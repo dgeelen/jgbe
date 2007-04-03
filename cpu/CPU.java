@@ -4,13 +4,15 @@ public class CPU
     private static final int CARRY8b_SHR = 5;
 
     //FLAGS
-        private static final int FLAG_REG = 5;
-        private static final int ZF_Shift = 7;
-        private static final int NF_Shift = ZF_Shift - 1;
-        private static final int HC_Shift = NF_Shift - 1;
+    private static final int FLAG_REG = 5;
+    private static final int ZF_Shift = 7;
+    private static final int NF_Shift = ZF_Shift - 1;
+    private static final int HC_Shift = NF_Shift - 1;
+    private static final int CF_Shift = HC_Shift - 1;
     private static final int ZF_Mask  = 1 << ZF_Shift;
     private static final int NF_Mask  = 1 << NF_Shift;
     private static final int HC_Mask  = 1 << HC_Shift;
+    private static final int CF_Mask  = 1 << CF_Shift;
 
     // Half carry van de 8b regs
     private static final int HALF_CARRY8b = 16;
@@ -42,10 +44,10 @@ public class CPU
         System.out.println("    L  = " + regs[L]);
         System.out.println("    PC = " + PC);
         System.out.println("  --- FLAGS ---");
-        System.out.println("    Z  = " + ((regs[FLAG_REG] & (1 << 7)) == (1 << 7)));
-        System.out.println("    n  = " + ((regs[FLAG_REG] & (1 << 6)) == (1 << 6)));
-        System.out.println("    h  = " + ((regs[FLAG_REG] & (1 << 5)) == (1 << 5)));
-        System.out.println("    C  = " + ((regs[FLAG_REG] & (1 << 4)) == (1 << 4)));
+        System.out.println("    Z  = " + ((regs[FLAG_REG] & ZF_Mask) == ZF_Mask));
+        System.out.println("    n  = " + ((regs[FLAG_REG] & NF_Mask) == NF_Mask));
+        System.out.println("    h  = " + ((regs[FLAG_REG] & HC_Mask) == HC_Mask));
+        System.out.println("    C  = " + ((regs[FLAG_REG] & CF_Mask) == CF_Mask));
         System.out.println("    F3 = " + ((regs[FLAG_REG] & (1 << 3)) == (1 << 3)));
         System.out.println("    F2 = " + ((regs[FLAG_REG] & (1 << 2)) == (1 << 2)));
         System.out.println("    F1 = " + ((regs[FLAG_REG] & (1 << 1)) == (1 << 1)));
@@ -55,6 +57,7 @@ public class CPU
 
     private void inc8b(int reg_index)
     {
+
         // Clear & Set HC
         regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
         regs[FLAG_REG] = regs[FLAG_REG] | ((((regs[reg_index] & 0xF) + 1) & 0x10) << 1);
@@ -154,7 +157,7 @@ public class CPU
 
 
     private boolean inc8b_diag() {
-        System.out.println(F);
+        printCPUstatus();
 
         /***************************************************************************************************************
         * Test INC_8b
