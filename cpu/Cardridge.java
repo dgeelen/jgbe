@@ -125,7 +125,8 @@ public class Cardridge
     public int read(int index)
     {
         //TODO fatsoenlijk
-        return 0x0004;
+        //return 0x0004;
+        return (RAM[0][index]);
     }
 
     public void write(int index, int value)

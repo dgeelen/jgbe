@@ -28,7 +28,28 @@ public class CPU
 
     private int PC;
 
-    private Cardridge cardridge = new Cardridge("Pokemon Blue.gb");
+    private Cardridge cardridge;// = new Cardridge("Pokemon Blue.gb");
+
+    public CPU(String filename) {
+      cardridge = new Cardridge(filename);
+      if(cardridge.getError()!=null) {
+        System.out.println("ERROR: "+cardridge.getError());
+      }
+      else {
+        System.out.println("Succesfully loaded ROM :)");
+      }
+      reset();
+    }
+
+    public void reset() {
+      PC = 0;
+      for(int i=0; i<8 ; ++i) regs[i]=0;
+      TotalInstrCount=0;
+    }
+
+    private int cycles() {
+      return TotalInstrCount;
+    }
 
     private void printCPUstatus()
     {
@@ -43,7 +64,7 @@ public class CPU
         flags += ((regs[FLAG_REG] & (1 <<0)) == (1 <<0))?"1 ":"0 ";
         System.out.println("---CPU Status for cycle "+TotalInstrCount+"---");
         System.out.println("A=" + regs[A] + "\tB=" + regs[B] + "\tC=" + regs[C] + "\tD=" + regs[D] + "\tE=" + regs[E] + "\tF=" + regs[F]);
-        System.out.println("H=" + regs[H] + "\tL=" + regs[L] + "\t\tPC=" + PC + "\tflags="+flags);
+        System.out.println("H=" + regs[H] + "\tL=" + regs[L] + "\tPC=" + PC +"\t@PC=" + cardridge.read(PC) + "\tflags="+flags);
     }
 
     private void inc8b(int reg_index)
@@ -61,7 +82,7 @@ public class CPU
 
       // clear & set NF
       regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-      ++TotalInstrCount;
+      ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       }
 
     private void dec8b( int reg_index ) {
@@ -78,7 +99,7 @@ public class CPU
 
       // clear & set NF
       regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
-      ++TotalInstrCount;
+      ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       }
 
     private void inc16b() {}
@@ -104,35 +125,30 @@ public class CPU
         return cardridge.read(PC);
     }
 
-    private boolean excecute( int instr ) {
+    private boolean execute( int instr ) {
       switch ( instr ) {
-        case 0x0000:
-          // NOP
+        case 0x0000:  // NOP
           break;
-        case 0x0001:
-          // LD BC,&0000
+        case 0x0001:  // LD BC,&0000
           // TODO
           break;
-        case 0x0002:
-          // LD (BC),A
+        case 0x0002:  // LD (BC),A
           // TODO
           break;
-        case 0x0003:
-          // INC BC
+        case 0x0003:  // INC BC
           // TODO
           break;
-        case 0x0004:
-          // INC B
+        case 0x0004:  // INC B
           inc8b( B );
           break;
-        case 0x0005:
-          // DEC B
+        case 0x0005:  // DEC B
           dec8b( B );
           break;
         default:
           System.out.println( "UNKNOWN INSTRUCTION: " + instr );
           return false;
         }
+      ++TotalInstrCount;
       return true;
       }
 
@@ -409,17 +425,19 @@ public class CPU
         ++count;
         }
       if ( verbose || count>0 ) System.out.println( "There were errors in "+count+" instructions" );
-
-      printCPUstatus();
-
-      // clear Flags
-      regs[F] = 0;
-      excecute(fetch());
-      printCPUstatus();
       return count;
       }
 
     public static final void main( String[] args ) {
-      ( new CPU() ).diagnose( true );
+      CPU cpu = new CPU("Pokemon Blue.gb");
+      if(cpu.diagnose(true)==0) {
+        cpu.reset();
+        int instr = cpu.fetch();
+        cpu.printCPUstatus();
+        while(cpu.execute(instr) && cpu.cycles()<6) {
+          cpu.fetch();
+          cpu.printCPUstatus();
+          }
+        }
       }
   }
