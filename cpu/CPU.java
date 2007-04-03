@@ -55,12 +55,6 @@ public class CPU
 
     private void inc8b(int reg_index)
     {
-        // CHECK FOR VIOLATIONS
-        if (reg_index == F)
-        {
-            System.out.println("INCREASING F!");
-        }
-
         // Clear & Set HC
         regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
         regs[FLAG_REG] = regs[FLAG_REG] | ((((regs[reg_index] & 0xF) + 1) & 0x10) << 1);
@@ -74,24 +68,23 @@ public class CPU
 
         // clear & set NF
         regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-//        System.out.println("reg["+reg_index+"]="+regs[reg_index]+" ZF="+((regs[FLAG_REG]&ZF_Mask)>>ZF_Shift)+" HC="+((regs[FLAG_REG]&HC_Mask)>>HC_Shift)+" NF="+((regs[FLAG_REG]&NF_Mask)>>NF_Shift));
     }
 
     private void dec8b(int reg_index)
     {
-        // hcb: half carry before increase
-        int hcb = regs[reg_index] & HALF_CARRY8b;
+        // Clear & Set HC
+        regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
+        regs[FLAG_REG] = regs[FLAG_REG] | (((regs[reg_index] & 0xF)==0)?ZF_Mask:0);
+
+        //Update register
         regs[reg_index] = (--regs[reg_index] & 0xFF);
-        // hcb: half carry after increase
-        int hca = regs[reg_index] & HALF_CARRY8b;
-        // Set halfcarry flag
-        regs[FLAG_REG] = regs[FLAG_REG] | ((hca ^hcb) << HALF_CARRY8b_SHL);
-        // clear ZF
+
+        // clear & set ZF
         regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
-        // Set Z flag
-        regs[FLAG_REG] = regs[FLAG_REG] | ((regs[reg_index]==0)?1:0<<ZF_Mask);
-        // SET n flag
-        regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
+        regs[FLAG_REG] = regs[FLAG_REG] | (((regs[reg_index]==0)?1:0)<<ZF_Shift);
+
+        // clear & set NF
+        regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
     }
 
     private void inc16b()
@@ -158,6 +151,8 @@ public class CPU
         return true;
     }
 
+
+
     private boolean inc8b_diag() {
         System.out.println(F);
 
@@ -187,7 +182,7 @@ public class CPU
             }
 
         regs[A]=0;
-        regs[FLAG_REG] = 0xff; // set all flags
+        regs[FLAG_REG] = 0xf0; // set all flags
         inc8b(A);
         if(regs[A]!=1) {
             System.out.println("Error: 0 + 1 != 1");
@@ -227,7 +222,7 @@ public class CPU
             }
 
         regs[A]=0x0f;
-        regs[FLAG_REG] = 0xff; // set all flags
+        regs[FLAG_REG] = 0xf0; // set all flags
         inc8b(A);
         if(regs[A]!=0x10) {
             System.out.println("Error: 0x0f + 1 != 0x10");
@@ -267,7 +262,7 @@ public class CPU
             }
 
         regs[A]=0xff;
-        regs[FLAG_REG] = 0xff; // set all flags
+        regs[FLAG_REG] = 0xf0; // set all flags
         inc8b(A);
         if(regs[A]!=0x00) {
             System.out.println("Error: 0xff + 1 != 0x00");
@@ -298,7 +293,7 @@ public class CPU
         System.out.println("*ERROR* IN INC8b INSTRUCTION!");
         ++count;
         }
-      if(verbose || count>0) System.out.println("There were errors in "+count+"instructions");
+      if(verbose || count>0) System.out.println("There were errors in "+count+" instructions");
 
     printCPUstatus();
 
