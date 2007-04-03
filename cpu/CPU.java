@@ -67,7 +67,7 @@ public class CPU
     private void dec8b( int reg_index ) {
       // Clear & Set HC
       regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
-      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index] & 0xF )==0 )?ZF_Mask:0 );
+      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index] & 0xF )==0 )?HC_Mask:0 );
 
       //Update register
       regs[reg_index] = ( --regs[reg_index] & 0xFF );
