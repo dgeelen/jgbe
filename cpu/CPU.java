@@ -77,4 +77,142 @@ public class CPU
 
         return true;
     }
+
+	private boolean inc8b_diag() {
+		/***************************************************************************************************************
+		* Test INC_8b
+		* Tests 0x00 + 1, 0x0f + 1, 0xff + 1 for setting AND clearing of flags
+		*/
+		boolean status=true;
+		regs[A]=0;
+		regs[FLAG_REG] = 0; // clear all flags
+		inc8b(A);
+		if(regs[A]!=1) {
+			system.out.println("Error: 0 + 1 != 1");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&ZF == ZF) {
+			system.out.println("Error: INC8b: A:0->1 and ZF is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&HALF_CARRY8b == ZF) {
+			system.out.println("Error: INC8b: A:0->1 and HC is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&NF == 0) {
+			system.out.println("Error: INC8b: Inc'd and NF not set");
+			status = status && false;
+			}
+
+		regs[A]=0;
+		regs[FLAG_REG] = 0xff; // set all flags
+		inc8b(A);
+		if(regs[A]!=1) {
+			system.out.println("Error: 0 + 1 != 1");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&ZF == ZF) {
+			system.out.println("Error: INC8b: A:0->1 and ZF is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&HALF_CARRY8b == HALF_CARRY8b) {
+			system.out.println("Error: INC8b: A:0->1 and HC is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&NF != NF) {
+			system.out.println("Error: INC8b: Inc'd and NF not set");
+			status = status && false;
+			}
+
+		regs[A]=0x0f;
+		regs[FLAG_REG] = 0; // clear all flags
+		inc8b(A);
+		if(regs[A]!=0x10) {
+			system.out.println("Error: 0x0f + 1 != 0x10");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&ZF == ZF) {
+			system.out.println("Error: INC8b: A:0x0f->0x10 and ZF is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&HALF_CARRY8b != HALF_CARRY8b) {
+			system.out.println("Error: INC8b: A:0x0f->0x10 and HC is NOT set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&NF != NF) {
+			system.out.println("Error: INC8b: Inc'd and NF not set");
+			status = status && false;
+			}
+
+		regs[A]=0x0f;
+		regs[FLAG_REG] = 0xff; // set all flags
+		inc8b(A);
+		if(regs[A]!=0x10) {
+			system.out.println("Error: 0x0f + 1 != 0x10");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&ZF == ZF) {
+			system.out.println("Error: INC8b: A:0x0f->0x10 and ZF is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&HALF_CARRY8b != HALF_CARRY8b) {
+			system.out.println("Error: INC8b: A:0x0f->0x10 and HC is NOT set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&NF != NF) {
+			system.out.println("Error: INC8b: Inc'd and NF not set");
+			status = status && false;
+			}
+
+		regs[A]=0xff;
+		regs[FLAG_REG] = 0; // clear all flags
+		inc8b(A);
+		if(regs[A]!=0x00) {
+			system.out.println("Error: 0xff + 1 != 0x00");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&ZF != ZF) {
+			system.out.println("Error: INC8b: A:0xff->0x00 and ZF is NOT set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&HALF_CARRY8b == HALF_CARRY8b) {
+			system.out.println("Error: INC8b: A:0xff->0x00 and HC is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&NF != NF) {
+			system.out.println("Error: INC8b: Inc'd and NF not set");
+			status = status && false;
+			}
+
+		regs[A]=0xff;
+		regs[FLAG_REG] = 0xff; // set all flags
+		inc8b(A);
+		if(regs[A]!=0x00) {
+			system.out.println("Error: 0xff + 1 != 0x00");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&ZF != ZF) {
+			system.out.println("Error: INC8b: A:0xff->0x00 and ZF is NOT set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&HALF_CARRY8b == HALF_CARRY8b) {
+			system.out.println("Error: INC8b: A:0xff->0x00 and HC is set");
+			status = status && false;
+			}
+		if(regs[FLAG_REG]&NF != NF) {
+			system.out.println("Error: INC8b: Inc'd and NF not set");
+			status = status && false;
+			}
+		return status;
+	}
+	private int diagnose(boolean verbose) {
+		boolean result;
+		result = inc8b_diag();
+	  if(verbose && result) {
+	  	system.out.println("INC8b instruction appears to work ok")
+	  	}
+	  else {
+	  	system.out.println("*ERROR* IN INC8b INSTRUCTION!");
+	  	}
+	}
 }
