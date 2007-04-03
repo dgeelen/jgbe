@@ -8,9 +8,14 @@ public class Cardridge
     // RAM/ROM
     private int[][] RAM;               // RAM [banknr][index]
     private int[][] ROM;               // ROM [banknr][index]
+    private int[][] mem_to_read = ROM; // The memory to read from
 
     private String  file_name;
     private String  err_msg;            // message in case of an error
+
+    private int MBC;                    // The MBC used in the cardridge
+
+    private boolean ram_enabled = false;// Whether RAM is enabled to read and write
 
     public Cardridge(String file_name)
     /**
@@ -67,6 +72,9 @@ public class Cardridge
         {
             err_msg = "Error while loading ROM bank #0 " + e.getMessage();
         }
+
+        // Detect MBC type
+        MBC = first_rom_bank[0x0147];
 
         // Determine ROM size
         switch(first_rom_bank[0x0148])
@@ -125,13 +133,63 @@ public class Cardridge
     public int read(int index)
     {
         //TODO fatsoenlijk
-        //return 0x0004;
-        return (RAM[0][index]);
+        return ROM[0][index];
     }
 
     public void write(int index, int value)
     {
         // TODO fatsoenlijk
+        // Switch RAM/ROM and bank numbers
+
+        //
+        switch (MBC)
+        {
+            case 0x0001:
+            case 0x0002:
+            case 0x0003:
+                // MBC1
+
+                if ((0xA000 <= index) && (index <= 0xBFFF))
+                {
+                    // RAM Bank 00-03, if any
+
+                }
+                else if ((0x0000 <= index) && (index <= 0x1FFF))
+                {
+                    // RAM Enable
+                    // 0x0Ah enable
+                    if (value == 0x0A) ram_enabled = true;
+                    else               ram_enabled = false;
+                }
+                // TODO all option
+
+                break;
+            case 0x0005:
+            case 0x0006:
+                // MBC2
+                break;
+            case 0x000F:
+            case 0x0010:
+            case 0x0011:
+            case 0x0012:
+            case 0x0013:
+                // MBC3
+                break;
+            case 0x0015:
+            case 0x0016:
+            case 0x0017:
+                // MBC4
+                break;
+            case 0x0019:
+            case 0x001A:
+            case 0x001B:
+            case 0x001C:
+            case 0x001D:
+            case 0x001E:
+                // MBC5
+                break;
+
+        }
     }
 
     public static void main(String[] args)
