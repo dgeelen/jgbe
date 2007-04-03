@@ -14,9 +14,7 @@ public class CPU
     private static final int HC_Mask  = 1 << HC_Shift;
     private static final int CF_Mask  = 1 << CF_Shift;
 
-    // Half carry van de 8b regs
-    private static final int HALF_CARRY8b = 16;
-    private static final int HALF_CARRY8b_SHL = 2;
+    private int TotalInstrCount = 0;
 
     private int[] regs = new int[8]; //[A,B,C,D,E,F,H,L]
     private static final int A = 0;
@@ -34,27 +32,18 @@ public class CPU
 
     private void printCPUstatus()
     {
-        System.out.println("--- CPU STATUS ---");
-        System.out.println("  --- REGS ---");
-        System.out.println("    A  = " + regs[A]);
-        System.out.println("    B  = " + regs[B]);
-        System.out.println("    C  = " + regs[C]);
-        System.out.println("    D  = " + regs[D]);
-        System.out.println("    E  = " + regs[E]);
-        System.out.println("    F  = " + regs[F]);
-        System.out.println("    H  = " + regs[H]);
-        System.out.println("    L  = " + regs[L]);
-        System.out.println("    PC = " + PC);
-        System.out.println("  --- FLAGS ---");
-        System.out.println("    Z  = " + ((regs[FLAG_REG] & ZF_Mask) == ZF_Mask));
-        System.out.println("    n  = " + ((regs[FLAG_REG] & NF_Mask) == NF_Mask));
-        System.out.println("    h  = " + ((regs[FLAG_REG] & HC_Mask) == HC_Mask));
-        System.out.println("    C  = " + ((regs[FLAG_REG] & CF_Mask) == CF_Mask));
-        System.out.println("    F3 = " + ((regs[FLAG_REG] & (1 << 3)) == (1 << 3)));
-        System.out.println("    F2 = " + ((regs[FLAG_REG] & (1 << 2)) == (1 << 2)));
-        System.out.println("    F1 = " + ((regs[FLAG_REG] & (1 << 1)) == (1 << 1)));
-        System.out.println("    F0 = " + ((regs[FLAG_REG] & (1 << 0)) == (1 << 0)));
-        System.out.println("------------------");
+        String flags = "";
+        flags += ((regs[FLAG_REG] & ZF_Mask) == ZF_Mask)?"Z ":"z ";
+        flags += ((regs[FLAG_REG] & NF_Mask) == NF_Mask)?"N ":"n ";
+        flags += ((regs[FLAG_REG] & HC_Mask) == HC_Mask)?"H ":"h ";
+        flags += ((regs[FLAG_REG] & CF_Mask) == CF_Mask)?"C ":"c ";
+        flags += ((regs[FLAG_REG] & (1 <<3)) == (1 <<3))?"1 ":"0 ";
+        flags += ((regs[FLAG_REG] & (1 <<2)) == (1 <<2))?"1 ":"0 ";
+        flags += ((regs[FLAG_REG] & (1 <<1)) == (1 <<1))?"1 ":"0 ";
+        flags += ((regs[FLAG_REG] & (1 <<0)) == (1 <<0))?"1 ":"0 ";
+        System.out.println("---CPU Status for cycle "+TotalInstrCount+"---");
+        System.out.println("A=" + regs[A] + "\tB=" + regs[B] + "\tC=" + regs[C] + "\tD=" + regs[D] + "\tE=" + regs[E] + "\tF=" + regs[F]);
+        System.out.println("H=" + regs[H] + "\tL=" + regs[L] + "\t\tPC=" + PC + "\tflags="+flags);
     }
 
     private void inc8b(int reg_index)
@@ -72,6 +61,7 @@ public class CPU
 
       // clear & set NF
       regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
+      ++TotalInstrCount;
       }
 
     private void dec8b( int reg_index ) {
@@ -87,7 +77,8 @@ public class CPU
       regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index]==0 )?1:0 )<<ZF_Shift );
 
       // clear & set NF
-      regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
+      regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
+      ++TotalInstrCount;
       }
 
     private void inc16b() {}
