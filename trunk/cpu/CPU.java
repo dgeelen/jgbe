@@ -118,7 +118,7 @@ public class CPU
 
     private int fetch()
     {
-        return 0x00004;
+        return cardridge.read(PC);
     }
 
     private boolean excecute(int instr)
@@ -302,6 +302,10 @@ public class CPU
 
     printCPUstatus();
 
+      // clear Flags
+      regs[F] = 0;
+      excecute(fetch());
+      printCPUstatus();
       return count;
     }
 

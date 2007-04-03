@@ -122,6 +122,17 @@ public class Cardridge
         }
     }
 
+    public int read(int index)
+    {
+        //TODO fatsoenlijk
+        return 0x0004;
+    }
+
+    public void write(int index, int value)
+    {
+        // TODO fatsoenlijk
+    }
+
     public static void main(String[] args)
     {
         Cardridge card = new Cardridge("../Pokemon Blue.gb");
