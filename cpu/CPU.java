@@ -1,5 +1,5 @@
 public class CPU
-{
+  {
     private static final int CARRY8b    = 512;
     private static final int CARRY8b_SHR = 5;
 
@@ -59,258 +59,376 @@ public class CPU
 
     private void inc8b(int reg_index)
     {
+      // Clear & Set HC
+      regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
+      regs[FLAG_REG] = regs[FLAG_REG] | ((((regs[reg_index] & 0xF) + 1) & 0x10) << 1);
 
-        // Clear & Set HC
-        regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
-        regs[FLAG_REG] = regs[FLAG_REG] | ((((regs[reg_index] & 0xF) + 1) & 0x10) << 1);
+      //Update register
+      regs[reg_index] = ( ++regs[reg_index] & 0xFF );
 
-                //Update register
-        regs[reg_index] = (++regs[reg_index] & 0xFF);
+      // clear & set ZF
+      regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
+      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index]==0 )?1:0 )<<ZF_Shift );
 
-        // clear & set ZF
-        regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
-        regs[FLAG_REG] = regs[FLAG_REG] | (((regs[reg_index]==0)?1:0)<<ZF_Shift);
+      // clear & set NF
+      regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
+      }
 
-        // clear & set NF
-        regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-    }
+    private void dec8b( int reg_index ) {
+      // Clear & Set HC
+      regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
+      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index] & 0xF )==0 )?ZF_Mask:0 );
 
-    private void dec8b(int reg_index)
-    {
-        // Clear & Set HC
-        regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
-        regs[FLAG_REG] = regs[FLAG_REG] | (((regs[reg_index] & 0xF)==0)?ZF_Mask:0);
+      //Update register
+      regs[reg_index] = ( --regs[reg_index] & 0xFF );
 
-        //Update register
-        regs[reg_index] = (--regs[reg_index] & 0xFF);
+      // clear & set ZF
+      regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
+      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index]==0 )?1:0 )<<ZF_Shift );
 
-        // clear & set ZF
-        regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
-        regs[FLAG_REG] = regs[FLAG_REG] | (((regs[reg_index]==0)?1:0)<<ZF_Shift);
+      // clear & set NF
+      regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
+      }
 
-        // clear & set NF
-        regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-    }
+    private void inc16b() {}
 
-    private void inc16b()
-    {
-    }
+    private void JPnn( int nn ) {
+      PC = nn;
+      }
 
-    private void JPnn(int nn)
-    {
-        PC = nn;
-    }
+    private void JPccnn( boolean cc, int nn ) {
+      if ( cc ) JPnn( nn );
+      }
 
-    private void JPccnn(boolean cc, int nn)
-    {
-        if (cc) JPnn(nn);
-    }
+    private void JRe( int e ) {
+      PC += e;
+      }
 
-    private void JRe(int e)
-    {
-        PC += e;
-    }
-
-    private void JRcce(boolean cc, int e)
-    {
-        if (cc) JRe(e);
-    }
+    private void JRcce( boolean cc, int e ) {
+      if ( cc ) JRe( e );
+      }
 
     private int fetch()
     {
         return cardridge.read(PC);
     }
 
-    private boolean excecute(int instr)
-    {
-        switch(instr)
-        {
-            case 0x0000:
-                // NOP
-                break;
-            case 0x0001:
-                // LD BC,&0000
-                // TODO
-                break;
-            case 0x0002:
-                // LD (BC),A
-                // TODO
-                break;
-            case 0x0003:
-                // INC BC
-                // TODO
-                break;
-            case 0x0004:
-                // INC B
-                inc8b(B);
-                break;
-            case 0x0005:
-                // DEC B
-                dec8b(B);
-                break;
-            default:
-                System.out.println("UNKNOWN INSTRUCTION: " + instr);
-                return false;
+    private boolean excecute( int instr ) {
+      switch ( instr ) {
+        case 0x0000:
+          // NOP
+          break;
+        case 0x0001:
+          // LD BC,&0000
+          // TODO
+          break;
+        case 0x0002:
+          // LD (BC),A
+          // TODO
+          break;
+        case 0x0003:
+          // INC BC
+          // TODO
+          break;
+        case 0x0004:
+          // INC B
+          inc8b( B );
+          break;
+        case 0x0005:
+          // DEC B
+          dec8b( B );
+          break;
+        default:
+          System.out.println( "UNKNOWN INSTRUCTION: " + instr );
+          return false;
+        }
+      return true;
+      }
+
+    private boolean dec8b_diag() {
+      /***************************************************************************************************************
+      * Test DEC_8b
+      * Tests 0x01 - 1, 0x00 - 1, 0x10 - 1 for setting AND clearing of flags
+      */
+      boolean status=true;
+
+      regs[A]=0x01;
+      regs[FLAG_REG] = 0x00; // clear all flags
+      dec8b( A );
+      if ( regs[A]!=0x00 ) {
+        System.out.println( "Error: 1 - 1 != 0x00" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) != ZF_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x01->0x00 and ZF is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) == HC_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x01->0x00 and HC is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) != NF_Mask ) {
+        System.out.println( "Error: DEC8b: DEC'd and NF not set" );
+        status = status && false;
+        }
+      regs[A]=0x01;
+      regs[FLAG_REG] = 0xf0; // set all flags
+      dec8b( A );
+      if ( regs[A]!=0x00 ) {
+        System.out.println( "Error: 1 - 1 != 0x00" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) != ZF_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x01->0x00 and ZF is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) == HC_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x01->0x00 and HC is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) != NF_Mask ) {
+        System.out.println( "Error: DEC8b: DEC'd and NF not set" );
+        status = status && false;
         }
 
-        return true;
-    }
+      regs[A]=0;
+      regs[FLAG_REG] = 0x00; // clear all flags
+      dec8b( A );
+      if ( regs[A]!=0xff ) {
+        System.out.println( "Error: 0 - 1 != 0xff" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x00->0xff and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x00->0xff and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) != NF_Mask ) {
+        System.out.println( "Error: DEC8b: DEC'd and NF not set" );
+        status = status && false;
+        }
+      regs[A]=0;
+      regs[FLAG_REG] = 0xf0; // set all flags
+      dec8b( A );
+      if ( regs[A]!=0xff ) {
+        System.out.println( "Error: 0 - 1 != 0xff" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x00->0xff and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x00->0xff and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) != NF_Mask ) {
+        System.out.println( "Error: DEC8b: DEC'd and NF not set" );
+        status = status && false;
+        }
 
-
+      regs[A]=0x10;
+      regs[FLAG_REG] = 0; // clear all flags
+      dec8b( A );
+      if ( regs[A]!=0x0f ) {
+        System.out.println( "Error: 0x10 - 1 != 0x0f" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x10->0x0f and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x10->0x0f and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) != NF_Mask ) {
+        System.out.println( "Error: DEC8b: DEC'd and NF not set" );
+        status = status && false;
+        }
+      regs[A]=0x10;
+      regs[FLAG_REG] = 0xf0; // set all flags
+      dec8b( A );
+      if ( regs[A]!=0x0f ) {
+        System.out.println( "Error: 0x10 - 1 != 0x0f" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x10->0x0f and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: DEC8b: A:0x10->0x0f and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) != NF_Mask ) {
+        System.out.println( "Error: DEC8b: DEC'd and NF not set" );
+        status = status && false;
+        }
+      return status;
+      }
 
     private boolean inc8b_diag() {
-        printCPUstatus();
+      /***************************************************************************************************************
+      * Test INC_8b
+      * Tests 0x00 + 1, 0x0f + 1, 0xff + 1 for setting AND clearing of flags
+      */
+      boolean status=true;
+      regs[A]=0;
+      regs[FLAG_REG] = 0; // clear all flags
+      inc8b( A );
+      if ( regs[A]!=1 ) {
+        System.out.println( "Error: 0 + 1 != 1" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: INC8b: A:0->1 and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) == HC_Mask ) {
+        System.out.println( "Error: INC8b: A:0->1 and HC is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) == NF_Mask ) {
+        System.out.println( "Error: INC8b: Inc'd and NF set" );
+        status = status && false;
+        }
 
-        /***************************************************************************************************************
-        * Test INC_8b
-        * Tests 0x00 + 1, 0x0f + 1, 0xff + 1 for setting AND clearing of flags
-        */
-        boolean status=true;
-        regs[A]=0;
-        regs[FLAG_REG] = 0; // clear all flags
-        inc8b(A);
-        if(regs[A]!=1) {
-            System.out.println("Error: 0 + 1 != 1");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
-            System.out.println("Error: INC8b: A:0->1 and ZF is set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&HC_Mask) == HC_Mask) {
-            System.out.println("Error: INC8b: A:0->1 and HC is set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
-            System.out.println("Error: INC8b: Inc'd and NF not set");
-            status = status && false;
-            }
+      regs[A]=0;
+      regs[FLAG_REG] = 0xf0; // set all flags
+      inc8b( A );
+      if ( regs[A]!=1 ) {
+        System.out.println( "Error: 0 + 1 != 1" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: INC8b: A:0->1 and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) == HC_Mask ) {
+        System.out.println( "Error: INC8b: A:0->1 and HC is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) == NF_Mask ) {
+        System.out.println( "Error: INC8b: Inc'd and NF set" );
+        status = status && false;
+        }
 
-        regs[A]=0;
-        regs[FLAG_REG] = 0xf0; // set all flags
-        inc8b(A);
-        if(regs[A]!=1) {
-            System.out.println("Error: 0 + 1 != 1");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
-            System.out.println("Error: INC8b: A:0->1 and ZF is set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&HC_Mask) == HC_Mask) {
-            System.out.println("Error: INC8b: A:0->1 and HC is set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
-            System.out.println("Error: INC8b: Inc'd and NF not set");
-            status = status && false;
-            }
+      regs[A]=0x0f;
+      regs[FLAG_REG] = 0; // clear all flags
+      inc8b( A );
+      if ( regs[A]!=0x10 ) {
+        System.out.println( "Error: 0x0f + 1 != 0x10" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: INC8b: A:0x0f->0x10 and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: INC8b: A:0x0f->0x10 and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) == NF_Mask ) {
+        System.out.println( "Error: INC8b: Inc'd and NF set" );
+        status = status && false;
+        }
 
-        regs[A]=0x0f;
-        regs[FLAG_REG] = 0; // clear all flags
-        inc8b(A);
-        if(regs[A]!=0x10) {
-            System.out.println("Error: 0x0f + 1 != 0x10");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
-            System.out.println("Error: INC8b: A:0x0f->0x10 and ZF is set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
-            System.out.println("Error: INC8b: A:0x0f->0x10 and HC is NOT set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
-            System.out.println("Error: INC8b: Inc'd and NF not set");
-            status = status && false;
-            }
+      regs[A]=0x0f;
+      regs[FLAG_REG] = 0xf0; // set all flags
+      inc8b( A );
+      if ( regs[A]!=0x10 ) {
+        System.out.println( "Error: 0x0f + 1 != 0x10" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) == ZF_Mask ) {
+        System.out.println( "Error: INC8b: A:0x0f->0x10 and ZF is set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: INC8b: A:0x0f->0x10 and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) == NF_Mask ) {
+        System.out.println( "Error: INC8b: Inc'd and NF set" );
+        status = status && false;
+        }
 
-        regs[A]=0x0f;
-        regs[FLAG_REG] = 0xf0; // set all flags
-        inc8b(A);
-        if(regs[A]!=0x10) {
-            System.out.println("Error: 0x0f + 1 != 0x10");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
-            System.out.println("Error: INC8b: A:0x0f->0x10 and ZF is set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
-            System.out.println("Error: INC8b: A:0x0f->0x10 and HC is NOT set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
-            System.out.println("Error: INC8b: Inc'd and NF not set");
-            status = status && false;
-            }
+      regs[A]=0xff;
+      regs[FLAG_REG] = 0; // clear all flags
+      inc8b( A );
+      if ( regs[A]!=0x00 ) {
+        System.out.println( "Error: 0xff + 1 != 0x00" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) != ZF_Mask ) {
+        System.out.println( "Error: INC8b: A:0xff->0x00 and ZF is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: INC8b: A:0xff->0x00 and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) == NF_Mask ) {
+        System.out.println( "Error: INC8b: Inc'd and NF set" );
+        status = status && false;
+        }
 
-        regs[A]=0xff;
-        regs[FLAG_REG] = 0; // clear all flags
-        inc8b(A);
-        if(regs[A]!=0x00) {
-            System.out.println("Error: 0xff + 1 != 0x00");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&ZF_Mask) != ZF_Mask) {
-            System.out.println("Error: INC8b: A:0xff->0x00 and ZF is NOT set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
-            System.out.println("Error: INC8b: A:0xff->0x00 and HC is NOT set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
-            System.out.println("Error: INC8b: Inc'd and NF not set");
-            status = status && false;
-            }
-
-        regs[A]=0xff;
-        regs[FLAG_REG] = 0xf0; // set all flags
-        inc8b(A);
-        if(regs[A]!=0x00) {
-            System.out.println("Error: 0xff + 1 != 0x00");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&ZF_Mask) != ZF_Mask) {
-            System.out.println("Error: INC8b: A:0xff->0x00 and ZF is NOT set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
-            System.out.println("Error: INC8b: A:0xff->0x00 and HC is NOT set");
-            status = status && false;
-            }
-        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
-            System.out.println("Error: INC8b: Inc'd and NF not set");
-            status = status && false;
-            }
-        return status;
-    }
-    private int diagnose(boolean verbose) {
-            boolean result;
-            int count=0;
-            result = inc8b_diag();
-      if(verbose && result) {
-        System.out.println("INC8b instruction appears to work ok");
+      regs[A]=0xff;
+      regs[FLAG_REG] = 0xf0; // set all flags
+      inc8b( A );
+      if ( regs[A]!=0x00 ) {
+        System.out.println( "Error: 0xff + 1 != 0x00" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&ZF_Mask ) != ZF_Mask ) {
+        System.out.println( "Error: INC8b: A:0xff->0x00 and ZF is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&HC_Mask ) != HC_Mask ) {
+        System.out.println( "Error: INC8b: A:0xff->0x00 and HC is NOT set" );
+        status = status && false;
+        }
+      if (( regs[FLAG_REG]&NF_Mask ) == NF_Mask ) {
+        System.out.println( "Error: INC8b: Inc'd and NF set" );
+        status = status && false;
+        }
+      return status;
+      }
+    private int diagnose( boolean verbose ) {
+      boolean result;
+      int count=0;
+      result = inc8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "INC8b instruction appears to work ok" );
         }
       else {
-        System.out.println("*ERROR* IN INC8b INSTRUCTION!");
+        System.out.println( "*ERROR* IN INC8b INSTRUCTION!" );
         ++count;
         }
-      if(verbose || count>0) System.out.println("There were errors in "+count+" instructions");
+      result = dec8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "DEC8b instruction appears to work ok" );
+        }
+      else {
+        System.out.println( "*ERROR* IN DEC8b INSTRUCTION!" );
+        ++count;
+        }
+      if ( verbose || count>0 ) System.out.println( "There were errors in "+count+" instructions" );
 
-    printCPUstatus();
+      printCPUstatus();
 
       // clear Flags
       regs[F] = 0;
       excecute(fetch());
       printCPUstatus();
       return count;
-    }
+      }
 
-    public static final void main(String[] args)
-    {
-        (new CPU()).diagnose(true);
-    }
-}
+    public static final void main( String[] args ) {
+      ( new CPU() ).diagnose( true );
+      }
+  }
