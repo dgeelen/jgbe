@@ -51,7 +51,7 @@ public class Cardridge
          * used to initialize RAM and ROM banks
          */
         int[] first_rom_bank = new int[ROM_BANK_SIZE];
-
+        System.out.println("Attempting to load ROM: `"+file_name+"'");
         try
         {
             File card = new File(file_name);
@@ -71,26 +71,26 @@ public class Cardridge
         // Determine ROM size
         switch(first_rom_bank[0x0148])
         {
-            case 0x00: ROM = new int[2][0x81]; break;   /* 32KByte (no ROM banking) */
-            case 0x01: ROM = new int[4][0x81]; break;   /* 64KByte (4 banks) */
-            case 0x02: ROM = new int[8][0x81]; break;   /* 128KByte (8 banks) */
-            case 0x03: ROM = new int[16][0x81]; break;  /* 256KByte (16 banks) */
-            case 0x04: ROM = new int[32][0x81]; break;  /* 512KByte (32 banks) */
-            case 0x05: ROM = new int[64][0x81]; break;  /* 1MByte (64 banks)  - only 63 banks used by MBC1 */
-            case 0x06: ROM = new int[128][0x81]; break; /* 2MByte (128 banks) - only 125 banks used by MBC1 */
-            case 0x07: ROM = new int[256][0x81]; break; /* 4MByte (256 banks) */
-            case 0x52: ROM = new int[72][0x81]; break;  /* 1.1MByte (72 banks) */
-            case 0x53: ROM = new int[80][0x81]; break;  /* 1.2MByte (80 banks) */
-            case 0x54: ROM = new int[96][0x81]; break;  /* 1.5MByte (96 banks) */
+            case 0x00: ROM = new int[2][0x81]; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
+            case 0x01: ROM = new int[4][0x81]; System.out.println("ROM size = 64KByte (4 banks)"); break;
+            case 0x02: ROM = new int[8][0x81]; System.out.println("ROM size = 128KByte (8 banks)"); break;
+            case 0x03: ROM = new int[16][0x81]; System.out.println("ROM size = 256KByte (16 banks)"); break;
+            case 0x04: ROM = new int[32][0x81]; System.out.println("ROM size = 512KByte (32 banks)"); break;
+            case 0x05: ROM = new int[64][0x81]; System.out.println("ROM size = 1MByte (64 banks) - only 63 banks used by MBC1"); break;
+            case 0x06: ROM = new int[128][0x81]; System.out.println("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
+            case 0x07: ROM = new int[256][0x81]; System.out.println("ROM size = 4MByte (256 banks)"); break;
+            case 0x52: ROM = new int[72][0x81]; System.out.println("ROM size = 1.1MByte (72 banks)"); break;
+            case 0x53: ROM = new int[80][0x81]; System.out.println("ROM size = 1.2MByte (80 banks)"); break;
+            case 0x54: ROM = new int[96][0x81]; System.out.println("ROM size = 1.5MByte (96 banks)"); break;
         } // switch(header[0x0148])
 
         // Determine RAM size
         switch(first_rom_bank[0x0149])
         {
-            case 0x00: RAM = null; break;               /* None */
-            case 0x01: RAM = new int[0][2 * 1024]; break; /* 2KBytes */
-            case 0x02: RAM = new int[0][8 * 1024]; break; /* 8Kbytes */
-            case 0x03: RAM = new int[4][8 * 1024]; break; /* 32 KBytes (4 banks of 8KBytes each) */
+            case 0x00: RAM = null; System.out.println("Card has no RAM");
+            case 0x01: RAM = new int[0][2 * 1024]; System.out.println("Card has 2KBytes of RAM");
+            case 0x02: RAM = new int[0][8 * 1024]; System.out.println("Card has 8Kbytes of RAM");
+            case 0x03: RAM = new int[4][8 * 1024]; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)");
         } // switch(header[0x0149])
 
         // load entire ROM/RAM into memory
@@ -98,7 +98,7 @@ public class Cardridge
         try
         {
             File card = new File(file_name);
-            System.out.println("" + card.length());
+            System.out.println("Cardsize = " + card.length() + " bytes");
             FileInputStream fistream = new FileInputStream(card);
             DataInputStream distream = new DataInputStream(fistream);
 
@@ -114,7 +114,7 @@ public class Cardridge
                   RAM[i][j] = distream.readUnsignedByte();
 
             t = 2;
-            System.out.println("" + (ROM.length * ROM[0].length + RAM.length * RAM[0].length));
+            System.out.println("Loaded " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM into memory");
         }
         catch(Exception e)
         {
@@ -135,8 +135,13 @@ public class Cardridge
 
     public static void main(String[] args)
     {
-        Cardridge card = new Cardridge("../Pokemon Blue.gb");
-        System.out.println(card.getError());
+        Cardridge card = new Cardridge("Pokemon Blue.gb");
+        if(card.getError()!=null) {
+          System.out.println("ERROR: "+card.getError());
+          }
+        else {
+          System.out.println("Succesfully loaded ROM :)");
+        }
     }
 
 }

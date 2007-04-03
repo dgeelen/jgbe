@@ -28,7 +28,7 @@ public class CPU
 
     private int PC;
 
-    private Cardridge cardridge = new Cardridge("../Pokemon Blue.gb");
+    private Cardridge cardridge = new Cardridge("Pokemon Blue.gb");
 
     private void printCPUstatus()
     {
