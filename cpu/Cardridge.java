@@ -95,10 +95,10 @@ public class Cardridge
         // Determine RAM size
         switch(first_rom_bank[0x0149])
         {
-            case 0x00: RAM = null; System.out.println("Card has no RAM");
-            case 0x01: RAM = new int[0][2 * 1024]; System.out.println("Card has 2KBytes of RAM");
-            case 0x02: RAM = new int[0][8 * 1024]; System.out.println("Card has 8Kbytes of RAM");
-            case 0x03: RAM = new int[4][8 * 1024]; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)");
+            case 0x00: RAM = null; System.out.println("Card has no RAM"); break;
+            case 0x01: RAM = new int[0][2 * 1024]; System.out.println("Card has 2KBytes of RAM"); break;
+            case 0x02: RAM = new int[0][8 * 1024]; System.out.println("Card has 8Kbytes of RAM"); break;
+            case 0x03: RAM = new int[4][8 * 1024]; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
         } // switch(header[0x0149])
 
         // load entire ROM/RAM into memory
