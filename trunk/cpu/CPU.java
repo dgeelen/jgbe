@@ -4,10 +4,10 @@ public class CPU
     private static final int CARRY8b_SHR = 5;
 
     //FLAGS
-		private static final int FLAG_REG = 5;
-		private static final int ZF_Shift = 7;
-		private static final int NF_Shift = ZF_Shift - 1;
-		private static final int HC_Shift = NF_Shift - 1;
+        private static final int FLAG_REG = 5;
+        private static final int ZF_Shift = 7;
+        private static final int NF_Shift = ZF_Shift - 1;
+        private static final int HC_Shift = NF_Shift - 1;
     private static final int ZF_Mask  = 1 << ZF_Shift;
     private static final int NF_Mask  = 1 << NF_Shift;
     private static final int HC_Mask  = 1 << HC_Shift;
@@ -22,19 +22,50 @@ public class CPU
     private static final int C = 2;
     private static final int D = 3;
     private static final int E = 4;
-    private static final int F = 5;
+    private static final int F = FLAG_REG;
     private static final int H = 6;
     private static final int L = 7;
 
     private int PC;
 
+    private void printCPUstatus()
+    {
+        System.out.println("--- CPU STATUS ---");
+        System.out.println("  --- REGS ---");
+        System.out.println("    A  = " + regs[A]);
+        System.out.println("    B  = " + regs[B]);
+        System.out.println("    C  = " + regs[C]);
+        System.out.println("    D  = " + regs[D]);
+        System.out.println("    E  = " + regs[E]);
+        System.out.println("    F  = " + regs[F]);
+        System.out.println("    H  = " + regs[H]);
+        System.out.println("    L  = " + regs[L]);
+        System.out.println("    PC = " + PC);
+        System.out.println("  --- FLAGS ---");
+        System.out.println("    Z  = " + ((regs[FLAG_REG] & (1 << 7)) == (1 << 7)));
+        System.out.println("    n  = " + ((regs[FLAG_REG] & (1 << 6)) == (1 << 6)));
+        System.out.println("    h  = " + ((regs[FLAG_REG] & (1 << 5)) == (1 << 5)));
+        System.out.println("    C  = " + ((regs[FLAG_REG] & (1 << 4)) == (1 << 4)));
+        System.out.println("    F3 = " + ((regs[FLAG_REG] & (1 << 3)) == (1 << 3)));
+        System.out.println("    F2 = " + ((regs[FLAG_REG] & (1 << 2)) == (1 << 2)));
+        System.out.println("    F1 = " + ((regs[FLAG_REG] & (1 << 1)) == (1 << 1)));
+        System.out.println("    F0 = " + ((regs[FLAG_REG] & (1 << 0)) == (1 << 0)));
+        System.out.println("------------------");
+    }
+
     private void inc8b(int reg_index)
     {
+        // CHECK FOR VIOLATIONS
+        if (reg_index == F)
+        {
+            System.out.println("INCREASING F!");
+        }
+
         // Clear & Set HC
         regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
         regs[FLAG_REG] = regs[FLAG_REG] | ((((regs[reg_index] & 0xF) + 1) & 0x10) << 1);
 
-				//Update register
+                //Update register
         regs[reg_index] = (++regs[reg_index] & 0xFF);
 
         // clear & set ZF
@@ -128,6 +159,8 @@ public class CPU
     }
 
     private boolean inc8b_diag() {
+        System.out.println(F);
+
         /***************************************************************************************************************
         * Test INC_8b
         * Tests 0x00 + 1, 0x0f + 1, 0xff + 1 for setting AND clearing of flags
@@ -255,9 +288,9 @@ public class CPU
         return status;
     }
     private int diagnose(boolean verbose) {
-			boolean result;
-			int count=0;
-			result = inc8b_diag();
+            boolean result;
+            int count=0;
+            result = inc8b_diag();
       if(verbose && result) {
         System.out.println("INC8b instruction appears to work ok");
         }
@@ -266,6 +299,9 @@ public class CPU
         ++count;
         }
       if(verbose || count>0) System.out.println("There were errors in "+count+"instructions");
+
+    printCPUstatus();
+
       return count;
     }
 
