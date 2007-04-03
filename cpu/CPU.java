@@ -2,9 +2,16 @@ public class CPU
 {
     private static final int CARRY8b    = 512;
     private static final int CARRY8b_SHR = 5;
-    private static final int ZF = 1<<7;
-    private static final int NF = 1<<6;
-    private static final int FLAG_REG = 5;
+
+    //FLAGS
+		private static final int FLAG_REG = 5;
+		private static final int ZF_Shift = 7;
+		private static final int NF_Shift = ZF_Shift - 1;
+		private static final int HC_Shift = NF_Shift - 1;
+    private static final int ZF_Mask  = 1 << ZF_Shift;
+    private static final int NF_Mask  = 1 << NF_Shift;
+    private static final int HC_Mask  = 1 << HC_Shift;
+
     // Half carry van de 8b regs
     private static final int HALF_CARRY8b = 16;
     private static final int HALF_CARRY8b_SHL = 2;
@@ -23,22 +30,20 @@ public class CPU
 
     private void inc8b(int reg_index)
     {
-        // Clear HC
-        regs[FLAG_REG] = regs[FLAG_REG] & ~HALF_CARRY8b;
-        // hcb: half carry before increase
-        // int hcb = regs[reg_index] & HALF_CARRY8b;
-        regs[FLAG_REG] = regs[FLAG_REG] | (((regs[reg_index] & 0xF) + 1) & 0x10) << 2;
+        // Clear & Set HC
+        regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
+        regs[FLAG_REG] = regs[FLAG_REG] | ((((regs[reg_index] & 0xF) + 1) & 0x10) << 1);
+
+				//Update register
         regs[reg_index] = (++regs[reg_index] & 0xFF);
-        // hcb: half carry after increase
-        int hca = regs[reg_index] & HALF_CARRY8b;
-        // Set halfcarry flag
-        // regs[FLAG_REG] = regs[FLAG_REG] | ((hca ^hcb));
-        // clear ZF
-        regs[FLAG_REG] = regs[FLAG_REG] & ~ZF;
-        // Set Z flag
-        regs[FLAG_REG] = regs[FLAG_REG] | ((regs[reg_index]==0)?1:0<<ZF);
-        // SET n flag
-        regs[FLAG_REG] = regs[FLAG_REG] & ~NF;
+
+        // clear & set ZF
+        regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
+        regs[FLAG_REG] = regs[FLAG_REG] | (((regs[reg_index]==0)?1:0)<<ZF_Shift);
+
+        // clear & set NF
+        regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
+//        System.out.println("reg["+reg_index+"]="+regs[reg_index]+" ZF="+((regs[FLAG_REG]&ZF_Mask)>>ZF_Shift)+" HC="+((regs[FLAG_REG]&HC_Mask)>>HC_Shift)+" NF="+((regs[FLAG_REG]&NF_Mask)>>NF_Shift));
     }
 
     private void dec8b(int reg_index)
@@ -51,11 +56,11 @@ public class CPU
         // Set halfcarry flag
         regs[FLAG_REG] = regs[FLAG_REG] | ((hca ^hcb) << HALF_CARRY8b_SHL);
         // clear ZF
-        regs[FLAG_REG] = regs[FLAG_REG] & ~ZF;
+        regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
         // Set Z flag
-        regs[FLAG_REG] = regs[FLAG_REG] | ((regs[reg_index]==0)?1:0<<ZF);
+        regs[FLAG_REG] = regs[FLAG_REG] | ((regs[reg_index]==0)?1:0<<ZF_Mask);
         // SET n flag
-        regs[FLAG_REG] = regs[FLAG_REG] | NF;
+        regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
     }
 
     private void inc16b()
@@ -135,15 +140,15 @@ public class CPU
             System.out.println("Error: 0 + 1 != 1");
             status = status && false;
             }
-        if((regs[FLAG_REG]&ZF) == ZF) {
+        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
             System.out.println("Error: INC8b: A:0->1 and ZF is set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&HALF_CARRY8b) == HALF_CARRY8b) {
+        if((regs[FLAG_REG]&HC_Mask) == HC_Mask) {
             System.out.println("Error: INC8b: A:0->1 and HC is set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&NF) == NF) {
+        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
             System.out.println("Error: INC8b: Inc'd and NF not set");
             status = status && false;
             }
@@ -155,15 +160,15 @@ public class CPU
             System.out.println("Error: 0 + 1 != 1");
             status = status && false;
             }
-        if((regs[FLAG_REG]&ZF) == ZF) {
+        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
             System.out.println("Error: INC8b: A:0->1 and ZF is set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&HALF_CARRY8b) == HALF_CARRY8b) {
+        if((regs[FLAG_REG]&HC_Mask) == HC_Mask) {
             System.out.println("Error: INC8b: A:0->1 and HC is set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&NF) == NF) {
+        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
             System.out.println("Error: INC8b: Inc'd and NF not set");
             status = status && false;
             }
@@ -175,15 +180,15 @@ public class CPU
             System.out.println("Error: 0x0f + 1 != 0x10");
             status = status && false;
             }
-        if((regs[FLAG_REG]&ZF) == ZF) {
+        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
             System.out.println("Error: INC8b: A:0x0f->0x10 and ZF is set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&HALF_CARRY8b) != HALF_CARRY8b) {
+        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
             System.out.println("Error: INC8b: A:0x0f->0x10 and HC is NOT set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&NF) == NF) {
+        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
             System.out.println("Error: INC8b: Inc'd and NF not set");
             status = status && false;
             }
@@ -195,15 +200,15 @@ public class CPU
             System.out.println("Error: 0x0f + 1 != 0x10");
             status = status && false;
             }
-        if((regs[FLAG_REG]&ZF) == ZF) {
+        if((regs[FLAG_REG]&ZF_Mask) == ZF_Mask) {
             System.out.println("Error: INC8b: A:0x0f->0x10 and ZF is set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&HALF_CARRY8b) != HALF_CARRY8b) {
+        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
             System.out.println("Error: INC8b: A:0x0f->0x10 and HC is NOT set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&NF) == NF) {
+        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
             System.out.println("Error: INC8b: Inc'd and NF not set");
             status = status && false;
             }
@@ -215,15 +220,15 @@ public class CPU
             System.out.println("Error: 0xff + 1 != 0x00");
             status = status && false;
             }
-        if((regs[FLAG_REG]&ZF) != ZF) {
+        if((regs[FLAG_REG]&ZF_Mask) != ZF_Mask) {
             System.out.println("Error: INC8b: A:0xff->0x00 and ZF is NOT set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&HALF_CARRY8b) == HALF_CARRY8b) {
-            System.out.println("Error: INC8b: A:0xff->0x00 and HC is set");
+        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
+            System.out.println("Error: INC8b: A:0xff->0x00 and HC is NOT set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&NF) == NF) {
+        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
             System.out.println("Error: INC8b: Inc'd and NF not set");
             status = status && false;
             }
@@ -235,24 +240,24 @@ public class CPU
             System.out.println("Error: 0xff + 1 != 0x00");
             status = status && false;
             }
-        if((regs[FLAG_REG]&ZF) != ZF) {
+        if((regs[FLAG_REG]&ZF_Mask) != ZF_Mask) {
             System.out.println("Error: INC8b: A:0xff->0x00 and ZF is NOT set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&HALF_CARRY8b) == HALF_CARRY8b) {
-            System.out.println("Error: INC8b: A:0xff->0x00 and HC is set");
+        if((regs[FLAG_REG]&HC_Mask) != HC_Mask) {
+            System.out.println("Error: INC8b: A:0xff->0x00 and HC is NOT set");
             status = status && false;
             }
-        if((regs[FLAG_REG]&NF) == NF) {
+        if((regs[FLAG_REG]&NF_Mask) == NF_Mask) {
             System.out.println("Error: INC8b: Inc'd and NF not set");
             status = status && false;
             }
         return status;
     }
     private int diagnose(boolean verbose) {
-        boolean result;
-        int count=0;
-        result = inc8b_diag();
+			boolean result;
+			int count=0;
+			result = inc8b_diag();
       if(verbose && result) {
         System.out.println("INC8b instruction appears to work ok");
         }
@@ -260,7 +265,7 @@ public class CPU
         System.out.println("*ERROR* IN INC8b INSTRUCTION!");
         ++count;
         }
-      if(verbose || count>0) System.out.println("There were errors: "+count);
+      if(verbose || count>0) System.out.println("There were errors in "+count+"instructions");
       return count;
     }
 
