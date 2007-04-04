@@ -31,15 +31,11 @@ public class CPU
     //CPU Class variables
     private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
     private int lastException=0;
+    private Disassembler deasm;
 
-    public CPU(String filename) {
-      cartridge = new Cartridge(filename);
-      if(cartridge.getError()!=null) {
-        System.out.println("ERROR: "+cartridge.getError());
-      }
-      else {
-        System.out.println("Succesfully loaded ROM :)");
-      }
+    public CPU(Cartridge cartridge) {
+      deasm = new Disassembler(cartridge, this);
+      this.cartridge = cartridge;
       reset();
     }
 
@@ -102,10 +98,13 @@ public class CPU
     }
 
     private String disassembleinstruction() {
+      //cartridge.write(PC,14);
+      //cartridge.write(PC,10);
+      //cartridge.write(PC,9);
       int instr = cartridge.read(PC);
       String s = String.format("$%02x\t", instr);
       // TODO take count of BC
-      s+=Disassembler.disassemble(instr, false);;
+      s+=deasm.disassemble(PC);
       return s;
     }
 

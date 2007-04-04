@@ -220,7 +220,7 @@ public class Cartridge
     public void write(int index, int value)
     {        // TODO fatsoenlijk
         // Switch RAM/ROM and bank numbers
-
+        /*HAX*/ROM[0][index]=value;/*HAX*/
         //
         switch (MBC)
         {
