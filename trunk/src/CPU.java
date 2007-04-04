@@ -478,8 +478,29 @@ public class CPU
         case 0x87: // ADD  A,A
           add8b(A, regs[A]);
           break;
+        case 0x98: // SBC  A,B
+          sbc( A, regs[B]);
+          break;
         case 0x99: // SBC  A,C
           sbc( A, regs[C]);
+          break;
+        case 0x9a: // SBC  A,D
+          sbc( A, regs[D]);
+          break;
+        case 0x9b: // SBC  A,E
+          sbc( A, regs[E]);
+          break;
+        case 0x9c: // SBC  A,H
+          sbc( A, regs[H]);
+          break;
+        case 0x9d: // SBC  A,L
+          sbc( A, regs[L]);
+          break;
+        case 0x9e: // SBC  A,(HL)
+          sbc( A, readmem8b(H,L));
+          break;
+        case 0x9f: // SBC  A,A
+          sbc( A, regs[A]);
           break;
         case 0xb8: // CP   B
           cp(regs[B]);
