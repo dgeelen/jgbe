@@ -7,7 +7,44 @@ public class TestSuite
         this.cpu = cpu;
     }
 
+    private boolean ldrr8b_diag() {
+      /***************************************************************************************************************
+      * Test LDRR_8b
+      * Tests 0x00 <- 0xFF, 0xFF <- 0x00 for not changing flags and loading good values
+      */
+      boolean status = true;
+
+      cpu.regs[cpu.A] = 0; cpu.regs[cpu.B] = 0;
+      cpu.regs[cpu.C] = 0; cpu.regs[cpu.D] = 0;
+      cpu.regs[cpu.E] = 0; cpu.regs[cpu.F] = 0;
+      cpu.regs[cpu.H] = 0; cpu.regs[cpu.L] = 0;
+
+      cpu.regs[cpu.A] = 0xFF;
+      cpu.ldrr8b(cpu.B,cpu.A);
+      if (cpu.regs[cpu.B] != cpu.regs[cpu.A]) {
+        System.out.println( "B != 0xFF after LD B,A (A = 0xFF)" );
+        status = status && false;
+      }
+      if (cpu.regs[cpu.F] != 0x00) {
+        System.out.println( "Flags set after ldrr8b(B, A)" );
+        status = status && false;
+      }
+      cpu.regs[cpu.A] = 0x00;
+      cpu.ldrr8b(cpu.B,cpu.A);
+      if (cpu.regs[cpu.B] != cpu.regs[cpu.A]) {
+        System.out.println( "B != 0x00 after LD B,A (A = 0x00)" );
+        status = status && false;
+      }
+      if (cpu.regs[cpu.F] != 0x00) {
+        System.out.println( "Flags set after ldrr8b(B, A)" );
+        status = status && false;
+      }
+
+      return status;
+  }
+
     private boolean dec8b_diag() {
+
       /***************************************************************************************************************
       * Test DEC_8b
       * Tests 0x01 - 1, 0x00 - 1, 0x10 - 1 for setting AND clearing of flags
@@ -279,6 +316,14 @@ public class TestSuite
         System.out.println( "*ERROR* IN DEC8b INSTRUCTION!" );
         ++count;
         }
+      result = ldrr8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "LDRR8b instruction appears to work ok" );
+      }
+      else {
+        System.out.println( "*ERROR* IN LDRR8b INSTRUCTION!" );
+        ++count;
+      }
       if ( verbose || count>0 ) System.out.println( "There were errors in "+count+" instructions" );
       return count;
       }
