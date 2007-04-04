@@ -117,14 +117,14 @@ public class Cartridge
             DataInputStream distream = new DataInputStream(fistream);
 
             // load ROM into memory
-            System.out.println("ROM should have "+ROM.length+" banks");
+            System.out.println("Trying to load "+ROM.length+" banks from ROM");
             for(int i = 0; i < ROM.length; i++) {
               for(int j = 0; j < ROM_BANK_SIZE; j++) {
                 ROM[i][j] = distream.readUnsignedByte();
                 }
               }
 
-            System.out.println("aaa");
+            System.out.println("***FIXME*** THIS IS WAAAAAY TOOOOO SLLOOOOOOWWWWW!!!!! ***FIXME***");
 
             t = 1;
             // load RAM into memory
@@ -133,7 +133,7 @@ public class Cartridge
                   RAM[i][j] = distream.readUnsignedByte();*/
 
             t = 2;
-            System.out.println("Loaded " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM into memory");
+            System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
         }
         catch(Exception e)
         {

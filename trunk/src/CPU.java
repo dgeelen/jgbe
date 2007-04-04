@@ -27,7 +27,7 @@ public class CPU
     protected static final int L = 7;
 
     protected int PC;
-
+    protected int SP;
     //CPU Class variables
     private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
     private int lastException=0;
@@ -59,6 +59,42 @@ public class CPU
       regs[H]=0x01;
       regs[L]=0x4d;
       TotalInstrCount=0;
+
+      //Stack Pointer=$FFFE
+      SP=0xfffe;
+/*TODO:INTERNAL RAM
+      [$FF05] = $00   ; TIMA
+      [$FF06] = $00   ; TMA
+      [$FF07] = $00   ; TAC
+      [$FF10] = $80   ; NR10
+      [$FF11] = $BF   ; NR11
+      [$FF12] = $F3   ; NR12
+      [$FF14] = $BF   ; NR14
+      [$FF16] = $3F   ; NR21
+      [$FF17] = $00   ; NR22
+      [$FF19] = $BF   ; NR24
+      [$FF1A] = $7F   ; NR30
+      [$FF1B] = $FF   ; NR31
+      [$FF1C] = $9F   ; NR32
+      [$FF1E] = $BF   ; NR33
+      [$FF20] = $FF   ; NR41
+      [$FF21] = $00   ; NR42
+      [$FF22] = $00   ; NR43
+      [$FF23] = $BF   ; NR30
+      [$FF24] = $77   ; NR50
+      [$FF25] = $F3   ; NR51
+      [$FF26] = $F1-GB, $F0-SGB ; NR52
+      [$FF40] = $91   ; LCDC
+      [$FF42] = $00   ; SCY
+      [$FF43] = $00   ; SCX
+      [$FF45] = $00   ; LYC
+      [$FF47] = $FC   ; BGP
+      [$FF48] = $FF   ; OBP0
+      [$FF49] = $FF   ; OBP1
+      [$FF4A] = $00   ; WY
+      [$FF4B] = $00   ; WX
+      [$FFFF] = $00   ; IE
+*/
     }
 
     protected int cycles() {
@@ -86,7 +122,7 @@ public class CPU
         flags += ((regs[FLAG_REG] & (1 <<0)) == (1 <<0))?"1 ":"0 ";
         System.out.println("---CPU Status for cycle "+TotalInstrCount+"---");
         System.out.printf("   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F], regs[H],regs[L]);
-        System.out.printf("  PC=$%04x                                    flags="+flags+"\n",PC);
+        System.out.printf("  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP);
         System.out.printf("  $%04x %s\n", PC, disassembleinstruction());
     }
     protected int readmem8b(int H, int L) {
@@ -148,11 +184,31 @@ public class CPU
       regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
     }
 
-    protected void ldrr8b(int dest, int src) {
-      regs[dest] = regs[src];
+    protected void ld8b(int dest, int val) {
+      regs[dest] = val;
     }
 
-    protected void JPnn( ) {
+    protected void cp(int val) {
+      //Set NF
+      regs[FLAG_REG]|=HC_Mask;
+
+      int i=regs[A]-val;
+      int d=i-val;
+
+      //Set ZF
+      regs[FLAG_REG]&=~ZF_Mask;
+      regs[FLAG_REG]|=((d==0)?1:0)<<ZF_Shift;
+
+      //Set HC
+      regs[FLAG_REG]&=~HC_Mask;
+      regs[FLAG_REG]|=((((regs[A]&0x0f)-(val&0x0f))&0x10)>>4)<<HC_Shift;
+
+      //Set CF
+      regs[FLAG_REG]&=~CF_Mask;
+      regs[FLAG_REG]|=((d&0x100)>>8)<<CF_Shift;
+    }
+
+    protected void JPnn() {
       int i=cartridge.read(++PC);
       int j=cartridge.read(++PC);
       PC = i<<8|j;
@@ -170,18 +226,28 @@ public class CPU
       if ( cc ) JRe( e );
       }
 
+    protected void push(int val, boolean b16) {
+      if(b16) {
+        cartridge.write(SP--, val&0xff);
+        cartridge.write(SP--, (val>>8)&0xff);
+      }
+      else {
+        cartridge.write(SP--, val&0xff);
+      }
+    }
+
     protected int fetch()
     {
         return cartridge.read(PC);
     }
 
     private boolean execute( int instr ) {
-      System.out.printf("Executing instruction $%02x\n", instr);
+      //System.out.printf("Executing instruction $%02x\n", instr);
       ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       switch ( instr ) {
         case 0x00:  // NOP
           break;
-        case 0x01:  // LD BC,&0000
+/*        case 0x01:  // LD BC,&0000
           // TODO
           break;
         case 0x02:  // LD (BC),A
@@ -189,12 +255,15 @@ public class CPU
           break;
         case 0x03:  // INC BC
           // TODO
-          break;
+          break;*/
         case 0x04:  // INC B
           inc8b( B );
           break;
         case 0x05:  // DEC B
           dec8b( B );
+          break;
+        case 0x0c: // INC  C
+          inc8b( C );
           break;
         case 0x2d:  // DEC  L
           dec8b( L );
@@ -202,11 +271,26 @@ public class CPU
         case 0x40:  // DEC H
           dec8b( H );
           break;
-        case 0x041: // LD BC
-          ldrr8b(B, C);
+        case 0x41: // LD B, C
+          ld8b(B, regs[C]);
+          break;
+        case 0x42: // LD   B,D
+          ld8b(B, regs[D]);
+          break;
+        case 0x44: // LD   B,H
+          ld8b(B, regs[H]);
           break;
         case 0x45: // LD   B,L
-          ldrr8b(B,L);
+          ld8b(B, regs[L]);
+          break;
+        case 0x46: //LD   B,(HL)
+          ld8b(B, readmem8b(H,L));
+          break;
+        case 0x48: // LD   C,B
+          ld8b(C, regs[B]);
+          break;
+        case 0x6d: // LD   L,L
+          ld8b(L, regs[L]);
           break;
         case 0x80: // ADD  A,B
           add8b(A,regs[B]);
@@ -217,8 +301,20 @@ public class CPU
         case 0x86: // ADD  A,(HL)
           add8b(A, readmem8b(H,L));
           break;
+//        case 0x99: // SBC  A,C
+//WIP
+//          break;
+        case 0xbe: // CP   (HL)
+          cp(readmem8b(H,L));
+          break;
         case 0xc3: // JPNNNN
           JPnn();
+          break;
+        case 0xd4: //D4 CALL NC,&0000
+          if((regs[FLAG_REG]&CF_Mask)==CF_Mask) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
+            push(PC, true);
+            JPnn();
+            }
           break;
         default:
           System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
