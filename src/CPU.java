@@ -294,6 +294,9 @@ public class CPU
         case 0x49: // LD   C,C
           ld8b(C, regs[C]);
           break;
+        case 0x4a: // LD   C,D
+          ld8b(C, regs[D]);
+          break;
         case 0x6d: // LD   L,L
           ld8b(L, regs[L]);
           break;
