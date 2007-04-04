@@ -29,13 +29,13 @@ public class CPU
     protected int PC;
 
     //CPU Class variables
-    private Cardridge cardridge;// = new Cardridge("Pokemon Blue.gb");
+    private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
     private int lastException=0;
 
     public CPU(String filename) {
-      cardridge = new Cardridge(filename);
-      if(cardridge.getError()!=null) {
-        System.out.println("ERROR: "+cardridge.getError());
+      cartridge = new Cartridge(filename);
+      if(cartridge.getError()!=null) {
+        System.out.println("ERROR: "+cartridge.getError());
       }
       else {
         System.out.println("Succesfully loaded ROM :)");
@@ -55,7 +55,7 @@ public class CPU
     }
 
     private String disassembleinstruction() {
-      int instr = cardridge.read(PC);
+      int instr = cartridge.read(PC);
       String s = String.format("$%02x\t", instr);
       // TODO take count of BC
       s+=Disassembler.disassemble(instr, false);;
@@ -138,8 +138,8 @@ public class CPU
     }
 
     protected void JPnn( ) {
-      int i=cardridge.read(++PC);
-      int j=cardridge.read(++PC);
+      int i=cartridge.read(++PC);
+      int j=cartridge.read(++PC);
       PC = i<<8|j;
       }
 
@@ -157,7 +157,7 @@ public class CPU
 
     protected int fetch()
     {
-        return cardridge.read(PC);
+        return cartridge.read(PC);
     }
 
     private boolean execute( int instr ) {
