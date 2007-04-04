@@ -188,6 +188,9 @@ public class CPU
         case 0x40:  // DEC H
           dec8b( H );
           break;
+        case 0x041: // LD BC
+          ldrr8b(B, C);
+          break;
         case 0x45: // LD   B,L
           ldrr8b(B,L);
           break;
