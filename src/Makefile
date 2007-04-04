@@ -5,12 +5,12 @@ Emulator: TestSuite
 TestSuite: CPU TestSuite.java
 	javac TestSuite.java
 
-Cardridge: Cardridge.java
-	javac Cardridge.java
+Cartridge: Cartridge.java
+	javac Cartridge.java
 
-CPU: Cardridge
+CPU: Cartridge
 	javac CPU.java
 
 clean:
-	rm -f Cardridge.class CPU.class main.class TestSuite.java
+	rm -f Cartridge.class CPU.class main.class TestSuite.java
 

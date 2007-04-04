@@ -46,7 +46,18 @@ public class CPU
     public void reset() {
     //TODO: Switch to bank 0
       PC = 0x100; //ROM Entry point on bank 0
-      for(int i=0; i<8 ; ++i) regs[i]=1<<i;
+      //AF=$01B0
+      regs[A]=0x01;
+      regs[F]=0xb0;
+      //BC=$0013
+      regs[B]=0x00;
+      regs[C]=0x13;
+      //DE=$00D8
+      regs[D]=0x00;
+      regs[E]=0xd8;
+      //HL=$014D
+      regs[H]=0x01;
+      regs[L]=0x4d;
       TotalInstrCount=0;
     }
 
@@ -77,6 +88,9 @@ public class CPU
         System.out.printf("   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F], regs[H],regs[L]);
         System.out.printf("  PC=$%04x                                    flags="+flags+"\n",PC);
         System.out.printf("  $%04x %s\n", PC, disassembleinstruction());
+    }
+    protected int readmem8b(int H, int L) {
+      return cartridge.read((regs[H]<<8)|regs[L]);
     }
 
     protected void inc8b(int reg_index)
@@ -114,15 +128,15 @@ public class CPU
 
     protected void inc16b() {}
 
-    protected void addrr8b(int dest, int src) {
+    protected void add8b(int dest, int val) {
       // Clear all flags & set NF
       regs[FLAG_REG] = (regs[FLAG_REG] & 0x0f) | NF_Mask;
 
       // Set HC
-      regs[FLAG_REG] = regs[FLAG_REG] | (((((regs[src]&0x0f)+(regs[dest]&0x0f))&0x10)!=0?1:0)<<HC_Shift);
+      regs[FLAG_REG] = regs[FLAG_REG] | (((((regs[dest]&0x0f)+(val&0x0f))&0x10)!=0?1:0)<<HC_Shift);
 
       // Update register (part 1)
-      regs[dest] = (regs[dest] + regs[src]);
+      regs[dest] = (regs[dest] + val);
 
       // set CF
       regs[FLAG_REG] = regs[FLAG_REG] | (regs[dest]>>8)<<CF_Shift;
@@ -195,10 +209,13 @@ public class CPU
           ldrr8b(B,L);
           break;
         case 0x80: // ADD  A,B
-          addrr8b(A,B);
+          add8b(A,regs[B]);
           break;
         case 0x81: // ADD  A,C
-          addrr8b(A,C);
+          add8b(A, regs[C]);
+          break;
+        case 0x86: // ADD  A,(HL)
+          add8b(A, readmem8b(H,L));
           break;
         case 0xc3: // JPNNNN
           JPnn();
