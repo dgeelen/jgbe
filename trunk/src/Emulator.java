@@ -1,4 +1,4 @@
-class Emulator {
+public class Emulator {
   public static final void main( String[] args ) {
     CPU cpu = new CPU("Pokemon Blue.gb");
     TestSuite t = new TestSuite(cpu);
