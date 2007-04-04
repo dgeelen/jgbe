@@ -1,8 +1,9 @@
 all: CPU
 Cardridge: cpu/Cardridge.java
-	cd cpu ; javac Cardridge.java ; cd ..
+	cd cpu ; javac Cardridge.java 
+
 CPU: Cardridge
-	cd cpu ; javac CPU.java ; cd ..
+	cd cpu ; javac CPU.java 
 clean:
-	rm -f Cardridge.class cpu/CPU.class
+	rm -f cpu/Cardridge.class cpu/CPU.class
 

@@ -28,7 +28,9 @@ public class CPU
 
     private int PC;
 
+    //CPU Class variables
     private Cardridge cardridge;// = new Cardridge("Pokemon Blue.gb");
+    private int lastException=0;
 
     public CPU(String filename) {
       cardridge = new Cardridge(filename);
@@ -42,13 +44,18 @@ public class CPU
     }
 
     public void reset() {
-      PC = 0;
+    //TODO: Switch to bank 0
+      PC = 0x100; //ROM Entry point on bank 0
       for(int i=0; i<8 ; ++i) regs[i]=0;
       TotalInstrCount=0;
     }
 
     private int cycles() {
       return TotalInstrCount;
+    }
+
+    private String disassembleinstruction() {
+      return "MOV A, B";
     }
 
     private void printCPUstatus()
@@ -63,8 +70,9 @@ public class CPU
         flags += ((regs[FLAG_REG] & (1 <<1)) == (1 <<1))?"1 ":"0 ";
         flags += ((regs[FLAG_REG] & (1 <<0)) == (1 <<0))?"1 ":"0 ";
         System.out.println("---CPU Status for cycle "+TotalInstrCount+"---");
-        System.out.println("A=" + regs[A] + "\tB=" + regs[B] + "\tC=" + regs[C] + "\tD=" + regs[D] + "\tE=" + regs[E] + "\tF=" + regs[F]);
-        System.out.println("H=" + regs[H] + "\tL=" + regs[L] + "\tPC=" + PC +"\t@PC=" + cardridge.read(PC) + "\tflags="+flags);
+        System.out.printf("A=$%02x\tB=$%02x\tC=$%02x\tD=$%02x\tE=$%02x\tF=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F]);
+        System.out.printf("H=$%04x\tL=$04x\t\tflags="+flags+"\n",regs[H],regs[L]);
+        System.out.printf("PC=$%2x\t%s\n", PC, disassembleinstruction());
     }
 
     private void inc8b(int reg_index)
@@ -82,7 +90,6 @@ public class CPU
 
       // clear & set NF
       regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-      ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       }
 
     private void dec8b( int reg_index ) {
@@ -99,7 +106,6 @@ public class CPU
 
       // clear & set NF
       regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
-      ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       }
 
     private void inc16b() {}
@@ -126,6 +132,7 @@ public class CPU
     }
 
     private boolean execute( int instr ) {
+      System.out.println("Executing intstruction #"+instr);
       switch ( instr ) {
         case 0x0000:  // NOP
           break;
@@ -148,8 +155,19 @@ public class CPU
           System.out.println( "UNKNOWN INSTRUCTION: " + instr );
           return false;
         }
+      ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       ++TotalInstrCount;
       return true;
+      }
+
+      private boolean nextinstruction() {
+        printCPUstatus();
+        lastException = execute(fetch()) ? 0 : 1;
+        return lastException==0;
+      }
+
+      private int exception() {
+        return lastException;
       }
 
     private boolean dec8b_diag() {
@@ -432,12 +450,9 @@ public class CPU
       CPU cpu = new CPU("Pokemon Blue.gb");
       if(cpu.diagnose(true)==0) {
         cpu.reset();
-        int instr = cpu.fetch();
-        cpu.printCPUstatus();
-        while(cpu.execute(instr) && cpu.cycles()<6) {
-          cpu.fetch();
-          cpu.printCPUstatus();
-          }
+        while(cpu.exception()==0 && cpu.cycles()<6){
+          cpu.nextinstruction();
         }
       }
+    }
   }
