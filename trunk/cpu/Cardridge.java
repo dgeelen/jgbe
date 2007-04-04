@@ -123,6 +123,8 @@ public class Cardridge
                 }
               }
 
+            System.out.println("aaa");
+
             t = 1;
             // load RAM into memory
             /*for(int i = 0; i < RAM.length; i++)
