@@ -264,6 +264,9 @@ public class CPU
         case 0x0c: // INC  C
           inc8b( C );
           break;
+        case 0x2c:  // INC L
+          inc8b( L );
+          break;
         case 0x2d:  // DEC  L
           dec8b( L );
           break;
