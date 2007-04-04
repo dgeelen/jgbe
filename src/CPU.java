@@ -164,8 +164,8 @@ public class CPU
     protected void inc16b() {}
 
     protected void add8b(int dest, int val) {
-      // Clear all flags & set NF
-      regs[FLAG_REG] = (regs[FLAG_REG] & 0x0f) | NF_Mask;
+      // Clear all flags (including ZF)
+      regs[FLAG_REG] = (regs[FLAG_REG] & 0x00);
 
       // Set HC
       regs[FLAG_REG] = regs[FLAG_REG] | (((((regs[dest]&0x0f)+(val&0x0f))&0x10)!=0?1:0)<<HC_Shift);
@@ -184,8 +184,8 @@ public class CPU
     }
 
     protected void sub8b(int dest, int val) {
-      // Clear all flags (including NF)
-      regs[FLAG_REG] = (regs[FLAG_REG] & 0x0f);
+      // set all flags (including NF)
+      regs[FLAG_REG] = (regs[FLAG_REG] | 0xf0);
 
       // Set HC
       regs[FLAG_REG] = regs[FLAG_REG] | (((((regs[dest]&0x10)-(val&0x10))&0x08)!=0?1:0)<<HC_Shift);
