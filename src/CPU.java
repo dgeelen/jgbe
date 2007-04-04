@@ -114,11 +114,12 @@ public class CPU
 
     protected void inc16b() {}
 
-    protected void add8b(int dest, int src) {
-      // Clear all flags
-      regs[FLAG_REG] = regs[FLAG_REG] & 0x0f;
+    protected void addrr8b(int dest, int src) {
+      // Clear all flags & set NF
+      regs[FLAG_REG] = (regs[FLAG_REG] & 0x0f) | NF_Mask;
+
       // Set HC
-      regs[FLAG_REG] = regs[FLAG_REG] | ((((src&0x0f)+(dest&0x0f))&0x10)>0?1:0);
+      regs[FLAG_REG] = regs[FLAG_REG] | (((((regs[src]&0x0f)+(regs[dest]&0x0f))&0x10)!=0?1:0)<<HC_Shift);
 
       // Update register (part 1)
       regs[dest] = (regs[dest] + regs[src]);
@@ -181,14 +182,20 @@ public class CPU
         case 0x05:  // DEC B
           dec8b( B );
           break;
+        case 0x2d:  // DEC  L
+          dec8b( L );
+          break;
+        case 0x40:  // DEC H
+          dec8b( H );
+          break;
         case 0x45: // LD   B,L
           ldrr8b(B,L);
           break;
         case 0x80: // ADD  A,B
-          add8b(A,B);
+          addrr8b(A,B);
           break;
         case 0x81: // ADD  A,C
-          add8b(A,C);
+          addrr8b(A,C);
           break;
         case 0xc3: // JPNNNN
           JPnn();
