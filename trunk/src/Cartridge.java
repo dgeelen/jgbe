@@ -60,9 +60,9 @@ public class Cartridge
         System.out.println("Attempting to load ROM: `"+file_name+"'");
         try
         {
-            File card = new File(file_name);
-            FileInputStream fistream = new FileInputStream(card);
-            DataInputStream distream = new DataInputStream(fistream);
+            FileInputStream fistream = new FileInputStream(file_name);
+            BufferedInputStream bistream = new BufferedInputStream(fistream);
+            DataInputStream distream = new DataInputStream(bistream);
 
             // load first ROM bank into memory
             for(int i = 0; i < ROM_BANK_SIZE; ++i)
@@ -111,10 +111,10 @@ public class Cartridge
         int t = 0;
         try
         {
-            File card = new File(file_name);
-            System.out.println("Cardsize = " + card.length() + " bytes ("+card.length()/ROM_BANK_SIZE+" banks)");
-            FileInputStream fistream = new FileInputStream(card);
-            DataInputStream distream = new DataInputStream(fistream);
+            FileInputStream fistream = new FileInputStream(file_name);
+            BufferedInputStream bistream = new BufferedInputStream(fistream);
+            DataInputStream distream = new DataInputStream(bistream);
+
 
             // load ROM into memory
             System.out.println("Trying to load "+ROM.length+" banks from ROM");
