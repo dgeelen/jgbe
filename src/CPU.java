@@ -46,7 +46,7 @@ public class CPU
     public void reset() {
     //TODO: Switch to bank 0
       PC = 0x100; //ROM Entry point on bank 0
-      for(int i=0; i<8 ; ++i) regs[i]=0;
+      for(int i=0; i<8 ; ++i) regs[i]=1<<i;
       TotalInstrCount=0;
     }
 
@@ -74,8 +74,8 @@ public class CPU
         flags += ((regs[FLAG_REG] & (1 <<1)) == (1 <<1))?"1 ":"0 ";
         flags += ((regs[FLAG_REG] & (1 <<0)) == (1 <<0))?"1 ":"0 ";
         System.out.println("---CPU Status for cycle "+TotalInstrCount+"---");
-        System.out.printf("   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F]);
-        System.out.printf("  PC=$%04x  H=$%04x  L=$%04x  flags="+flags+"\n",PC, regs[H],regs[L]);
+        System.out.printf("   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F], regs[H],regs[L]);
+        System.out.printf("  PC=$%04x                                    flags="+flags+"\n",PC);
         System.out.printf("  $%04x %s\n", PC, disassembleinstruction());
     }
 
@@ -133,6 +133,10 @@ public class CPU
       regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
     }
 
+    protected void ldrr8b(int dest, int src) {
+      regs[dest] = regs[src];
+    }
+
     protected void JPnn( ) {
       int i=cardridge.read(++PC);
       int j=cardridge.read(++PC);
@@ -178,7 +182,7 @@ public class CPU
           dec8b( B );
           break;
         case 0x45: // LD   B,L
-          //ld8b(B,L);
+          ldrr8b(B,L);
           break;
         case 0x80: // ADD  A,B
           add8b(A,B);
