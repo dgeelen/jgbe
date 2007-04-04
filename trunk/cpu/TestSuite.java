@@ -260,7 +260,7 @@ public class TestSuite
         }
       return status;
       }
-    private int diagnose( boolean verbose ) {
+    public int diagnose( boolean verbose ) {
       boolean result;
       int count=0;
       result = inc8b_diag();
@@ -283,15 +283,22 @@ public class TestSuite
       return count;
       }
 
-    public static final void main( String[] args ) {
-      CPU cpu = new CPU("Pokemon Blue.gb");
-      TestSuite t = new TestSuite(cpu);
+    private boolean add8b_diag() {
+      /***************************************************************************************************************
+      * Test ADD_8b
+      * Tests 0x07 + 0x08, 0x0F + 0x1, 0x10 + 0xf0 for setting AND clearing of flags
+      */
 
-      if(t.diagnose(true)==0) {
-        cpu.reset();
-        while(cpu.exception()==0 && cpu.cycles()<6){
-          cpu.nextinstruction();
+      boolean status=true;
+      cpu.regs[cpu.A]=0x07; cpu.regs[cpu.B]=0x08;
+      cpu.regs[cpu.FLAG_REG] = 0; // clear all flags
+      cpu.add8b( cpu.A, cpu.B );
+      if ( cpu.regs[cpu.A]!= 0x0f ) {
+        System.out.println( "Error: 0x07 + 0x08 != 0x0f" );
+        status = status && false;
         }
-      }
+
+      return status;
     }
+
 }

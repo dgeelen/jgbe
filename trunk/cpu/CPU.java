@@ -56,7 +56,7 @@ public class CPU
 
     private String disassembleinstruction() {
       int instr = cardridge.read(PC);
-      String s = String.format("$%02x ", instr);
+      String s = String.format("$%02x\t", instr);
       // TODO take count of BC
       s+=Disassembler.disassemble(instr, false);;
       return s;
@@ -74,9 +74,9 @@ public class CPU
         flags += ((regs[FLAG_REG] & (1 <<1)) == (1 <<1))?"1 ":"0 ";
         flags += ((regs[FLAG_REG] & (1 <<0)) == (1 <<0))?"1 ":"0 ";
         System.out.println("---CPU Status for cycle "+TotalInstrCount+"---");
-        System.out.printf("A=$%02x\tB=$%02x\tC=$%02x\tD=$%02x\tE=$%02x\tF=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F]);
-        System.out.printf("H=$%04x\tL=$04x\t\tflags="+flags+"\n",regs[H],regs[L]);
-        System.out.printf("PC=$%2x\t%s\n", PC, disassembleinstruction());
+        System.out.printf("   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F]);
+        System.out.printf("  PC=$%04x  H=$%04x  L=$%04x  flags="+flags+"\n",PC, regs[H],regs[L]);
+        System.out.printf("  $%04x %s\n", PC, disassembleinstruction());
     }
 
     protected void inc8b(int reg_index)
@@ -177,6 +177,12 @@ public class CPU
         case 0x05:  // DEC B
           dec8b( B );
           break;
+        case 0x45: // LD   B,L
+          //ld8b(B,L);
+          break;
+        case 0x80: // ADD  A,B
+          add8b(A,B);
+          break;
         case 0x81: // ADD  A,C
           add8b(A,C);
           break;
@@ -200,4 +206,5 @@ public class CPU
       protected int exception() {
         return lastException;
       }
+
   }
