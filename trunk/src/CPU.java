@@ -183,6 +183,26 @@ public class CPU
       regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
     }
 
+    protected void sub8b(int dest, int val) {
+      // Clear all flags (including NF)
+      regs[FLAG_REG] = (regs[FLAG_REG] & 0x0f);
+
+      // Set HC
+      regs[FLAG_REG] = regs[FLAG_REG] | (((((regs[dest]&0x10)-(val&0x10))&0x08)!=0?1:0)<<HC_Shift);
+
+      // Update register (part 1)
+      regs[dest] = (regs[dest] - val);
+
+      // set CF
+      regs[FLAG_REG] = regs[FLAG_REG] | (regs[dest]>>8)<<CF_Shift;
+
+      // Clamp register (part 2)
+      regs[dest]&=0xFF;
+
+      // set ZF
+      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
+    }
+
     protected void ld8b(int dest, int val) {
       regs[dest] = val;
     }
@@ -220,6 +240,11 @@ public class CPU
     protected void JRe( int e ) {
       PC += e;
       }
+
+    protected void sbc(int dest, int val) {
+        sub8b( dest, val );
+        sub8b( dest, regs[FLAG_REG] >> CF_Shift);
+    }
 
     protected void JRcce( boolean cc, int e ) {
       if ( cc ) JRe( e );
@@ -453,9 +478,9 @@ public class CPU
         case 0x87: // ADD  A,A
           add8b(A, regs[A]);
           break;
-//        case 0x99: // SBC  A,C
-//WIP
-//          break;
+        case 0x99: // SBC  A,C
+          sbc( A, regs[C]);
+          break;
         case 0xb8: // CP   B
           cp(regs[B]);
           break;
