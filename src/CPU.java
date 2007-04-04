@@ -267,6 +267,18 @@ public class CPU
         case 0x0d: // DEC  C
           dec8b( C );
           break;
+        case 0x14: // INC  D
+          inc8b( D );
+          break;
+        case 0x15: // DEC  D
+          dec8b( D );
+          break;
+        case 0x1c: // INC  E
+          inc8b( E );
+          break;
+        case 0x1d: // DEC  E
+          dec8b( E );
+          break;
         case 0x2c:  // INC L
           inc8b( L );
           break;
