@@ -16,6 +16,7 @@ public class Cartridge
     private int MBC;                    // The MBC used in the cardridge
 
     private boolean ram_enabled = false;// Whether RAM is enabled to read and write
+    private int     rom_bank_nr = 0;    // The ROM bank to read/write
 
     public Cartridge(String file_name)
     /**
@@ -157,7 +158,7 @@ public class Cartridge
      * FFFF        Interrupt Enable Register
      */
      int b=0; // b==byte read
-        //TODO fatsoenlijk
+        //TODO fatsoenlijk (USE rom_bank_nr)
         if(index<0) { //Invalid
           System.out.println("ERROR: Cartridge.read(): No negative addresses in GameBoy memorymap.");
           b=0; //NOP
@@ -217,8 +218,7 @@ public class Cartridge
     }
 
     public void write(int index, int value)
-    {
-        // TODO fatsoenlijk
+    {        // TODO fatsoenlijk
         // Switch RAM/ROM and bank numbers
 
         //
@@ -247,6 +247,34 @@ public class Cartridge
             case 0x0005:
             case 0x0006:
                 // MBC2
+                // 0000-3FFF - ROM Bank 00 (Read Only)0000-3FFF - ROM Bank 00 (Read Only)
+                // 4000-7FFF - ROM Bank 01-0F (Read Only)
+                // A000-A1FF - 512x4bits RAM, built-in into the MBC2 chip (Read/Write)
+                // 0000-1FFF - RAM Enable (Write Only)
+                // 2000-3FFF - ROM Bank Number (Write Only)
+
+                if ((0xA0000 <= index) && (index <= 0xA1FF))
+                {
+                    // TODO write to internal RAM
+                }
+                else if ((0x0000 <= index) && (index <= 0x1FFF))
+                {
+                    if ((index & 1 << 4) == 0)
+                    {
+                        // toggle RAM enabled
+                        ram_enabled = !ram_enabled;
+                    }
+
+                }
+                else if ((0x2000 <= index) && (index <= 0x3FFFF))
+                {
+                    if ((index & 1 << 4) == (1 << 4))
+                    {
+                        // Enable set ROM bank nr
+                        rom_bank_nr = value & 0x0F;
+                    }
+                }
+
                 break;
             case 0x000F:
             case 0x0010:
