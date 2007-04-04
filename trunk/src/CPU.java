@@ -456,8 +456,29 @@ public class CPU
 //        case 0x99: // SBC  A,C
 //WIP
 //          break;
+        case 0xb8: // CP   B
+          cp(regs[B]);
+          break;
+        case 0xb9: // CP   C
+          cp(regs[C]);
+          break;
+        case 0xba: // CP   D
+          cp(regs[D]);
+          break;
+        case 0xbb: // CP   E
+          cp(regs[E]);
+          break;
+        case 0xbc: // CP   H
+          cp(regs[H]);
+          break;
+        case 0xbd: // CP   L
+          cp(regs[L]);
+          break;
         case 0xbe: // CP   (HL)
           cp(readmem8b(H,L));
+          break;
+        case 0xbf: // CP   Q
+          cp(regs[A]);
           break;
         case 0xc3: // JPNNNN
           JPnn();
