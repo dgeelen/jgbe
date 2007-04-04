@@ -208,23 +208,19 @@ public class CPU
     }
 
     protected void cp(int val) {
-      //Set NF
-      regs[FLAG_REG]|=HC_Mask;
+      //Set NF, clear other flags
+      regs[FLAG_REG] = NF_Mask;
 
       int i=regs[A]-val;
-      int d=i-val;
 
       //Set ZF
-      regs[FLAG_REG]&=~ZF_Mask;
-      regs[FLAG_REG]|=((d==0)?1:0)<<ZF_Shift;
+      regs[FLAG_REG] |= (i==0) ? ZF_Mask : 0;
 
       //Set HC
-      regs[FLAG_REG]&=~HC_Mask;
-      regs[FLAG_REG]|=((((regs[A]&0x0f)-(val&0x0f))&0x10)>>4)<<HC_Shift;
+      regs[FLAG_REG] |= ((regs[A]&0x0f)-(val&0x0f))<0 ? HC_Mask : 0;
 
       //Set CF
-      regs[FLAG_REG]&=~CF_Mask;
-      regs[FLAG_REG]|=((d&0x100)>>8)<<CF_Shift;
+      regs[FLAG_REG] |= i<0 ? CF_Mask : 0;
     }
 
     protected void JPnn() {
