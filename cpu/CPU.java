@@ -55,8 +55,10 @@ public class CPU
     }
 
     private String disassembleinstruction() {
-      String s = String.format("$%02x", cardridge.read(PC));
-      s+=" MOV A, B";
+      int instr = cardridge.read(PC);
+      String s = String.format("$%02x ", instr);
+      // TODO take count of BC
+      s+=Disassembler.disassemble(instr, false);;
       return s;
     }
 
