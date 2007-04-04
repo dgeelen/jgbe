@@ -264,20 +264,26 @@ public class CPU
         case 0x0c: // INC  C
           inc8b( C );
           break;
+        case 0x0d: // DEC  C
+          dec8b( C );
+          break;
         case 0x2c:  // INC L
           inc8b( L );
           break;
         case 0x2d:  // DEC  L
           dec8b( L );
           break;
-        case 0x40:  // DEC H
-          dec8b( H );
+        case 0x40: // LD B, B
+          ld8b(B, regs[B]);
           break;
         case 0x41: // LD B, C
           ld8b(B, regs[C]);
           break;
         case 0x42: // LD   B,D
           ld8b(B, regs[D]);
+          break;
+        case 0x43: // LD   B,E
+          ld8b(B, regs[E]);
           break;
         case 0x44: // LD   B,H
           ld8b(B, regs[H]);
@@ -297,8 +303,116 @@ public class CPU
         case 0x4a: // LD   C,D
           ld8b(C, regs[D]);
           break;
+        case 0x4b: // LD   C,E
+          ld8b(C, regs[E]);
+          break;
+        case 0x4c: // LD   C,H
+          ld8b(C, regs[H]);
+          break;
+        case 0x4d: // LD   C,L
+          ld8b(C, regs[L]);
+          break;
+        case 0x4e: // LD   C,(HL)
+          ld8b(C, readmem8b(H,L));
+          break;
+        case 0x4f: // LD   C,A
+          ld8b(C, regs[A]);
+          break;
+        case 0x50: // LD   D,B
+          ld8b(D, regs[B]);
+          break;
+        case 0x51: // LD   D,C
+          ld8b(D, regs[C]);
+          break;
+        case 0x52: // LD   D,D
+          ld8b(D, regs[D]);
+          break;
+        case 0x53: // LD   D,E
+          ld8b(D, regs[E]);
+          break;
+        case 0x54: // LD   D,H
+          ld8b(D, regs[H]);
+          break;
+        case 0x55: // LD   D,L
+          ld8b(D, regs[L]);
+          break;
+        case 0x56: // LD   D,(HL)
+          ld8b(D, readmem8b(H,L));
+          break;
+        case 0x57: // LD   D,A
+          ld8b(D, regs[A]);
+          break;
+        case 0x58: // LD   E,B
+          ld8b(E, regs[B]);
+          break;
+        case 0x59: // LD   E,C
+          ld8b(E, regs[C]);
+          break;
+        case 0x5a: // LD   E,D
+          ld8b(E, regs[D]);
+          break;
+        case 0x5b: // LD   E,E
+          ld8b(E, regs[E]);
+          break;
+        case 0x5c: // LD   E,H
+          ld8b(E, regs[H]);
+          break;
+        case 0x5d: // LD   E,L
+          ld8b(E, regs[L]);
+          break;
+        case 0x5e: // LD   E,(HL)
+          ld8b(E, readmem8b(H,L));
+          break;
+        case 0x5f: // LD   E,A
+          ld8b(E, regs[A]);
+          break;
+        case 0x60: // LD   H,B
+          ld8b(H, regs[B]);
+          break;
+        case 0x61: // LD   H,C
+          ld8b(H, regs[C]);
+          break;
+        case 0x62: // LD   H,D
+          ld8b(H, regs[D]);
+          break;
+        case 0x63: // LD   H,E
+          ld8b(H, regs[E]);
+          break;
+        case 0x64: // LD   H,H
+          ld8b(H, regs[H]);
+          break;
+        case 0x65: // LD   H,L
+          ld8b(H, regs[L]);
+          break;
+        case 0x66: // LD   H,(HL)
+          ld8b(H, readmem8b(H,L));
+          break;
+        case 0x67: // LD   H,A
+          ld8b(H, regs[A]);
+          break;
+        case 0x68: // LD   L,B
+          ld8b(L, regs[B]);
+          break;
+        case 0x69: // LD   L,C
+          ld8b(L, regs[C]);
+          break;
+        case 0x6a: // LD   L,D
+          ld8b(L, regs[D]);
+          break;
+        case 0x6b: // LD   L,E
+          ld8b(L, regs[E]);
+          break;
+        case 0x6c: // LD   L,H
+          ld8b(L, regs[H]);
+          break;
         case 0x6d: // LD   L,L
           ld8b(L, regs[L]);
+          break;
+        case 0x6e: // LD   L,(HL)
+          ld8b(L, readmem8b(H,L));
+          break;
+        case 0x6f: // LD   L,A
+          ld8b(L, regs[A]);
           break;
         case 0x80: // ADD  A,B
           add8b(A,regs[B]);
