@@ -446,6 +446,156 @@ public class TestSuite
       return status;
     }
 
+    private boolean sub8b_diag() {
+      /***************************************************************************************************************
+      * Test SUB_8b
+      * Tests 0x10 + 0x10, 0x01 - 0x02, 0x10 - 0xf0 for setting AND clearing of flags
+      */
+
+      boolean status=true;
+      cpu.regs[cpu.A]=0x10;
+      cpu.regs[cpu.FLAG_REG] = 0xf0; // set all flags
+      cpu.sub8b( cpu.A, 0x10 );
+      if ( cpu.regs[cpu.A]!= 0x00 ) {
+        System.out.println( "Error: DEC8b: 0x10 + 0x10 != 0x00" );
+        status = status && false;
+        }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) != cpu.ZF_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 + 0x10 = 0x00 and ZF is not set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: DEC8b: does not set NF" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 + 0x10 = 0x00 and HC is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: ADD8b: 0x10 + 0x10 = 0x00 and CF is set" );
+        status = status && false;
+      }
+      cpu.regs[cpu.A]=0x10;
+      cpu.regs[cpu.FLAG_REG] = 0x00; // reset all flags
+      cpu.sub8b( cpu.A, 0x10 );
+      if ( cpu.regs[cpu.A]!= 0x00 ) {
+        System.out.println( "Error: DEC8b: 0x10 + 0x10 != 0x00" );
+        status = status && false;
+        }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) != cpu.ZF_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 + 0x10 = 0x00 and ZF is not set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: DEC8b: does not set NF" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 + 0x10 = 0x00 and HC is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: DEC8b: 0x00 + 0x00 = 0x00 and CF is set" );
+        status = status && false;
+      }
+
+      cpu.regs[cpu.A]=0x01;
+      cpu.regs[cpu.FLAG_REG] = 0x00; // clear all flags
+      cpu.sub8b( cpu.A, 0x02 );
+      if ( cpu.regs[cpu.A]!= 0xFF ) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 != 0xFF" );
+        status = status && false;
+        }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 = 0xFC and ZF is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: DEC8b: does not set NF" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) != cpu.HC_Mask) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 = 0xFC and HC is NOT set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) != cpu.CF_Mask) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 = 0xFF and CF is set" );
+        status = status && false;
+      }
+      cpu.regs[cpu.A]=0x01;
+      cpu.regs[cpu.FLAG_REG] = 0xf0; // set all flags
+      cpu.sub8b( cpu.A, 0x02 );
+      if ( cpu.regs[cpu.A]!= 0xFF ) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 != 0xFF" );
+        status = status && false;
+        }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 = 0xFC and ZF is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: DEC8b: does not set NF" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) != cpu.HC_Mask) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 = 0xFC and HC is NOT set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) != cpu.CF_Mask) {
+        System.out.println( "Error: DEC8b: 0x01 - 0x02 = 0xFF and CF is set" );
+        status = status && false;
+      }
+
+      cpu.regs[cpu.A]=0x10;
+      cpu.regs[cpu.FLAG_REG] = 0; // clear all flags
+      cpu.sub8b( cpu.A, 0xf0 );
+      if ( cpu.regs[cpu.A]!= 0x10 ) {
+        System.out.println( "Error: DEC8b: 0x10 + 0xf0 != 0x10" );
+        status = status && false;
+        }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 - 0xf0 = 0x10 and ZF is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: DEC8b: does not set NF" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 - 0xf0 = 0x10 and HC is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 - 0xf0 = 0x10 and is NOT set" );
+        status = status && false;
+      }
+      cpu.regs[cpu.A]=0x10;
+      cpu.regs[cpu.FLAG_REG] = 0xf0; // set all flags
+      cpu.sub8b( cpu.A, 0xf0 );
+      if ( cpu.regs[cpu.A]!= 0x10 ) {
+        System.out.println( "Error: DEC8b: 0x10 + 0xf0 != 0x10" );
+        status = status && false;
+        }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 - 0xf0 = 0x10 and ZF is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: DEC8b: does not set NF" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 - 0xf0 = 0x10 and HC is set" );
+        status = status && false;
+      }
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: DEC8b: 0x10 - 0xf0 = 0x10 and is NOT set" );
+        status = status && false;
+      }
+      return status;
+    }
+
     public int diagnose( boolean verbose ) {
       boolean result;
       int count=0;
@@ -471,6 +621,14 @@ public class TestSuite
         }
       else {
         System.out.println( "*ERROR* IN ADD8b INSTRUCTION!" );
+        ++count;
+        }
+      result = dec8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "DEC8b instruction appears to work ok" );
+        }
+      else {
+        System.out.println( "*ERROR* IN DEC8b INSTRUCTION!" );
         ++count;
         }
       result = ld8b_diag();
