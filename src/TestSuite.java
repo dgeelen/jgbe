@@ -7,7 +7,7 @@ public class TestSuite
         this.cpu = cpu;
     }
 
-    private boolean ldrr8b_diag() {
+    private boolean ld8b_diag() {
       /***************************************************************************************************************
       * Test LDRR_8b
       * Tests 0x00 <- 0xFF, 0xFF <- 0x00 for not changing flags and loading good values
@@ -19,24 +19,22 @@ public class TestSuite
       cpu.regs[cpu.E] = 0; cpu.regs[cpu.F] = 0;
       cpu.regs[cpu.H] = 0; cpu.regs[cpu.L] = 0;
 
-      cpu.regs[cpu.A] = 0xFF;
-      cpu.ldrr8b(cpu.B,cpu.A);
-      if (cpu.regs[cpu.B] != cpu.regs[cpu.A]) {
+      cpu.ld8b(cpu.B, 0xff);
+      if (cpu.regs[cpu.B] != 0xff) {
         System.out.println( "B != 0xFF after LD B,A (A = 0xFF)" );
         status = status && false;
       }
       if (cpu.regs[cpu.F] != 0x00) {
-        System.out.println( "Flags set after ldrr8b(B, A)" );
+        System.out.println( "Flags set after ld8b(B, A)" );
         status = status && false;
       }
-      cpu.regs[cpu.A] = 0x00;
-      cpu.ldrr8b(cpu.B,cpu.A);
-      if (cpu.regs[cpu.B] != cpu.regs[cpu.A]) {
+      cpu.ld8b(cpu.B,0x00);
+      if (cpu.regs[cpu.B] != 0x00) {
         System.out.println( "B != 0x00 after LD B,A (A = 0x00)" );
         status = status && false;
       }
       if (cpu.regs[cpu.F] != 0x00) {
-        System.out.println( "Flags set after ldrr8b(B, A)" );
+        System.out.println( "Flags set after ld8b(B, A)" );
         status = status && false;
       }
 
@@ -297,36 +295,6 @@ public class TestSuite
         }
       return status;
       }
-    public int diagnose( boolean verbose ) {
-      boolean result;
-      int count=0;
-      result = inc8b_diag();
-      if ( verbose && result ) {
-        System.out.println( "INC8b instruction appears to work ok" );
-        }
-      else {
-        System.out.println( "*ERROR* IN INC8b INSTRUCTION!" );
-        ++count;
-        }
-      result = dec8b_diag();
-      if ( verbose && result ) {
-        System.out.println( "DEC8b instruction appears to work ok" );
-        }
-      else {
-        System.out.println( "*ERROR* IN DEC8b INSTRUCTION!" );
-        ++count;
-        }
-      result = add8b_diag();
-      if ( verbose && result ) {
-        System.out.println( "ADD8b instruction appears to work ok" );
-        }
-      else {
-        System.out.println( "*ERROR* IN ADD8b INSTRUCTION!" );
-        ++count;
-        }
-      if ( verbose || count>0 ) System.out.println( "There were errors in "+count+" instructions" );
-      return count;
-      }
 
     private boolean add8b_diag() {
       /***************************************************************************************************************
@@ -477,5 +445,45 @@ public class TestSuite
       }
       return status;
     }
+
+    public int diagnose( boolean verbose ) {
+      boolean result;
+      int count=0;
+      result = inc8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "INC8b instruction appears to work ok" );
+        }
+      else {
+        System.out.println( "*ERROR* IN INC8b INSTRUCTION!" );
+        ++count;
+        }
+      result = dec8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "DEC8b instruction appears to work ok" );
+        }
+      else {
+        System.out.println( "*ERROR* IN DEC8b INSTRUCTION!" );
+        ++count;
+        }
+      result = add8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "ADD8b instruction appears to work ok" );
+        }
+      else {
+        System.out.println( "*ERROR* IN ADD8b INSTRUCTION!" );
+        ++count;
+        }
+      result = ld8b_diag();
+      if ( verbose && result ) {
+        System.out.println( "LD8b instruction appears to work ok" );
+        }
+      else {
+        System.out.println( "*ERROR* IN LD8b INSTRUCTION!" );
+        ++count;
+        }
+      if ( verbose || count>0 ) System.out.println( "There were errors in "+count+" instructions" );
+      return count;
+      }
+
 
 }
