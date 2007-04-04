@@ -6,6 +6,12 @@ public class Emulator {
     if(t.diagnose(true)==0) {
       cpu.reset();
       while(cpu.exception()==0 && cpu.cycles()<16){
+/*        int cycles = cpu.nextinstruction();
+        if(cycles == -1) {
+          panic();
+        } else {
+          sleep(cycles);
+        }*/
         cpu.nextinstruction();
       }
     }
