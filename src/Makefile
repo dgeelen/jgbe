@@ -1,6 +1,6 @@
-all: emulator
-emulator: TestSuite
-	javac emulator.java
+all: Emulator
+Emulator: TestSuite
+	javac Emulator.java
 
 TestSuite: CPU TestSuite.java
 	javac TestSuite.java
