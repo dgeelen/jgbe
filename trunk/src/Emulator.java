@@ -5,7 +5,7 @@ public class Emulator {
 
     if(t.diagnose(true)==0) {
       cpu.reset();
-      while(cpu.exception()==0 && cpu.cycles()<6){
+      while(cpu.exception()==0 && cpu.cycles()<16){
         cpu.nextinstruction();
       }
     }
