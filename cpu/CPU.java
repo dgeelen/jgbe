@@ -55,7 +55,9 @@ public class CPU
     }
 
     private String disassembleinstruction() {
-      return "MOV A, B";
+      String s = String.format("$%02x", cardridge.read(PC));
+      s+=" MOV A, B";
+      return s;
     }
 
     private void printCPUstatus()
@@ -110,12 +112,33 @@ public class CPU
 
     private void inc16b() {}
 
-    private void JPnn( int nn ) {
-      PC = nn;
+    private void add8b(int dest, int src) {
+      // Clear all flags
+      regs[FLAG_REG] = regs[FLAG_REG] & 0x0f;
+      // Set HC
+      regs[FLAG_REG] = regs[FLAG_REG] | ((((src&0x0f)+(dest&0x0f))&0x10)>0?1:0);
+
+      // Update register (part 1)
+      regs[dest] = (regs[dest] + regs[src]);
+
+      // set CF
+      regs[FLAG_REG] = regs[FLAG_REG] | (regs[dest]>>8)<<CF_Shift;
+
+      // Clamp register (part 2)
+      regs[dest]&=0xFF;
+
+      // set ZF
+      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
+    }
+
+    private void JPnn( ) {
+      int i=cardridge.read(++PC);
+      int j=cardridge.read(++PC);
+      PC = i<<8|j;
       }
 
     private void JPccnn( boolean cc, int nn ) {
-      if ( cc ) JPnn( nn );
+      if ( cc ) JPnn();
       }
 
     private void JRe( int e ) {
@@ -132,30 +155,36 @@ public class CPU
     }
 
     private boolean execute( int instr ) {
-      System.out.println("Executing intstruction #"+instr);
+      System.out.printf("Executing instruction $%02x\n", instr);
+      ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       switch ( instr ) {
-        case 0x0000:  // NOP
+        case 0x00:  // NOP
           break;
-        case 0x0001:  // LD BC,&0000
+        case 0x01:  // LD BC,&0000
           // TODO
           break;
-        case 0x0002:  // LD (BC),A
+        case 0x02:  // LD (BC),A
           // TODO
           break;
-        case 0x0003:  // INC BC
+        case 0x03:  // INC BC
           // TODO
           break;
-        case 0x0004:  // INC B
+        case 0x04:  // INC B
           inc8b( B );
           break;
-        case 0x0005:  // DEC B
+        case 0x05:  // DEC B
           dec8b( B );
           break;
+        case 0x81: // ADD  A,C
+          add8b(A,C);
+          break;
+        case 0xc3: // JPNNNN
+          JPnn();
+          break;
         default:
-          System.out.println( "UNKNOWN INSTRUCTION: " + instr );
+          System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
           return false;
         }
-      ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       ++TotalInstrCount;
       return true;
       }
