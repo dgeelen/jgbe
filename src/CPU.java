@@ -291,8 +291,11 @@ public class CPU
         case 0x45: // LD   B,L
           ld8b(B, regs[L]);
           break;
-        case 0x46: //LD   B,(HL)
+        case 0x46: // LD   B,(HL)
           ld8b(B, readmem8b(H,L));
+          break;
+        case 0x47: // LD   B,A
+          ld8b(C, regs[A]);
           break;
         case 0x48: // LD   C,B
           ld8b(C, regs[B]);
@@ -415,13 +418,28 @@ public class CPU
           ld8b(L, regs[A]);
           break;
         case 0x80: // ADD  A,B
-          add8b(A,regs[B]);
+          add8b(A, regs[B]);
           break;
         case 0x81: // ADD  A,C
           add8b(A, regs[C]);
           break;
+        case 0x82: // ADD  A,D
+          add8b(A, regs[D]);
+          break;
+        case 0x83: // ADD  A,E
+          add8b(A, regs[E]);
+          break;
+        case 0x84: // ADD  A,H
+          add8b(A, regs[H]);
+          break;
+        case 0x85: // ADD  A,L
+          add8b(A, regs[L]);
+          break;
         case 0x86: // ADD  A,(HL)
           add8b(A, readmem8b(H,L));
+          break;
+        case 0x87: // ADD  A,A
+          add8b(A, regs[A]);
           break;
 //        case 0x99: // SBC  A,C
 //WIP
