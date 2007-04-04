@@ -1,6 +1,6 @@
 import java.io.*;
 
-public class Cardridge
+public class Cartridge
 {
     // the size of the ROM banks in byte
     private static final int ROM_BANK_SIZE = 0x4000;
@@ -17,14 +17,14 @@ public class Cardridge
 
     private boolean ram_enabled = false;// Whether RAM is enabled to read and write
 
-    public Cardridge(String file_name)
+    public Cartridge(String file_name)
     /**
-     * constructs a new instance of Cardridge
-     * pre:  fileName is the name of a cardridge
+     * constructs a new instance of Cartridge
+     * pre:  fileName is the name of a cartridge
      * post: f an error occurred while loading
      *         getError() contains the gives the message of the error
      *       else
-     *         the cardridge is loaded into memory
+     *         the cartridge is loaded into memory
      */
     {
         this.file_name = file_name;
@@ -43,16 +43,16 @@ public class Cardridge
 
     private void loadFromFile()
     /*
-     * loadFromFile loads a cardridge from a file
+     * loadFromFile loads a cartidge from a file
      * pre:  true
      * post: if an error occurred
      *         getError() contains the gives the message of the error
      *       else
-     *         the cardridge is loaded into ROM/RAM
+     *         the cartidge is loaded into ROM/RAM
      */
     {
         /*
-         * load the first ROM bank of the cardridge into memory
+         * load the first ROM bank of the cartridge into memory
          * used to initialize RAM and ROM banks
          */
         int[] first_rom_bank = new int[ROM_BANK_SIZE];
@@ -274,7 +274,7 @@ public class Cardridge
 
     public static void main(String[] args)
     {
-        Cardridge card = new Cardridge("Pokemon Blue.gb");
+        Cartridge card = new Cartridge("Pokemon Blue.gb");
         if(card.getError()!=null) {
           System.out.println("ERROR: "+card.getError());
           }
