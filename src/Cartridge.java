@@ -255,7 +255,7 @@ public class Cartridge
 
                 if ((0xA0000 <= index) && (index <= 0xA1FF))
                 {
-                    // TODO write to internal RAM
+                    System.out.println("TODO: write to internal cartridge RAM.");
                 }
                 else if ((0x0000 <= index) && (index <= 0x1FFF))
                 {
@@ -271,6 +271,7 @@ public class Cartridge
                     if ((index & 1 << 4) == (1 << 4))
                     {
                         // Enable set ROM bank nr
+                        value = (value == 0)?1:value;
                         rom_bank_nr = value & 0x0F;
                     }
                 }
