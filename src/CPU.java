@@ -184,23 +184,23 @@ public class CPU
     }
 
     protected void sub8b(int dest, int val) {
-      // set all flags (including NF)
-      regs[FLAG_REG] = (regs[FLAG_REG] | 0xf0);
+      // clear all flags except NF which is set
+      regs[FLAG_REG] = NF_Mask;
 
       // Set HC
-      regs[FLAG_REG] = regs[FLAG_REG] | (((((regs[dest]&0x10)-(val&0x10))&0x08)!=0?1:0)<<HC_Shift);
+      regs[FLAG_REG] |= (((regs[dest]&0x0F)-(val&0x0F))<0) ? HC_Mask : 0;
 
       // Update register (part 1)
       regs[dest] = (regs[dest] - val);
 
       // set CF
-      regs[FLAG_REG] = regs[FLAG_REG] | (regs[dest]>>8)<<CF_Shift;
+      regs[FLAG_REG] |= (regs[dest]<0) ? CF_Mask : 0;
 
       // Clamp register (part 2)
       regs[dest]&=0xFF;
 
       // set ZF
-      regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
+      regs[FLAG_REG] |= regs[dest]==0 ? ZF_Mask : 0;
     }
 
     protected void ld8b(int dest, int val) {

@@ -508,7 +508,7 @@ public class TestSuite
         status = status && false;
         }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) == cpu.ZF_Mask) {
-        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFC and ZF is set" );
+        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and ZF is set" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
@@ -516,7 +516,7 @@ public class TestSuite
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) != cpu.HC_Mask) {
-        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFC and HC is NOT set" );
+        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and HC is NOT set" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) != cpu.CF_Mask) {
@@ -531,7 +531,7 @@ public class TestSuite
         status = status && false;
         }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.ZF_Mask) == cpu.ZF_Mask) {
-        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFC and ZF is set" );
+        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and ZF is set" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
@@ -539,7 +539,7 @@ public class TestSuite
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) != cpu.HC_Mask) {
-        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFC and HC is NOT set" );
+        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and HC is NOT set" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) != cpu.CF_Mask) {
