@@ -115,7 +115,6 @@ public class Cartridge
             BufferedInputStream bistream = new BufferedInputStream(fistream);
             DataInputStream distream = new DataInputStream(bistream);
 
-
             // load ROM into memory
             System.out.println("Trying to load "+ROM.length+" banks from ROM");
             for(int i = 0; i < ROM.length; i++) {
@@ -123,8 +122,6 @@ public class Cartridge
                 ROM[i][j] = distream.readUnsignedByte();
                 }
               }
-
-            System.out.println("***FIXME*** THIS IS WAAAAAY TOOOOO SLLOOOOOOWWWWW!!!!! ***FIXME***");
 
             t = 1;
             // load RAM into memory

@@ -304,7 +304,7 @@ public class TestSuite
 
       boolean status=true;
       cpu.regs[cpu.A]=0x07;
-      cpu.regs[cpu.FLAG_REG] = 0; // clear all flags
+      cpu.regs[cpu.FLAG_REG] = cpu.NF_Mask; // clear all flags except NF
       cpu.add8b( cpu.A, 0x08 );
       if ( cpu.regs[cpu.A]!= 0x0f ) {
         System.out.println( "Error: ADD8b: 0x07 + 0x08 != 0x0f" );
@@ -314,8 +314,8 @@ public class TestSuite
         System.out.println( "Error: ADD8b: 0x07 + 0x08 = 0x0f and ZF is set" );
         status = status && false;
       }
-      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
-        System.out.println( "Error: ADD8b: does not set NF" );
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != 0) {
+        System.out.println( "Error: ADD8b: doesnt clear NF" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
@@ -327,7 +327,7 @@ public class TestSuite
         status = status && false;
       }
       cpu.regs[cpu.A]=0x07;
-      cpu.regs[cpu.FLAG_REG] = 0xf0; // set all flags
+      cpu.regs[cpu.FLAG_REG] = cpu.NF_Mask; // clear all flags except NF
       cpu.add8b( cpu.A, 0x08 );
       if ( cpu.regs[cpu.A]!= 0x0f ) {
         System.out.println( "Error: ADD8b: 0x07 + 0x08 != 0x0f" );
@@ -337,8 +337,8 @@ public class TestSuite
         System.out.println( "Error: ADD8b: 0x07 + 0x08 = 0x0f and ZF is set" );
         status = status && false;
       }
-      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
-        System.out.println( "Error: ADD8b: does not set NF" );
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != 0) {
+        System.out.println( "Error: ADD8b: doesnt clear NF" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
@@ -351,7 +351,7 @@ public class TestSuite
       }
 
       cpu.regs[cpu.A]=0x0f;
-      cpu.regs[cpu.FLAG_REG] = 0; // clear all flags
+      cpu.regs[cpu.FLAG_REG] = cpu.NF_Mask; // clear all flags except NF
       cpu.add8b( cpu.A, 0x01 );
       if ( cpu.regs[cpu.A]!= 0x10 ) {
         System.out.println( "Error: ADD8b: 0x0f + 0x01 != 0x10" );
@@ -361,8 +361,8 @@ public class TestSuite
         System.out.println( "Error: ADD8b: 0x0f + 0x01 = 0x10 and ZF is set" );
         status = status && false;
       }
-      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
-        System.out.println( "Error: ADD8b: does not set NF" );
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != 0) {
+        System.out.println( "Error: ADD8b: doesnt clear NF" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) != cpu.HC_Mask) {
@@ -384,8 +384,8 @@ public class TestSuite
         System.out.println( "Error: ADD8b: 0x0f + 0x01 = 0x10 and ZF is set" );
         status = status && false;
       }
-      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
-        System.out.println( "Error: ADD8b: does not set NF" );
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != 0) {
+        System.out.println( "Error: ADD8b: doesnt clear NF" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) != cpu.HC_Mask) {
@@ -408,8 +408,8 @@ public class TestSuite
         System.out.println( "Error: ADD8b: 0x10 + 0xf0 = 0x00 and ZF is NOT set" );
         status = status && false;
       }
-      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
-        System.out.println( "Error: ADD8b: does not set NF" );
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != 0) {
+        System.out.println( "Error: ADD8b: doesnt clear NF" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
@@ -431,8 +431,8 @@ public class TestSuite
         System.out.println( "Error: ADD8b: 0x10 + 0xf0 = 0x00 and ZF is NOT set" );
         status = status && false;
       }
-      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != cpu.NF_Mask) {
-        System.out.println( "Error: ADD8b: does not set NF" );
+      if ( (cpu.regs[cpu.FLAG_REG]&cpu.NF_Mask) != 0) {
+        System.out.println( "Error: ADD8b: doesnt clear NF" );
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.HC_Mask) == cpu.HC_Mask) {
