@@ -477,7 +477,7 @@ public class CPU
         case 0xbe: // CP   (HL)
           cp(readmem8b(H,L));
           break;
-        case 0xbf: // CP   Q
+        case 0xbf: // CP   A
           cp(regs[A]);
           break;
         case 0xc3: // JPNNNN
