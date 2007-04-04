@@ -623,12 +623,12 @@ public class TestSuite
         System.out.println( "*ERROR* IN ADD8b INSTRUCTION!" );
         ++count;
         }
-      result = dec8b_diag();
+      result = sub8b_diag();
       if ( verbose && result ) {
-        System.out.println( "DEC8b instruction appears to work ok" );
+        System.out.println( "SUB8b instruction appears to work ok" );
         }
       else {
-        System.out.println( "*ERROR* IN DEC8b INSTRUCTION!" );
+        System.out.println( "*ERROR* IN SUB8b INSTRUCTION!" );
         ++count;
         }
       result = ld8b_diag();
