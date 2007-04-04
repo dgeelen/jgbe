@@ -118,7 +118,6 @@ public class Cardridge
             // load ROM into memory
             System.out.println("ROM should have "+ROM.length+" banks");
             for(int i = 0; i < ROM.length; i++) {
-              System.out.println("Reading bank #"+i+", "+i*ROM_BANK_SIZE+" bytes done");
               for(int j = 0; j < ROM_BANK_SIZE; j++) {
                 ROM[i][j] = distream.readUnsignedByte();
                 }
@@ -126,9 +125,9 @@ public class Cardridge
 
             t = 1;
             // load RAM into memory
-            for(int i = 0; i < RAM.length; i++)
+            /*for(int i = 0; i < RAM.length; i++)
                 for(int j = 0; j < RAM[i].length; j++)
-                  RAM[i][j] = distream.readUnsignedByte();
+                  RAM[i][j] = distream.readUnsignedByte();*/
 
             t = 2;
             System.out.println("Loaded " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM into memory");
@@ -210,6 +209,7 @@ public class Cardridge
         }
         else {
           System.out.println("ERROR: Cartridge.read(): Out of range memory access: $"+index);
+          b=0;
         }
       return b;
     }
