@@ -204,6 +204,10 @@ public class CPU
       regs[dest] = val;
     }
 
+    protected void ld8bmem( int location, int val ) {
+      cartridge.write(location, val);
+    }
+
     protected void cp(int val) {
       int i= regs[A];
       sub8b(A, val);
@@ -554,6 +558,11 @@ public class CPU
           break;
         case 0xc3: // JPNNNN
           JPnn();
+          break;
+        case 0xea: // LD (nnnn), A
+          int a = cartridge.read(PC++);
+          int b = cartridge.read(PC++);
+          ld8bmem((b << 8) + a, regs[A]);
           break;
         case 0xee: // XOR   &00
           xor(cartridge.read(PC++));
