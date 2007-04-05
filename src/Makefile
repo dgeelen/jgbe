@@ -1,10 +1,4 @@
-all: Emulator.class
-
-Emulator.class: TestSuite.class
-
-TestSuite.class: CPU.class
-
-CPU.class: Cartridge.class
+all: clean Emulator.class
 
 %.class: %.java
 	javac $<
