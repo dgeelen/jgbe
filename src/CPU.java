@@ -220,6 +220,18 @@ public class CPU
       regs[F]|=(regs[A]==0?ZF_Mask:0);
     }
 
+    protected void or(int val) {
+      regs[F]=0;
+      regs[A]|=val;
+      regs[F]|=(regs[A]==0?ZF_Mask:0);
+    }
+
+    protected void and(int val) {
+      regs[F]=HC_Mask;
+      regs[A]&=val;
+      regs[F]|=(regs[A]==0?ZF_Mask:0);
+    }
+
     protected void JPnn() {
       int i=cartridge.read(PC++);
       int j=cartridge.read(PC++);
@@ -233,6 +245,10 @@ public class CPU
 
     protected void sbc(int dest, int val) {
         sub8b( dest, val+((regs[FLAG_REG]&CF_Mask) >> CF_Shift) );
+    }
+
+    protected void adc(int dest, int val) {
+        add8b( dest, val+((regs[FLAG_REG]&CF_Mask) >> CF_Shift) );
     }
 
     protected void JRcce( boolean cc, int e ) {
@@ -315,6 +331,9 @@ public class CPU
           break;
         case 0x2d:  // DEC  L
           dec8b( L );
+          break;
+        case 0x2f:  // CPL
+          xor(0xFF);
           break;
         case 0x40: // LD B, B
           ld8b(B, regs[B]);
@@ -484,6 +503,30 @@ public class CPU
         case 0x87: // ADD  A,A
           add8b(A, regs[A]);
           break;
+        case 0x88: // ADC  A,B
+          adc(A, regs[B]);
+          break;
+        case 0x89: // ADC  A,C
+          adc(A, regs[C]);
+          break;
+        case 0x8a: // ADC  A,D
+          adc(A, regs[D]);
+          break;
+        case 0x8b: // ADC  A,E
+          adc(A, regs[E]);
+          break;
+        case 0x8c: // ADC  A,H
+          adc(A, regs[H]);
+          break;
+        case 0x8d: // ADC  A,L
+          adc(A, regs[L]);
+          break;
+        case 0x8e: // ADC  A,(HL)
+          adc(A, readmem8b(H,L));
+          break;
+        case 0x8f: // ADC  A,A
+          adc(A, regs[A]);
+          break;
         case 0x98: // SBC  A,B
           sbc( A, regs[B]);
           break;
@@ -508,6 +551,30 @@ public class CPU
         case 0x9f: // SBC  A,A
           sbc( A, regs[A]);
           break;
+        case 0xa0: // AND B
+          and(regs[B]);
+          break;
+        case 0xa1: // AND C
+          and(regs[C]);
+          break;
+        case 0xa2: // AND D
+          and(regs[D]);
+          break;
+        case 0xa3: // AND E
+          and(regs[E]);
+          break;
+        case 0xa4: // AND H
+          and(regs[H]);
+          break;
+        case 0xa5: // AND L
+          and(regs[L]);
+          break;
+        case 0xa6: // AND (HL)
+          and(readmem8b(H,L));
+          break;
+        case 0xa7: // AND A
+          and(regs[A]);
+          break;
         case 0xa8: // XOR B
           xor(regs[B]);
           break;
@@ -531,6 +598,30 @@ public class CPU
           break;
         case 0xaf: // XOR A
           xor(regs[A]);
+          break;
+        case 0xb0: // OR  B
+          or(regs[B]);
+          break;
+        case 0xb1: // OR  C
+          or(regs[C]);
+          break;
+        case 0xb2: // OR  D
+          or(regs[D]);
+          break;
+        case 0xb3: // OR  E
+          or(regs[E]);
+          break;
+        case 0xb4: // OR  H
+          or(regs[H]);
+          break;
+        case 0xb5: // OR  L
+          or(regs[L]);
+          break;
+        case 0xb6: // OR  (HL)
+          or(readmem8b(H,L));
+          break;
+        case 0xb7: // OR  A
+          or(regs[A]);
           break;
         case 0xb8: // CP   B
           cp(regs[B]);
