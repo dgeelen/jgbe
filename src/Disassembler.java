@@ -65,7 +65,7 @@ public class Disassembler
         int j = op.indexOf("]");
         immediate = Math.max(regval(op.substring(i+1,j)), immediate);
         if(immediate == -1){ //One of the special cases (LDH etc)
-            if(op.indexOf("LDH")>-1){
+            if(op.indexOf("LDH")>-1) {
                 immediate=0xff00|cart.read(PC+1);
             }
         }

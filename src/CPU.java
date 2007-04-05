@@ -17,7 +17,6 @@ public class CPU
     protected int TotalInstrCount = 0;
 
     protected int[] regs = new int[8]; //[A,B,C,D,E,F,H,L]
-    protected static final int A = 0;
     protected static final int B = 1;
     protected static final int C = 2;
     protected static final int D = 3;
@@ -25,6 +24,7 @@ public class CPU
     protected static final int F = FLAG_REG;
     protected static final int H = 6;
     protected static final int L = 7;
+    protected static final int A = 0;
 
     protected int[] HRAM = new int[0x7E];
 
@@ -126,6 +126,10 @@ public class CPU
     }
     protected int readmem8b(int H, int L) {
       return cartridge.read((regs[H]<<8)|regs[L]);
+    }
+
+    protected void writemem8b(int H, int L, int val) {
+      cartridge.write((regs[H]<<8)|regs[L], val);
     }
 
     protected void inc8b(int reg_index)
@@ -665,6 +669,9 @@ public class CPU
         case 0xee: // XOR   &00
           xor(cartridge.read(PC++));
           break;
+        case 0xf0: // LDH
+          regs[A] = cartridge.read(0xff00 | cartridge.read(PC++));
+          break;
         case 0xf3: // DI
           IR = 0x00;
           break;
@@ -679,10 +686,42 @@ public class CPU
             PC+=2;
           }
           break;
+        case 0xcb: // prefix instruction
+          instr = cartridge.read(PC++);
+          switch (instr) {
+            case 0x80: // RES 0,B
+              regs[B] &= ~(1 << 0);
+              break;
+            case 0x81: // RES 0,C
+              regs[C] &= ~(1 << 0);
+              break;
+            case 0x82: // RES 0,D
+              regs[D] &= ~(1 << 0);
+              break;
+            case 0x83: // RES 0,E
+              regs[E] &= ~(1 << 0);
+              break;
+            case 0x84: // RES 0,H
+              regs[H] &= ~(1 << 0);
+              break;
+            case 0x85: // RES 0,L
+              regs[L] &= ~(1 << 0);
+              break;
+            case 0x86: // RES 0,(HL)
+              writemem8b(H,L, readmem8b(H,L) & ~(1 << 0));
+              break;
+            case 0x87: // RES 0,A
+              regs[A] &= ~(1 << 0);
+              break;
+            default:
+              System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , instr );
+              return false;
+          }
+          break;
         default:
           System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
           return false;
-        }
+      }
       ++TotalInstrCount;
       if(nop) {
         ++nopCount;
