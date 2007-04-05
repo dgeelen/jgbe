@@ -51,7 +51,6 @@ public class Disassembler
 
     public static final String disassemble(int PC) {
       String op = opcode[cart.read(PC)];
-      System.out.println("PC+1="+cart.read(PC+1)+" PC+2="+cart.read(PC+2)+" PC+3="+cart.read(PC+3));
       String s="";
       int immediate=-1;
       if(op.indexOf("IMM16")>-1) {
@@ -61,7 +60,6 @@ public class Disassembler
       if(op.indexOf("IMM08")>-1) {
         immediate= cart.read(PC+1);
       }
-      System.out.println("immediate="+immediate);
       if(op.indexOf("[")>-1) {
         int i = op.indexOf("[");
         int j = op.indexOf("]");
