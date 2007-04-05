@@ -138,86 +138,142 @@ public class Cartridge
         }
     }
 
-    public int read(int index)
-    {
-    /* Memorymap:
-     * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
-     * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
-     * 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
-     * A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)
-     * C000-CFFF   4KB Work RAM Bank 0 (WRAM)
-     * D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-     * E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
-     * FE00-FE9F   Sprite Attribute Table (OAM)
-     * FEA0-FEFF   Not Usable
-     * FF00-FF7F   I/O Ports
-     * FF80-FFFE   High RAM (HRAM)
-     * FFFF        Interrupt Enable Register
-     */
-     int b=0; // b==byte read
-        //TODO fatsoenlijk (USE rom_bank_nr)
-        if(index<0) { //Invalid
-          System.out.println("ERROR: Cartridge.read(): No negative addresses in GameBoy memorymap.");
-          b=0; //NOP
-          }
-        else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
-          b=ROM[0][index];
+    public int read(int index) {
+      /* Memorymap:
+      * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+      * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+      * 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+      * A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)
+      * C000-CFFF   4KB Work RAM Bank 0 (WRAM)
+      * D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+      * E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
+      * FE00-FE9F   Sprite Attribute Table (OAM)
+      * FEA0-FEFF   Not Usable
+      * FF00-FF7F   I/O Ports
+      * FF80-FFFE   High RAM (HRAM)
+      * FFFF        Interrupt Enable Register
+      */
+      int b=0; // b==byte read
+      //TODO fatsoenlijk (USE rom_bank_nr)
+      if(index<0) { //Invalid
+        System.out.println("ERROR: Cartridge.read(): No negative addresses in GameBoy memorymap.");
+        b=0; //NOP
         }
-        else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
-          System.out.println("TODO: Cartridge.read(): Bankswitching (fixed at bank 1)");
-          b=ROM[1][index];
-        }
-        else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
-          System.out.println("TODO: Cartridge.read(): VRAM Read");
-          b=0;
-        }
-        else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
-          System.out.println("TODO: Cartridge.read(): External RAM Read");
-          b=0;
-        }
-        else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
-          System.out.println("TODO: Cartridge.read(): Internal RAM Read bank0");
-          b=0;
-        }
-        else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-          System.out.println("TODO: Cartridge.read(): Internal RAM Read bank1");
-          b=0;
-        }
-        else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
-          System.out.println("TODO: Cartridge.read(): ECHO RAM Read");
-          b=read(index-0x2000);
-        }
-        else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
-          System.out.println("TODO: Cartridge.read(): Sprite Attribute Table");
-          b=0;
-        }
-        else if(index < 0xff00) { //Not Usable
-          System.out.println("TODO: Cartridge.read(): Read from unusable memory (0xfea-0xfeff)");
-          b=0;
-        }
-        else if(index < 0xff80) { //I/O Ports
-          System.out.println("TODO: Cartridge.read(): Read from IO ports");
-          b=0;
-        }
-        else if(index < 0xffff) { //High RAM (HRAM)
-          System.out.println("TODO: Cartridge.read(): Read from High RAM (0xff80-0xfffe)");
-          b=0;
-        }
-        else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
-          System.out.println("TODO: Cartridge.read(): Read from Interrupt Enable Register (0xffff)");
-          b=0;
-        }
-        else {
-          System.out.println("ERROR: Cartridge.read(): Out of range memory access: $"+index);
-          b=0;
-        }
+      else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+        b=ROM[0][index];
+      }
+      else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+        System.out.println("TODO: Cartridge.read(): Bankswitching (fixed at bank 1)");
+        b=ROM[1][index];
+      }
+      else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+        System.out.println("TODO: Cartridge.read(): VRAM Read");
+        b=0;
+      }
+      else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
+        System.out.println("TODO: Cartridge.read(): External RAM Read");
+        b=0;
+      }
+      else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
+        System.out.println("TODO: Cartridge.read(): Internal RAM Read bank0");
+        b=0;
+      }
+      else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+        System.out.println("TODO: Cartridge.read(): Internal RAM Read bank1");
+        b=0;
+      }
+      else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
+        System.out.println("TODO: Cartridge.read(): ECHO RAM Read");
+        b=read(index-0x2000);
+      }
+      else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
+        System.out.println("TODO: Cartridge.read(): Sprite Attribute Table");
+        b=0;
+      }
+      else if(index < 0xff00) { //Not Usable
+        System.out.println("TODO: Cartridge.read(): Read from unusable memory (0xfea-0xfeff)");
+        b=0;
+      }
+      else if(index < 0xff80) { //I/O Ports
+        System.out.println("TODO: Cartridge.read(): Read from IO ports");
+        b=0;
+      }
+      else if(index < 0xffff) { //High RAM (HRAM)
+        System.out.println("TODO: Cartridge.read(): Read from High RAM (0xff80-0xfffe)");
+        b=0;
+      }
+      else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
+        System.out.println("TODO: Cartridge.read(): Read from Interrupt Enable Register (0xffff)");
+        b=0;
+      }
+      else {
+        System.out.println("ERROR: Cartridge.read(): Out of range memory access: $"+index);
+        b=0;
+      }
       return b;
     }
 
-    public void write(int index, int value)
-    {        // TODO fatsoenlijk
+    public void write(int index, int value) {        // TODO fatsoenlijk
+      /* Memorymap:
+      * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+      * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+      * 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+      * A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)
+      * C000-CFFF   4KB Work RAM Bank 0 (WRAM)
+      * D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+      * E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
+      * FE00-FE9F   Sprite Attribute Table (OAM)
+      * FEA0-FEFF   Not Usable
+      * FF00-FF7F   I/O Ports
+      * FF80-FFFE   High RAM (HRAM)
+      * FFFF        Interrupt Enable Register
+      */
+      if(index<0) { //Invalid
+        System.out.println("ERROR: Cartridge.write(): No negative addresses in GameBoy memorymap.");
+        }
+      else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+        System.out.println("WARNING: Cartridge.write(): Writing to ROM bank 0");
+      }
+      else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+        System.out.println("WARNING: Cartridge.write(): Writing to ROM bank N (fixed at bank 1)");
+      }
+      else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+        System.out.println("TODO: Cartridge.write(): VRAM Read");
+      }
+      else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
+        System.out.println("TODO: Cartridge.write(): External RAM Read");
+      }
+      else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
+        System.out.println("TODO: Cartridge.write(): Internal RAM Read bank0");
+      }
+      else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+        System.out.println("TODO: Cartridge.write(): Internal RAM Read bank1");
+      }
+      else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
+        System.out.println("TODO: Cartridge.write(): ECHO RAM Read");
+      }
+      else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
+        System.out.println("TODO: Cartridge.write(): Sprite Attribute Table");
+      }
+      else if(index < 0xff00) { //Not Usable
+        System.out.println("TODO: Cartridge.write(): Read from unusable memory (0xfea-0xfeff)");
+      }
+      else if(index < 0xff80) { //I/O Ports
+        System.out.println("TODO: Cartridge.write(): Read from IO ports");
+      }
+      else if(index < 0xffff) { //High RAM (HRAM)
+        System.out.println("TODO: Cartridge.write(): Read from High RAM (0xff80-0xfffe)");
+      }
+      else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
+        System.out.println("TODO: Cartridge.write(): Read from Interrupt Enable Register (0xffff)");
+      }
+      else {
+        System.out.println("ERROR: Cartridge.write(): Out of range memory access: $"+index);
+      }
+
         // Switch RAM/ROM and bank numbers
-        /*HAX*/ROM[0][index]=value;/*HAX*/
+
+        /*HAX* /ROM[0][index]=value;/*HAX* /
         //
         switch (MBC)
         {
@@ -295,7 +351,7 @@ public class Cartridge
                 // MBC5
                 break;
 
-        }
+        } */
     }
 
     public static void main(String[] args)
