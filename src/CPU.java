@@ -101,11 +101,8 @@ public class CPU
       //cartridge.write(PC,14);
       //cartridge.write(PC,10);
       //cartridge.write(PC,9);
-      int instr = cartridge.read(PC);
-      String s = String.format("$%02x\t", instr);
-      // TODO take count of BC
-      s+=deasm.disassemble(PC);
-      return s;
+      // TODO: take count of BC
+      return String.format("$%02x\t", cartridge.read(PC))+deasm.disassemble(PC);
     }
 
     protected void printCPUstatus()
@@ -238,8 +235,7 @@ public class CPU
       }
 
     protected void sbc(int dest, int val) {
-        sub8b( dest, val );
-        sub8b( dest, regs[FLAG_REG] >> CF_Shift);
+        sub8b( dest, val+((regs[FLAG_REG]&CF_Mask) >> CF_Shift) );
     }
 
     protected void JRcce( boolean cc, int e ) {

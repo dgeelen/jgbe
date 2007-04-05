@@ -171,7 +171,7 @@ public class Cartridge
           System.out.println("TODO: Cartridge.read(): VRAM Read");
           b=0;
         }
-        else if(index < 0xC00) { //8KB External RAM     (in cartridge, switchable bank, if any)
+        else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
           System.out.println("TODO: Cartridge.read(): External RAM Read");
           b=0;
         }
