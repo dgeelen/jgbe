@@ -221,9 +221,10 @@ public class CPU
     }
 
     protected void JPnn() {
-      int i=cartridge.read(++PC);
-      int j=cartridge.read(++PC);
-      PC = i<<8|j;
+      int i=cartridge.read(PC++);
+      int j=cartridge.read(PC++);
+      System.out.println("i="+i+ " j="+j);
+      PC = j<<8|i; //Should be endian correct
       }
 
     protected void JRe( int e ) {
@@ -239,7 +240,9 @@ public class CPU
       }
 
     protected void push(int val, boolean b16) {
+      System.out.println("Pushing val="+val+" 16b="+b16);
       if(b16) {
+        //Should be endian correct
         cartridge.write(SP--, val&0xff);
         cartridge.write(SP--, (val>>8)&0xff);
       }
@@ -253,11 +256,14 @@ public class CPU
         return cartridge.read(PC);
     }
 
+    static int nopCount=0;
     private boolean execute( int instr ) {
+      boolean nop=false;
       //System.out.printf("Executing instruction $%02x\n", instr);
       ++PC;  //FIXME: Is de PC niet ook een register in de CPU?
       switch ( instr ) {
         case 0x00:  // NOP
+          nop=true;
           break;
 /*        case 0x01:  // LD BC,&0000
           // TODO
@@ -518,7 +524,8 @@ public class CPU
           JPnn();
           break;
         case 0xda: //D4 JMP CF,&0000
-          if((regs[FLAG_REG]&CF_Mask)==CF_Mask) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
+          if((regs[FLAG_REG]&CF_Mask)!=CF_Mask) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
+            System.out.println("pushed");
             JPnn();
             }
           break;
@@ -527,6 +534,16 @@ public class CPU
           return false;
         }
       ++TotalInstrCount;
+      if(nop) {
+        ++nopCount;
+      }
+      else {
+        nopCount=0;
+      }
+      if(nopCount>5) {
+        System.out.println("Executing a lot of NOPs, aborting!");
+        return false;
+      }
       return true;
       }
 
