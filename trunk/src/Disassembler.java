@@ -50,7 +50,14 @@ public class Disassembler
     }
 
     public static final String disassemble(int PC) {
-      String op = opcode[cart.read(PC)];
+      int instr=cart.read(PC);
+      String op="";
+      if(instr==0xcb) {
+        op = opcode[instr+0x100];
+      }
+      else {
+        op = opcode[instr];
+      }
       String s="";
       int immediate=-1;
       if(op.indexOf("IMM16")>-1) {
