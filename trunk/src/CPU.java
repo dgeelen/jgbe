@@ -240,11 +240,11 @@ public class CPU
       int j=cartridge.read(PC++);
       System.out.println("i="+i+ " j="+j);
       PC = j<<8|i; //Should be endian correct
-      }
+    }
 
     protected void JRe( int e ) {
       PC += e;
-      }
+    }
 
     protected void sbc(int dest, int val) {
         sub8b( dest, val+((regs[FLAG_REG]&CF_Mask) >> CF_Shift) );
@@ -256,18 +256,12 @@ public class CPU
 
     protected void JRcce( boolean cc, int e ) {
       if ( cc ) JRe( e );
-      }
+    }
 
-    protected void push(int val, boolean b16) {
-      System.out.println("Pushing val="+val+" 16b="+b16);
-      if(b16) {
-        //Should be endian correct
-        cartridge.write(SP--, val&0xff);
-        cartridge.write(SP--, (val>>8)&0xff);
-      }
-      else {
-        cartridge.write(SP--, val&0xff);
-      }
+    protected void push(int val) {
+      //Should be endian correct
+      cartridge.write(--SP, (val>>8)&0xff);
+      cartridge.write(--SP, val&0xff);
     }
 
     protected int fetch()
@@ -337,6 +331,9 @@ public class CPU
           break;
         case 0x2f:  // CPL
           xor(0xFF);
+          break;
+        case 0x3e:  // LD A, n
+          regs[A]=cartridge.read(PC++);
           break;
         case 0x40: // LD B, B
           ld8b(B, regs[B]);
@@ -653,6 +650,13 @@ public class CPU
         case 0xc3: // JPNNNN
           JPnn();
           break;
+        case 0xcd: // CALL &0000
+          push(PC+2);
+          JPnn();
+          break;
+        case 0xe0: // LDH
+          cartridge.write(0xff00 | cartridge.read(PC++), regs[A]);
+          break;
         case 0xea: // LD (nnnn), A
           int a = cartridge.read(PC++);
           int b = cartridge.read(PC++);
@@ -669,7 +673,6 @@ public class CPU
           break;
         case 0xda: //D4 JMP CF,&0000
           if((regs[FLAG_REG]&CF_Mask)!=CF_Mask) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
-            System.out.println("pushed");
             JPnn();
             }
           else {
