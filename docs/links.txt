@@ -3,3 +3,6 @@ http://www.z80.info/z80oplist.txt
 http://verhoeven272.nl/cgi-bin/index?fruttenboel%2FGameboy&Gameboy+section&GBtop&GBsummary&GBcontent
 http://fruttenboel.verhoeven272.nl/Gameboy/pandocs.html.gz#aboutthepandocs
 http://fruttenboel.verhoeven272.nl/Gameboy/index.html
+
+Gameboy emulator shit
+http://www.z80.info/decoding.htm
