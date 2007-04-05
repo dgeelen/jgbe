@@ -288,6 +288,11 @@ public class CPU
         case 0x1d: // DEC  E
           dec8b( E );
           break;
+        case 0x28: // JR   Z, n
+          if((regs[F]&ZF_Mask)==ZF_Mask)
+            PC+=(int)((byte)(cartridge.read(PC++)));
+          else ++PC;
+          break;
         case 0x2c:  // INC L
           inc8b( L );
           break;
@@ -521,6 +526,9 @@ public class CPU
             System.out.println("pushed");
             JPnn();
             }
+          else {
+            PC+=2;
+          }
           break;
         default:
           System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
