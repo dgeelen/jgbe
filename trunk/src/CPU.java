@@ -226,10 +226,6 @@ public class CPU
       PC = i<<8|j;
       }
 
-    protected void JPccnn( boolean cc, int nn ) {
-      if ( cc ) JPnn();
-      }
-
     protected void JRe( int e ) {
       PC += e;
       }
@@ -521,9 +517,8 @@ public class CPU
         case 0xc3: // JPNNNN
           JPnn();
           break;
-        case 0xd4: //D4 CALL NC,&0000
+        case 0xda: //D4 JMP CF,&0000
           if((regs[FLAG_REG]&CF_Mask)==CF_Mask) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
-            push(PC, true);
             JPnn();
             }
           break;
