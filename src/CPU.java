@@ -26,6 +26,7 @@ public class CPU
     protected static final int H = 6;
     protected static final int L = 7;
 
+    protected int IR;
     protected int PC;
     protected int SP;
     //CPU Class variables
@@ -657,6 +658,9 @@ public class CPU
           break;
         case 0xee: // XOR   &00
           xor(cartridge.read(PC++));
+          break;
+        case 0xf3: // DI
+          IR = 0x00;
           break;
         case 0xfe: // CP n
           cp (cartridge.read(PC++));
