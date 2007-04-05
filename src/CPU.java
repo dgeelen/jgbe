@@ -210,6 +210,12 @@ public class CPU
       regs[A] = i;
     }
 
+    protected void xor(int val) {
+      regs[F]=0;
+      regs[A]^=val;
+      regs[F]|=(regs[A]==0?ZF_Mask:0);
+    }
+
     protected void JPnn() {
       int i=cartridge.read(PC++);
       int j=cartridge.read(PC++);
@@ -282,6 +288,10 @@ public class CPU
         case 0x15: // DEC  D
           dec8b( D );
           break;
+        case 0x18: // JR   &00
+          int x = cartridge.read(PC++);
+          PC += ((x>=128) ? -(x & 0x7F) : x & 0x7F);
+          break;
         case 0x1c: // INC  E
           inc8b( E );
           break;
@@ -289,8 +299,11 @@ public class CPU
           dec8b( E );
           break;
         case 0x28: // JR   Z, n
-          if((regs[F]&ZF_Mask)==ZF_Mask)
-            PC+=(int)((byte)(cartridge.read(PC++)));
+          if((regs[F]&ZF_Mask)==ZF_Mask) {
+            System.out.println(PC);
+            PC -= (cartridge.read(PC++))^128;
+            System.out.println(PC);
+          }
           else ++PC;
           break;
         case 0x2c:  // INC L
@@ -491,6 +504,30 @@ public class CPU
         case 0x9f: // SBC  A,A
           sbc( A, regs[A]);
           break;
+        case 0xa8: // XOR B
+          xor(regs[B]);
+          break;
+        case 0xa9: // XOR C
+          xor(regs[C]);
+          break;
+        case 0xaa: // XOR D
+          xor(regs[D]);
+          break;
+        case 0xab: // XOR E
+          xor(regs[E]);
+          break;
+        case 0xac: // XOR H
+          xor(regs[H]);
+          break;
+        case 0xad: // XOR L
+          xor(regs[L]);
+          break;
+        case 0xae: // XOR (HL)
+          xor(readmem8b(H,L));
+          break;
+        case 0xaf: // XOR A
+          xor(regs[A]);
+          break;
         case 0xb8: // CP   B
           cp(regs[B]);
           break;
@@ -517,6 +554,9 @@ public class CPU
           break;
         case 0xc3: // JPNNNN
           JPnn();
+          break;
+        case 0xee: // XOR   &00
+          xor(cartridge.read(PC++));
           break;
         case 0xfe: // CP n
           cp (cartridge.read(PC++));
