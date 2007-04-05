@@ -33,7 +33,6 @@ public class Disassembler
     // Opcode: opcode to disassemble
     // BC:     whether opcode was after BC
     private static int regval(String reg) {
-      System.out.println(reg);
       if(reg.equalsIgnoreCase("A")) return cpu.regs[cpu.A];
       if(reg.equalsIgnoreCase("B")) return cpu.regs[cpu.B];
       if(reg.equalsIgnoreCase("C")) return cpu.regs[cpu.C];

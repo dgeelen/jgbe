@@ -7,6 +7,180 @@ public class TestSuite
         this.cpu = cpu;
     }
 
+    private boolean sbc_diag() {
+      /***************************************************************************************************************
+      * Test SBC
+      * Tests 0x01 - 1, 0x00 - 1, 0x10 - 1 for setting AND clearing of flags
+      * SBC: flags=z1hc A=A-r-cy
+      */
+      boolean status = true;
+      cpu.regs[cpu.A] = 0x01;
+      cpu.regs[cpu.F] = cpu.CF_Mask;
+      cpu.sbc(cpu.A, 1);
+      if (cpu.regs[cpu.A] != 0xff) {
+        System.out.println( "Error: SBC: 1 - 1 - C=1 != 0xff");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=1 = 0xff sets ZF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: SBC: Does not set NF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.HC_Mask) != cpu.HC_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=1 = 0xff does NOT set HC");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.CF_Mask) != cpu.CF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=1 = 0xff does NOT set CF" );
+        status = status && false;
+      }
+      cpu.regs[cpu.A] = 0x01;
+      cpu.regs[cpu.F] = 0xf0;
+      cpu.sbc(cpu.A, 1);
+      if (cpu.regs[cpu.A] != 0xff) {
+        System.out.println( "Error: SBC: 1 - 1 - C=1 != 0xff");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=1 = 0xff sets ZF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: SBC: Does not set NF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.HC_Mask) != cpu.HC_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=1 = 0xff does NOT set HC");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.CF_Mask) != cpu.CF_Mask) {
+        System.out.println( "Error: SBC: A - 1 - C=1 = 0xff does NOT set CF" );
+        status = status && false;
+      }
+
+      cpu.regs[cpu.A] = 0x01;
+      cpu.regs[cpu.F] = 0x00;
+      cpu.sbc(cpu.A, 1);
+      if (cpu.regs[cpu.A] != 0x00) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 != 0x00");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.ZF_Mask) != cpu.ZF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does NOT set ZF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: SBC: Does not set NF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does set HC");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does set CF" );
+        status = status && false;
+      }
+      cpu.regs[cpu.A] = 0x01;
+      cpu.regs[cpu.F] = ~cpu.CF_Mask;
+      cpu.sbc(cpu.A, 1);
+      if (cpu.regs[cpu.A] != 0x00) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 != 0x00");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.ZF_Mask) != cpu.ZF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does NOT set ZF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: SBC: Does not set NF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does set HC");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does set CF" );
+        status = status && false;
+      }
+
+      cpu.regs[cpu.A] = 0x01;
+      cpu.regs[cpu.F] = ~cpu.CF_Mask;
+      cpu.sbc(cpu.A, 1);
+      if (cpu.regs[cpu.A] != 0x00) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 != 0x00");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.ZF_Mask) != cpu.ZF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does NOT set ZF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: SBC: Does not set NF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does set HC");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: SBC: 1 - 1 - C=0 = 0x00 does set CF" );
+        status = status && false;
+      }
+
+      cpu.regs[cpu.A] = 0x10;
+      cpu.regs[cpu.F] = ~cpu.CF_Mask;
+      cpu.sbc(cpu.A, 0);
+      if (cpu.regs[cpu.A] != 0x10) {
+        System.out.println( "Error: SBC: 0x10 - 0 - C=0 != 0x10");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: SBC: 0x10 - 1 - C=0 = 0x10 does set ZF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: SBC: Does not set NF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.HC_Mask) == cpu.HC_Mask) {
+        System.out.println( "Error: SBC: 0x10 - 1 - C=0 = 0x10 does set HC");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: SBC: 0x10 - 1 - C=0 = 0x10 does set CF" );
+        status = status && false;
+      }
+
+      cpu.regs[cpu.A] = 0x10;
+      cpu.regs[cpu.F] = cpu.CF_Mask;
+      cpu.sbc(cpu.A, 0);
+      if (cpu.regs[cpu.A] != 0x0f) {
+        System.out.println( "Error: SBC: 0x10 - 0 - C=1 != 0x0f");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.ZF_Mask) == cpu.ZF_Mask) {
+        System.out.println( "Error: SBC: 0x10 - 1 - C=1 = 0x0f does set ZF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.NF_Mask) != cpu.NF_Mask) {
+        System.out.println( "Error: SBC: Does not set NF" );
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.HC_Mask) != cpu.HC_Mask) {
+        System.out.println( "Error: SBC: 0x10 - 1 - C=1 = 0x0f does NOT set HC");
+        status = status && false;
+      }
+      if((cpu.regs[cpu.F]&cpu.CF_Mask) == cpu.CF_Mask) {
+        System.out.println( "Error: SBC: 0x10 - 1 - C=1 = 0x0f does set CF" );
+        status = status && false;
+      }
+      return status;
+    }
     private boolean ld8b_diag() {
       /***************************************************************************************************************
       * Test LDRR_8b
@@ -520,7 +694,7 @@ public class TestSuite
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) != cpu.CF_Mask) {
-        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and CF is set" );
+        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and CF is NOT set" );
         status = status && false;
       }
       cpu.regs[cpu.A]=0x01;
@@ -543,7 +717,7 @@ public class TestSuite
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) != cpu.CF_Mask) {
-        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and CF is set" );
+        System.out.println( "Error: SUB8b: 0x01 - 0x02 = 0xFF and CF is NOT set" );
         status = status && false;
       }
 
@@ -567,7 +741,7 @@ public class TestSuite
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) == cpu.CF_Mask) {
-        System.out.println( "Error: SUB8b: 0x10 - 0x00 = 0x10 and is NOT set" );
+        System.out.println( "Error: SUB8b: 0x10 - 0x00 = 0x10 and CF is set" );
         status = status && false;
       }
       cpu.regs[cpu.A]=0x10;
@@ -590,7 +764,7 @@ public class TestSuite
         status = status && false;
       }
       if ( (cpu.regs[cpu.FLAG_REG]&cpu.CF_Mask) == cpu.CF_Mask) {
-        System.out.println( "Error: SUB8b: 0x10 - 0x00 = 0x10 and is NOT set" );
+        System.out.println( "Error: SUB8b: 0x10 - 0x00 = 0x10 and CF is set" );
         status = status && false;
       }
       return status;
@@ -637,6 +811,14 @@ public class TestSuite
         }
       else {
         System.out.println( "*ERROR* IN LD8b INSTRUCTION!" );
+        ++count;
+        }
+      result = sbc_diag();
+      if ( verbose && result ) {
+        System.out.println( "SBC instruction appears to work ok" );
+        }
+      else {
+        System.out.println( "*ERROR* IN SBC INSTRUCTION!" );
         ++count;
         }
       if ( verbose || count>0 ) System.out.println( "There were errors in "+count+" instructions" );
