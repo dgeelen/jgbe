@@ -205,19 +205,9 @@ public class CPU
     }
 
     protected void cp(int val) {
-      //Set NF, clear other flags
-      regs[FLAG_REG] = NF_Mask;
-
-      int i=regs[A]-val;
-
-      //Set ZF
-      regs[FLAG_REG] |= (i==0) ? ZF_Mask : 0;
-
-      //Set HC
-      regs[FLAG_REG] |= ((regs[A]&0x0f)-(val&0x0f))<0 ? HC_Mask : 0;
-
-      //Set CF
-      regs[FLAG_REG] |= i<0 ? CF_Mask : 0;
+      int i= regs[A];
+      sub8b(A, val);
+      regs[A] = i;
     }
 
     protected void JPnn() {
@@ -522,6 +512,9 @@ public class CPU
           break;
         case 0xc3: // JPNNNN
           JPnn();
+          break;
+        case 0xfe: // CP n
+          cp (cartridge.read(PC++));
           break;
         case 0xda: //D4 JMP CF,&0000
           if((regs[FLAG_REG]&CF_Mask)!=CF_Mask) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
