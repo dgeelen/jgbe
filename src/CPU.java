@@ -286,13 +286,14 @@ public class CPU
 				case 0x00:  // NOP
 					nop=true;
 					break;
-					/*        case 0x01:  // LD BC,&0000
-					          // TODO
-					          break;
-					        case 0x02:  // LD (BC),A
-					          // TODO
-					          break;
-					        case 0x03:  // INC BC
+				case 0x01: // LD BC, nn
+					regs[C] = cartridge.read( PC++ );
+					regs[B] = cartridge.read( PC++ );
+					break;
+				case 0x02: // LD (BC), A
+					writemem8b(B,C, regs[A]);
+					break;
+					/*      case 0x03:  // INC BC
 					          // TODO
 					          break;*/
 				case 0x04:  // INC B
@@ -306,6 +307,10 @@ public class CPU
 					break;
 				case 0x0d: // DEC  C
 					dec8b( C );
+					break;
+				case 0x11: // LD DE, nn
+					regs[E] = cartridge.read( PC++ );
+					regs[D] = cartridge.read( PC++ );
 					break;
 				case 0x14: // INC  D
 					inc8b( D );
@@ -331,6 +336,10 @@ public class CPU
 					}
 					else ++PC;
 					break;
+				case 0x21: // LD HL, nn
+					regs[L] = cartridge.read( PC++ );
+					regs[H] = cartridge.read( PC++ );
+					break;
 				case 0x28: // JR   Z, n
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
 						int x = cartridge.read( PC++ );
@@ -347,6 +356,11 @@ public class CPU
 				case 0x2f:  // CPL
 					xor( 0xFF );
 					break;
+				case 0x31:{// LD SP, nn
+					int l = cartridge.read( PC++ );
+					int h = cartridge.read( PC++ );
+					SP = l | (h<<8);
+				};break;
 				case 0x3e:  // LD A, n
 					regs[A]=cartridge.read( PC++ );
 					break;
@@ -725,11 +739,11 @@ public class CPU
 				case 0xe6: // AND nn
 					and(cartridge.read(PC++));
 					break;
-				case 0xea: // LD (nnnn), A
+				case 0xea:{// LD (nnnn), A
 					int a = cartridge.read( PC++ );
 					int b = cartridge.read( PC++ );
 					ld8bmem(( b << 8 ) + a, regs[A] );
-					break;
+				};break;
 				case 0xee: // XOR   &00
 					xor( cartridge.read( PC++ ) );
 					break;
