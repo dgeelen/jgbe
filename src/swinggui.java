@@ -18,8 +18,11 @@ public class swinggui implements ActionListener, ItemListener {
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				System.out.println("REPAINTING PANEL");
-				VC.renderImage(g);
-				g.drawRect(10,10,100,100);
+
+				//aargh broken!!!
+				//g.drawImage(grfx, 0, 0, null);
+				//VC.renderImage(g);
+				//g.drawRect(10,10,100,100);
     	}
 		}
 
