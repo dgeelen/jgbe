@@ -15,6 +15,7 @@ public class CPU
 		protected static final int CF_Mask  = 1 << CF_Shift;
 
 		protected int TotalInstrCount = 0;
+		protected int TotalCycleCount = 0;
 
 		protected int[] regs = new int[8]; //[A,B,C,D,E,F,H,L]
 		protected static final int B = 1;
@@ -29,6 +30,8 @@ public class CPU
 		private int[] HRAM = new int[0x7F]; //HighRAM
 		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
 		private int CurrentWRAMBank=0;
+
+		private int curcycles;
 
 		protected int IR;
 		protected int PC;
@@ -61,6 +64,7 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
+			curcycles+=4;
 			int b=0; // b==byte read
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
@@ -129,6 +133,7 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
+			curcycles+=4;
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.write(): No negative addresses in GameBoy memorymap.");
 			}
@@ -209,6 +214,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 			regs[H]=0x01;
 			regs[L]=0x4d;
 			TotalInstrCount=0;
+			TotalCycleCount=0;
 
 			//Stack Pointer=$FFFE
 			SP=0xfffe;
@@ -261,7 +267,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 			flags += (( regs[FLAG_REG] & ( 1 <<2 ) ) == ( 1 <<2 ) )?"1 ":"0 ";
 			flags += (( regs[FLAG_REG] & ( 1 <<1 ) ) == ( 1 <<1 ) )?"1 ":"0 ";
 			flags += (( regs[FLAG_REG] & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
-			System.out.println( "---CPU Status for cycle "+TotalInstrCount+"---" );
+			System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
 			System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F], regs[H],regs[L] );
 			System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
 			System.out.println( "  "+deasm.disassemble( PC ) );
@@ -351,6 +357,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 		}
 
 		protected void inc16b(int ri1, int ri2 ) {
+			curcycles += 4; // 16-bit add takes time
 			// 16-bit inc/dec doesnt affect any flags
 			++regs[ri2];
 			if (regs[ri2]>0xFF) {
@@ -361,6 +368,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 		}
 
 		protected void dec16b(int ri1, int ri2 ) {
+			curcycles += 4; // 16-bit add takes time
 			// 16-bit inc/dec doesnt affect any flags
 			--regs[ri2];
 			if (regs[ri2]<0) {
@@ -411,6 +419,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 		}
 
 		protected void add16bHL(int val1, int val2) {
+			curcycles += 4; // 16-bit add takes time
 			int fmask = regs[F] & ZF_Mask; // zero flag should be unaffected
 			add8b(L, val2);
 			fmask |= ((regs[F]&CF_Mask)==CF_Mask) ? HC_Mask : 0;
@@ -484,16 +493,13 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 			return (l | (h<<8));
 		}
 
-		protected int fetch() {
-			return read( PC );
-		}
-
 		static int nopCount=0;
-		private boolean execute( int instr ) {
+		private int execute() {
+			curcycles = 0;
 			boolean nop=false;
 			//if (!nop) return nop;
 			//System.out.printf("Executing instruction $%02x\n", instr);
-			++PC;  //FIXME: Is de PC niet ook een register in de CPU?
+			int instr = read(PC++);
 			switch ( instr ) {
 				case 0x00:  // NOP
 					nop=true;
@@ -561,6 +567,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 				case 0x18:{// JR   &00
 					int x = read( PC++ );
 					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
+					curcycles += 4; // takes 12 instead of 8 cycles
 				};break;
 				case 0x19: // ADD HL, DE
 					add16bHL(regs[D], regs[E]);
@@ -581,6 +588,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 					regs[E] = read( PC++ );
 					break;
 				case 0x20: // JR NZ, n
+					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -602,6 +610,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 					regs[H] = read( PC++ );
 					break;
 				case 0x28: // JR   Z, n
+					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -631,6 +640,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 					xor( 0xFF );
 					break;
 				case 0x30: // JR NC, n
+					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&CF_Mask )!=CF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -654,6 +664,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 					regs[F] |= CF_Mask;
 					break;
 				case 0x38: // JR C, n
+					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&CF_Mask )==CF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -1042,15 +1053,21 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 				};break;
 				case 0xc3: // JPNNNN
 					JPnn();
+					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xc5: // PUSH BC
 					push( regs[B]<<8 | regs[C]);
+					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xc8: // RET  Z
 					if ((regs[F]&ZF_Mask) == ZF_Mask)
 						PC = pop();
+					curcycles <<= 1; // magix!
+					curcycles &= 20;
+					curcycles |= 8; 
 					break;
 				case 0xc9: // RET
+					curcycles += 4; // takes 16 instead of 12 cycles
 					PC = pop();
 					break;
 				case 0xca: // JMP Z, nn
@@ -1058,14 +1075,20 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						JPnn();
 					else
 						PC+=2;
+					curcycles <<=1; // takes 16;12 instead of 12;4 cycles
+					curcycles ^= 8;
 					break;
 				case 0xcd: // CALL &0000
+					curcycles += 4; // takes 24 instead of 20 cycles
 					push( PC+2 );
 					JPnn();
 					break;
 				case 0xd0: // RET  NC
 					if ((regs[F]&CF_Mask) != CF_Mask)
 						PC = pop();
+					curcycles <<= 1; // magix!
+					curcycles &= 20;
+					curcycles |= 8; 
 					break;
 				case 0xd1:{// POP DE
 					int x = pop();
@@ -1077,17 +1100,20 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						JPnn();
 					else
 						PC+=2;
+					curcycles <<=1; // takes 16;12 instead of 12;4 cycles
+					curcycles ^= 8;
 					break;
 				case 0xd5: // PUSH DE
 					push( regs[D]<<8 | regs[E]);
+					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xda: //D4 JMP CF,&0000
-					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask ) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
+					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask )
 						JPnn();
-					}
-					else {
+					else
 						PC+=2;
-					}
+					curcycles <<=1; // takes 16;12 instead of 12;4 cycles
+					curcycles ^= 8;
 					break;
 				case 0xe0: // LDH  (n), A
 					write( 0xff00 | read( PC++ ), regs[A] );
@@ -1102,6 +1128,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 					break;
 				case 0xe5: // PUSH HL
 					push( regs[H]<<8 | regs[L]);
+					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xe6: // AND nn
 					and(read(PC++));
@@ -1130,6 +1157,11 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 					break;
 				case 0xf5: // PUSH AF
 					push( regs[A]<<8 | regs[F]);
+					curcycles += 4; // takes 16 instead of 12 cycles
+					break;
+				case 0xf9: // LD SP, HL
+					SP = regs[H]<<8 | regs[L];
+					curcycles += 4; // takes 8 instead of 4 cycles
 					break;
 				case 0xfa:{// LD A, (nn)
 					int a = read( PC++ );
@@ -1243,17 +1275,18 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						default:
 							System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , instr );
 							PC -= 2; // we failed to execute the instruction, so restore PC
-							return false;
+							return 0;
 					}
 					break;
 				default:
 					System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
 					PC -= 1; // we failed to execute the instruction, so restore PC
-					return false;
+					return 0;
 			}
 			PC &= 0xffff;
 			SP &= 0xffff;
 			++TotalInstrCount;
+			TotalCycleCount += curcycles;
 			if ( nop ) {
 				++nopCount;
 			}
@@ -1262,16 +1295,17 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 			}
 			if ( nopCount>5 ) {
 				System.out.println( "Executing a lot of NOPs, aborting!" );
-				return false;
+				return 0;
 			}
-			return true;
+			return curcycles;
 		}
 
-		protected boolean nextinstruction() {
-			lastException = execute( fetch() ) ? 0 : 1;
-			return lastException==0;
+		public int nextinstruction() {
+			int res = execute();
+			lastException = (res!=0) ? 0 : 1;
+			return res;
 		}
-
+		
 		protected int exception() {
 			return lastException;
 		}
