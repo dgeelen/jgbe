@@ -75,8 +75,7 @@ public class CPU
 				b=0;
 			}
 			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
-				System.out.println("TODO: CPU.read(): External RAM Read");
-				b=0;
+				b=cartridge.read(index);
 			}
 			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
 				b=WRAM[0][index-0xc000];
@@ -85,7 +84,6 @@ public class CPU
 				b=WRAM[CurrentWRAMBank][index-0xd000];
 			}
 			else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
-				System.out.println("TODO: CPU.read(): ECHO RAM Read");
 				b=read(index-0x2000);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
@@ -93,7 +91,7 @@ public class CPU
 				b=0;
 			}
 			else if(index < 0xff00) { //Not Usable
-				System.out.println("TODO: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
+				System.out.println("WARNING: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
 				b=0;
 			}
 			else if(index < 0xff80) { //I/O Ports
@@ -102,8 +100,7 @@ public class CPU
 				b=0;
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
-				b=HRAM[index-0xff80];
-				b=0;
+				b = HRAM[index-0xff80];
 			}
 			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
 				System.out.println("TODO: CPU.read(): Read from Interrupt Enable Register (0xffff)");
@@ -131,25 +128,20 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-			if (index >=0xff80 && index <= 0xfffe) {
-				System.out.println("write: " + String.format("$%04x", index) + "  HRAM[" + (index - 0xff00) + "] = " + value);
-				HRAM[index-0xff80] = value; // HAXOR!!!
-			}
-			else
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.write(): No negative addresses in GameBoy memorymap.");
 			}
 			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
-				System.out.println("WARNING: CPU.write(): Writing to ROM bank 0");
+				cartridge.write(index, value);
 			}
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
-				System.out.println("WARNING: CPU.write(): Writing to ROM bank N (fixed at bank 1)");
+				cartridge.write(index, value);
 			}
 			else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
 				System.out.println("TODO: CPU.write(): VRAM Write");
 			}
 			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
-				System.out.println("TODO: CPU.write(): External RAM Write");
+				cartridge.write(index, value);
 			}
 			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
 				WRAM[0][index-0xc000]=value;
@@ -158,7 +150,7 @@ public class CPU
 				WRAM[CurrentWRAMBank][index-0xc000]=value;
 			}
 			else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
-				System.out.println("TODO: CPU.write(): ECHO RAM Write");
+				write(index-0x2000, value);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
 				System.out.println("TODO: CPU.write(): Sprite Attribute Table");
@@ -173,7 +165,7 @@ public class CPU
 				}
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
-				HRAM[index-0xff80]=value;
+				HRAM[index-0xff80] = value;
 			}
 			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
 				System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
