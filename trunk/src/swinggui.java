@@ -19,6 +19,7 @@ public class swinggui implements ActionListener, ItemListener {
 				super.paintComponent(g);
 				System.out.println("REPAINTING PANEL");
 				VC.renderImage(g);
+				g.drawRect(10,10,100,100);
     	}
 		}
 

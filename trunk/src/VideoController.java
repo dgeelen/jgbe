@@ -17,6 +17,7 @@ public class VideoController {
 		for(int i=0; i<width; ++i) {
 			g.drawLine(0,0,i,i);
 		}
+		g.drawRect(20,20,200,200);
 	}
 
 	public int read(int index) {
