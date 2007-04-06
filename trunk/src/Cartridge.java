@@ -214,7 +214,7 @@ public class Cartridge {
 				if((index>=0x6000)&&(index<0x8000)) { //6000-7FFF - Latch Clock Data (Write Only)
 					System.out.println("TODO: Cartridge.write(): Latch Clock Data!");
 				}
-				if((index>=0xA000) && (index<0xc000)){
+				if((index>=0xa000) && (index<0xc000)){
 					if(RTCRegisterEnabled) {
 						System.out.println("TODO: Cartridge.write(): writing to RAM in RTC mode");
 					}
@@ -222,7 +222,7 @@ public class Cartridge {
 						RAM[CurrentRAMBank][index-0xa000] = value;
 					}
 				}
-				if(((index>=0x8000)&&(index<0xa000)) || ((index>0xc000))) System.out.println("TODO: Cartridge.write(): Unsupported address for write");
+				if(((index>=0x8000)&&(index<0xa000)) || ((index>0xc000))) System.out.println("WARNING: Cartridge.write(): Unsupported address for write");
 				break;
 			case 0x0015:
 			case 0x0016:

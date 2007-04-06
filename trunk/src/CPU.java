@@ -256,6 +256,50 @@ public class CPU
 			write(( regs[H]<<8 )|regs[L], val );
 		}
 
+		protected int rol(int value) {
+			int res = value;
+			res <<= 1;
+			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1 : 0;
+			regs[F] = 0;
+			regs[F] |= (res > 0xff) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		protected int rolc(int value) {
+			int res = value;
+			res <<= 1;
+			res |= (res > 0xff) ? 1 : 0;
+			regs[F] = 0;
+			regs[F] |= (res > 0xff) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		protected int ror(int value) {
+			int res = value;
+			res >>= 1;
+			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1<<7 : 0;
+			regs[F] = 0;
+			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		protected int rorc(int value) {
+			int res = value;
+			res >>= 1;
+			res |= ((value&1)==1) ? 1<<7 : 0;
+			regs[F] = 0;
+			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
 		protected void inc8b( int reg_index ) {
 			// Clear & Set HC
 			regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
@@ -453,6 +497,10 @@ public class CPU
 					break;
 				case 0x06:  // LD  B, n
 					regs[B] = read( PC++ );
+					break;
+				case 0x07:  // RLCA
+					regs[A] = rolc(regs[A]);
+					regs[F] &= ~ZF_Mask;
 					break;
 				case 0x0a:  // LD  A, (BC)
 					regs[A] = readmem8b(B, C);
