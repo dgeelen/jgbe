@@ -26,9 +26,10 @@ public class swinggui implements ActionListener, ItemListener {
 			}
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
-				g.drawImage(img[which_img_to_draw_for_double_buffering^1],0,0, this);
-				which_img_to_draw_for_double_buffering^=1;
-				//System.out.println("Painting! ");
+				g.drawImage(img[which_img_to_draw_for_double_buffering],0,0, this);
+
+
+				//System.out.println("Painting! "); //DO NOT REMOVE: Loadbaring Println :)
     	}
 		}
 
@@ -46,8 +47,6 @@ public class swinggui implements ActionListener, ItemListener {
 			img=new Image[2];
 			img[0] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 			img[1] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-			//img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-			//graph = img.getGraphics();
 		}
 
 		private JMenuBar createJMenuBar() {
@@ -132,12 +131,13 @@ public class swinggui implements ActionListener, ItemListener {
 
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
-			javax.swing.SwingUtilities.invokeLater( new Runnable() {
+			/*javax.swing.SwingUtilities.invokeLater( new Runnable() {
 				                                        public void run() {
 					                                        gui.createAndShowGUI();
 				                                        }
 			                                        }
-			                                      );
+			                                      );*/
+			gui.createAndShowGUI();
 			gui.cpu.reset();
 			int x = 10;
 			boolean fulldebug=false;
@@ -146,7 +146,8 @@ public class swinggui implements ActionListener, ItemListener {
 				gui.cpu.nextinstruction();
 				if ((gui.cpu.TotalInstrCount % 1000000) == 0) {
 					gui.VC.renderImage(gui.img[gui.which_img_to_draw_for_double_buffering^1].getGraphics());
-					//gui.grfx.updateUI();
+					gui.which_img_to_draw_for_double_buffering^=1;
+					gui.grfx.updateUI();
 				}
 				if (gui.cpu.exception()!=0) {
 					Disassembler deasm = new Disassembler( gui.cartridge, gui.cpu);

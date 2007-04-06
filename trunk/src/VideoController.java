@@ -9,11 +9,17 @@ public class VideoController {
 	private int SCY=0;
 	protected int LCDC=0;
 	private CPU cpu; // dont think we need this...
+	private Color Gray[];
 
 	public VideoController(CPU cpu) {
 		VRAM = new int[2][0x2000]; //8k per bank
 		OAM = new int[0xa0]; //Sprite Attribute Table
 		this.cpu = cpu;
+		Gray = new Color[4];
+		Gray[0]=new Color(0,0,0);
+		Gray[1]=new Color(64,64,64);
+		Gray[2]=new Color(128,128,128);
+		Gray[3]=new Color(192,192,192);
 	}
 
 	public void renderBackGroundMap(Graphics g) {
@@ -53,7 +59,8 @@ public class VideoController {
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
 				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 				//now we should do some pallete stuff....
-				g.setColor(new Color((col&1)*255,(col>>1)*255,255));
+				g.setColor(Gray[(col&1)|(col&2)]);// System.out.println((col&1)|(col&2));
+				//g.setColor(new Color((col&1)*255,(col>>1)*255,255));
 				g.drawRect(x-SCX, linenumber, x-SCX+2, linenumber+2);
 				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 			}
