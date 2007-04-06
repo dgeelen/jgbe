@@ -42,6 +42,151 @@ public class CPU
 			reset();
 		}
 
+		private int read(int index) {
+			/* Memorymap:
+			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+			 * 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+			 * A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)
+			 * C000-CFFF   4KB Work RAM Bank 0 (WRAM)
+			 * D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+			 * E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
+			 * FE00-FE9F   Sprite Attribute Table (OAM)
+			 * FEA0-FEFF   Not Usable
+			 * FF00-FF7F   I/O Ports
+			 * FF80-FFFE   High RAM (HRAM)
+			 * FFFF        Interrupt Enable Register
+			 */
+			int b=0; // b==byte read
+			if (index >=0xff00 && index <= 0xffff) {
+				b = HRAM[index-0xff00]; // HAXOR!!!
+				System.out.println("read:  " + String.format("$%04x", index) + "  HRAM[" + (index - 0xff00) + "] = " + b);
+				if (index == 0xff44)
+					HRAM[index-0xff00] = (HRAM[index-0xff00]+1) % 153;
+			}
+			else
+			if(index<0) { //Invalid
+				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
+				b=-1;
+				}
+			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+				b=cartridge.read(index);
+			}
+			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+				System.out.println("TODO: CPU.read(): Bankswitching (fixed at bank 1)");
+				b=b=cartridge.read(index);
+			}
+			else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+				System.out.println("TODO: CPU.read(): VRAM Read");
+				b=0;
+			}
+			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
+				System.out.println("TODO: CPU.read(): External RAM Read");
+				b=0;
+			}
+			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
+				System.out.println("TODO: CPU.read(): Internal RAM Read bank0");
+				b=0;
+			}
+			else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+				System.out.println("TODO: CPU.read(): Internal RAM Read bank1");
+				b=0;
+			}
+			else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
+				System.out.println("TODO: CPU.read(): ECHO RAM Read");
+				b=read(index-0x2000);
+			}
+			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
+				System.out.println("TODO: CPU.read(): Sprite Attribute Table");
+				b=0;
+			}
+			else if(index < 0xff00) { //Not Usable
+				System.out.println("TODO: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
+				b=0;
+			}
+			else if(index < 0xff80) { //I/O Ports
+				System.out.println("TODO: CPU.read(): Read from IO ports");
+				b=0;
+			}
+			else if(index < 0xffff) { //High RAM (HRAM)
+				System.out.println("TODO: CPU.read(): Read from High RAM (0xff80-0xfffe)");
+				b=0;
+			}
+			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
+				System.out.println("TODO: CPU.read(): Read from Interrupt Enable Register (0xffff)");
+				b=0;
+			}
+			else {
+				System.out.println("ERROR: CPU.read(): Out of range memory access: $"+index);
+				b=0;
+			}
+			return b;
+		}
+
+		private void write(int index, int value) {
+			/* Memorymap:
+			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+			 * 8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+			 * A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)
+			 * C000-CFFF   4KB Work RAM Bank 0 (WRAM)
+			 * D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+			 * E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
+			 * FE00-FE9F   Sprite Attribute Table (OAM)
+			 * FEA0-FEFF   Not Usable
+			 * FF00-FF7F   I/O Ports
+			 * FF80-FFFE   High RAM (HRAM)
+			 * FFFF        Interrupt Enable Register
+			 */
+			if (index >=0xff00 && index <= 0xffff) {
+				System.out.println("write: " + String.format("$%04x", index) + "  HRAM[" + (index - 0xff00) + "] = " + value);
+				HRAM[index-0xff00] = value; // HAXOR!!!
+			}
+			else
+			if(index<0) { //Invalid
+				System.out.println("ERROR: Cartridge.write(): No negative addresses in GameBoy memorymap.");
+			}
+			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+				System.out.println("WARNING: Cartridge.write(): Writing to ROM bank 0");
+			}
+			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+				System.out.println("WARNING: Cartridge.write(): Writing to ROM bank N (fixed at bank 1)");
+			}
+			else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+				System.out.println("TODO: Cartridge.write(): VRAM Read");
+			}
+			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
+				System.out.println("TODO: Cartridge.write(): External RAM Read");
+			}
+			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
+				System.out.println("TODO: Cartridge.write(): Internal RAM Read bank0");
+			}
+			else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+				System.out.println("TODO: Cartridge.write(): Internal RAM Read bank1");
+			}
+			else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
+				System.out.println("TODO: Cartridge.write(): ECHO RAM Read");
+			}
+			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
+				System.out.println("TODO: Cartridge.write(): Sprite Attribute Table");
+			}
+			else if(index < 0xff00) { //Not Usable
+				System.out.println("TODO: Cartridge.write(): Read from unusable memory (0xfea-0xfeff)");
+			}
+			else if(index < 0xff80) { //I/O Ports
+				System.out.println("TODO: Cartridge.write(): Read from IO ports");
+			}
+			else if(index < 0xffff) { //High RAM (HRAM)
+				System.out.println("TODO: Cartridge.write(): Read from High RAM (0xff80-0xfffe)");
+			}
+			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
+				System.out.println("TODO: Cartridge.write(): Read from Interrupt Enable Register (0xffff)");
+			}
+			else {
+				System.out.println("ERROR: Cartridge.write(): Out of range memory access: $"+index);
+			}
+		}
+
 		public void reset() {
 			//TODO: Switch to bank 0
 			PC = 0x100; //ROM Entry point on bank 0
@@ -116,11 +261,11 @@ public class CPU
 			System.out.println( "  "+deasm.disassemble( PC ) );
 		}
 		protected int readmem8b( int H, int L ) {
-			return cartridge.read(( regs[H]<<8 )|regs[L] );
+			return read(( regs[H]<<8 )|regs[L] );
 		}
 
 		protected void writemem8b( int H, int L, int val ) {
-			cartridge.write(( regs[H]<<8 )|regs[L], val );
+			write(( regs[H]<<8 )|regs[L], val );
 		}
 
 		protected void inc8b( int reg_index ) {
@@ -220,7 +365,7 @@ public class CPU
 		}
 
 		protected void ld8bmem( int location, int val ) {
-			cartridge.write( location, val );
+			write( location, val );
 		}
 
 		protected void cp( int val ) {
@@ -248,9 +393,9 @@ public class CPU
 		}
 
 		protected void JPnn() {
-			int i=cartridge.read( PC++ );
-			int j=cartridge.read( PC++ );
-			System.out.println( "i="+i+ " j="+j );
+			int i=read( PC++ );
+			int j=read( PC++ );
+			//System.out.println( "i="+i+ " j="+j );
 			PC = j<<8|i; //Should be endian correct
 		}
 
@@ -272,19 +417,19 @@ public class CPU
 
 		protected void push( int val ) {
 			//Should be endian correct
-			cartridge.write( --SP, ( val>>8 )&0xff );
-			cartridge.write( --SP, val&0xff );
+			write( --SP, ( val>>8 )&0xff );
+			write( --SP, val&0xff );
 		}
 
 		protected int pop() {
 			//Should be endian correct
-			int l = cartridge.read( SP++ );
-			int h = cartridge.read( SP++ );
+			int l = read( SP++ );
+			int h = read( SP++ );
 			return (l | (h<<8));
 		}
 
 		protected int fetch() {
-			return cartridge.read( PC );
+			return read( PC );
 		}
 
 		static int nopCount=0;
@@ -297,8 +442,8 @@ public class CPU
 					nop=true;
 					break;
 				case 0x01: // LD BC, nn
-					regs[C] = cartridge.read( PC++ );
-					regs[B] = cartridge.read( PC++ );
+					regs[C] = read( PC++ );
+					regs[B] = read( PC++ );
 					break;
 				case 0x02: // LD (BC), A
 					writemem8b(B,C, regs[A]);
@@ -322,8 +467,8 @@ public class CPU
 					dec8b( C );
 					break;
 				case 0x11: // LD DE, nn
-					regs[E] = cartridge.read( PC++ );
-					regs[D] = cartridge.read( PC++ );
+					regs[E] = read( PC++ );
+					regs[D] = read( PC++ );
 					break;
 				case 0x13: // INC DE
 					inc16b(D, E);
@@ -335,7 +480,7 @@ public class CPU
 					dec8b( D );
 					break;
 				case 0x18:{// JR   &00
-					int x = cartridge.read( PC++ );
+					int x = read( PC++ );
 					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 				};break;
 				case 0x1b: // DEC DE
@@ -349,14 +494,14 @@ public class CPU
 					break;
 				case 0x20: // JR NZ, n
 					if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
-						int x = cartridge.read( PC++ );
+						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 					}
 					else ++PC;
 					break;
 				case 0x21: // LD HL, nn
-					regs[L] = cartridge.read( PC++ );
-					regs[H] = cartridge.read( PC++ );
+					regs[L] = read( PC++ );
+					regs[H] = read( PC++ );
 					break;
 				case 0x22: // LDI (HL), A
 					writemem8b(H,L, regs[A]);
@@ -367,7 +512,7 @@ public class CPU
 					break;
 				case 0x28: // JR   Z, n
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
-						int x = cartridge.read( PC++ );
+						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 					}
 					else ++PC;
@@ -385,8 +530,8 @@ public class CPU
 					xor( 0xFF );
 					break;
 				case 0x31:{// LD SP, nn
-					int l = cartridge.read( PC++ );
-					int h = cartridge.read( PC++ );
+					int l = read( PC++ );
+					int h = read( PC++ );
 					SP = l | (h<<8);
 				};break;
 				case 0x33: // INC SP
@@ -394,14 +539,14 @@ public class CPU
 					SP&=0xffff;
 					break;
 				case 0x36: // LD (HL), n
-					writemem8b(H,L, cartridge.read(PC++));
+					writemem8b(H,L, read(PC++));
 					break;
 				case 0x3b: // DEC SP
 					--SP; //16-bit inc/dec doesnt affect any flags
 					SP&=0xffff;
 					break;
 				case 0x3e:  // LD A, n
-					regs[A]=cartridge.read( PC++ );
+					regs[A]=read( PC++ );
 					break;
 				case 0x40: // LD B, B
 					ld8b( B, regs[B] );
@@ -781,27 +926,27 @@ public class CPU
 					push( regs[D]<<8 | regs[E]);
 					break;
 				case 0xe0: // LDH
-					cartridge.write( 0xff00 | cartridge.read( PC++ ), regs[A] );
+					write( 0xff00 | read( PC++ ), regs[A] );
 					break;
 				case 0xe6: // AND nn
-					and(cartridge.read(PC++));
+					and(read(PC++));
 					break;
 				case 0xea:{// LD (nnnn), A
-					int a = cartridge.read( PC++ );
-					int b = cartridge.read( PC++ );
+					int a = read( PC++ );
+					int b = read( PC++ );
 					ld8bmem(( b << 8 ) + a, regs[A] );
 				};break;
 				case 0xee: // XOR   &00
-					xor( cartridge.read( PC++ ) );
+					xor( read( PC++ ) );
 					break;
 				case 0xf0: // LDH
-					regs[A] = cartridge.read( 0xff00 | cartridge.read( PC++ ) );
+					regs[A] = read( 0xff00 | read( PC++ ) );
 					break;
 				case 0xf3: // DI
 					IR = 0x00;
 					break;
 				case 0xfe: // CP n
-					cp( cartridge.read( PC++ ) );
+					cp( read( PC++ ) );
 					break;
 				case 0xda: //D4 JMP CF,&0000
 					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask ) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
@@ -816,7 +961,7 @@ public class CPU
 					PC = 0x38;
 					break;
 				case 0xcb: // prefix instruction
-					instr = cartridge.read( PC++ );
+					instr = read( PC++ );
 					switch ( instr ) {
 						case 0x80: // RES 0,B
 							regs[B] &= ~( 1 << 0 );
