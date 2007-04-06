@@ -95,9 +95,9 @@ public class CPU
 				b=0;
 			}
 			else if(index < 0xff80) { //I/O Ports
-				System.out.println("TODO: CPU.read(): Read from IO ports");
-				if (index == 0xff44) HRAM[index-0xff00] = (HRAM[index-0xff00]+1) % 153;//vblank hax
+				System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 				b=0;
+				if (index == 0xff44) b=0x91;//vblank hax
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
 				b = HRAM[index-0xff80];
