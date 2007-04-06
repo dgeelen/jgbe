@@ -308,7 +308,7 @@ public class CPU
 					break;
 				case 0x18: {// JR   &00
 					int x = cartridge.read( PC++ );
-					PC += (( x>=128 ) ? -( x & 0x7F ) : x & 0x7F );
+					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 				}
 				; break;
 				case 0x1c: // INC  E
@@ -320,14 +320,14 @@ public class CPU
 				case 0x20: // JR NZ, n
 					if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
 						int x = cartridge.read( PC++ );
-						PC += (( x>=128 ) ? -( x & 0x7F ) : x & 0x7F );
+						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 					}
 					else ++PC;
 					break;
 				case 0x28: // JR   Z, n
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
 						int x = cartridge.read( PC++ );
-						PC += (( x>=128 ) ? -( x & 0x7F ) : x & 0x7F );
+						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 					}
 					else ++PC;
 					break;
