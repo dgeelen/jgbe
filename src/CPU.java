@@ -811,6 +811,10 @@ public class CPU
 						PC+=2;
 					}
 					break;
+				case 0xFF: // RST &38
+					push(PC);
+					PC = 0x38;
+					break;
 				case 0xcb: // prefix instruction
 					instr = cartridge.read( PC++ );
 					switch ( instr ) {
