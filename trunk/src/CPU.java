@@ -26,7 +26,7 @@ public class CPU
 		protected static final int L = 7;
 		protected static final int A = 0;
 
-		protected int[] HRAM = new int[0x7E];
+		protected int[] HRAM = new int[0x80];
 
 		protected int IR;
 		protected int PC;
@@ -58,8 +58,8 @@ public class CPU
 			 * FFFF        Interrupt Enable Register
 			 */
 			int b=0; // b==byte read
-			if (index >=0xff00 && index <= 0xffff) {
-				b = HRAM[index-0xff00]; // HAXOR!!!
+			if (index >=0xff80 && index <= 0xfffe) {
+				b = HRAM[index-0xff80]; // HAXOR!!!
 				System.out.println("read:  " + String.format("$%04x", index) + "  HRAM[" + (index - 0xff00) + "] = " + b);
 				if (index == 0xff44)
 					HRAM[index-0xff00] = (HRAM[index-0xff00]+1) % 153;
@@ -138,9 +138,9 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-			if (index >=0xff00 && index <= 0xffff) {
+			if (index >=0xff80 && index <= 0xfffe) {
 				System.out.println("write: " + String.format("$%04x", index) + "  HRAM[" + (index - 0xff00) + "] = " + value);
-				HRAM[index-0xff00] = value; // HAXOR!!!
+				HRAM[index-0xff80] = value; // HAXOR!!!
 			}
 			else
 			if(index<0) { //Invalid
