@@ -828,11 +828,13 @@ public class CPU
 							break;
 						default:
 							System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , instr );
+							PC -= 2; // we failed to execute the instruction, so restore PC
 							return false;
 					}
 					break;
 				default:
 					System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
+					PC -= 1; // we failed to execute the instruction, so restore PC
 					return false;
 			}
 			PC &= 0xffff;
@@ -852,7 +854,6 @@ public class CPU
 		}
 
 		protected boolean nextinstruction() {
-			printCPUstatus();
 			lastException = execute( fetch() ) ? 0 : 1;
 			return lastException==0;
 		}
