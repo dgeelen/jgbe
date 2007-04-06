@@ -526,6 +526,10 @@ public class CPU
 					}
 					else ++PC;
 					break;
+				case 0x2a: // LDI A, (HL)
+					regs[A] = readmem8b(H, L);
+					inc16b(H, L);
+					break;
 				case 0x2b:  // DEC HL
 					dec16b(H, L);
 					break;
