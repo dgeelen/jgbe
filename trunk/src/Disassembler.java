@@ -80,7 +80,9 @@ public class Disassembler
 				j=op.lastIndexOf(",", i-1);
 				if(j>-1) {//2 parts
 					//part 1
-					immediate=regval(op.substring(i+1));
+					int k=op.length()-1;
+					if(op.charAt(i+1)=='[') { ++i; k--; }; //TODO:Verify this does what I want
+					immediate=regval(op.substring(i+1, k));
 					if(immediate>-1) {
 						if(immediate>0xffff) {
 							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
@@ -91,6 +93,7 @@ public class Disassembler
 					}
 					//part 2
 					i=op.lastIndexOf(" ",j);
+					if(op.charAt(i+1)=='[') { ++i; j--; }; //TODO:Verify this does what I want
 					immediate=regval(op.substring(i+1,j));
 					if(immediate>-1) {
 						if(immediate>0xffff) {
