@@ -27,6 +27,7 @@ public class CPU
 		protected static final int L = 7;
 		protected static final int A = 0;
 
+		private int[] IOP = new int[0x80]; //IO Ports
 		private int[] HRAM = new int[0x7F]; //HighRAM
 		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
 		private int CurrentWRAMBank=0;
@@ -36,6 +37,9 @@ public class CPU
 		protected int IR;
 		protected int PC;
 		protected int SP;
+		//IO
+		public int DirectionKeyStatus=0; //bitmask
+		public int ButtonKeyStatus=0; //bitmask
 		//CPU Class variables
 		private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
 		private int lastException=0;
@@ -100,17 +104,32 @@ public class CPU
 				b=0;
 			}
 			else if(index < 0xff80) { //I/O Ports
-				if (index==0xff40) { // LCDC register
-					b = VC.LCDC;
-				}	else if (index==0xff42) { // SCY
-					b = VC.SCY;
-				}	else if (index==0xff43) { // SCX
-					b = VC.SCX;
-				}	else if (index==0xff44) { // vblank ???
-					b = 0x91;//vblank hax
+				switch(index) {
+					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
+						b=IOP[index-0xff00]&0xf0;
+						if((b&(1<<4))==0) { // Direction keys, 0=select
+							b|=DirectionKeyStatus;
+						}
+						if((b&(1<<5))==0) { // Buttons, 0=select
+							b|=ButtonKeyStatus;
+						}
+						break;
+					case 0xff40: // LCDC register
+						b = VC.LCDC;
+						break;
+					case 0xff42: // SCY
+						b = VC.SCY;
+						break;
+					case 0xff43: // SCX
+						b = VC.SCX;
+						break;
+					case 0xff44: // vblank ???
+						b = 0x91;//vblank hax
+						break;
+					default:
+						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
+						break;
 				}
-				else
-					System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
 				b = HRAM[index-0xff80];
@@ -173,34 +192,41 @@ public class CPU
 				System.out.println("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff)");
 			}
 			else if(index < 0xff80) { //I/O Ports
-				if(index == 0xff46 ) { // FF46 - DMA - DMA Transfer and Start Address (W)
-					for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
-						write(0xfe00|i, read(i+(value<<8)));
-					}
+				switch(index) {
+					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
+							IOP[index-0xff00]=value;
+						break;
+					case 0xff40: // LCDC register
+						VC.LCDC = value;
+						break;
+					case 0xff42: // SCY
+						VC.SCY = value;
+						break;
+					case 0xff43: // SCX
+						VC.SCX = value;
+						break;
+					case 0xff46: // FF46 - DMA - DMA Transfer and Start Address (W)
+						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
+							write(0xfe00|i, read(i+(value<<8)));
+						}
+						break;
+					case 0xff4f: // FF4F - VBK - CGB Mode Only - VRAM Bank
+						VC.selectVRAMBank(value&1);
+						break;
+					case 0xff51: // FF51 - HDMA1 - CGB Mode Only - New DMA Source, High
+					case 0xff52: // FF52 - HDMA2 - CGB Mode Only - New DMA Source, Low
+					case 0xff53: // FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
+					case 0xff54: // FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
+					case 0xff55: // FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
+						System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");
+						break;
+					case 0xff70: //FF70 - SVBK - CGB Mode Only - WRAM Bank
+						CurrentWRAMBank=Math.max(value&0x07, 1);
+						break;
+					default:
+						System.out.printf("TODO: CPU.write(): Write to IO port $%04x\n",index);
+						break;
 				}
-				else if(index==0xff4f) { //FF4F - VBK - CGB Mode Only - VRAM Bank
-					VC.selectVRAMBank(value&1);
-				}
-/*
-FF51 - HDMA1 - CGB Mode Only - New DMA Source, High
-FF52 - HDMA2 - CGB Mode Only - New DMA Source, Low
-FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
-FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
-FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
-*/			else if(index==0xff40) { // LCDC register
-					VC.LCDC = value;
-				}	else if (index==0xff42) { // SCY
-					VC.SCY = value;
-				}	else if (index==0xff43) { // SCX
-					VC.SCX = value;
-				}
-				else if((index>0xff50)&&(index<0xff56)) {
-					System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");
-				}
-				else if(index==0xff70) { //FF70 - SVBK - CGB Mode Only - WRAM Bank
-					CurrentWRAMBank=Math.max(value&0x07, 1);
-				}
-				else System.out.println("TODO: CPU.write(): Write to IO ports");
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
 				HRAM[index-0xff80] = value;
