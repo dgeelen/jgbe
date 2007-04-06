@@ -5,19 +5,27 @@ public class VideoController {
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
 	private int OAM[];
+	private int SCX=0;
+	private int SCY=0;
 
 	public VideoController() {
 		VRAM = new int[2][0x2000]; //8k per bank
 		OAM = new int[0xa0]; //Sprite Attribute Table
 	}
 
+	public void renderBackGroundMap(Graphics g, int i) {
+
+	}
+
 	public void renderImage(Graphics g) {	//g is a reference to the display
-		int width = (g.getClipBounds()).x;
-		System.out.println("Rendering Image");
-		for(int i=0; i<width; ++i) {
-			g.drawLine(0,0,i,i);
+		int width = (g.getClipBounds()).width;
+		int height = (g.getClipBounds()).height;
+		System.out.println("Graphics g width="+width+ " height="+height);
+		for(int i=0; i<height; i+=4) {
+			g.drawLine(0,0,width,i);
 		}
 		g.drawRect(20,20,200,200);
+		renderBackGroundMap(g,0);
 	}
 
 	public int read(int index) {
