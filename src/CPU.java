@@ -309,28 +309,28 @@ public class CPU
         case 0x15: // DEC  D
           dec8b( D );
           break;
-        case 0x18:{// JR   &00
-					int x = cartridge.read(PC++);
+        case 0x18: {// JR   &00
+          int x = cartridge.read(PC++);
           PC += ((x>=128) ? -(x & 0x7F) : x & 0x7F);
-				};break;
+          }; break;
         case 0x1c: // INC  E
           inc8b( E );
           break;
         case 0x1d: // DEC  E
           dec8b( E );
           break;
-				case 0x20: // JR  NZ, n
-					if((regs[F]&ZF_Mask)!=ZF_Mask) {
-						int x = cartridge.read(PC++);
-						PC += ((x>=128) ? -(x & 0x7F) : x & 0x7F);
-					}
-					else ++PC;
-					break;
-				case 0x28: // JR   Z, n
+        case 0x20: // JR NZ, n
+          if((regs[F]&ZF_Mask)!=ZF_Mask) {
+            int x = cartridge.read(PC++);
+            PC += ((x>=128) ? -(x & 0x7F) : x & 0x7F);
+          }
+          else ++PC;
+          break;
+        case 0x28: // JR   Z, n
           if((regs[F]&ZF_Mask)==ZF_Mask) {
-						int x = cartridge.read(PC++);
-						PC += ((x>=128) ? -(x & 0x7F) : x & 0x7F);
-					}
+            int x = cartridge.read(PC++);
+            PC += ((x>=128) ? -(x & 0x7F) : x & 0x7F);
+          }
           else ++PC;
           break;
         case 0x2c:  // INC L
@@ -728,7 +728,8 @@ public class CPU
           System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
           return false;
       }
-			PC &= 0xFFFF;
+      PC &= 0xffff;
+      SP &= 0xffff;
       ++TotalInstrCount;
       if(nop) {
         ++nopCount;
