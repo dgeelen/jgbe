@@ -100,14 +100,6 @@ public class CPU
 			return TotalInstrCount;
 		}
 
-		private String disassembleinstruction() {
-			//cartridge.write(PC,14);
-			//cartridge.write(PC,10);
-			//cartridge.write(PC,9);
-			// TODO: take count of BC
-			return String.format( "$%02x\t", cartridge.read( PC ) )+deasm.disassemble( PC );
-		}
-
 		protected void printCPUstatus() {
 			String flags = "";
 			flags += (( regs[FLAG_REG] & ZF_Mask ) == ZF_Mask )?"Z ":"z ";
@@ -121,7 +113,7 @@ public class CPU
 			System.out.println( "---CPU Status for cycle "+TotalInstrCount+"---" );
 			System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F], regs[H],regs[L] );
 			System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
-			System.out.printf( "  $%04x %s\n", PC, disassembleinstruction() );
+			System.out.println( "  "+deasm.disassemble( PC ) );
 		}
 		protected int readmem8b( int H, int L ) {
 			return cartridge.read(( regs[H]<<8 )|regs[L] );

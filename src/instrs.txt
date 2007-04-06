@@ -1,131 +1,131 @@
 NOP
-LD  BC, IMM16
-LD  [BC], A
+LD   BC, IMM16
+LD   [BC], A
 INC  BC
 INC  B
 DEC  B
-LD  B, IMM08
+LD   B, IMM08
 RLCA
-LD  [IMM16], SP
+LD   [IMM16], SP
 ADD  HL, BC
-LD  A, [BC]
+LD   A, [BC]
 DEC  BC
 INC  C
 DEC  C
-LD  C, IMM08
+LD   C, IMM08
 RRCA
 STOP
-LD  DE, IMM16
-LD  [DE], A
+LD   DE, IMM16
+LD   [DE], A
 INC  DE
 INC  D
 DEC  D
-LD  D, IMM08
+LD   D, IMM08
 RLA
-JR  IMM08
+JR   IMM08
 ADD  HL, DE
-LD  A, [DE]
+LD   A, [DE]
 DEC  DE
 INC  E
 DEC  E
-LD  E, IMM08
+LD   E, IMM08
 RRA
-JR  NZ, IMM08
-LD  HL, IMM16
+JR   NZ, IMM08
+LD   HL, IMM16
 LDI  [HL], A
 INC  HL
 INC  H
 DEC  H
-LD  H, IMM08
+LD   H, IMM08
 DAA
-JR  Z, IMM08
+JR   Z, IMM08
 ADD  HL, HL
 LDI  A, HL
 DEC  HL
 INC  L
 DEC  L
-LD  L, IMM08
+LD   L, IMM08
 CPL
-JR  NC, IMM08
-LD  SP, IMM16
+JR   NC, IMM08
+LD   SP, IMM16
 LDD  HL, A
 INC  SP
 INC  [HL]
 DEC  [HL]
-LD  [HL], IMM08
+LD   [HL], IMM08
 SCF
-JR  C, IMM08
+JR   C, IMM08
 ADD  HL, SP
 LDD  A, HL
 DEC  SP
 INC  A
 DEC  A
-LD  A, IMM08
+LD   A, IMM08
 CCF
-LD  B, B
-LD  B, C
-LD  B, D
-LD  B, E
-LD  B, H
-LD  B, L
-LD  B, [HL]
-LD  B, A
-LD  C, B
-LD  C, C
-LD  C, D
-LD  C, E
-LD  C, H
-LD  C, L
-LD  C, [HL]
-LD  C, A
-LD  D, B
-LD  D, C
-LD  D, D
-LD  D, E
-LD  D, H
-LD  D, L
-LD  D, [HL]
-LD  D, A
-LD  E, B
-LD  E, C
-LD  E, D
-LD  E, E
-LD  E, H
-LD  E, L
-LD  E, [HL]
-LD  E, A
-LD  H, B
-LD  H, C
-LD  H, D
-LD  H, E
-LD  H, H
-LD  H, L
-LD  H, [HL]
-LD  H, A
-LD  L, B
-LD  L, C
-LD  L, D
-LD  L, E
-LD  L, H
-LD  L, L
-LD  L, [HL]
-LD  L, A
-LD  [HL], B
-LD  [HL], C
-LD  [HL], D
-LD  [HL], E
-LD  [HL], H
-LD  [HL], L
+LD   B, B
+LD   B, C
+LD   B, D
+LD   B, E
+LD   B, H
+LD   B, L
+LD   B, [HL]
+LD   B, A
+LD   C, B
+LD   C, C
+LD   C, D
+LD   C, E
+LD   C, H
+LD   C, L
+LD   C, [HL]
+LD   C, A
+LD   D, B
+LD   D, C
+LD   D, D
+LD   D, E
+LD   D, H
+LD   D, L
+LD   D, [HL]
+LD   D, A
+LD   E, B
+LD   E, C
+LD   E, D
+LD   E, E
+LD   E, H
+LD   E, L
+LD   E, [HL]
+LD   E, A
+LD   H, B
+LD   H, C
+LD   H, D
+LD   H, E
+LD   H, H
+LD   H, L
+LD   H, [HL]
+LD   H, A
+LD   L, B
+LD   L, C
+LD   L, D
+LD   L, E
+LD   L, H
+LD   L, L
+LD   L, [HL]
+LD   L, A
+LD   [HL], B
+LD   [HL], C
+LD   [HL], D
+LD   [HL], E
+LD   [HL], H
+LD   [HL], L
 HALT
-LD  [HL], A
-LD  A, B
-LD  A, C
-LD  A, D
-LD  A, E
-LD  A, H
-LD  A, L
-LD  A, [HL]
-LD  A, A
+LD   [HL], A
+LD   A, B
+LD   A, C
+LD   A, D
+LD   A, E
+LD   A, H
+LD   A, L
+LD   A, [HL]
+LD   A, A
 ADD  A, B
 ADD  A, C
 ADD  A, D
@@ -174,85 +174,85 @@ XOR  H
 XOR  L
 XOR  [HL]
 XOR  A
-OR  B
-OR  C
-OR  D
-OR  E
-OR  H
-OR  L
-OR  [HL]
-OR  A
-CP  B
-CP  C
-CP  D
-CP  E
-CP  H
-CP  L
-CP  [HL]
-CP  A
+OR   B
+OR   C
+OR   D
+OR   E
+OR   H
+OR   L
+OR   [HL]
+OR   A
+CP   B
+CP   C
+CP   D
+CP   E
+CP   H
+CP   L
+CP   [HL]
+CP   A
 RET  NZ
 POP  BC
-JP  NZ, IMM16
-JP  IMM16
-CALL  NZ, IMM16
-PUSH  BC
+JP   NZ, IMM16
+JP   IMM16
+CALL NZ, IMM16
+PUSH BC
 ADD  A, IMM08
 RST  IMM08
 RET  Z
 RET
-JP  Z, IMM16
-****  CB  ****
-CALL  Z, IMM16
-CALL  IMM16
+JP   Z, IMM16
+**** CB ****
+CALL Z, IMM16
+CALL IMM16
 ADC  A, IMM08
 RST  &08
 RET  NC
 POP  DE
-JP  NC, IMM16
-**MISSING  INSTRUCTION**
-CALL  NC, IMM16
-PUSH  DE
+JP   NC, IMM16
+**MISSING    INSTRUCTION**
+CALL NC, IMM16
+PUSH DE
 SUB  A, IMM08
 RST  &10
 RET  C
 RETI
-JP  C, IMM16
-**MISSING  INSTRUCTION**
-CALL  C, IMM16
-**MISSING  INSTRUCTION**
+JP   C, IMM16
+**MISSING    INSTRUCTION**
+CALL C, IMM16
+**MISSING    INSTRUCTION**
 SBC  A, IMM08
 RST  &18
 LDH  [n], A
 POP  HL
-LD  [C], A
-**MISSING  INSTRUCTION**
-**MISSING  INSTRUCTION**
-PUSH  HL
+LD   [C], A
+**MISSING    INSTRUCTION**
+**MISSING    INSTRUCTION**
+PUSH HL
 AND  IMM08
 RST  &20
 ADD  SP, IMM16
-JP  [HL]
-LD  [IMM16], A
-**MISSING  INSTRUCTION**
-**MISSING  INSTRUCTION**
-**MISSING  INSTRUCTION**
+JP   [HL]
+LD   [IMM16], A
+**MISSING    INSTRUCTION**
+**MISSING    INSTRUCTION**
+**MISSING    INSTRUCTION**
 XOR  IMM08
 RST  &28
 LDH  A, [n]
 POP  AF
-LD  A, [C]
+LD   A, [C]
 DI
-**MISSING  INSTRUCTION**
-PUSH  AF
-OR  IMM08
+**MISSING    INSTRUCTION**
+PUSH AF
+OR   IMM08
 RST  &30
-LD  A, SP+dd
-LD  SP, HL
-LD  A, [IMM16]
+LD   A, SP+dd
+LD   SP, HL
+LD   A, [IMM16]
 EI
-**MISSING  INSTRUCTION**
-**MISSING  INSTRUCTION**
-CP  IMM08
+**MISSING    INSTRUCTION**
+**MISSING    INSTRUCTION**
+CP   IMM08
 RST  &38
 RLC  B
 RLC  C
@@ -270,22 +270,22 @@ RRC  H
 RRC  L
 RRC  [HL]
 RRC  A
-RL  B
-RL  C
-RL  D
-RL  E
-RL  H
-RL  L
-RL  [HL]
-RL  A
-RR  B
-RR  C
-RR  D
-RR  E
-RR  H
-RR  L
-RR  [HL]
-RR  A
+RL   B
+RL   C
+RL   D
+RL   E
+RL   H
+RL   L
+RL   [HL]
+RL   A
+RR   B
+RR   C
+RR   D
+RR   E
+RR   H
+RR   L
+RR   [HL]
+RR   A
 SLA  B
 SLA  C
 SLA  D
@@ -302,14 +302,14 @@ SRA  H
 SRA  L
 SRA  [HL]
 SRA  A
-SWAP  B
-SWAP  C
-SWAP  D
-SWAP  E
-SWAP  H
-SWAP  L
-SWAP  [HL]
-SWAP  A
+SWAP B
+SWAP C
+SWAP D
+SWAP E
+SWAP H
+SWAP L
+SWAP [HL]
+SWAP A
 SRL  B
 SRL  C
 SRL  D
