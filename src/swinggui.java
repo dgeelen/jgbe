@@ -70,7 +70,7 @@ public class swinggui implements ActionListener, ItemListener {
 			}
 
 			grfx=new DrawingArea( cpu.VC ); //doublebuffering
-			grfx.setPreferredSize( new Dimension( 160*4, 144*4 ) ); //quadruple each pixel
+			grfx.setPreferredSize( new Dimension( 160, 144 ) ); //quadruple each pixel
 			contentPane.add( grfx, BorderLayout.CENTER );
 		}
 
