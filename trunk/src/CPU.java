@@ -73,8 +73,7 @@ public class CPU
 				b=cartridge.read(index);
 			}
 			else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
-				System.out.println("TODO: CPU.read(): VRAM Read");
-				b=0;
+				b=VC.read(index);
 			}
 			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
 				b=cartridge.read(index);
@@ -140,7 +139,7 @@ public class CPU
 				cartridge.write(index, value);
 			}
 			else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
-				System.out.println("TODO: CPU.write(): VRAM Write");
+				VC.write(index, value);
 			}
 			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
 				cartridge.write(index, value);
@@ -161,10 +160,18 @@ public class CPU
 				System.out.println("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff)");
 			}
 			else if(index < 0xff80) { //I/O Ports
-				System.out.println("TODO: CPU.write(): Write to IO ports");
-				if(index==0xff70) { //FF70 - SVBK - CGB Mode Only - WRAM Bank
+				if(index == 0xff46 ) { // FF46 - DMA - DMA Transfer and Start Address (W)
+					for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
+						write(0xfe00|i, read(i+(value<<8)));
+					}
+				}
+				else if(index==0xff4f) { //FF4F - VBK - CGB Mode Only - VRAM Bank
+					VC.selectVRAMBank(value&1);
+				}
+				else if(index==0xff70) { //FF70 - SVBK - CGB Mode Only - WRAM Bank
 					CurrentWRAMBank=Math.max(value&0x07, 1);
 				}
+				else System.out.println("TODO: CPU.write(): Write to IO ports");
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
 				HRAM[index-0xff80] = value;
