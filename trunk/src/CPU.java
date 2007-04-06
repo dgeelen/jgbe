@@ -348,6 +348,16 @@ public class CPU
 			regs[FLAG_REG] |= regs[dest]==0 ? ZF_Mask : 0;
 		}
 
+		protected void add16bHL(int val1, int val2) {
+			int fmask = regs[F] & ZF_Mask; // zero flag should be unaffected
+			add8b(L, val2);
+			fmask |= ((regs[F]&CF_Mask)==CF_Mask) ? HC_Mask : 0;
+			adc(H, val1);
+			regs[F] &= ~ZF_Mask;
+			regs[F] &= ~HC_Mask;
+			regs[F] |= fmask;
+		}
+
 		protected void ld8b( int dest, int val ) {
 			regs[dest] = val;
 		}
@@ -482,6 +492,12 @@ public class CPU
 					int x = read( PC++ );
 					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 				};break;
+				case 0x19: // ADD HL, DE
+					add16bHL(regs[D], regs[E]);
+					break;
+				case 0x1a: // LD A, (DE)
+					regs[A] = readmem8b(D, E);
+					break;
 				case 0x1b: // DEC DE
 					dec16b(D, E);
 					break;
@@ -521,6 +537,9 @@ public class CPU
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 					}
 					else ++PC;
+					break;
+				case 0x29: // ADD HL, HL
+					add16bHL(regs[H], regs[L]);
 					break;
 				case 0x2a: // LDI A, (HL)
 					regs[A] = readmem8b(H, L);
@@ -952,6 +971,12 @@ public class CPU
 					regs[D] = x >> 8;
 					regs[E] = x&0xff;
 				};break;
+				case 0xd2: // JMP NC, nn
+					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask )
+						JPnn();
+					else
+						PC+=2;
+					break;
 				case 0xd5: // PUSH DE
 					push( regs[D]<<8 | regs[E]);
 					break;
