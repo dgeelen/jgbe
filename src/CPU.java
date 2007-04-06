@@ -502,6 +502,9 @@ public class CPU
 					regs[A] = rolc(regs[A]);
 					regs[F] &= ~ZF_Mask;
 					break;
+				case 0x09:  // ADD HL, BC
+					add16bHL(regs[B], regs[C]);
+					break;
 				case 0x0a:  // LD  A, (BC)
 					regs[A] = readmem8b(B, C);
 					break;
@@ -619,6 +622,13 @@ public class CPU
 					break;
 				case 0x36: // LD (HL), n
 					writemem8b(H,L, read(PC++));
+					break;
+				case 0x38: // JR C, n
+					if (( regs[F]&CF_Mask )==CF_Mask ) {
+						int x = read( PC++ );
+						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
+					}
+					else ++PC;
 					break;
 				case 0x3b: // DEC SP
 					--SP; //16-bit inc/dec doesnt affect any flags
@@ -995,12 +1005,17 @@ public class CPU
 				case 0xbf: // CP   A
 					cp( regs[A] );
 					break;
+				case 0xc1:{// POP BC
+					int x = pop();
+					regs[B] = x >> 8;
+					regs[C] = x&0xff;
+				};break;
 				case 0xc3: // JPNNNN
 					JPnn();
 					break;
-				case 0xc5: // PUSH BC
-					push( regs[B]<<8 | regs[C]);
-					break;
+					case 0xc5: // PUSH BC
+						push( regs[B]<<8 | regs[C]);
+						break;
 				case 0xc9: // RET
 					PC = pop();
 					break;
@@ -1039,6 +1054,11 @@ public class CPU
 				case 0xe0: // LDH
 					write( 0xff00 | read( PC++ ), regs[A] );
 					break;
+				case 0xe1:{// POP HL
+					int x = pop();
+					regs[H] = x >> 8;
+					regs[L] = x&0xff;
+				};break;
 				case 0xe2: // LD (C), A
 					write( 0xff00 | regs[C], regs[A] );
 					break;
@@ -1059,8 +1079,16 @@ public class CPU
 				case 0xf0: // LDH
 					regs[A] = read( 0xff00 | read( PC++ ) );
 					break;
+				case 0xf1:{// POP AF
+					int x = pop();
+					regs[A] = x >> 8;
+					regs[F] = x&0xff;
+				};break;
 				case 0xf3: // DI
 					IR = 0x00;
+					break;
+				case 0xf5: // PUSH AF
+					push( regs[A]<<8 | regs[F]);
 					break;
 				case 0xfa:{// LD A, (nn)
 					int a = read( PC++ );
