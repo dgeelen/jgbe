@@ -222,7 +222,7 @@ public class Cartridge {
 						RAM[CurrentRAMBank][index-0xa000] = value;
 					}
 				}
-				if(((index>0x800)&&(index<0xa000)) || ((index>0xc000))) System.out.println("TODO: Cartridge.write(): Unsupported address for write");
+				if(((index>=0x8000)&&(index<0xa000)) || ((index>0xc000))) System.out.println("TODO: Cartridge.write(): Unsupported address for write");
 				break;
 			case 0x0015:
 			case 0x0016:
