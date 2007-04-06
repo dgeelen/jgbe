@@ -1,3 +1,6 @@
+import javax.swing.*;
+import java.awt.*;
+
 public class VideoController {
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
@@ -8,7 +11,12 @@ public class VideoController {
 		OAM = new int[0xa0]; //Sprite Attribute Table
 	}
 
-	//public
+	public void renderImage(Graphics g) {	//g is a reference to the display
+		int width = (g.getClipBounds()).x;
+		for(int i=0; i<width; ++i) {
+			g.drawLine(0,0,i,i);
+		}
+	}
 
 	public int read(int index) {
 		if(index<0x8000) {
