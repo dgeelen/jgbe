@@ -1062,9 +1062,8 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 				case 0xc8: // RET  Z
 					if ((regs[F]&ZF_Mask) == ZF_Mask)
 						PC = pop();
-					curcycles <<= 1; // magix!
-					curcycles &= 20;
-					curcycles |= 8; 
+					if (curcycles == 8) curcycles = 20;
+					if (curcycles == 4) curcycles =  8;
 					break;
 				case 0xc9: // RET
 					curcycles += 4; // takes 16 instead of 12 cycles
@@ -1075,8 +1074,8 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						JPnn();
 					else
 						PC+=2;
-					curcycles <<=1; // takes 16;12 instead of 12;4 cycles
-					curcycles ^= 8;
+					if (curcycles == 12) curcycles = 16;
+					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xcd: // CALL &0000
 					curcycles += 4; // takes 24 instead of 20 cycles
@@ -1086,9 +1085,8 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 				case 0xd0: // RET  NC
 					if ((regs[F]&CF_Mask) != CF_Mask)
 						PC = pop();
-					curcycles <<= 1; // magix!
-					curcycles &= 20;
-					curcycles |= 8; 
+					if (curcycles == 8) curcycles = 20;
+					if (curcycles == 4) curcycles =  8;
 					break;
 				case 0xd1:{// POP DE
 					int x = pop();
@@ -1100,8 +1098,8 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						JPnn();
 					else
 						PC+=2;
-					curcycles <<=1; // takes 16;12 instead of 12;4 cycles
-					curcycles ^= 8;
+					if (curcycles == 12) curcycles = 16;
+					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xd5: // PUSH DE
 					push( regs[D]<<8 | regs[E]);
@@ -1112,8 +1110,8 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						JPnn();
 					else
 						PC+=2;
-					curcycles <<=1; // takes 16;12 instead of 12;4 cycles
-					curcycles ^= 8;
+					if (curcycles == 12) curcycles = 16;
+					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xe0: // LDH  (n), A
 					write( 0xff00 | read( PC++ ), regs[A] );
@@ -1287,12 +1285,9 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 			SP &= 0xffff;
 			++TotalInstrCount;
 			TotalCycleCount += curcycles;
-			if ( nop ) {
-				++nopCount;
-			}
-			else {
+			++nopCount;
+			if (!nop)
 				nopCount=0;
-			}
 			if ( nopCount>5 ) {
 				System.out.println( "Executing a lot of NOPs, aborting!" );
 				return 0;
