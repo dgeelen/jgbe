@@ -139,6 +139,18 @@ public class Cartridge {
 				if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];
 				System.out.println("Error: Reading from cardridge with a non cardridge address!");
 				return -1;
+			case 0x0019:
+			case 0x001A:
+			case 0x001B:
+			case 0x001C:
+			case 0x001D:
+			case 0x001E:
+				// MBC5
+				if(index < 0x4000) return ROM[0][index];
+				if((index >= 0x4000) && (index < 0x8000)) return ROM[CurrentROMBank][index-0x4000];
+				if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];
+				System.out.println("Error: Reading from cardridge with a non cardridge address!");
+				return -1;
 			default:
 				System.out.println("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
 				return -1;
@@ -236,6 +248,27 @@ public class Cartridge {
 			case 0x001D:
 			case 0x001E:
 				// MBC5
+				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
+					if(value==0x0a) ram_enabled = true;
+					else if(value==0x00) ram_enabled = false;
+					else System.out.println("WARNING: Ram enabled state UNDEFINED");
+				}
+				if((index>=0x2000)&&(index<0x3000)) {//2000-3FFF - ROM Bank Number (Write Only)
+					CurrentROMBank &= 0x100;
+					CurrentROMBank |= value;
+				}
+				if((index>=0x3000)&&(index<0x4000)) {//2000-3FFF - ROM Bank Number (Write Only)
+					CurrentROMBank &= 0xff;
+					CurrentROMBank |= (value&1) << 8;
+				}
+				if((index>=0x4000)&&(index<0x6000)) { //4000-5FFF - RAM Bank Number
+					if (value < 0x10)
+						CurrentRAMBank=value;
+				}
+				if((index>=0xa000) && (index<0xc000)){
+					RAM[CurrentRAMBank][index-0xa000] = value;
+				}
+				if(((index>=0x6000)&&(index<0xa000)) || ((index>0xc000))) System.out.println("WARNING: Cartridge.write(): Unsupported address for write");
 				break;
 		}
 	}
