@@ -102,6 +102,10 @@ public class CPU
 			else if(index < 0xff80) { //I/O Ports
 				if (index==0xff40) { // LCDC register
 					b = VC.LCDC;
+				}	else if (index==0xff42) { // SCY
+					b = VC.SCY;
+				}	else if (index==0xff43) { // SCX
+					b = VC.SCX;
 				}	else if (index==0xff44) { // vblank ???
 					b = 0x91;//vblank hax
 				}
@@ -185,6 +189,10 @@ FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
 FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 */			else if(index==0xff40) { // LCDC register
 					VC.LCDC = value;
+				}	else if (index==0xff42) { // SCY
+					VC.SCY = value;
+				}	else if (index==0xff43) { // SCX
+					VC.SCX = value;
 				}
 				else if((index>0xff50)&&(index<0xff56)) {
 					System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");

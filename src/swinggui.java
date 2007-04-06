@@ -27,9 +27,6 @@ public class swinggui implements ActionListener, ItemListener {
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				g.drawImage(img[which_img_to_draw_for_double_buffering],0,0, this);
-
-
-				//System.out.println("Painting! "); //DO NOT REMOVE: Loadbaring Println :)
     	}
 		}
 
@@ -131,12 +128,6 @@ public class swinggui implements ActionListener, ItemListener {
 
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
-			/*javax.swing.SwingUtilities.invokeLater( new Runnable() {
-				                                        public void run() {
-					                                        gui.createAndShowGUI();
-				                                        }
-			                                        }
-			                                      );*/
 			gui.createAndShowGUI();
 			gui.cpu.reset();
 			int x = 10;
