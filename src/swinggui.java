@@ -4,9 +4,29 @@ import javax.swing.*;
 
 public class swinggui implements ActionListener, ItemListener {
 		public static boolean RIGHT_TO_LEFT = false;
-		private static JPanel grfx;
+		private static DrawingArea grfx;
 		private static JMenuBar menubar;
-		//private VRAM vram;
+		private VideoController VC;
+		private Cartridge cartridge;
+		private CPU cpu;
+		public class DrawingArea extends JPanel{
+			public void paintComponent(Graphics g) {
+				super.paintComponent(g);
+    	}
+		}
+
+		public swinggui() {
+			cartridge = new Cartridge("Pokemon Blue.gb");
+			if(cartridge.getError()!=null) {
+				System.out.println("ERROR: "+cartridge.getError());
+			}
+			else {
+				System.out.println("Succesfully loaded ROM :)");
+				cpu = new CPU(cartridge);
+				TestSuite t = new TestSuite(cpu);
+			}
+		}
+
 		private JMenuBar createJMenuBar() {
 			JMenuBar mainMenuBar;
 			JMenu menuFile;
@@ -41,7 +61,7 @@ public class swinggui implements ActionListener, ItemListener {
 				  java.awt.ComponentOrientation.RIGHT_TO_LEFT );
 			}
 
-			grfx=new JPanel( true ); //doublebuffering
+			grfx=new DrawingArea(  ); //doublebuffering
 			grfx.setPreferredSize( new Dimension( 160*4, 144*4 ) ); //quadruple each pixel
 			contentPane.add( grfx, BorderLayout.CENTER );
 		}
@@ -59,6 +79,24 @@ public class swinggui implements ActionListener, ItemListener {
 
 			frame.pack();
 			frame.setVisible( true );
+
+			cpu.reset();
+			int x = 10;
+			boolean fulldebug=false;
+			while(x > 0){
+				if (fulldebug) cpu.printCPUstatus();
+				cpu.nextinstruction();
+				if (cpu.exception()!=0) {
+					Disassembler deasm = new Disassembler( cartridge, cpu);
+					if (!fulldebug) cpu.printCPUstatus();
+					String s = deasm.disassemble(cpu.PC);
+					if (s.charAt( 6)=='$') ++(cpu.PC);
+					if (s.charAt(10)=='$') ++(cpu.PC);
+					if (s.charAt(14)=='$') ++(cpu.PC);
+					--x;
+					fulldebug = true;
+				}
+			}
 		}
 
 		public void actionPerformed( ActionEvent e ) {
