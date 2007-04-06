@@ -37,7 +37,7 @@ public class CPU
 		private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
 		private int lastException=0;
 		private Disassembler deasm;
-		private VideoController VC;
+		protected VideoController VC;
 
 		public CPU( Cartridge cartridge ) {
 			deasm = new Disassembler( cartridge, this );

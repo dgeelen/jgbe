@@ -6,12 +6,19 @@ public class swinggui implements ActionListener, ItemListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
 		private static JMenuBar menubar;
-		private VideoController VC;
-		private Cartridge cartridge;
-		private CPU cpu;
+		protected VideoController VC;
+		protected Cartridge cartridge;
+		protected CPU cpu;
 		public class DrawingArea extends JPanel{
+			VideoController VC;
+			public DrawingArea(VideoController vc) {
+			super();
+			VC=vc;
+			}
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
+				System.out.println("REPAINTING PANEL");
+				VC.renderImage(g);
     	}
 		}
 
@@ -61,7 +68,7 @@ public class swinggui implements ActionListener, ItemListener {
 				  java.awt.ComponentOrientation.RIGHT_TO_LEFT );
 			}
 
-			grfx=new DrawingArea(  ); //doublebuffering
+			grfx=new DrawingArea( cpu.VC ); //doublebuffering
 			grfx.setPreferredSize( new Dimension( 160*4, 144*4 ) ); //quadruple each pixel
 			contentPane.add( grfx, BorderLayout.CENTER );
 		}
@@ -80,23 +87,6 @@ public class swinggui implements ActionListener, ItemListener {
 			frame.pack();
 			frame.setVisible( true );
 
-			cpu.reset();
-			int x = 10;
-			boolean fulldebug=false;
-			while(x > 0){
-				if (fulldebug) cpu.printCPUstatus();
-				cpu.nextinstruction();
-				if (cpu.exception()!=0) {
-					Disassembler deasm = new Disassembler( cartridge, cpu);
-					if (!fulldebug) cpu.printCPUstatus();
-					String s = deasm.disassemble(cpu.PC);
-					if (s.charAt( 6)=='$') ++(cpu.PC);
-					if (s.charAt(10)=='$') ++(cpu.PC);
-					if (s.charAt(14)=='$') ++(cpu.PC);
-					--x;
-					fulldebug = true;
-				}
-			}
 		}
 
 		public void actionPerformed( ActionEvent e ) {
@@ -132,5 +122,22 @@ public class swinggui implements ActionListener, ItemListener {
 				                                        }
 			                                        }
 			                                      );
+			gui.cpu.reset();
+			int x = 10;
+			boolean fulldebug=false;
+			while(x > 0){
+				if (fulldebug) gui.cpu.printCPUstatus();
+				gui.cpu.nextinstruction();
+				if (gui.cpu.exception()!=0) {
+					Disassembler deasm = new Disassembler( gui.cartridge, gui.cpu);
+					if (!fulldebug) gui.cpu.printCPUstatus();
+					String s = deasm.disassemble(gui.cpu.PC);
+					if (s.charAt( 6)=='$') ++(gui.cpu.PC);
+					if (s.charAt(10)=='$') ++(gui.cpu.PC);
+					if (s.charAt(14)=='$') ++(gui.cpu.PC);
+					--x;
+					fulldebug = true;
+				}
+			}
 		}
 	}
