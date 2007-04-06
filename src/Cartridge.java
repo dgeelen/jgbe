@@ -15,8 +15,10 @@ public class Cartridge {
 	private int MBC;                    // The MBC used in the cardridge
 
 	private boolean ram_enabled = false;// Whether RAM is enabled to read and write
+	private boolean RTCRegisterEnabled=false;
 	private int     CurrentROMBank = 0;    // The ROM bank to read/write
 	private int     CurrentRAMBank = 0;    // The RAM bank to read/write
+	private int     CurrentRTCRegister=0;
 
 	public Cartridge(String file_name) {
 		/**
@@ -149,19 +151,16 @@ public class Cartridge {
 			case 0x0002:
 			case 0x0003:
 				// MBC1
-				if ((0xA000 <= index) && (index <= 0xBFFF))
-				{
-					// RAM Bank 00-03, if any
+				if ((0xA000 <= index) && (index <= 0xBFFF))	{
+						// RAM Bank 00-03, if any
 				}
-				else if ((0x0000 <= index) && (index <= 0x1FFF))
-				{
+				else if ((0x0000 <= index) && (index <= 0x1FFF)) {
 					// RAM Enable
 					// 0x0Ah enable
 					if (value == 0x0A) ram_enabled = true;
 					else               ram_enabled = false;
 				}
 				// TODO all option
-
 				break;
 			case 0x0005:
 			case 0x0006:
@@ -171,30 +170,22 @@ public class Cartridge {
 				// A000-A1FF - 512x4bits RAM, built-in into the MBC2 chip (Read/Write)
 				// 0000-1FFF - RAM Enable (Write Only)
 				// 2000-3FFF - ROM Bank Number (Write Only)
-
-				if ((0xA0000 <= index) && (index <= 0xA1FF))
-				{
-					System.out.println("TODO: write to internal cartridge RAM.");
+				if ((0xA0000 <= index) && (index <= 0xA1FF))	{
+						System.out.println("TODO: write to internal cartridge RAM.");
 				}
-				else if ((0x0000 <= index) && (index <= 0x1FFF))
-				{
-					if ((index & 1 << 4) == 0)
-					{
-						// toggle RAM enabled
-						ram_enabled = !ram_enabled;
+				else if ((0x0000 <= index) && (index <= 0x1FFF)) {
+					if ((index & 1 << 4) == 0) {
+							// toggle RAM enabled
+							ram_enabled = !ram_enabled;
 					}
-
 				}
-				else if ((0x2000 <= index) && (index <= 0x3FFFF))
-				{
-					if ((index & 1 << 4) == (1 << 4))
-					{
+				else if ((0x2000 <= index) && (index <= 0x3FFFF))	{
+					if ((index & 1 << 4) == (1 << 4))	{
 						// Enable set ROM bank nr
 						value = (value == 0)?1:value;
 						CurrentROMBank = value & 0x0F;
 					}
 				}
-
 				break;
 			case 0x000F:
 			case 0x0010:
@@ -202,21 +193,50 @@ public class Cartridge {
 			case 0x0012:
 			case 0x0013:
 				// MBC3
+				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
+					if(value==0x0a) ram_enabled = true;
+					else if(value==0x00) ram_enabled = false;
+					else System.out.println("WARNING: Ram enabled state UNDEFINED");
+				}
+				if((index>=0x2000)&&(index<0x4000)) {//2000-3FFF - ROM Bank Number (Write Only)
+					CurrentROMBank=Math.max(value&0x7f,1);
+				}
+				if((index>=0x4000)&&(index<0x6000)) { //4000-5FFF - RAM Bank Number - or - RTC Register Select (Write Only)
+					if((value>=0)&&(value<0x4)) {
+						RTCRegisterEnabled=false;
+						CurrentRAMBank=value;
+					}
+					if((value>=0x08)&&(value<0x0c)) {
+						RTCRegisterEnabled=true;
+						CurrentRTCRegister=value-0x08;
+					}
+				}
+				if((index>=0x6000)&&(index<0x8000)) { //6000-7FFF - Latch Clock Data (Write Only)
+					System.out.println("TODO: Cartridge.write(): Latch Clock Data!");
+				}
+				if((index>=0xA000) && (index<0xc000)){
+					if(RTCRegisterEnabled) {
+						System.out.println("TODO: Cartridge.write(): writing to RAM in RTC mode");
+					}
+					else {
+						RAM[CurrentRAMBank][index-0xa000] = value;
+					}
+				}
+				if(((index>0x800)&&(index<0xa000)) || ((index>0xc000))) System.out.println("TODO: Cartridge.write(): Unsupported address for write");
 				break;
 			case 0x0015:
 			case 0x0016:
 			case 0x0017:
-				// MBC4
-				break;
+					// MBC4
+					break;
 			case 0x0019:
 			case 0x001A:
 			case 0x001B:
 			case 0x001C:
 			case 0x001D:
 			case 0x001E:
-				// MBC5
-				break;
-
+					// MBC5
+					break;
 		}
 	}
 }
