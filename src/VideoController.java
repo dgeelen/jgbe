@@ -41,12 +41,12 @@ public class VideoController {
 			int BGTileMap = ((LCDC&(1<<3))==0) ? 0x9800 : 0x9c00;
 
 			int ry = (SCY+linenumber)&0xFF;
-			int rty = ry >> 5; // tile x
-			int rsy = ry & 31; // x offs
+			int rty = ry >> 3; // tile x
+			int rsy = ry & 7; // x offs
 			for (int x = SCX; x < SCX + 160; ++x) {
 				int rx = x & 0xff; // it wraps, too
-				int rtx = rx >> 5; // tile x
-				int rsx = rx & 31; // x offs
+				int rtx = rx >> 3; // tile x
+				int rsx = rx & 7; // x offs
 				int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
 				int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
 				int d1 = read(TileData + offset);     // lsb bit of col is in here
