@@ -352,10 +352,6 @@ public class CPU
 			regs[dest] = val;
 		}
 
-		protected void ld8bmem( int location, int val ) {
-			write( location, val );
-		}
-
 		protected void cp( int val ) {
 			int i= regs[A];
 			sub8b( A, val );
@@ -560,6 +556,12 @@ public class CPU
 				case 0x3b: // DEC SP
 					--SP; //16-bit inc/dec doesnt affect any flags
 					SP&=0xffff;
+					break;
+				case 0x3c: // INC A
+					inc8b(A);
+					break;
+				case 0x3d: // DEC A
+					dec8b(A);
 					break;
 				case 0x3e: // LD A, n
 					regs[A]=read( PC++ );
@@ -929,8 +931,17 @@ public class CPU
 				case 0xc3: // JPNNNN
 					JPnn();
 					break;
+				case 0xc5: // PUSH BC
+					push( regs[B]<<8 | regs[C]);
+					break;
 				case 0xc9: // RET
 					PC = pop();
+					break;
+				case 0xca: // JMP Z, nn
+					if (( regs[FLAG_REG]&ZF_Mask )==ZF_Mask )
+						JPnn();
+					else
+						PC+=2;
 					break;
 				case 0xcd: // CALL &0000
 					push( PC+2 );
@@ -944,8 +955,22 @@ public class CPU
 				case 0xd5: // PUSH DE
 					push( regs[D]<<8 | regs[E]);
 					break;
+				case 0xda: //D4 JMP CF,&0000
+					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask ) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
+						JPnn();
+					}
+					else {
+						PC+=2;
+					}
+					break;
 				case 0xe0: // LDH
 					write( 0xff00 | read( PC++ ), regs[A] );
+					break;
+				case 0xe2: // LD (C), A
+					write( 0xff00 | regs[C], regs[A] );
+					break;
+				case 0xe5: // PUSH HL
+					push( regs[H]<<8 | regs[L]);
 					break;
 				case 0xe6: // AND nn
 					and(read(PC++));
@@ -953,7 +978,7 @@ public class CPU
 				case 0xea:{// LD (nnnn), A
 					int a = read( PC++ );
 					int b = read( PC++ );
-					ld8bmem(( b << 8 ) + a, regs[A] );
+					write((b<<8) | a, regs[A] );
 				};break;
 				case 0xee: // XOR   &00
 					xor( read( PC++ ) );
@@ -964,18 +989,15 @@ public class CPU
 				case 0xf3: // DI
 					IR = 0x00;
 					break;
+				case 0xfa:{// LD A, (nn)
+					int a = read( PC++ );
+					int b = read( PC++ );
+					regs[A] = read((b<<8) | a);
+				};break;
 				case 0xfe: // CP n
 					cp( read( PC++ ) );
 					break;
-				case 0xda: //D4 JMP CF,&0000
-					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask ) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
-						JPnn();
-					}
-					else {
-						PC+=2;
-					}
-					break;
-				case 0xFF: // RST &38
+				case 0xff: // RST &38
 					push(PC);
 					PC = 0x38;
 					break;
