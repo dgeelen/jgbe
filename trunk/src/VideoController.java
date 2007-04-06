@@ -7,7 +7,8 @@ public class VideoController {
 	private int OAM[];
 	private int SCX=0;
 	private int SCY=0;
-	private CPU cpu;
+	protected int LCDC=0;
+	private CPU cpu; // dont think we need this...
 
 	public VideoController(CPU cpu) {
 		VRAM = new int[2][0x2000]; //8k per bank
@@ -32,11 +33,31 @@ public class VideoController {
 		* Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
-		int lcdc=cpu.read(0xff40);
-		if((lcdc&(1<<7))!=0) { //LCD enabled
-			if((lcdc&(1<<5))!=0) {
-			int WindowTileMap = 0x9800;
-			if((lcdc&(1<<6))!=0) WindowTileMap=0x9c00;
+		if((LCDC&(1<<7))!=0) { //LCD enabled
+			int TileData = ((LCDC&(1<<4))==0) ? 0x8800 : 0x8000;
+			// BG display
+			int CurBG = LCDC & 1;
+			int BGTileMap = ((LCDC&(1<<3))==0) ? 0x9800 : 0x9c00;
+
+			int ry = (SCY+linenumber)&0xFF;
+			int rty = ry >> 5; // tile x
+			int rsy = ry & 31; // x offs
+			for (int x = SCX; x < SCX + 160; ++x) {
+				int rx = x & 0xff; // it wraps, too
+				int rtx = rx >> 5; // tile x
+				int rsx = rx & 31; // x offs
+				int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
+				int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
+				int d1 = read(TileData + offset);     // lsb bit of col is in here
+				int d2 = read(TileData + offset + 1); // msb bit of col is in here
+				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
+				//now we should do some pallete stuff....
+				g.setColor(new Color(col&1,col>>1,0));
+				g.drawRect(x-SCX, linenumber, x-SCX, linenumber);
+			}
+			
+			if((LCDC&(1<<5))!=0) { //window display
+				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
 
 			}
 		}
@@ -50,8 +71,8 @@ public class VideoController {
 		for(int i=0; i<height; i+=4) {
 			g.drawLine(0,0,width,i);
 		}
-		g.drawRect(20,20,200,200);
-		renderBackGroundMap(g);
+		g.drawRect(20,20,20,20);
+		//renderBackGroundMap(g);
 	}
 
 	public int read(int index) {

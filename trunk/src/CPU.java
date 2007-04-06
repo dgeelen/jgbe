@@ -100,9 +100,13 @@ public class CPU
 				b=0;
 			}
 			else if(index < 0xff80) { //I/O Ports
-				System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
-				b=0;
-				if (index == 0xff44) b=0x91;//vblank hax
+				if (index==0xff40) { // LCDC register
+					b = VC.LCDC;
+				}	else if (index==0xff44) { // vblank ???
+					b = 0x91;//vblank hax
+				}
+				else
+					System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
 				b = HRAM[index-0xff80];
@@ -179,7 +183,10 @@ FF52 - HDMA2 - CGB Mode Only - New DMA Source, Low
 FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
 FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
 FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
-*/			else if((index>0xff50)&&(index<0xff56)) {
+*/			else if(index==0xff40) { // LCDC register
+					VC.LCDC = value;
+				}
+				else if((index>0xff50)&&(index<0xff56)) {
 					System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");
 				}
 				else if(index==0xff70) { //FF70 - SVBK - CGB Mode Only - WRAM Bank
