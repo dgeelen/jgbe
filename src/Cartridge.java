@@ -32,27 +32,27 @@ public class Cartridge {
 	}
 
 	public String getError() {
-			/**
-			 * getError returns the error message if an error has occured
-			 * pre: loadFromFile == true
-			 * ret: Exception.getMessage()
-			 */
-			return err_msg;
+		/**
+		 * getError returns the error message if an error has occured
+		 * pre: loadFromFile == true
+		 * ret: Exception.getMessage()
+		 */
+		return err_msg;
 	}
 
 	private void loadFromFile() {
+		/**
+		 * loadFromFile loads a cartidge from a file
+		 * pre:  true
+		 * post: if an error occurred
+		 *         getError() contains the gives the message of the error
+		 *       else
+		 *         the cartidge is loaded into ROM/RAM
+		 */
 		/*
-			* loadFromFile loads a cartidge from a file
-			* pre:  true
-			* post: if an error occurred
-			*         getError() contains the gives the message of the error
-			*       else
-			*         the cartidge is loaded into ROM/RAM
-			*/
-		/*
-			* load the first ROM bank of the cartridge into memory
-			* used to initialize RAM and ROM banks
-			*/
+		 * load the first ROM bank of the cartridge into memory
+		 * used to initialize RAM and ROM banks
+		 */
 		int[] first_rom_bank = new int[ROM_BANK_SIZE];
 		System.out.println("Attempting to load ROM: `"+file_name+"'");
 		try {
@@ -140,86 +140,83 @@ public class Cartridge {
 			default:
 				System.out.println("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
 				return -1;
-			}
+		}
 	}
 
 	public void write(int index, int value) {        // TODO fatsoenlijk
-			switch (MBC)
+		switch (MBC) {
+			case 0x0001:
+			case 0x0002:
+			case 0x0003:
+				// MBC1
+				if ((0xA000 <= index) && (index <= 0xBFFF))
 				{
-						case 0x0001:
-						case 0x0002:
-						case 0x0003:
-								// MBC1
+					// RAM Bank 00-03, if any
+				}
+				else if ((0x0000 <= index) && (index <= 0x1FFF))
+				{
+					// RAM Enable
+					// 0x0Ah enable
+					if (value == 0x0A) ram_enabled = true;
+					else               ram_enabled = false;
+				}
+				// TODO all option
 
-								if ((0xA000 <= index) && (index <= 0xBFFF))
-								{
-										// RAM Bank 00-03, if any
+				break;
+			case 0x0005:
+			case 0x0006:
+				// MBC2
+				// 0000-3FFF - ROM Bank 00 (Read Only)0000-3FFF - ROM Bank 00 (Read Only)
+				// 4000-7FFF - ROM Bank 01-0F (Read Only)
+				// A000-A1FF - 512x4bits RAM, built-in into the MBC2 chip (Read/Write)
+				// 0000-1FFF - RAM Enable (Write Only)
+				// 2000-3FFF - ROM Bank Number (Write Only)
 
-								}
-								else if ((0x0000 <= index) && (index <= 0x1FFF))
-								{
-										// RAM Enable
-										// 0x0Ah enable
-										if (value == 0x0A) ram_enabled = true;
-										else               ram_enabled = false;
-								}
-								// TODO all option
+				if ((0xA0000 <= index) && (index <= 0xA1FF))
+				{
+					System.out.println("TODO: write to internal cartridge RAM.");
+				}
+				else if ((0x0000 <= index) && (index <= 0x1FFF))
+				{
+					if ((index & 1 << 4) == 0)
+					{
+						// toggle RAM enabled
+						ram_enabled = !ram_enabled;
+					}
 
-								break;
-						case 0x0005:
-						case 0x0006:
-								// MBC2
-								// 0000-3FFF - ROM Bank 00 (Read Only)0000-3FFF - ROM Bank 00 (Read Only)
-								// 4000-7FFF - ROM Bank 01-0F (Read Only)
-								// A000-A1FF - 512x4bits RAM, built-in into the MBC2 chip (Read/Write)
-								// 0000-1FFF - RAM Enable (Write Only)
-								// 2000-3FFF - ROM Bank Number (Write Only)
+				}
+				else if ((0x2000 <= index) && (index <= 0x3FFFF))
+				{
+					if ((index & 1 << 4) == (1 << 4))
+					{
+						// Enable set ROM bank nr
+						value = (value == 0)?1:value;
+						CurrentROMBank = value & 0x0F;
+					}
+				}
 
-								if ((0xA0000 <= index) && (index <= 0xA1FF))
-								{
-										System.out.println("TODO: write to internal cartridge RAM.");
-								}
-								else if ((0x0000 <= index) && (index <= 0x1FFF))
-								{
-										if ((index & 1 << 4) == 0)
-										{
-										    // toggle RAM enabled
-										    ram_enabled = !ram_enabled;
-										}
+				break;
+			case 0x000F:
+			case 0x0010:
+			case 0x0011:
+			case 0x0012:
+			case 0x0013:
+				// MBC3
+				break;
+			case 0x0015:
+			case 0x0016:
+			case 0x0017:
+				// MBC4
+				break;
+			case 0x0019:
+			case 0x001A:
+			case 0x001B:
+			case 0x001C:
+			case 0x001D:
+			case 0x001E:
+				// MBC5
+				break;
 
-								}
-								else if ((0x2000 <= index) && (index <= 0x3FFFF))
-								{
-										if ((index & 1 << 4) == (1 << 4))
-										{
-										    // Enable set ROM bank nr
-										    value = (value == 0)?1:value;
-										    rom_bank_nr = value & 0x0F;
-										}
-								}
-
-								break;
-						case 0x000F:
-						case 0x0010:
-						case 0x0011:
-						case 0x0012:
-						case 0x0013:
-								// MBC3
-								break;
-						case 0x0015:
-						case 0x0016:
-						case 0x0017:
-								// MBC4
-								break;
-						case 0x0019:
-						case 0x001A:
-						case 0x001B:
-						case 0x001C:
-						case 0x001D:
-						case 0x001E:
-								// MBC5
-								break;
-
-				} */
 		}
+	}
 }
