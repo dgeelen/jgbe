@@ -8,7 +8,7 @@ public class VideoController {
 		OAM = new int[0xa0]; //Sprite Attribute Table
 	}
 
-	public
+	//public
 
 	public int read(int index) {
 		if(index<0x8000) {
