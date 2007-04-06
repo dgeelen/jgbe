@@ -1,4 +1,4 @@
-all: clean Emulator.class
+all: clean swinggui.class Emulator.class
 
 %.class: %.java
 	javac $<
