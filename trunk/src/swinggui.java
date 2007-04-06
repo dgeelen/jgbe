@@ -26,6 +26,7 @@ public class swinggui implements ActionListener, ItemListener {
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				g.drawImage(img,0,0, this);
+				System.out.println("Painting!");
     	}
 		}
 
@@ -140,12 +141,13 @@ public class swinggui implements ActionListener, ItemListener {
 				if (fulldebug) gui.cpu.printCPUstatus();
 				gui.cpu.nextinstruction();
 				if ((gui.cpu.TotalInstrCount % 1000000) == 0) {
-		if (gui.graph == null)
-		{
-			gui.img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-			gui.graph = gui.img.getGraphics();
-		} else
+//		if (gui.graph == null)
+//		{
+//			gui.img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+//			gui.graph = gui.img.getGraphics();
+//		} else
 					gui.VC.renderImage(gui.graph);
+					gui.grfx.updateUI();
 				}
 				if (gui.cpu.exception()!=0) {
 					Disassembler deasm = new Disassembler( gui.cartridge, gui.cpu);

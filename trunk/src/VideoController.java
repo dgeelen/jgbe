@@ -34,6 +34,7 @@ public class VideoController {
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
 		if((LCDC&(1<<7))!=0) { //LCD enabled
+			System.out.println("rendering scanline");
 			int TileData = ((LCDC&(1<<4))==0) ? 0x8800 : 0x8000;
 			// BG display
 			int CurBG = LCDC & 1;
@@ -52,8 +53,9 @@ public class VideoController {
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
 				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 				//now we should do some pallete stuff....
-				g.setColor(new Color(col&1,col>>1,0));
-				g.drawRect(x-SCX, linenumber, x-SCX, linenumber);
+				g.setColor(new Color((col&1)*255,(col>>1)*255,255));
+				g.drawRect(x-SCX, linenumber, x-SCX+2, linenumber+2);
+				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 			}
 			
 			if((LCDC&(1<<5))!=0) { //window display
