@@ -8,7 +8,7 @@ public class Emulator {
 			if (args[i].equals("--full-debug"))
 				fulldebug = true;
 		}
-	
+
 		Cartridge cartridge = new Cartridge("Pokemon Blue.gb");
 		if(cartridge.getError()!=null) {
 			System.out.println("ERROR: "+cartridge.getError());
@@ -35,6 +35,9 @@ public class Emulator {
 							fulldebug = true;
 						}
 					}
+					System.out.println("Too many errors, aborting.");
+					System.exit(-1); //FIXME: We should 'avoid System.exit() like the plague'
+					System.out.println("You are *NOT* seeing this message");
 				}
 			}
 		}
