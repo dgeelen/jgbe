@@ -6,7 +6,7 @@ public class Disassembler
     private static CPU cpu;
     private static String opcode[];
     private static final String file_name = "instrs.txt";
-		private static final char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
+		private static final char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
     public Disassembler(Cartridge cart, CPU cpu) {
       this.cart=cart;
       this.cpu=cpu;
@@ -40,12 +40,12 @@ public class Disassembler
       if(reg.equalsIgnoreCase("E")) return cpu.regs[cpu.E];
       if(reg.equalsIgnoreCase("H")) return cpu.regs[cpu.H];
       if(reg.equalsIgnoreCase("L")) return cpu.regs[cpu.L];
-      if(reg.equalsIgnoreCase("AF")) return (cpu.regs[cpu.A]<<8)|cpu.regs[cpu.F];
-      if(reg.equalsIgnoreCase("BC")) return (cpu.regs[cpu.B]<<8)|cpu.regs[cpu.C];
-      if(reg.equalsIgnoreCase("DE")) return (cpu.regs[cpu.D]<<8)|cpu.regs[cpu.E];
-      if(reg.equalsIgnoreCase("HL")) return (cpu.regs[cpu.H]<<8)|cpu.regs[cpu.L];
-      if(reg.equalsIgnoreCase("SP")) return cpu.regs[cpu.SP];
-      if(reg.equalsIgnoreCase("PC")) return cpu.regs[cpu.PC];
+      if(reg.equalsIgnoreCase("AF")) return 0x10000|((cpu.regs[cpu.A]<<8)|cpu.regs[cpu.F]);
+      if(reg.equalsIgnoreCase("BC")) return 0x10000|((cpu.regs[cpu.B]<<8)|cpu.regs[cpu.C]);
+      if(reg.equalsIgnoreCase("DE")) return 0x10000|((cpu.regs[cpu.D]<<8)|cpu.regs[cpu.E]);
+      if(reg.equalsIgnoreCase("HL")) return 0x10000|((cpu.regs[cpu.H]<<8)|cpu.regs[cpu.L]);
+      if(reg.equalsIgnoreCase("SP")) return 0x10000|(cpu.SP);
+      if(reg.equalsIgnoreCase("PC")) return 0x10000|(cpu.PC);
       return -1;
     }
 
@@ -82,8 +82,8 @@ public class Disassembler
 					//part 1
 					immediate=regval(op.substring(i+1));
 					if(immediate>-1) {
-						if(immediate>0xff) {
-							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate);
+						if(immediate>0xffff) {
+							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
 							}
 						else {
 							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
@@ -93,8 +93,8 @@ public class Disassembler
 					i=op.lastIndexOf(" ",j);
 					immediate=regval(op.substring(i+1,j));
 					if(immediate>-1) {
-						if(immediate>0xff) {
-							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate);
+						if(immediate>0xffff) {
+							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
 							}
 						else {
 							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
@@ -104,8 +104,8 @@ public class Disassembler
 				else { // only 1 part
 					immediate=regval(op.substring(i+1));
 					if(immediate>-1) {
-						if(immediate>0xff) {
-							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate);
+						if(immediate>0xffff) {
+							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
 						}
 						else {
 							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
@@ -113,10 +113,10 @@ public class Disassembler
 					}
 				}
 			}
-			i=op.indexOf("[n]");
+			i=s.indexOf("[n]");
 			if(i>-1) { //specialcase
-        immediate= cart.read(PC+1);
-				s=String.format(s.substring(0,i+3)+"$%04x"+s.substring(i+4),immediate);
+				immediate=cart.read(PC+1);
+				s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
 			}
 
 			String prefix=String.format("$%04x ",PC);
