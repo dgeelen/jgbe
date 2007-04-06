@@ -13,6 +13,7 @@ public class VideoController {
 
 	public void renderImage(Graphics g) {	//g is a reference to the display
 		int width = (g.getClipBounds()).x;
+		System.out.println("Rendering Image");
 		for(int i=0; i<width; ++i) {
 			g.drawLine(0,0,i,i);
 		}
