@@ -163,7 +163,25 @@ public class CPU
 			regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
 		}
 
-		protected void inc16b() {}
+		protected void inc16b(int ri1, int ri2 ) {
+			// 16-bit inc/dec doesnt affect any flags
+			++regs[ri2];
+			if (regs[ri2]>0xFF) {
+				regs[ri2]&=0xFF;
+				++regs[ri1];
+				regs[ri1]&=0xFF;
+			}
+		}
+
+		protected void dec16b(int ri1, int ri2 ) {
+			// 16-bit inc/dec doesnt affect any flags
+			--regs[ri2];
+			if (regs[ri2]<0) {
+				regs[ri2]&=0xFF;
+				--regs[ri1];
+				regs[ri1]&=0xFF;
+			}
+		}
 
 		protected void add8b( int dest, int val ) {
 			// Clear all flags (including ZF)
@@ -293,14 +311,17 @@ public class CPU
 				case 0x02: // LD (BC), A
 					writemem8b(B,C, regs[A]);
 					break;
-					/*      case 0x03:  // INC BC
-					          // TODO
-					          break;*/
+				case 0x03: // INC BC
+					inc16b(B, C);
+					break;
 				case 0x04:  // INC B
 					inc8b( B );
 					break;
 				case 0x05:  // DEC B
 					dec8b( B );
+					break;
+				case 0x0b:  // DEC BC
+					dec16b(B, C);
 					break;
 				case 0x0c: // INC  C
 					inc8b( C );
@@ -312,17 +333,22 @@ public class CPU
 					regs[E] = cartridge.read( PC++ );
 					regs[D] = cartridge.read( PC++ );
 					break;
+				case 0x13: // INC DE
+					inc16b(D, E);
+					break;
 				case 0x14: // INC  D
 					inc8b( D );
 					break;
 				case 0x15: // DEC  D
 					dec8b( D );
 					break;
-				case 0x18: {// JR   &00
+				case 0x18:{// JR   &00
 					int x = cartridge.read( PC++ );
 					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-				}
-				; break;
+				};break;
+				case 0x1b: // DEC DE
+					dec16b(D, E);
+					break;
 				case 0x1c: // INC  E
 					inc8b( E );
 					break;
@@ -340,12 +366,18 @@ public class CPU
 					regs[L] = cartridge.read( PC++ );
 					regs[H] = cartridge.read( PC++ );
 					break;
+				case 0x23: // INC HL
+					inc16b(H, L);
+					break;
 				case 0x28: // JR   Z, n
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
 						int x = cartridge.read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 					}
 					else ++PC;
+					break;
+				case 0x2b:  // DEC HL
+					dec16b(H, L);
 					break;
 				case 0x2c:  // INC L
 					inc8b( L );
@@ -361,6 +393,17 @@ public class CPU
 					int h = cartridge.read( PC++ );
 					SP = l | (h<<8);
 				};break;
+				case 0x33: // INC SP
+					++SP; //16-bit inc/dec doesnt affect any flags
+					SP&=0xffff;
+					break;
+				case 0x36: // LD (HL), n
+					writemem8b(H,L, cartridge.read(PC++));
+					break;
+				case 0x3b: // DEC SP
+					--SP; //16-bit inc/dec doesnt affect any flags
+					SP&=0xffff;
+					break;
 				case 0x3e:  // LD A, n
 					regs[A]=cartridge.read( PC++ );
 					break;
