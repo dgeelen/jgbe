@@ -50,7 +50,7 @@ public class Disassembler
     }
 
     public static final String disassemble(int PC) {
-      int instr=cart.read(PC);
+      int instr=cpu.read(PC);
       int immediate=-1;
       int i=-1;
       int j=-1;
@@ -75,14 +75,19 @@ public class Disassembler
 				s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
 				bytecount=3;
 			}
+
 			i=op.lastIndexOf(" ");
 			if(i>-1) {
 				j=op.lastIndexOf(",", i-1);
 				if(j>-1) {//2 parts
 					//part 1
-					int k=op.length()-1;
-					if(op.charAt(i+1)=='[') { ++i; k--; }; //TODO:Verify this does what I want
-					immediate=regval(op.substring(i+1, k));
+					if(op.charAt(i+1)=='[') { // ++i; j--; }; //TODO:Verify this does what I want
+						immediate=regval(op.substring(i+2,op.indexOf("]",i+2)));
+						++i;
+					}
+					else {
+						immediate=regval(op.substring(i+1));
+					}
 					if(immediate>-1) {
 						if(immediate>0xffff) {
 							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
@@ -93,8 +98,13 @@ public class Disassembler
 					}
 					//part 2
 					i=op.lastIndexOf(" ",j);
-					if(op.charAt(i+1)=='[') { ++i; j--; }; //TODO:Verify this does what I want
-					immediate=regval(op.substring(i+1,j));
+					if(op.charAt(i+1)=='[') { // ++i; j--; }; //TODO:Verify this does what I want
+						immediate=regval(op.substring(i+2,op.indexOf("]",i+2)));
+						++i;
+					}
+					else {
+						immediate=regval(op.substring(i+1,j));
+					}
 					if(immediate>-1) {
 						if(immediate>0xffff) {
 							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
@@ -105,7 +115,13 @@ public class Disassembler
 					}
 				}
 				else { // only 1 part
-					immediate=regval(op.substring(i+1));
+					if(op.charAt(i+1)=='[') { // ++i; j--; }; //TODO:Verify this does what I want
+						immediate=regval(op.substring(i+2,op.indexOf("]",i+2)));
+						++i;
+					}
+					else {
+						immediate=regval(op.substring(i+1));
+					}
 					if(immediate>-1) {
 						if(immediate>0xffff) {
 							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);

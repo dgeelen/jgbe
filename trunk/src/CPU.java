@@ -44,7 +44,7 @@ public class CPU
 			reset();
 		}
 
-		private int read(int index) {
+		protected int read(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
