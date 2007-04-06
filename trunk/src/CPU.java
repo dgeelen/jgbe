@@ -358,6 +358,10 @@ public class CPU
 					regs[L] = cartridge.read( PC++ );
 					regs[H] = cartridge.read( PC++ );
 					break;
+				case 0x22: // LDI (HL), A
+					writemem8b(H,L, regs[A]);
+					inc16b(H, L);
+					break;
 				case 0x23: // INC HL
 					inc16b(H, L);
 					break;
@@ -767,6 +771,14 @@ public class CPU
 				case 0xcd: // CALL &0000
 					push( PC+2 );
 					JPnn();
+					break;
+				case 0xd1:{// POP DE
+					int x = pop();
+					regs[D] = x >> 8;
+					regs[E] = x&0xff;
+				};break;
+				case 0xd5: // PUSH DE
+					push( regs[D]<<8 | regs[E]);
 					break;
 				case 0xe0: // LDH
 					cartridge.write( 0xff00 | cartridge.read( PC++ ), regs[A] );
