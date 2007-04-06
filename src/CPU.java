@@ -1,5 +1,5 @@
 public class CPU
-	{
+{
 		protected static final int CARRY8b    = 512;
 		protected static final int CARRY8b_SHR = 5;
 
@@ -40,7 +40,7 @@ public class CPU
 			deasm = new Disassembler( cartridge, this );
 			this.cartridge = cartridge;
 			reset();
-			}
+		}
 
 		public void reset() {
 			//TODO: Switch to bank 0
@@ -94,11 +94,11 @@ public class CPU
 			      [$FF4B] = $00   ; WX
 			      [$FFFF] = $00   ; IE
 			*/
-			}
+		}
 
 		protected int cycles() {
 			return TotalInstrCount;
-			}
+		}
 
 		private String disassembleinstruction() {
 			//cartridge.write(PC,14);
@@ -106,7 +106,7 @@ public class CPU
 			//cartridge.write(PC,9);
 			// TODO: take count of BC
 			return String.format( "$%02x\t", cartridge.read( PC ) )+deasm.disassemble( PC );
-			}
+		}
 
 		protected void printCPUstatus() {
 			String flags = "";
@@ -122,14 +122,14 @@ public class CPU
 			System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F], regs[H],regs[L] );
 			System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
 			System.out.printf( "  $%04x %s\n", PC, disassembleinstruction() );
-			}
+		}
 		protected int readmem8b( int H, int L ) {
 			return cartridge.read(( regs[H]<<8 )|regs[L] );
-			}
+		}
 
 		protected void writemem8b( int H, int L, int val ) {
 			cartridge.write(( regs[H]<<8 )|regs[L], val );
-			}
+		}
 
 		protected void inc8b( int reg_index ) {
 			// Clear & Set HC
@@ -145,7 +145,7 @@ public class CPU
 
 			// clear & set NF
 			regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-			}
+		}
 
 		protected void dec8b( int reg_index ) {
 			// Clear & Set HC
@@ -161,7 +161,7 @@ public class CPU
 
 			// clear & set NF
 			regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
-			}
+		}
 
 		protected void inc16b() {}
 
@@ -183,7 +183,7 @@ public class CPU
 
 			// set ZF
 			regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
-			}
+		}
 
 		protected void sub8b( int dest, int val ) {
 			// clear all flags except NF which is set
@@ -203,72 +203,72 @@ public class CPU
 
 			// set ZF
 			regs[FLAG_REG] |= regs[dest]==0 ? ZF_Mask : 0;
-			}
+		}
 
 		protected void ld8b( int dest, int val ) {
 			regs[dest] = val;
-			}
+		}
 
 		protected void ld8bmem( int location, int val ) {
 			cartridge.write( location, val );
-			}
+		}
 
 		protected void cp( int val ) {
 			int i= regs[A];
 			sub8b( A, val );
 			regs[A] = i;
-			}
+		}
 
 		protected void xor( int val ) {
 			regs[F]=0;
 			regs[A]^=val;
 			regs[F]|=( regs[A]==0?ZF_Mask:0 );
-			}
+		}
 
 		protected void or( int val ) {
 			regs[F]=0;
 			regs[A]|=val;
 			regs[F]|=( regs[A]==0?ZF_Mask:0 );
-			}
+		}
 
 		protected void and( int val ) {
 			regs[F]=HC_Mask;
 			regs[A]&=val;
 			regs[F]|=( regs[A]==0?ZF_Mask:0 );
-			}
+		}
 
 		protected void JPnn() {
 			int i=cartridge.read( PC++ );
 			int j=cartridge.read( PC++ );
 			System.out.println( "i="+i+ " j="+j );
 			PC = j<<8|i; //Should be endian correct
-			}
+		}
 
 		protected void JRe( int e ) {
 			PC += e;
-			}
+		}
 
 		protected void sbc( int dest, int val ) {
 			sub8b( dest, val+(( regs[FLAG_REG]&CF_Mask ) >> CF_Shift ) );
-			}
+		}
 
 		protected void adc( int dest, int val ) {
 			add8b( dest, val+(( regs[FLAG_REG]&CF_Mask ) >> CF_Shift ) );
-			}
+		}
 
 		protected void JRcce( boolean cc, int e ) {
 			if ( cc ) JRe( e );
-			}
+		}
 
 		protected void push( int val ) {
 			//Should be endian correct
 			cartridge.write( --SP, ( val>>8 )&0xff );
 			cartridge.write( --SP, val&0xff );
-			}
+		}
 
 		protected int fetch() {
 			return cartridge.read( PC );
-			}
+		}
 
 		static int nopCount=0;
 		private boolean execute( int instr ) {
@@ -309,7 +309,7 @@ public class CPU
 				case 0x18: {// JR   &00
 					int x = cartridge.read( PC++ );
 					PC += (( x>=128 ) ? -( x & 0x7F ) : x & 0x7F );
-					}
+				}
 				; break;
 				case 0x1c: // INC  E
 					inc8b( E );
@@ -321,14 +321,14 @@ public class CPU
 					if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
 						int x = cartridge.read( PC++ );
 						PC += (( x>=128 ) ? -( x & 0x7F ) : x & 0x7F );
-						}
+					}
 					else ++PC;
 					break;
 				case 0x28: // JR   Z, n
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
 						int x = cartridge.read( PC++ );
 						PC += (( x>=128 ) ? -( x & 0x7F ) : x & 0x7F );
-						}
+					}
 					else ++PC;
 					break;
 				case 0x2c:  // INC L
@@ -685,10 +685,10 @@ public class CPU
 				case 0xda: //D4 JMP CF,&0000
 					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask ) { //call to nn, SP=SP-2, (SP)=PC, PC=nn
 						JPnn();
-						}
+					}
 					else {
 						PC+=2;
-						}
+					}
 					break;
 				case 0xcb: // prefix instruction
 					instr = cartridge.read( PC++ );
@@ -720,36 +720,36 @@ public class CPU
 						default:
 							System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , instr );
 							return false;
-						}
+					}
 					break;
 				default:
 					System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
 					return false;
-				}
+			}
 			PC &= 0xffff;
 			SP &= 0xffff;
 			++TotalInstrCount;
 			if ( nop ) {
 				++nopCount;
-				}
+			}
 			else {
 				nopCount=0;
-				}
+			}
 			if ( nopCount>5 ) {
 				System.out.println( "Executing a lot of NOPs, aborting!" );
 				return false;
-				}
-			return true;
 			}
+			return true;
+		}
 
 		protected boolean nextinstruction() {
 			printCPUstatus();
 			lastException = execute( fetch() ) ? 0 : 1;
 			return lastException==0;
-			}
+		}
 
 		protected int exception() {
 			return lastException;
-			}
+		}
 
-	}
+}
