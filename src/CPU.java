@@ -147,7 +147,7 @@ public class CPU
 				WRAM[0][index-0xc000]=value;
 			}
 			else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-				WRAM[CurrentWRAMBank][index-0xc000]=value;
+				WRAM[CurrentWRAMBank][index-0xd000]=value;
 			}
 			else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
 				write(index-0x2000, value);
