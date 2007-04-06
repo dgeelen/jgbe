@@ -1,25 +1,24 @@
 import java.io.*;
 
-public class Cartridge
-{
-		// the size of the ROM banks in byte
-		private static final int ROM_BANK_SIZE = 0x4000;
+public class Cartridge {
+	// the size of the ROM banks in byte
+	private static final int ROM_BANK_SIZE = 0x4000;
 
-		// RAM/ROM
-		private int[][] RAM;               // RAM [banknr][index]
-		private int[][] ROM;               // ROM [banknr][index]
-		private int[][] mem_to_read = ROM; // The memory to read from
+	// RAM/ROM
+	private int[][] RAM;               // RAM [banknr][index]
+	private int[][] ROM;               // ROM [banknr][index]
+	private int[][] mem_to_read = ROM; // The memory to read from
 
-		private String  file_name;
-		private String  err_msg;            // message in case of an error
+	private String  file_name;
+	private String  err_msg;            // message in case of an error
 
-		private int MBC;                    // The MBC used in the cardridge
+	private int MBC;                    // The MBC used in the cardridge
 
-		private boolean ram_enabled = false;// Whether RAM is enabled to read and write
-		private int     CurrentROMBank = 0;    // The ROM bank to read/write
-		private int     CurrentRAMBank = 0;    // The RAM bank to read/write
+	private boolean ram_enabled = false;// Whether RAM is enabled to read and write
+	private int     CurrentROMBank = 0;    // The ROM bank to read/write
+	private int     CurrentRAMBank = 0;    // The RAM bank to read/write
 
-		public Cartridge(String file_name)
+	public Cartridge(String file_name) {
 		/**
 		 * constructs a new instance of Cartridge
 		 * pre:  fileName is the name of a cartridge
@@ -28,139 +27,124 @@ public class Cartridge
 		 *       else
 		 *         the cartridge is loaded into memory
 		 */
-		{
-				this.file_name = file_name;
-				loadFromFile();
-		}
+		this.file_name = file_name;
+		loadFromFile();
+	}
 
-		public String getError()
-		/**
-		 * getError returns the error message if an error has occured
-		 * pre: loadFromFile == true
-		 * ret: Exception.getMessage()
-		 */
-		{
-				return err_msg;
-		}
+	public String getError() {
+			/**
+			 * getError returns the error message if an error has occured
+			 * pre: loadFromFile == true
+			 * ret: Exception.getMessage()
+			 */
+			return err_msg;
+	}
 
-		private void loadFromFile()
+	private void loadFromFile() {
 		/*
-		 * loadFromFile loads a cartidge from a file
-		 * pre:  true
-		 * post: if an error occurred
-		 *         getError() contains the gives the message of the error
-		 *       else
-		 *         the cartidge is loaded into ROM/RAM
-		 */
-		{
-				/*
-				 * load the first ROM bank of the cartridge into memory
-				 * used to initialize RAM and ROM banks
-				 */
-				int[] first_rom_bank = new int[ROM_BANK_SIZE];
-				System.out.println("Attempting to load ROM: `"+file_name+"'");
-				try
-				{
-						FileInputStream fistream = new FileInputStream(file_name);
-						BufferedInputStream bistream = new BufferedInputStream(fistream);
-						DataInputStream distream = new DataInputStream(bistream);
+			* loadFromFile loads a cartidge from a file
+			* pre:  true
+			* post: if an error occurred
+			*         getError() contains the gives the message of the error
+			*       else
+			*         the cartidge is loaded into ROM/RAM
+			*/
+		/*
+			* load the first ROM bank of the cartridge into memory
+			* used to initialize RAM and ROM banks
+			*/
+		int[] first_rom_bank = new int[ROM_BANK_SIZE];
+		System.out.println("Attempting to load ROM: `"+file_name+"'");
+		try {
+			FileInputStream fistream = new FileInputStream(file_name);
+			BufferedInputStream bistream = new BufferedInputStream(fistream);
+			DataInputStream distream = new DataInputStream(bistream);
 
-						// load first ROM bank into memory
-						for(int i = 0; i < ROM_BANK_SIZE; ++i)
-								first_rom_bank[i] = distream.readUnsignedByte();
-
-				}
-				catch(Exception e)
-				{
-						err_msg = "Error while loading ROM bank #0 " + e.getMessage();
-				}
-
-				// Detect MBC type
-				MBC = first_rom_bank[0x0147];
-
-				// Determine ROM size
-				switch(first_rom_bank[0x0148])
-				{
-						case 0x00: ROM = new int[2][0x81]; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
-						case 0x01: ROM = new int[4][0x81]; System.out.println("ROM size = 64KByte (4 banks)"); break;
-						case 0x02: ROM = new int[8][0x81]; System.out.println("ROM size = 128KByte (8 banks)"); break;
-						case 0x03: ROM = new int[16][0x81]; System.out.println("ROM size = 256KByte (16 banks)"); break;
-						case 0x04: ROM = new int[32][0x81]; System.out.println("ROM size = 512KByte (32 banks)"); break;
-						case 0x05: ROM = new int[64][ROM_BANK_SIZE]; System.out.println("ROM size = 1MByte (64 banks) - only 63 banks used by MBC1"); break;
-						case 0x06: ROM = new int[128][0x81]; System.out.println("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
-						case 0x07: ROM = new int[256][0x81]; System.out.println("ROM size = 4MByte (256 banks)"); break;
-						case 0x52: ROM = new int[72][0x81]; System.out.println("ROM size = 1.1MByte (72 banks)"); break;
-						case 0x53: ROM = new int[80][0x81]; System.out.println("ROM size = 1.2MByte (80 banks)"); break;
-						case 0x54: ROM = new int[96][0x81]; System.out.println("ROM size = 1.5MByte (96 banks)"); break;
-				} // switch(header[0x0148])
-
-				// Determine RAM size
-				switch(first_rom_bank[0x0149])
-				{
-						case 0x00: RAM = null; System.out.println("Card has no RAM"); break;
-						case 0x01: RAM = new int[0][2 * 1024]; System.out.println("Card has 2KBytes of RAM"); break;
-						case 0x02: RAM = new int[0][8 * 1024]; System.out.println("Card has 8Kbytes of RAM"); break;
-						case 0x03: RAM = new int[4][8 * 1024]; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
-				} // switch(header[0x0149])
-				String title="";
-				for(int i=0; i<16; ++i) {
-					if(first_rom_bank[0x0134+i]==0) break;
-					title+=(char)first_rom_bank[0x0134+i];
-				}
-				System.out.println("ROM Name appears to be `"+title+"'");
-				// load entire ROM/RAM into memory
-				int t = 0;
-				try
-				{
-						FileInputStream fistream = new FileInputStream(file_name);
-						BufferedInputStream bistream = new BufferedInputStream(fistream);
-						DataInputStream distream = new DataInputStream(bistream);
-
-						// load ROM into memory
-						System.out.println("Trying to load "+ROM.length+" banks from ROM");
-						for(int i = 0; i < ROM.length; i++) {
-							for(int j = 0; j < ROM_BANK_SIZE; j++) {
-								ROM[i][j] = distream.readUnsignedByte();
-								}
-							}
-
-						t = 1;
-						// load RAM into memory
-						/*for(int i = 0; i < RAM.length; i++)
-								for(int j = 0; j < RAM[i].length; j++)
-									RAM[i][j] = distream.readUnsignedByte();*/
-
-						t = 2;
-						System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
-				}
-				catch(Exception e)
-				{
-						err_msg = "Error while loading ROM/RAM " + e.toString() + " " + t;
-				}
+			// load first ROM bank into memory
+			for(int i = 0; i < ROM_BANK_SIZE; ++i)
+				first_rom_bank[i] = distream.readUnsignedByte();
+		}
+		catch(Exception e) {
+			err_msg = "Error while loading ROM bank #0 " + e.getMessage();
 		}
 
-		public int read(int index) {
-			switch(MBC) {
-				case 0x13: //Magic?
-					if(index < 0x4000) return ROM[0][index];
-					if((index >= 0x4000) && (index < 0x8000)) return ROM[CurrentROMBank][index-0x4000];
-					if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];
-					System.out.println("Error: Reading from cardridge with a non cardridge address!");
-					return -1;
-				default:
-					System.out.println("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
-					return -1;
-				}
+		// Detect MBC type
+		MBC = first_rom_bank[0x0147];
+
+		// Determine ROM size
+		switch(first_rom_bank[0x0148])	{
+			case 0x00: ROM = new int[2][0x81]; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
+			case 0x01: ROM = new int[4][0x81]; System.out.println("ROM size = 64KByte (4 banks)"); break;
+			case 0x02: ROM = new int[8][0x81]; System.out.println("ROM size = 128KByte (8 banks)"); break;
+			case 0x03: ROM = new int[16][0x81]; System.out.println("ROM size = 256KByte (16 banks)"); break;
+			case 0x04: ROM = new int[32][0x81]; System.out.println("ROM size = 512KByte (32 banks)"); break;
+			case 0x05: ROM = new int[64][ROM_BANK_SIZE]; System.out.println("ROM size = 1MByte (64 banks) - only 63 banks used by MBC1"); break;
+			case 0x06: ROM = new int[128][0x81]; System.out.println("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
+			case 0x07: ROM = new int[256][0x81]; System.out.println("ROM size = 4MByte (256 banks)"); break;
+			case 0x52: ROM = new int[72][0x81]; System.out.println("ROM size = 1.1MByte (72 banks)"); break;
+			case 0x53: ROM = new int[80][0x81]; System.out.println("ROM size = 1.2MByte (80 banks)"); break;
+			case 0x54: ROM = new int[96][0x81]; System.out.println("ROM size = 1.5MByte (96 banks)"); break;
+		} // switch(header[0x0148])
+
+		// Determine RAM size
+		switch(first_rom_bank[0x0149]) {
+			case 0x00: RAM = null; System.out.println("Card has no RAM"); break;
+			case 0x01: RAM = new int[0][2 * 1024]; System.out.println("Card has 2KBytes of RAM"); break;
+			case 0x02: RAM = new int[0][8 * 1024]; System.out.println("Card has 8Kbytes of RAM"); break;
+			case 0x03: RAM = new int[4][8 * 1024]; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
+		} // switch(header[0x0149])
+
+		String title="";
+		for(int i=0; i<16; ++i) {
+			if(first_rom_bank[0x0134+i]==0) break;
+			title+=(char)first_rom_bank[0x0134+i];
 		}
+		System.out.println("ROM Name appears to be `"+title+"'");
+		// load entire ROM/RAM into memory
+		int t = 0;
+		try	{
+			FileInputStream fistream = new FileInputStream(file_name);
+			BufferedInputStream bistream = new BufferedInputStream(fistream);
+			DataInputStream distream = new DataInputStream(bistream);
 
-		public void write(int index, int value) {        // TODO fatsoenlijk
-			System.out.println("Error: Cartridge.write() not implemented!");
-	
-			// Switch RAM/ROM and bank numbers
+			// load ROM into memory
+			System.out.println("Trying to load "+ROM.length+" banks from ROM");
+			for(int i = 0; i < ROM.length; i++) {
+				for(int j = 0; j < ROM_BANK_SIZE; j++) {
+					ROM[i][j] = distream.readUnsignedByte();
+				}
+			}
 
-				/*HAX* /ROM[0][index]=value;/*HAX* /
-				//
-				switch (MBC)
+			t = 1;
+			// load RAM into memory
+			/*for(int i = 0; i < RAM.length; i++)
+					for(int j = 0; j < RAM[i].length; j++)
+						RAM[i][j] = distream.readUnsignedByte();*/
+
+			t = 2;
+			System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
+		}
+		catch(Exception e) {
+			err_msg = "Error while loading ROM/RAM " + e.toString() + " " + t;
+		}
+	}
+
+	public int read(int index) {
+		switch(MBC) {
+			case 0x13: //MBC3
+				if(index < 0x4000) return ROM[0][index];
+				if((index >= 0x4000) && (index < 0x8000)) return ROM[CurrentROMBank][index-0x4000];
+				if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];
+				System.out.println("Error: Reading from cardridge with a non cardridge address!");
+				return -1;
+			default:
+				System.out.println("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
+				return -1;
+			}
+	}
+
+	public void write(int index, int value) {        // TODO fatsoenlijk
+			switch (MBC)
 				{
 						case 0x0001:
 						case 0x0002:
@@ -238,16 +222,4 @@ public class Cartridge
 
 				} */
 		}
-
-		public static void main(String[] args)
-		{
-				Cartridge card = new Cartridge("Pokemon Blue.gb");
-				if(card.getError()!=null) {
-					System.out.println("ERROR: "+card.getError());
-					}
-				else {
-					System.out.println("Succesfully loaded ROM :)");
-				}
-		}
-
 }
