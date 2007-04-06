@@ -168,6 +168,15 @@ public class CPU
 				else if(index==0xff4f) { //FF4F - VBK - CGB Mode Only - VRAM Bank
 					VC.selectVRAMBank(value&1);
 				}
+/*
+FF51 - HDMA1 - CGB Mode Only - New DMA Source, High
+FF52 - HDMA2 - CGB Mode Only - New DMA Source, Low
+FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
+FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
+FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
+*/			else if((index>0xff50)&&(index<0xff56)) {
+					System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");
+				}
 				else if(index==0xff70) { //FF70 - SVBK - CGB Mode Only - WRAM Bank
 					CurrentWRAMBank=Math.max(value&0x07, 1);
 				}
