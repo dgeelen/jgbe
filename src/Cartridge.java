@@ -133,7 +133,7 @@ public class Cartridge {
 
 	public int read(int index) {
 		switch(MBC) {
-			case 0x13: //MBC3
+			case 0x13: //MBC3 TODO: RTC CRAP
 				if(index < 0x4000) return ROM[0][index];
 				if((index >= 0x4000) && (index < 0x8000)) return ROM[CurrentROMBank][index-0x4000];
 				if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];
