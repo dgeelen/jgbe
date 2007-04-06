@@ -119,6 +119,7 @@ public class Disassembler
 			i=s.indexOf("[n]");
 			if(i>-1) { //specialcase
 				immediate=cart.read(PC+1);
+				if(op.indexOf("LDH")>-1) immediate|=0xff00;
 				s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
 			}
 
