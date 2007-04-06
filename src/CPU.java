@@ -26,7 +26,7 @@ public class CPU
 		protected static final int L = 7;
 		protected static final int A = 0;
 
-		protected int[] HRAM = new int[0x80];
+		protected int[] HRAM = new int[0x7F];
 
 		protected int IR;
 		protected int PC;
