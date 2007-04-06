@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.net.*;
 import java.awt.image.BufferedImage;
 
-public class swinggui implements ActionListener, ItemListener {
+public class swinggui implements ActionListener, ItemListener, KeyListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
 		private static JMenuBar menubar;
@@ -81,6 +81,8 @@ public class swinggui implements ActionListener, ItemListener {
 			}
 
 			grfx=new DrawingArea( cpu.VC ); //doublebuffering
+			grfx.setFocusable(true);
+			grfx.addKeyListener(this);
 			grfx.setPreferredSize( new Dimension( 160, 144 ) ); //quadruple each pixel
 			contentPane.add( grfx, BorderLayout.CENTER );
 		}
@@ -118,6 +120,74 @@ public class swinggui implements ActionListener, ItemListener {
 			              "selected":"unselected" );
 			System.out.println( s );
 		}
+
+		public void keyTyped(KeyEvent e) {
+			System.out.println("keyTyped");
+		}
+
+		public void keyPressed(KeyEvent e) {
+			switch(e.getKeyCode()){
+				case KeyEvent.VK_Z:
+					cpu.ButtonKeyStatus|=1; // A
+					break;
+				case KeyEvent.VK_X:
+					cpu.ButtonKeyStatus|=2; // B
+					break;
+				case KeyEvent.VK_MINUS:
+					cpu.ButtonKeyStatus|=4; // Select
+					break;
+				case KeyEvent.VK_EQUALS:
+					cpu.ButtonKeyStatus|=8; // Select
+					break;
+				case KeyEvent.VK_RIGHT:
+					cpu.DirectionKeyStatus|=1; // Right
+					break;
+				case KeyEvent.VK_LEFT:
+					cpu.DirectionKeyStatus|=2; // Left
+					break;
+				case KeyEvent.VK_UP:
+					cpu.DirectionKeyStatus|=4; // Up
+					break;
+				case KeyEvent.VK_DOWN:
+					cpu.DirectionKeyStatus|=8; // Down
+					break;
+				default:
+					System.out.println("keyPressed");
+					break;
+				}
+		}
+		public void keyReleased(KeyEvent e) {
+			switch(e.getKeyCode()){
+				case KeyEvent.VK_Z:
+					cpu.ButtonKeyStatus&=~1; // A
+					break;
+				case KeyEvent.VK_X:
+					cpu.ButtonKeyStatus&=~2; // B
+					break;
+				case KeyEvent.VK_MINUS:
+					cpu.ButtonKeyStatus&=~4; // Select
+					break;
+				case KeyEvent.VK_EQUALS:
+					cpu.ButtonKeyStatus&=~8; // Select
+					break;
+				case KeyEvent.VK_RIGHT:
+					cpu.DirectionKeyStatus&=~1; // Right
+					break;
+				case KeyEvent.VK_LEFT:
+					cpu.DirectionKeyStatus&=~2; // Left
+					break;
+				case KeyEvent.VK_UP:
+					cpu.DirectionKeyStatus&=~4; // Up
+					break;
+				case KeyEvent.VK_DOWN:
+					cpu.DirectionKeyStatus&=~8; // Down
+					break;
+				default:
+					System.out.println("keyReleased" + e.getKeyCode());
+					break;
+				}
+		}
+
 
 		// Returns the class name, no package info
 		protected static String getClassName( Object o ) {
