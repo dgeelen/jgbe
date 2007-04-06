@@ -147,7 +147,7 @@ public class CPU
 
       // clear & set NF
       regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-      }
+    }
 
     protected void dec8b( int reg_index ) {
       // Clear & Set HC
@@ -163,7 +163,7 @@ public class CPU
 
       // clear & set NF
       regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
-      }
+    }
 
     protected void inc16b() {}
 
@@ -734,16 +734,16 @@ public class CPU
         return false;
       }
       return true;
-      }
+    }
 
-      protected boolean nextinstruction() {
-        printCPUstatus();
-        lastException = execute(fetch()) ? 0 : 1;
-        return lastException==0;
-      }
+    protected boolean nextinstruction() {
+      printCPUstatus();
+      lastException = execute(fetch()) ? 0 : 1;
+      return lastException==0;
+    }
 
-      protected int exception() {
-        return lastException;
-      }
+    protected int exception() {
+      return lastException;
+    }
 
   }
