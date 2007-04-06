@@ -8,6 +8,8 @@ public class VideoController {
 		OAM = new int[0xa0]; //Sprite Attribute Table
 	}
 
+	public
+
 	public int read(int index) {
 		if(index<0x8000) {
 			System.out.println("Error: VideoController.read(): Reading from non VideoController-Address "+index);
