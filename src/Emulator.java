@@ -20,14 +20,19 @@ public class Emulator {
 			if(true){
 				if(t.diagnose(true)==0) {
 					cpu.reset();
-					int x = 1;
+					int x = 10;
 					while(x > 0){
 						if (fulldebug) cpu.printCPUstatus();
 						cpu.nextinstruction();
 						if (cpu.exception()!=0) {
+							Disassembler deasm = new Disassembler( cartridge, cpu);
 							if (!fulldebug) cpu.printCPUstatus();
-							++(cpu.PC); // hope its a single byte instruction? ask disassembler how big the instruction is?
+							String s = deasm.disassemble(cpu.PC);
+							if (s.charAt( 6)=='$') ++(cpu.PC);
+							if (s.charAt(10)=='$') ++(cpu.PC);
+							if (s.charAt(14)=='$') ++(cpu.PC);
 							--x;
+							fulldebug = true;
 						}
 					}
 				}

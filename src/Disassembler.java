@@ -59,6 +59,7 @@ public class Disassembler
       if(instr==0xcb) {
 	      instr=cpu.read(PC+1);
         op = opcode[instr+0x100];
+				bytecount=2;
       }
       else {
         op = opcode[instr];

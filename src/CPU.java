@@ -491,6 +491,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 		static int nopCount=0;
 		private boolean execute( int instr ) {
 			boolean nop=false;
+			//if (!nop) return nop;
 			//System.out.printf("Executing instruction $%02x\n", instr);
 			++PC;  //FIXME: Is de PC niet ook een register in de CPU?
 			switch ( instr ) {
@@ -1062,6 +1063,10 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 					push( PC+2 );
 					JPnn();
 					break;
+				case 0xd0: // RET  NC
+					if ((regs[F]&CF_Mask) != CF_Mask)
+						PC = pop();
+					break;
 				case 0xd1:{// POP DE
 					int x = pop();
 					regs[D] = x >> 8;
@@ -1084,7 +1089,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						PC+=2;
 					}
 					break;
-				case 0xe0: // LDH
+				case 0xe0: // LDH  (n), A
 					write( 0xff00 | read( PC++ ), regs[A] );
 					break;
 				case 0xe1:{// POP HL
@@ -1112,7 +1117,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 				case 0xee: // XOR   &00
 					xor( read( PC++ ) );
 					break;
-				case 0xf0: // LDH
+				case 0xf0: // LDH A, (n)
 					regs[A] = read( 0xff00 | read( PC++ ) );
 					break;
 				case 0xf1:{// POP AF
