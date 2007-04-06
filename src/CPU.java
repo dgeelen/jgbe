@@ -26,7 +26,7 @@ public class CPU
 		protected static final int L = 7;
 		protected static final int A = 0;
 
-		private int[] HRAM = new int[0x7E]; //HighRAM
+		private int[] HRAM = new int[0x7F]; //HighRAM
 		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
 		private int CurrentWRAMBank=0;
 

@@ -227,16 +227,16 @@ public class Cartridge {
 			case 0x0015:
 			case 0x0016:
 			case 0x0017:
-					// MBC4
-					break;
+				// MBC4
+				break;
 			case 0x0019:
 			case 0x001A:
 			case 0x001B:
 			case 0x001C:
 			case 0x001D:
 			case 0x001E:
-					// MBC5
-					break;
+				// MBC5
+				break;
 		}
 	}
 }
