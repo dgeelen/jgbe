@@ -40,7 +40,7 @@ LD   H, IMM08
 DAA
 JR   Z, IMM08
 ADD  HL, HL
-LDI  A, HL
+LDI  A, [HL]
 DEC  HL
 INC  L
 DEC  L
