@@ -116,7 +116,7 @@ public class Disassembler
 			i=op.indexOf("[n]");
 			if(i>-1) { //specialcase
         immediate= cart.read(PC+1);
-				s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
+				s=String.format(s.substring(0,i+3)+"$%04x"+s.substring(i+4),immediate);
 			}
 
 			String prefix=String.format("$%04x ",PC);
