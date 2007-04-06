@@ -14,9 +14,10 @@ public class swinggui implements ActionListener, ItemListener {
 		protected Cartridge cartridge;
 		protected CPU cpu;
 
-		private Image    img;
+		private Image[]    img;
+		private int which_img_to_draw_for_double_buffering=0;
 		private Graphics graph;
-	
+
 		public class DrawingArea extends JPanel{
 			VideoController VC;
 			public DrawingArea(VideoController vc) {
@@ -25,8 +26,9 @@ public class swinggui implements ActionListener, ItemListener {
 			}
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
-				g.drawImage(img,0,0, this);
-				System.out.println("Painting!");
+				g.drawImage(img[which_img_to_draw_for_double_buffering^1],0,0, this);
+				which_img_to_draw_for_double_buffering^=1;
+				//System.out.println("Painting! ");
     	}
 		}
 
@@ -41,9 +43,11 @@ public class swinggui implements ActionListener, ItemListener {
 				VC = cpu.VC;
 				TestSuite t = new TestSuite(cpu);
 			}
-
-			img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-			graph = img.getGraphics();
+			img=new Image[2];
+			img[0] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+			img[1] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+			//img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+			//graph = img.getGraphics();
 		}
 
 		private JMenuBar createJMenuBar() {
@@ -137,17 +141,12 @@ public class swinggui implements ActionListener, ItemListener {
 			gui.cpu.reset();
 			int x = 10;
 			boolean fulldebug=false;
-			while(x > 0){
+			while(x > 0) {
 				if (fulldebug) gui.cpu.printCPUstatus();
 				gui.cpu.nextinstruction();
 				if ((gui.cpu.TotalInstrCount % 1000000) == 0) {
-//		if (gui.graph == null)
-//		{
-//			gui.img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-//			gui.graph = gui.img.getGraphics();
-//		} else
-					gui.VC.renderImage(gui.graph);
-					gui.grfx.updateUI();
+					gui.VC.renderImage(gui.img[gui.which_img_to_draw_for_double_buffering^1].getGraphics());
+					//gui.grfx.updateUI();
 				}
 				if (gui.cpu.exception()!=0) {
 					Disassembler deasm = new Disassembler( gui.cartridge, gui.cpu);

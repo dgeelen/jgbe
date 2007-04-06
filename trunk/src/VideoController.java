@@ -34,7 +34,7 @@ public class VideoController {
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
 		if((LCDC&(1<<7))!=0) { //LCD enabled
-			System.out.println("rendering scanline");
+			//System.out.println("rendering scanline");
 			int TileData = ((LCDC&(1<<4))==0) ? 0x8800 : 0x8000;
 			// BG display
 			int CurBG = LCDC & 1;
@@ -57,7 +57,7 @@ public class VideoController {
 				g.drawRect(x-SCX, linenumber, x-SCX+2, linenumber+2);
 				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 			}
-			
+
 			if((LCDC&(1<<5))!=0) { //window display
 				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
 
