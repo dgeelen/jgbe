@@ -5,8 +5,8 @@ public class VideoController {
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
 	private int OAM[];
-	private int SCX=0;
-	private int SCY=0;
+	protected int SCX=0;
+	protected int SCY=0;
 	protected int LCDC=0;
 	private CPU cpu; // dont think we need this...
 	private Color Gray[];
@@ -23,7 +23,7 @@ public class VideoController {
 	}
 
 	public void renderBackGroundMap(Graphics g) {
-		for(int i=0; i<160; ++i) {
+		for(int i=0; i<144; ++i) {
 			renderScanLine(g, i);
 		}
 	}
@@ -49,8 +49,8 @@ public class VideoController {
 			int ry = (SCY+linenumber)&0xFF;
 			int rty = ry >> 3; // tile x
 			int rsy = ry & 7; // x offs
-			for (int x = SCX; x < SCX + 160; ++x) {
-				int rx = x & 0xff; // it wraps, too
+			for (int x = 0; x < 160; ++x) {
+				int rx = (SCX+x)&0xff; // it wraps, too
 				int rtx = rx >> 3; // tile x
 				int rsx = rx & 7; // x offs
 				int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
@@ -59,9 +59,9 @@ public class VideoController {
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
 				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 				//now we should do some pallete stuff....
-				g.setColor(Gray[(col&1)|(col&2)]);// System.out.println((col&1)|(col&2));
+				g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
 				//g.setColor(new Color((col&1)*255,(col>>1)*255,255));
-				g.drawRect(x-SCX, linenumber, x-SCX+2, linenumber+2);
+				g.drawRect(x, linenumber, x, linenumber);
 				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 			}
 
