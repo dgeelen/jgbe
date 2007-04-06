@@ -611,6 +611,13 @@ public class CPU
 				case 0x2f:  // CPL
 					xor( 0xFF );
 					break;
+				case 0x30: // JR NC, n
+					if (( regs[F]&CF_Mask )!=CF_Mask ) {
+						int x = read( PC++ );
+						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
+					}
+					else ++PC;
+					break;
 				case 0x31:{// LD SP, nn
 					int l = read( PC++ );
 					int h = read( PC++ );
@@ -622,6 +629,10 @@ public class CPU
 					break;
 				case 0x36: // LD (HL), n
 					writemem8b(H,L, read(PC++));
+					break;
+				case 0x37: // SCF
+					regs[F] &= ZF_Mask;
+					regs[F] |= CF_Mask;
 					break;
 				case 0x38: // JR C, n
 					if (( regs[F]&CF_Mask )==CF_Mask ) {
@@ -1013,9 +1024,13 @@ public class CPU
 				case 0xc3: // JPNNNN
 					JPnn();
 					break;
-					case 0xc5: // PUSH BC
-						push( regs[B]<<8 | regs[C]);
-						break;
+				case 0xc5: // PUSH BC
+					push( regs[B]<<8 | regs[C]);
+					break;
+				case 0xc8: // RET  Z
+					if ((regs[F]&ZF_Mask) == ZF_Mask)
+						PC = pop();
+					break;
 				case 0xc9: // RET
 					PC = pop();
 					break;
@@ -1068,6 +1083,9 @@ public class CPU
 				case 0xe6: // AND nn
 					and(read(PC++));
 					break;
+				case 0xe9: // JP  HL
+					PC = (regs[H]<<8) | regs[L];
+					break;
 				case 0xea:{// LD (nnnn), A
 					int a = read( PC++ );
 					int b = read( PC++ );
@@ -1085,7 +1103,7 @@ public class CPU
 					regs[F] = x&0xff;
 				};break;
 				case 0xf3: // DI
-					IR = 0x00;
+					IR = 0x00; // TODO:?
 					break;
 				case 0xf5: // PUSH AF
 					push( regs[A]<<8 | regs[F]);
@@ -1095,6 +1113,9 @@ public class CPU
 					int b = read( PC++ );
 					regs[A] = read((b<<8) | a);
 				};break;
+				case 0xfb: // EI
+					IR = 0xff; // TODO:?
+					break;
 				case 0xfe: // CP n
 					cp( read( PC++ ) );
 					break;
@@ -1105,6 +1126,49 @@ public class CPU
 				case 0xcb: // prefix instruction
 					instr = read( PC++ );
 					switch ( instr ) {
+						case 0x1a: // RR  D
+							regs[D] = ror(regs[D]);
+							break;
+						case 0x40: // BIT 0,B
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[B]&(1<<0))==0 ? ZF_Mask : 0;
+							break;
+						case 0x41: // BIT 0,C
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[C]&(1<<0))==0 ? ZF_Mask : 0;
+							break;
+						case 0x42: // BIT 0,D
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[D]&(1<<0))==0 ? ZF_Mask : 0;
+							break;
+						case 0x43: // BIT 0,E
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[E]&(1<<0))==0 ? ZF_Mask : 0;
+							break;
+						case 0x44: // BIT 0,H
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[H]&(1<<0))==0 ? ZF_Mask : 0;
+							break;
+						case 0x45: // BIT 0,L
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[L]&(1<<0))==0 ? ZF_Mask : 0;
+							break;
+						case 0x46: // BIT 0,(HL)
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (readmem8b(H, L)&(1<<0))==0 ? ZF_Mask : 0;
+							break;
+						case 0x47: // BIT 0,A
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[A]&(1<<0))==0 ? ZF_Mask : 0;
+							break;
 						case 0x80: // RES 0,B
 							regs[B] &= ~( 1 << 0 );
 							break;
@@ -1128,6 +1192,30 @@ public class CPU
 							break;
 						case 0x87: // RES 0,A
 							regs[A] &= ~( 1 << 0 );
+							break;
+						case 0xD0: // SET 2,B
+							regs[B] |= ( 1 << 2 );
+							break;
+						case 0xD1: // SET 2,C
+							regs[C] |= ( 1 << 2 );
+							break;
+						case 0xD2: // SET 2,D
+							regs[D] |= ( 1 << 2 );
+							break;
+						case 0xD3: // SET 2,E
+							regs[E] |= ( 1 << 2 );
+							break;
+						case 0xD4: // SET 2,H
+							regs[H] |= ( 1 << 2 );
+							break;
+						case 0xD5: // SET 2,L
+							regs[L] |= ( 1 << 2 );
+							break;
+						case 0xD6: // SET 2,(HL)
+							writemem8b(H,L, readmem8b(H, L) | ( 1 << 2 ) );
+							break;
+						case 0xD7: // SET 2,A
+							regs[A] |= ( 1 << 2 );
 							break;
 						default:
 							System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , instr );
