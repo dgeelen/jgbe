@@ -44,7 +44,7 @@ public class CPU
 
 		public CPU( Cartridge cartridge ) {
 			deasm = new Disassembler( cartridge, this );
-			VC = new VideoController();
+			VC = new VideoController(this);
 			this.cartridge = cartridge;
 			reset();
 		}
@@ -218,39 +218,38 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 
 			//Stack Pointer=$FFFE
 			SP=0xfffe;
-			/*TODO:INTERNAL RAM
-			      [$FF05] = $00   ; TIMA
-			      [$FF06] = $00   ; TMA
-			      [$FF07] = $00   ; TAC
-			      [$FF10] = $80   ; NR10
-			      [$FF11] = $BF   ; NR11
-			      [$FF12] = $F3   ; NR12
-			      [$FF14] = $BF   ; NR14
-			      [$FF16] = $3F   ; NR21
-			      [$FF17] = $00   ; NR22
-			      [$FF19] = $BF   ; NR24
-			      [$FF1A] = $7F   ; NR30
-			      [$FF1B] = $FF   ; NR31
-			      [$FF1C] = $9F   ; NR32
-			      [$FF1E] = $BF   ; NR33
-			      [$FF20] = $FF   ; NR41
-			      [$FF21] = $00   ; NR42
-			      [$FF22] = $00   ; NR43
-			      [$FF23] = $BF   ; NR30
-			      [$FF24] = $77   ; NR50
-			      [$FF25] = $F3   ; NR51
-			      [$FF26] = $F1-GB, $F0-SGB ; NR52
-			      [$FF40] = $91   ; LCDC
-			      [$FF42] = $00   ; SCY
-			      [$FF43] = $00   ; SCX
-			      [$FF45] = $00   ; LYC
-			      [$FF47] = $FC   ; BGP
-			      [$FF48] = $FF   ; OBP0
-			      [$FF49] = $FF   ; OBP1
-			      [$FF4A] = $00   ; WY
-			      [$FF4B] = $00   ; WX
-			      [$FFFF] = $00   ; IE
-			*/
+
+			write(0xff05, 0x00); // [$FF05] = $00   ; TIMA
+			write(0xff06, 0x00); // [$FF06] = $00   ; TMA
+			write(0xff07, 0x00); // [$FF07] = $00   ; TAC
+			write(0xff10, 0x80); // [$FF10] = $80   ; NR10
+			write(0xff11, 0xbf); // [$FF11] = $BF   ; NR11
+			write(0xff12, 0xf3); // [$FF12] = $F3   ; NR12
+			write(0xff14, 0xbf); // [$FF14] = $BF   ; NR14
+			write(0xff16, 0x3f); // [$FF16] = $3F   ; NR21
+			write(0xff17, 0x00); // [$FF17] = $00   ; NR22
+			write(0xff19, 0xbf); // [$FF19] = $BF   ; NR24
+			write(0xff1a, 0x7f); // [$FF1A] = $7F   ; NR30
+			write(0xff1b, 0xff); // [$FF1B] = $FF   ; NR31
+			write(0xff1c, 0x9f); // [$FF1C] = $9F   ; NR32
+			write(0xff1e, 0xbf); // [$FF1E] = $BF   ; NR33
+			write(0xff20, 0xff); // [$FF20] = $FF   ; NR41
+			write(0xff21, 0x00); // [$FF21] = $00   ; NR42
+			write(0xff22, 0x00); // [$FF22] = $00   ; NR43
+			write(0xff23, 0xbf); // [$FF23] = $BF   ; NR30
+			write(0xff24, 0x77); // [$FF24] = $77   ; NR50
+			write(0xff25, 0xf3); // [$FF25] = $F3   ; NR51
+			write(0xff26, 0xf1); // [$FF26] = $F1-GB, $F0-SGB ; NR52
+			write(0xff40, 0x91); // [$FF40] = $91   ; LCDC
+			write(0xff42, 0x00); // [$FF42] = $00   ; SCY
+			write(0xff43, 0x00); // [$FF43] = $00   ; SCX
+			write(0xff45, 0x00); // [$FF45] = $00   ; LYC
+			write(0xff47, 0xfc); // [$FF47] = $FC   ; BGP
+			write(0xff48, 0xff); // [$FF48] = $FF   ; OBP0
+			write(0xff49, 0xff); // [$FF49] = $FF   ; OBP1
+			write(0xff4a, 0x00); // [$FF4A] = $00   ; WY
+			write(0xff4b, 0x00); // [$FF4B] = $00   ; WX
+			write(0xffff, 0x00); // [$FFFF] = $00   ; IE
 		}
 
 		protected int cycles() {
@@ -1300,7 +1299,7 @@ FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 			lastException = (res!=0) ? 0 : 1;
 			return res;
 		}
-		
+
 		protected int exception() {
 			return lastException;
 		}
