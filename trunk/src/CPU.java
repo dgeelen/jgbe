@@ -266,6 +266,13 @@ public class CPU
 			cartridge.write( --SP, val&0xff );
 		}
 
+		protected int pop() {
+			//Should be endian correct
+			int l = cartridge.read( SP++ );
+			int h = cartridge.read( SP++ );
+			return (l | (h<<8));
+		}
+
 		protected int fetch() {
 			return cartridge.read( PC );
 		}
@@ -704,6 +711,9 @@ public class CPU
 					break;
 				case 0xc3: // JPNNNN
 					JPnn();
+					break;
+				case 0xc9: // RET
+					PC = pop();
 					break;
 				case 0xcd: // CALL &0000
 					push( PC+2 );
