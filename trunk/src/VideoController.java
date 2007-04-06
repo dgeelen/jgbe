@@ -54,6 +54,10 @@ public class VideoController {
 				int rtx = rx >> 3; // tile x
 				int rsx = rx & 7; // x offs
 				int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
+				if (TileData == 0x8800) {
+					TileNum += 0x80;
+					TileNum &= 0xFF;
+				}
 				int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
 				int d1 = read(TileData + offset);     // lsb bit of col is in here
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
