@@ -6,7 +6,7 @@ public class swinggui implements ActionListener, ItemListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static JPanel grfx;
 		private static JMenuBar menubar;
-
+		private VRAM vram;
 		private JMenuBar createJMenuBar() {
 			JMenuBar mainMenuBar;
 			JMenu menuFile;
