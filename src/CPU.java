@@ -487,6 +487,53 @@ public class CPU
 				case 0x6f: // LD   L,A
 					ld8b( L, regs[A] );
 					break;
+				case 0x70: // LD   (HL),B
+					writemem8b(H,L, regs[B]);
+					break;
+				case 0x71: // LD   (HL),C
+					writemem8b(H,L, regs[C]);
+					break;
+				case 0x72: // LD   (HL),D
+					writemem8b(H,L, regs[D]);
+					break;
+				case 0x73: // LD   (HL),E
+					writemem8b(H,L, regs[E]);
+					break;
+				case 0x74: // LD   (HL),H
+					writemem8b(H,L, regs[H]);
+					break;
+				case 0x75: // LD   (HL),L
+					writemem8b(H,L, regs[L]);
+					break;
+				//case 0x76: // HALT
+				//	break;
+				case 0x77: // LD   (HL),A
+					writemem8b(H,L, regs[A]);
+					break;
+				case 0x78: // LD   A,B
+					ld8b( A, regs[B] );
+					break;
+				case 0x79: // LD   A,C
+					ld8b( A, regs[C] );
+					break;
+				case 0x7a: // LD   A,D
+					ld8b( A, regs[D] );
+					break;
+				case 0x7b: // LD   A,E
+					ld8b( A, regs[E] );
+					break;
+				case 0x7c: // LD   A,H
+					ld8b( A, regs[H] );
+					break;
+				case 0x7d: // LD   A,L
+					ld8b( A, regs[L] );
+					break;
+				case 0x7e: // LD   A,(HL)
+					ld8b( A, readmem8b( H,L ) );
+					break;
+				case 0x7f: // LD   A,A
+					ld8b( A, regs[A] );
+					break;
 				case 0x80: // ADD  A,B
 					add8b( A, regs[B] );
 					break;
@@ -664,6 +711,9 @@ public class CPU
 					break;
 				case 0xe0: // LDH
 					cartridge.write( 0xff00 | cartridge.read( PC++ ), regs[A] );
+					break;
+				case 0xe6: // AND nn
+					and(cartridge.read(PC++));
 					break;
 				case 0xea: // LD (nnnn), A
 					int a = cartridge.read( PC++ );
