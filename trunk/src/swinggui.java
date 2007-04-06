@@ -1,6 +1,10 @@
+import javax.swing.*;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
+import java.util.LinkedList;
+import java.net.*;
+import java.awt.image.BufferedImage;
 
 public class swinggui implements ActionListener, ItemListener {
 		public static boolean RIGHT_TO_LEFT = false;
@@ -9,6 +13,10 @@ public class swinggui implements ActionListener, ItemListener {
 		protected VideoController VC;
 		protected Cartridge cartridge;
 		protected CPU cpu;
+
+		private Image    img;
+		private Graphics graph;
+	
 		public class DrawingArea extends JPanel{
 			VideoController VC;
 			public DrawingArea(VideoController vc) {
@@ -17,12 +25,7 @@ public class swinggui implements ActionListener, ItemListener {
 			}
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
-				System.out.println("REPAINTING PANEL");
-
-				//aargh broken!!!
-				//g.drawImage(grfx, 0, 0, null);
-				//VC.renderImage(g);
-				//g.drawRect(10,10,100,100);
+				g.drawImage(img,0,0, this);
     	}
 		}
 
@@ -34,8 +37,12 @@ public class swinggui implements ActionListener, ItemListener {
 			else {
 				System.out.println("Succesfully loaded ROM :)");
 				cpu = new CPU(cartridge);
+				VC = cpu.VC;
 				TestSuite t = new TestSuite(cpu);
 			}
+
+			img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+			graph = img.getGraphics();
 		}
 
 		private JMenuBar createJMenuBar() {
@@ -132,6 +139,14 @@ public class swinggui implements ActionListener, ItemListener {
 			while(x > 0){
 				if (fulldebug) gui.cpu.printCPUstatus();
 				gui.cpu.nextinstruction();
+				if ((gui.cpu.TotalInstrCount % 1000000) == 0) {
+		if (gui.graph == null)
+		{
+			gui.img   = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+			gui.graph = gui.img.getGraphics();
+		} else
+					gui.VC.renderImage(gui.graph);
+				}
 				if (gui.cpu.exception()!=0) {
 					Disassembler deasm = new Disassembler( gui.cartridge, gui.cpu);
 					if (!fulldebug) gui.cpu.printCPUstatus();

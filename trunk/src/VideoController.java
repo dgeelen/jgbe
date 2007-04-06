@@ -65,14 +65,14 @@ public class VideoController {
 
 
 	public void renderImage(Graphics g) {	//g is a reference to the display
-		int width = (g.getClipBounds()).width;
+/*		int width = (g.getClipBounds()).width;
 		int height = (g.getClipBounds()).height;
 		System.out.println("Graphics g width="+width+ " height="+height);
 		for(int i=0; i<height; i+=4) {
 			g.drawLine(0,0,width,i);
 		}
-		g.drawRect(20,20,20,20);
-		//renderBackGroundMap(g);
+		g.drawRect(20,20,20,20);*/
+		renderBackGroundMap(g);
 	}
 
 	public int read(int index) {
