@@ -445,6 +445,12 @@ public class CPU
 				case 0x05:  // DEC B
 					dec8b( B );
 					break;
+				case 0x06:  // LD  B, n
+					regs[B] = read( PC++ );
+					break;
+				case 0x0a:  // LD  A, (BC)
+					regs[A] = readmem8b(B, C);
+					break;
 				case 0x0b:  // DEC BC
 					dec16b(B, C);
 					break;
@@ -454,9 +460,15 @@ public class CPU
 				case 0x0d: // DEC  C
 					dec8b( C );
 					break;
+				case 0x0e:  // LD  C, n
+					regs[C] = read( PC++ );
+					break;
 				case 0x11: // LD DE, nn
 					regs[E] = read( PC++ );
 					regs[D] = read( PC++ );
+					break;
+				case 0x12: // LD (DE), A
+					writemem8b(D,E, regs[A]);
 					break;
 				case 0x13: // INC DE
 					inc16b(D, E);
@@ -466,6 +478,9 @@ public class CPU
 					break;
 				case 0x15: // DEC  D
 					dec8b( D );
+					break;
+				case 0x16: // LD   D, n
+					regs[D] = read( PC++ );
 					break;
 				case 0x18:{// JR   &00
 					int x = read( PC++ );
@@ -479,6 +494,9 @@ public class CPU
 					break;
 				case 0x1d: // DEC  E
 					dec8b( E );
+					break;
+				case 0x1e: // LD   E, n
+					regs[E] = read( PC++ );
 					break;
 				case 0x20: // JR NZ, n
 					if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
@@ -498,6 +516,9 @@ public class CPU
 				case 0x23: // INC HL
 					inc16b(H, L);
 					break;
+				case 0x26: // LD   H, n
+					regs[H] = read( PC++ );
+					break;
 				case 0x28: // JR   Z, n
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
 						int x = read( PC++ );
@@ -513,6 +534,9 @@ public class CPU
 					break;
 				case 0x2d:  // DEC  L
 					dec8b( L );
+					break;
+				case 0x2e:  // LD   L, n
+					regs[L] = read( PC++ );
 					break;
 				case 0x2f:  // CPL
 					xor( 0xFF );
@@ -533,8 +557,11 @@ public class CPU
 					--SP; //16-bit inc/dec doesnt affect any flags
 					SP&=0xffff;
 					break;
-				case 0x3e:  // LD A, n
+				case 0x3e: // LD A, n
 					regs[A]=read( PC++ );
+					break;
+				case 0x3f: // CCF
+					regs[F] ^= CF_Mask;
 					break;
 				case 0x40: // LD B, B
 					ld8b( B, regs[B] );
