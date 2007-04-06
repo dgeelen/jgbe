@@ -6,7 +6,7 @@ public class Disassembler
     private static CPU cpu;
     private static String opcode[];
     private static final String file_name = "instrs.txt";
-
+		private static final char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
     public Disassembler(Cartridge cart, CPU cpu) {
       this.cart=cart;
       this.cpu=cpu;
@@ -51,6 +51,10 @@ public class Disassembler
 
     public static final String disassemble(int PC) {
       int instr=cart.read(PC);
+      int immediate=-1;
+      int i=-1;
+      int j=-1;
+      int bytecount=1;
       String op="";
       if(instr==0xcb) {
         op = opcode[instr+0x100];
@@ -58,40 +62,71 @@ public class Disassembler
       else {
         op = opcode[instr];
       }
-      String s="";
-      int immediate=-1;
-      if(op.indexOf("IMM16")>-1) {
-        //immediate= (cart.read(PC+1)<<8)|cart.read(PC+2);
-        immediate=(cart.read(PC+2)<<8)|cart.read(PC+1); //little endian
-      }
-      if(op.indexOf("IMM08")>-1) {
+			String s=op;
+      i=op.indexOf("IMM08");
+      if(i>-1) {
         immediate= cart.read(PC+1);
-      }
-      if(op.indexOf("[")>-1) {
-        int i = op.indexOf("[");
-        int j = op.indexOf("]");
-        immediate = Math.max(regval(op.substring(i+1,j)), immediate);
-        if(immediate == -1){ //One of the special cases (LDH etc)
-            if(op.indexOf("LDH")>-1) {
-                immediate=0xff00|cart.read(PC+1);
-            }
-        }
-        s=String.format(op.substring(0,i+1)+"$%04x"+op.substring(j),immediate);
-      }
-      else if(immediate>-1) {
-        int i = op.indexOf("IMM16");
-        if(i>-1) {
-          s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
-          }
-        else {
-          i=op.indexOf("IMM08");
-          s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
-        }
-      }
-      else {
-        s = op;
-      }
-      return s  ;
+        s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+        bytecount=2;
+			}
+			i=op.indexOf("IMM16");
+			if(i>-1) {
+				immediate=(cart.read(PC+2)<<8)|cart.read(PC+1); //little endian
+				s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
+				bytecount=3;
+			}
+			i=op.lastIndexOf(" ");
+			if(i>-1) {
+				j=op.lastIndexOf(",", i-1);
+				if(j>-1) {//2 parts
+					//part 1
+					immediate=regval(op.substring(i+1));
+					if(immediate>-1) {
+						if(immediate>0xff) {
+							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate);
+							}
+						else {
+							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+						}
+					}
+					//part 2
+					i=op.lastIndexOf(" ",j);
+					immediate=regval(op.substring(i+1,j));
+					if(immediate>-1) {
+						if(immediate>0xff) {
+							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate);
+							}
+						else {
+							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+						}
+					}
+				}
+				else { // only 1 part
+					immediate=regval(op.substring(i+1));
+					if(immediate>-1) {
+						if(immediate>0xff) {
+							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate);
+						}
+						else {
+							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+						}
+					}
+				}
+			}
+			i=op.indexOf("[n]");
+			if(i>-1) { //specialcase
+        immediate= cart.read(PC+1);
+				s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
+			}
+
+			String prefix=String.format("$%04x ",PC);
+			for(i=0; i<bytecount;  ++i) {
+				prefix+=String.format("$%02x ", cart.read(PC+i));
+			}
+			for(i=0; i<3-bytecount; ++i){
+			  prefix+=String.format("    ", cart.read(PC+i));
+			}
+      return prefix + s + (new String(whitespace, 0, 18 - s.length())) + "// "+op ;
     }
 
     public static void main(String[] args)
@@ -102,3 +137,39 @@ public class Disassembler
         System.out.println(Disassembler.disassemble(255));
     }
 }
+
+
+/*      if(op.indexOf("IMM16")>-1) {
+        //immediate= (cart.read(PC+1)<<8)|cart.read(PC+2);
+        immediate=(cart.read(PC+2)<<8)|cart.read(PC+1); //little endian
+      }
+      if(op.indexOf("IMM08")>-1) {
+        immediate= cart.read(PC+1);
+      }
+      if(op.indexOf("[")>-1) {
+        i = op.indexOf("[");
+        int j = op.indexOf("]");
+        immediate = Math.max(regval(op.substring(i+1,j)), immediate);
+        if(immediate == -1){ //One of the special cases (LDH etc)
+            if(op.indexOf("LDH")>-1) {
+                immediate=0xff00|cart.read(PC+1);
+            }
+        }
+        s=String.format(op.substring(0,i+1)+"$%04x"+op.substring(j),immediate);
+      }
+      if(immediate>-1) {
+        i = op.indexOf("IMM16");
+        if(i>-1) {
+          s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
+          }
+        else {
+          i=op.indexOf("IMM08");
+          s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+        }
+      }
+      if((i=op.indexOf(","))>-1) {
+      	int j=op.indexOf(" ");
+      	immediate = regval(op.substring(j,i));
+				System.out.println(op.substring(j,i)+"= "+immediate);
+
+      }*/
