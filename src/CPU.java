@@ -1171,6 +1171,12 @@ public class CPU
 				case 0xbf: // CP   A
 					cp( regs[A] );
 					break;
+				case 0xc0: // RET  NZ
+					if ((regs[F]&ZF_Mask) != ZF_Mask)
+						PC = pop();
+					if (curcycles == 8) curcycles = 20;
+					if (curcycles == 4) curcycles =  8;
+					break;
 				case 0xc1:{// POP BC
 					int x = pop();
 					regs[B] = x >> 8;
