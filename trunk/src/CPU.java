@@ -1353,6 +1353,46 @@ public class CPU
 							regs[F] |= HC_Mask;
 							regs[F] |= (regs[A]&(1<<0))==0 ? ZF_Mask : 0;
 							break;
+						case 0x48: // BIT 1,B
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[B]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x49: // BIT 1,C
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[C]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x4a: // BIT 1,D
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[D]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x4b: // BIT 1,E
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[E]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x4c: // BIT 1,H
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[H]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x4d: // BIT 1,L
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[L]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x4e: // BIT 1,(HL)
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (readmem8b(H, L)&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x4f: // BIT 1,A
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[A]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
 						case 0x80: // RES 0,B
 							regs[B] &= ~( 1 << 0 );
 							break;
