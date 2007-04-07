@@ -152,6 +152,9 @@ public class CPU
 					case 0xff4b: // WX
 						b = VC.WX;
 						break;
+					case 0xff4f: // VRAM bank nr
+						b = VC.getcurVRAMBank();
+						break;
 					case 0xff68: // BGPI
 						b = VC.BGPI;
 						break;
@@ -433,6 +436,16 @@ public class CPU
 
 		protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
 			IOP[0x0f] |= (1<<i);
+		}
+
+		protected int shla(int value) {
+			int res = value;
+			res <<= 1;
+			regs[F] = 0;
+			regs[F] |= (res > 0xff) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
 		}
 
 		protected int rol(int value) {
@@ -1321,6 +1334,9 @@ public class CPU
 					push( regs[D]<<8 | regs[E]);
 					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
+				case 0xd6: // SUB A, n
+					sub8b(A, read(PC++));
+					break;
 				case 0xd7: // RST &10
 					push(PC);
 					PC = 0x10;
@@ -1424,6 +1440,30 @@ public class CPU
 					switch ( instr ) {
 						case 0x1a: // RR  D
 							regs[D] = ror(regs[D]);
+							break;
+						case 0x20: // SLA  B
+							regs[B] = shla(regs[B]);
+							break;
+						case 0x21: // SLA  C
+							regs[C] = shla(regs[C]);
+							break;
+						case 0x22: // SLA  D
+							regs[D] = shla(regs[D]);
+							break;
+						case 0x23: // SLA  E
+							regs[E] = shla(regs[E]);
+							break;
+						case 0x24: // SLA  H
+							regs[H] = shla(regs[H]);
+							break;
+						case 0x25: // SLA  L
+							regs[L] = shla(regs[L]);
+							break;
+						case 0x26: // SLA  (HL)
+							writemem8b(H, L, shla(readmem8b(H, L)));
+							break;
+						case 0x27: // SLA  A
+							regs[A] = shla(regs[A]);
 							break;
 						case 0x30: // SWAP B
 							regs[B] = ((regs[B]&0x0f)<< 4) | ((regs[B]&0xf0) >> 4);
@@ -1530,6 +1570,46 @@ public class CPU
 							regs[F] &= CF_Mask;
 							regs[F] |= HC_Mask;
 							regs[F] |= (regs[A]&(1<<1))==0 ? ZF_Mask : 0;
+							break;
+						case 0x78: // BIT 7,B
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[B]&(1<<7))==0 ? ZF_Mask : 0;
+							break;
+						case 0x79: // BIT 7,C
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[C]&(1<<7))==0 ? ZF_Mask : 0;
+							break;
+						case 0x7a: // BIT 7,D
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[D]&(1<<7))==0 ? ZF_Mask : 0;
+							break;
+						case 0x7b: // BIT 7,E
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[E]&(1<<7))==0 ? ZF_Mask : 0;
+							break;
+						case 0x7c: // BIT 7,H
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[H]&(1<<7))==0 ? ZF_Mask : 0;
+							break;
+						case 0x7d: // BIT 7,L
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[L]&(1<<7))==0 ? ZF_Mask : 0;
+							break;
+						case 0x7e: // BIT 7,(HL)
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (readmem8b(H, L)&(1<<7))==0 ? ZF_Mask : 0;
+							break;
+						case 0x7f: // BIT 7,A
+							regs[F] &= CF_Mask;
+							regs[F] |= HC_Mask;
+							regs[F] |= (regs[A]&(1<<7))==0 ? ZF_Mask : 0;
 							break;
 						case 0x80: // RES 0,B
 							regs[B] &= ~( 1 << 0 );
