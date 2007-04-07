@@ -41,6 +41,7 @@ public class CPU
 		protected int SP=0;         ///< Stack Pointer
 		protected int IE=0;         ///< Interrupt Enable (allowed interrupts)
 		protected boolean IME=true; ///< Interrupt Master Enable
+		protected boolean halted=false;
 		//IO
 		public int DirectionKeyStatus=0; //bitmask
 		public int ButtonKeyStatus=0; //bitmask
@@ -645,7 +646,11 @@ public class CPU
 			curcycles = 0;
 			boolean nop=false;
 			//System.out.printf("Executing instruction $%02x\n", instr);
-			if(checkInterrupts()!=0) return 12; // 12 cycles for this?
+			if(checkInterrupts()!=0) {
+				halted = false;
+				return 12; // 12 cycles for this?
+			}
+			if (halted) return 4;
 			int instr = read(PC++);
 			switch ( instr ) {
 				case 0x00:  // NOP
@@ -1000,8 +1005,11 @@ public class CPU
 				case 0x75: // LD   (HL),L
 					writemem8b(H,L, regs[L]);
 					break;
-				//case 0x76: // HALT
-				//	break;
+				case 0x76: // HALT
+					if ((IE==0) || (!IME))
+						System.out.println("PANIC: we will never unhalt!!!");
+					halted = true;
+					break;
 				case 0x77: // LD   (HL),A
 					writemem8b(H,L, regs[A]);
 					break;
