@@ -365,18 +365,23 @@ public class CPU
 				int ir=IOP[0x0f]&IE; //First Requested interrupts
 				if((ir&(1<<0))!=0) { //VBlANK
 					interrupt(0x40);
+					return 1;
 				}
 				else if((ir&(1<<1))!=0) { //LCD STAT
 					interrupt(0x48);
+					return 1;
 				}
 				else if((ir&(1<<2))!=0) { //Timer
 					interrupt(0x50);
+					return 1;
 				}
 				else if((ir&(1<<3))!=0) { //Serial
 					interrupt(0x58);
+					return 1;
 				}
 				else if((ir&(1<<4))!=0) { //Joypad
 					interrupt(0x60);
+					return 1;
 				}
 			}
 			return 0; // No interrupts to service
