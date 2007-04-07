@@ -215,7 +215,6 @@ public class CPU
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being executed)
 						IOP[index&0xff]=value;
-						checkInterrupts();
 						break;
 					case 0xff24: // FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
 					case 0xff25: // FF25 - NR51 - Selection of Sound output terminal (R/W)
@@ -274,7 +273,6 @@ public class CPU
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
 				//System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
 				IER=value; // Interrupt Enable Register
-				checkInterrupts();
 			}
 			else {
 				System.out.println("ERROR: CPU.write(): Out of range memory access: $"+index);
@@ -362,8 +360,9 @@ public class CPU
 			write(( regs[H]<<8 )|regs[L], val );
 		}
 
-		protected void checkInterrupts() { //handle interrupt priorities
+		protected int checkInterrupts() { //handle interrupt priorities
 		//if(bla) interrupt(n)
+			return 0; // No interrupts to service
 		}
 
 		protected void interrupt(int i) { //execute interrupt #i
@@ -587,8 +586,8 @@ public class CPU
 		private int execute() {
 			curcycles = 0;
 			boolean nop=false;
-			//if (!nop) return nop;
 			//System.out.printf("Executing instruction $%02x\n", instr);
+			if(checkInterrupts()!=0) return true;
 			int instr = read(PC++);
 			switch ( instr ) {
 				case 0x00:  // NOP
