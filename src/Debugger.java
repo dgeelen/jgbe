@@ -103,8 +103,25 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		}
 	}
 
+
+	private int seekBackOneInstruction(int pc) {
+		int j=Math.max(pc-3,0);
+		int i=deasm.instructionLength(j);
+		if(i==3) return j;
+		j=Math.max(pc-2,0);
+		i=deasm.instructionLength(j);
+		if(i==2) return j;
+		j=Math.max(pc-1,0);
+		i=deasm.instructionLength(j);
+		if(i==1) return j;
+		return -1;
+	}
+
 	private void updateInstructions() {
 		int pc=gui.cpu.PC;
+		for(int i=0; i<7; ++i) {
+			pc=seekBackOneInstruction(pc);
+			}
 		for(int i=0; i<16; ++i) {
 			instrs.setValueAt(deasm.disassemble(pc), i,0);
 			pc+=deasm.instructionLength(pc);
