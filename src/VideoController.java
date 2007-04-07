@@ -42,34 +42,36 @@ public class VideoController {
 		if((LCDC&(1<<7))!=0) { //LCD enabled
 			//System.out.println("rendering scanline");
 			int TileData = ((LCDC&(1<<4))==0) ? 0x8800 : 0x8000;
-			// BG display
-			int CurBG = LCDC & 1;
-			int BGTileMap = ((LCDC&(1<<3))==0) ? 0x9800 : 0x9c00;
 
-			int ry = (SCY+linenumber)&0xFF;
-			int rty = ry >> 3; // tile x
-			int rsy = ry & 7; // x offs
-			for (int x = 0; x < 160; ++x) {
-				int rx = (SCX+x)&0xff; // it wraps, too
-				int rtx = rx >> 3; // tile x
-				int rsx = rx & 7; // x offs
-				int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
-				if (TileData == 0x8800) {
-					TileNum += 0x80; //are these two lines not just an xor with 0x80?
-					TileNum &= 0xFF;
+			if ((LCDC&(1<<0))!=0) { // BG display enabled
+				int BGTileMap = ((LCDC&(1<<3))==0) ? 0x9800 : 0x9c00;
+
+				int ry = (SCY+linenumber)&0xFF;
+				int rty = ry >> 3; // tile x
+				int rsy = ry & 7; // x offs
+				for (int x = 0; x < 160; ++x) {
+					int rx = (SCX+x)&0xff; // it wraps, too
+					int rtx = rx >> 3; // tile x
+					int rsx = rx & 7; // x offs
+					int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
+					if (TileData == 0x8800)
+						TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
+					int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
+					int d1 = read(TileData + offset);     // lsb bit of col is in here
+					int d2 = read(TileData + offset + 1); // msb bit of col is in here
+					int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
+					//now we should do some pallete stuff....
+					g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
+					//g.setColor(new Color((col&1)*255,(col>>1)*255,255));
+					g.drawRect(x, linenumber, x, linenumber);
+					//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 				}
-				int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
-				int d1 = read(TileData + offset);     // lsb bit of col is in here
-				int d2 = read(TileData + offset + 1); // msb bit of col is in here
-				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
-				//now we should do some pallete stuff....
-				g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
-				//g.setColor(new Color((col&1)*255,(col>>1)*255,255));
-				g.drawRect(x, linenumber, x, linenumber);
-				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
+			} else { // no BG, use white
+				g.setColor(new Color(255,255,255));
+				g.drawRect(0, linenumber, 160-1, linenumber);
 			}
-
-			if((LCDC&(1<<5))!=0) { //window display
+			
+			if((LCDC&(1<<5))!=0) { //window display enabled
 				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
 
 			}
