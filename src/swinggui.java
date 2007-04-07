@@ -14,10 +14,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		protected Cartridge cartridge;
 		protected CPU cpu;
 
-		private Image[]    img;
-		private int which_img_to_draw_for_double_buffering=0;
-		private Graphics graph;
-
 		public class DrawingArea extends JPanel{
 			VideoController VC;
 			public DrawingArea(VideoController vc) {
@@ -26,13 +22,13 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			}
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
-				g.drawImage(img[which_img_to_draw_for_double_buffering],0,0, this);
+				g.drawImage(cpu.VC.getImage(),0,0, this);
     	}
 		}
 
 		public swinggui() {
-			cartridge = new Cartridge("Pokemon Blue.gb");
-			//cartridge = new Cartridge("../roms/Metal Slug.gb");
+			//cartridge = new Cartridge("Pokemon Blue.gb");
+			cartridge = new Cartridge("../roms/Metal Slug.gb");
 			//cartridge = new Cartridge("tetris.gb");
 			if(cartridge.getError()!=null) {
 				System.out.println("ERROR: "+cartridge.getError());
@@ -43,9 +39,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 				VC = cpu.VC;
 				TestSuite t = new TestSuite(cpu);
 			}
-			img=new Image[2];
-			img[0] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-			img[1] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 		}
 
 		private JMenuBar createJMenuBar() {
@@ -202,6 +195,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			final swinggui gui=new swinggui();
 			gui.createAndShowGUI();
 			gui.cpu.reset();
+			gui.cpu.VC.addListener(gui.grfx);
 
 			/*DEBUGGER*/
 			final Debugger dbgr=new Debugger(gui); //The GUI to which this debugger belongs
