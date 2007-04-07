@@ -27,7 +27,7 @@ public class CPU
 		protected static final int L = 7;
 		protected static final int A = 0;
 
-		private int[] IOP = new int[0x80]; //IO Ports
+		protected int[] IOP = new int[0x80]; //IO Ports
 		private int[] HRAM = new int[0x7F]; //HighRAM
 		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
 		private int CurrentWRAMBank=1;
@@ -120,6 +120,9 @@ public class CPU
 						break;
 					case 0xff40: // LCDC register
 						b = VC.LCDC;
+						break;
+					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
+						b = VC.STAT;
 						break;
 					case 0xff42: // SCY
 						b = VC.SCY;
@@ -221,6 +224,9 @@ public class CPU
 
 					case 0xff40: // LCDC register
 						VC.LCDC = value;
+						break;
+					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
+						VC.STAT = value&0xf0; //lower 4bits are readonly
 						break;
 					case 0xff42: // SCY
 						VC.SCY = value;
@@ -369,6 +375,7 @@ public class CPU
 				}
 				else if ((ir&(1<<1))!=0) { //LCD STAT
 					IOP[0x0f] &= ~(1<<1);
+					System.out.println("INTERRUPT: STAT");
 					interrupt(0x48);
 					return 1;
 				}

@@ -11,6 +11,7 @@ public class VideoController {
 	protected int WX=0;
 	protected int WY=0;
 	protected int LCDC=0;
+	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
 	protected int BGPI=0;    //BCPS/BGPI - CGB Mode Only - Background Palette Index
 	private int BGPD[];  //CPD/BGPD - CGB Mode Only - Background Palette Data
 	private Color BGPC[][];
@@ -157,6 +158,9 @@ public class VideoController {
 			}
 		}
 		selectVRAMBank(prevrambank);
+		//System.out.println("VC: Requesting STAT");
+		STAT&=0xfc; //Set HBlank, mode=0
+		cpu.IOP[0x0f]|=2; //request STAT
 	}
 
 	public boolean renderNextScanline(Graphics g) {
