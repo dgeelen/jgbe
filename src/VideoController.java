@@ -7,6 +7,8 @@ public class VideoController {
 	private int OAM[];
 	protected int SCX=0;
 	protected int SCY=0;
+	protected int WX=0;
+	protected int WY=0;
 	protected int LCDC=0;
 	private CPU cpu; // dont think we need this...
 	private Color Gray[];
@@ -39,6 +41,7 @@ public class VideoController {
 		* Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
+		int prevrambank = CurrentVRAMBank;
 		if((LCDC&(1<<7))!=0) { //LCD enabled
 			//System.out.println("rendering scanline");
 			int TileData = ((LCDC&(1<<4))==0) ? 0x8800 : 0x8000;
@@ -58,9 +61,18 @@ public class VideoController {
 				int rx = (SCX+x)&0xff; // it wraps, too
 				int rtx = rx >> 3; // tile x
 				int rsx = rx & 7; // x offs
+
+				selectVRAMBank(0);	// should read directly form VRAM[][]? need to change all offsets
 				int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
 				if (TileData == 0x8800)
 					TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
+
+				selectVRAMBank(1);
+				int TileAttr = read(BGTileMap + rtx + (rty*32)); // get attributes of current tile
+				selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
+				if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip 
+				if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
+
 				int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
 				int d1 = read(TileData + offset);     // lsb bit of col is in here
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
@@ -72,11 +84,50 @@ public class VideoController {
 				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 			}
 
-			if((LCDC&(1<<5))!=0) { //window display enabled
+			if(((LCDC&(1<<5))!=0)
+			&& (WX >= 0) && (WX < 167) // yes this is 160+7
+			&& (WY >= 0) && (WY < 144)){ //window display enabled
 				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
+				if (linenumber >= WY) { // does window have height, width? doest seem so...
+					ry  = linenumber - WY;
+					rty = ry >> 3; // tile x
+					rsy = ry & 7; // x offs
+					for (int x = 0; x < 160; ++x) {
+						int rx = WX - 7 - x; // no wrapping here?
+						if ((rx >= 0) && (rx < 255)) { // bound correct?
+							int rtx = rx >> 3; // tile x
+							int rsx = rx & 7; // x offs
 
+							selectVRAMBank(0);	// should read directly form VRAM[][]? need to change all offsets
+							int TileNum = read(WindowTileMap + rtx + (rty*32)); // get number of current tile
+							if (TileData == 0x8800)
+								TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
+
+							// window has tile attrs?
+							/*
+							selectVRAMBank(1);
+							int TileAttr = read(WindowTileMap + rtx + (rty*32)); // get attributes of current tile
+							selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
+							if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip 
+							if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
+							*/
+							
+							int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
+							int d1 = read(TileData + offset);     // lsb bit of col is in here
+							int d2 = read(TileData + offset + 1); // msb bit of col is in here
+							int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
+
+							//now we should do some pallete stuff....
+							g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
+							
+							g.drawRect(x, linenumber, x, linenumber);
+							System.out.println("drawing window rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
+						}
+					}
+				}
 			}
 		}
+		selectVRAMBank(prevrambank);
 	}
 
 
