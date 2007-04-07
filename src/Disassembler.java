@@ -74,6 +74,10 @@ public class Disassembler
 			if(i>-1) { //specialcase
 				bytecount=2;
 			}
+			i=op.indexOf("dd");
+			if(i>-1) { //specialcase
+				bytecount=2;
+			}
 			return bytecount;
 		}
 
@@ -168,6 +172,16 @@ public class Disassembler
 				bytecount=2;
 				if(op.indexOf("LDH")>-1) immediate|=0xff00;
 				s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
+			}
+			i=op.indexOf("dd");
+			if(i>-1) { //specialcase
+				immediate=cart.read(PC+1);
+				if(op.indexOf("(SP+dd)")>-1) {
+					immediate ^= 0x80;
+					immediate -= 0x80;
+					immediate += cpu.SP;
+				}
+				bytecount=2;
 			}
 
 			String prefix=String.format("$%04x ",PC);
