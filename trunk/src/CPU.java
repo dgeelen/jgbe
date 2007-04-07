@@ -30,7 +30,7 @@ public class CPU
 		private int[] IOP = new int[0x80]; //IO Ports
 		private int[] HRAM = new int[0x7F]; //HighRAM
 		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
-		private int CurrentWRAMBank=0;
+		private int CurrentWRAMBank=1;
 
 		private int curcycles;
 
