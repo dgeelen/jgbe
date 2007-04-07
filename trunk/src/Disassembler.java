@@ -7,8 +7,7 @@ public class Disassembler
     private static String opcode[];
     private static final String file_name = "instrs.txt";
 		private static final char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
-    public Disassembler(Cartridge cart, CPU cpu) {
-      this.cart=cart;
+    public Disassembler(CPU cpu) {
       this.cpu=cpu;
       this.opcode=new String[512];
       BufferedReader reader;
@@ -99,13 +98,13 @@ public class Disassembler
 			String s=op;
       i=op.indexOf("IMM08");
       if(i>-1) {
-        immediate= cart.read(PC+1);
+        immediate= cpu.read(PC+1);
         s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
         bytecount=2;
 			}
 			i=op.indexOf("IMM16");
 			if(i>-1) {
-				immediate=(cart.read(PC+2)<<8)|cart.read(PC+1); //little endian
+				immediate=(cpu.read(PC+2)<<8)|cpu.read(PC+1); //little endian
 				s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
 				bytecount=3;
 			}
@@ -168,14 +167,14 @@ public class Disassembler
 			}
 			i=s.indexOf("[n]");
 			if(i>-1) { //specialcase
-				immediate=cart.read(PC+1);
+				immediate=cpu.read(PC+1);
 				bytecount=2;
 				if(op.indexOf("LDH")>-1) immediate|=0xff00;
 				s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
 			}
 			i=op.indexOf("dd");
 			if(i>-1) { //specialcase
-				immediate=cart.read(PC+1);
+				immediate=cpu.read(PC+1);
 				if(op.indexOf("(SP+dd)")>-1) {
 					immediate ^= 0x80;
 					immediate -= 0x80;
@@ -186,10 +185,10 @@ public class Disassembler
 
 			String prefix=String.format("$%04x ",PC);
 			for(i=0; i<bytecount;  ++i) {
-				prefix+=String.format("$%02x ", cart.read(PC+i));
+				prefix+=String.format("$%02x ", cpu.read(PC+i));
 			}
 			for(i=0; i<3-bytecount; ++i){
-			  prefix+=String.format("    ", cart.read(PC+i));
+			  prefix+=String.format("    ", cpu.read(PC+i));
 			}
       return prefix + s + (new String(whitespace, 0, 18 - s.length())) + "// "+op ;
     }
