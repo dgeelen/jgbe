@@ -31,8 +31,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			contentPane.setComponentOrientation(
 				java.awt.ComponentOrientation.RIGHT_TO_LEFT );
 		}
-		JScrollPane scroll;
-		contentPane.add( new JLabel("- Registers -"), BorderLayout.LINE_END );
+		JScrollPane scroll = new JScrollPane(new JLabel("Registers:"));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 		regs1 = new JTable(1,8);
 		regs1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		regs1.setTableHeader(null);
@@ -51,8 +53,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.NORTH );
 
-
-		contentPane.add( new JLabel("- Memory -"), BorderLayout.LINE_END );
+		scroll = new JScrollPane(new JLabel("Memory:"));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 		mem = new JTable(8,16+2);
 		mem.setTableHeader(null);
 		scroll = new JScrollPane(mem);
@@ -60,7 +64,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setPreferredSize(new Dimension(aaarg, 131));
 		contentPane.add( scroll, BorderLayout.LINE_END );
 
-		contentPane.add( new JLabel("- Instructions -"), BorderLayout.LINE_END );
+		scroll = new JScrollPane(new JLabel("Instructions:"));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 		instrs = new JTable(16,1);
 		instrs.setTableHeader(null);
 		instrs.setFont(new Font("Bitstream Vera Sans Mono",0, 12));
@@ -68,9 +75,15 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 259));
 		contentPane.add( scroll, BorderLayout.LINE_END );
-		contentPane.add( new JLabel("- Commands -"), BorderLayout.LINE_END );
+		scroll = new JScrollPane(new JLabel("Commands:"));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 		cmds = new JTextField();
-		contentPane.add( cmds, BorderLayout.LINE_END );
+		scroll = new JScrollPane(cmds);
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 20));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 	}
 
 	public void update() {
@@ -113,10 +126,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		JFrame.setDefaultLookAndFeelDecorated( true );
 		JFrame frame = new JFrame( "JGameBoy Emulator DEBUGGER" );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-
 		//Set up the content pane and add swing components to it
 		addComponentsToPane( frame.getContentPane() );
 		frame.pack();
+		frame.setSize(new Dimension(480,640));
 		frame.setVisible( true );
 	}
 
