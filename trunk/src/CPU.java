@@ -1208,6 +1208,15 @@ public class CPU
 					if (curcycles == 12) curcycles = 16;
 					if (curcycles ==  4) curcycles = 12;
 					break;
+				case 0xcc: // CALL Z, &0000
+					if (( regs[FLAG_REG]&ZF_Mask )==ZF_Mask ) {
+						push( PC+2 );
+						JPnn();
+					} else
+						PC += 2;
+					if (curcycles == 20) curcycles = 24;
+					if (curcycles ==  4) curcycles = 12;
+					break;
 				case 0xcd: // CALL &0000
 					curcycles += 4; // takes 24 instead of 20 cycles
 					push( PC+2 );
@@ -1235,6 +1244,11 @@ public class CPU
 				case 0xd5: // PUSH DE
 					push( regs[D]<<8 | regs[E]);
 					curcycles += 4; // takes 16 instead of 12 cycles
+					break;
+				case 0xd9: // RETI
+					curcycles += 4; // takes 16 instead of 12 cycles
+					IME = true;
+					PC = pop();
 					break;
 				case 0xda: //D4 JMP CF,&0000
 					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask )
@@ -1312,6 +1326,32 @@ public class CPU
 					switch ( instr ) {
 						case 0x1a: // RR  D
 							regs[D] = ror(regs[D]);
+							break;
+						case 0x30: // SWAP B
+							regs[B] = ((regs[B]&0x0f)<< 4) | ((regs[B]&0xf0) >> 4);
+							break;
+						case 0x31: // SWAP C
+							regs[C] = ((regs[C]&0x0f)<< 4) | ((regs[C]&0xf0) >> 4);
+							break;
+						case 0x32: // SWAP D
+							regs[D] = ((regs[D]&0x0f)<< 4) | ((regs[D]&0xf0) >> 4);
+							break;
+						case 0x33: // SWAP E
+							regs[E] = ((regs[E]&0x0f)<< 4) | ((regs[E]&0xf0) >> 4);
+							break;
+						case 0x34: // SWAP H
+							regs[H] = ((regs[H]&0x0f)<< 4) | ((regs[H]&0xf0) >> 4);
+							break;
+						case 0x35: // SWAP L
+							regs[L] = ((regs[L]&0x0f)<< 4) | ((regs[L]&0xf0) >> 4);
+							break;
+						case 0x36:{// SWAP (HL)
+							int x = readmem8b(H, L);
+							x = ((x&0x0f)<< 4) | ((x&0xf0) >> 4);
+							writemem8b(H,L, x);
+						};break;
+						case 0x37: // SWAP A
+							regs[A] = ((regs[A]&0x0f)<< 4) | ((regs[A]&0xf0) >> 4);
 							break;
 						case 0x40: // BIT 0,B
 							regs[F] &= CF_Mask;
