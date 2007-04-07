@@ -36,6 +36,7 @@ public class CPU
 
 		private int DIVcntdwn = 0;
 		private int TIMAcntdwn = 0;
+		private int VBLANKcntdwn = 0;
 
 		protected int PC=0;         ///< Program counter
 		protected int SP=0;         ///< Stack Pointer
@@ -1709,6 +1710,12 @@ public class CPU
 							triggerInterrupt(2);
 						}
 					}
+				}
+
+				VBLANKcntdwn -= res;
+				if (VBLANKcntdwn < 0) {
+					VBLANKcntdwn += 456;   // 4194304/9198
+					VC.renderNextScanline();
 				}
 			}
 			return res;
