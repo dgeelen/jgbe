@@ -31,9 +31,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		}
 
 		public swinggui() {
-			cartridge = new Cartridge("Pokemon Blue.gb");
+			//cartridge = new Cartridge("Pokemon Blue.gb");
 			//cartridge = new Cartridge("../roms/Metal Slug.gb");
-			//cartridge = new Cartridge("tetris.gb");
+			cartridge = new Cartridge("tetris.gb");
 			if(cartridge.getError()!=null) {
 				System.out.println("ERROR: "+cartridge.getError());
 			}
@@ -202,6 +202,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			final swinggui gui=new swinggui();
 			gui.createAndShowGUI();
 			gui.cpu.reset();
+
+			/*DEBUGGER* /
+			final Debugger dbgr=new Debugger(gui); //The GUI to which this debugger belongs
+//			Debugger.createAndShowGUI();
+			/*///END DEBUGGER
 			int x = 1;
 			boolean fulldebug=false;
 			while(x > 0) {
@@ -223,6 +228,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 					--x;
 					fulldebug = true;
 				}
-			}
+			} /* */
 		}
 	}
