@@ -34,11 +34,11 @@ public class CPU
 
 		private int curcycles;
 
-		protected int PC=0;
-		protected int SP=0;
-		protected int IE=0;
-		protected int IF=0;
-		protected boolean IME=true;
+		protected int PC=0;         ///< Program counter
+		protected int SP=0;         ///< Stack Pointer
+		protected int IE=0;         ///< Interrupt Enable (allowed interrupts)
+		protected int IF=0;         ///< Interrupt Enable (requested interrupts)
+		protected boolean IME=true; ///< Interrupt Master Enable
 		//IO
 		public int DirectionKeyStatus=0; //bitmask
 		public int ButtonKeyStatus=0; //bitmask
@@ -153,7 +153,7 @@ public class CPU
 			}
 			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
 				//System.out.println("TODO: CPU.read(): Read from Interrupt Enable Register (0xffff)");
-				b=IER;
+				b=IE;
 			}
 			else {
 				System.out.println("ERROR: CPU.read(): Out of range memory access: $"+index);
@@ -272,7 +272,7 @@ public class CPU
 			}
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
 				//System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
-				IER=value; // Interrupt Enable Register
+				IE=value; // Interrupt Enable Register
 			}
 			else {
 				System.out.println("ERROR: CPU.write(): Out of range memory access: $"+index);
