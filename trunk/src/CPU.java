@@ -34,10 +34,10 @@ public class CPU
 
 		private int curcycles;
 
-		protected int IR=0;
 		protected int PC=0;
 		protected int SP=0;
-		protected int IER=0;
+		protected int IE=0;
+		protected int IF=0;
 		protected boolean IME=true;
 		//IO
 		public int DirectionKeyStatus=0; //bitmask
@@ -1244,7 +1244,7 @@ public class CPU
 					regs[F] = x&0xff;
 				};break;
 				case 0xf3: // DI
-					IR = 0x00; // TODO:?
+					IME = false;
 					break;
 				case 0xf5: // PUSH AF
 					push( regs[A]<<8 | regs[F]);
@@ -1260,7 +1260,7 @@ public class CPU
 					regs[A] = read((b<<8) | a);
 				};break;
 				case 0xfb: // EI
-					IR = 0xff; // TODO:?
+					IME = true;
 					break;
 				case 0xfe: // CP n
 					cp( read( PC++ ) );
