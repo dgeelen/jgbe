@@ -143,6 +143,9 @@ public class CPU
 					case 0xff44: // LY
 						b = VC.LY;
 						break;
+					case 0xff45: // LYC
+						b = VC.LYC;
+						break;
 					case 0xff4a: // WY
 						b = VC.WY;
 						break;
@@ -256,6 +259,9 @@ public class CPU
 						break;
 					case 0xff44: // LY
 						VC.LY = 0; // can only be set to 0
+						break;
+					case 0xff45: // LYC
+						VC.LYC = value;
 						break;
 					case 0xff46: // FF46 - DMA - DMA Transfer and Start Address (W)
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
@@ -396,7 +402,6 @@ public class CPU
 				}
 				else if ((ir&(1<<1))!=0) { //LCD STAT
 					IOP[0x0f] &= ~(1<<1);
-					System.out.println("INTERRUPT: STAT");
 					interrupt(0x48);
 					return 1;
 				}
@@ -420,6 +425,7 @@ public class CPU
 		}
 
 		protected void interrupt(int i) { //execute interrupt #i
+			System.out.println("INTERRUPT: " + i);
 			IME = false;
 			push(PC + 2);
 			PC = i;
@@ -697,6 +703,15 @@ public class CPU
 					break;
 				case 0x0e:  // LD  C, n
 					regs[C] = read( PC++ );
+					break;
+				case 0x0f:  // RRCA
+					regs[A] = rorc(regs[A]);
+					break;
+				case 0x10: // STOP
+					// pretend stop==halt
+					if ((IE==0) || (!IME))
+						System.out.println("PANIC: we will never unhalt!!!\n");
+					halted = true;
 					break;
 				case 0x11: // LD DE, nn
 					regs[E] = read( PC++ );
@@ -1086,6 +1101,9 @@ public class CPU
 				case 0x8f: // ADC  A,A
 					adc( A, regs[A] );
 					break;
+				case 0x90: // SUB  A,B
+					sub8b(A, regs[B]);
+					break;
 				case 0x98: // SBC  A,B
 					sbc( A, regs[B] );
 					break;
@@ -1306,6 +1324,12 @@ public class CPU
 				case 0xd7: // RST &10
 					push(PC);
 					PC = 0x10;
+					break;
+				case 0xd8: // RET  C
+					if ((regs[F]&CF_Mask) == CF_Mask)
+						PC = pop();
+					if (curcycles == 8) curcycles = 20;
+					if (curcycles == 4) curcycles =  8;
 					break;
 				case 0xd9: // RETI
 					curcycles += 4; // takes 16 instead of 12 cycles

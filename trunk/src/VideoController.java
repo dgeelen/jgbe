@@ -6,6 +6,7 @@ public class VideoController {
 	private int CurrentVRAMBank=0;
 	protected int OAM[];
 	protected int LY=0;
+	protected int LYC=0;
 	protected int SCX=0;
 	protected int SCY=0;
 	protected int WX=0;
@@ -158,15 +159,34 @@ public class VideoController {
 			}
 		}
 		selectVRAMBank(prevrambank);
-		//System.out.println("VC: Requesting STAT");
-		STAT&=0xfc; //Set HBlank, mode=0
-		cpu.triggerInterrupt(1); //request STAT
 	}
 
 	public boolean renderNextScanline(Graphics g) {
 		if (LY < 144) renderScanLine(g, LY);
 		++LY;
 		if (LY == 154) LY = 0;
+
+		STAT &= ~(1<<2);             // clear coincidence bit
+		if (LY==LYC) {               // if equal
+			STAT |= 1<<2;              // then set it
+			if ((STAT&(1<<6))!=0)      // if LYC=LY is enabled in STAT reg
+				cpu.triggerInterrupt(1); // request int STAT/LYC=LY
+		}
+
+		if (LY < 144) {              // HBLANK
+			STAT &= ~(3);              // mode=0
+			if ((STAT&(1<<3))!=0)
+				cpu.triggerInterrupt(1); //request STAT/HBlank
+		}
+		
+		if (LY == 144) {             // VBLANK
+			STAT &= ~(3);
+			STAT |= 1;                 // mode=1
+			if ((STAT&(1<<4))!=0)      // if VBlank is enabled in STAT reg
+				cpu.triggerInterrupt(1); // request int STAT/VBlank
+			cpu.triggerInterrupt(0);   // always request int VBLANK
+		}
+
 		return (LY == 144);
 	}
 
