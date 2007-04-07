@@ -299,9 +299,30 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		//frame.addKeyListener(this); TODO: Shortcut keys
 	}
 
+	private int StrToInt(String in) {
+		String s=in.trim();
+		try {
+			int i=s.indexOf("$");
+			if(i>-1) { //Hex
+				return Integer.parseInt( s.substring(i+1), 16 );
+			}
+			else {
+				return Integer.parseInt( s, 10 );
+			}
+		}
+		catch ( NumberFormatException ee ) {
+				System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+		}
+		return -1;
+	}
+
+	private String Substitute(String s) { // replace all variable references by their values
+		return "String";
+	}
 	public void actionPerformed( ActionEvent e ) {
 		JTextField f = ( JTextField )( e.getSource() );
 		if(f==cmds) {
+			int i=0;
 			String s=cmds.getText().trim();
 			cmds.selectAll();
 			System.out.println("Command='"+s+"'");
@@ -323,18 +344,15 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					update();
 				}
 			}
+			i=s.indexOf("=");
+			if(i>-1) { //assignment
+				String l = s.substring(0,i).trim();
+				String r = Substitute(s.substring(i).trim());
+				//if(ss.equals("A")) gui.cpu.regs[A] =
+			}
 			if(s.charAt(0)=='m') {
-				try {
-					String ss = s.substring( s.lastIndexOf(" ") + 1);
-					if( ss.charAt(0)=='$' )
-						memaddr = Integer.parseInt( ss.substring(1), 16 );
-					else
-						memaddr = Integer.parseInt( ss );
-				}
-				catch ( NumberFormatException ee ) {
-						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
-				}
 				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
+				memaddr = StrToInt(s.substring(1));
 				update();
 			}
 		}
