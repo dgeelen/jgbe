@@ -48,7 +48,7 @@ LD   L, IMM08
 CPL
 JR   NC, IMM08
 LD   SP, IMM16
-LDD  HL, A
+LDD  [HL], A
 INC  SP
 INC  [HL]
 DEC  [HL]

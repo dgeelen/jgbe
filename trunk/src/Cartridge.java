@@ -12,7 +12,7 @@ public class Cartridge {
 	private String  file_name;
 	private String  err_msg;            // message in case of an error
 
-	private int MBC;                    // The MBC used in the cardridge
+	private int MBC;                    // The MBC used in the cartridge
 
 	private boolean ram_enabled = false;// Whether RAM is enabled to read and write
 	private boolean RTCRegisterEnabled=false;
@@ -72,27 +72,31 @@ public class Cartridge {
 
 		// Detect MBC type
 		MBC = first_rom_bank[0x0147];
-
-		System.out.println("[0x143] = "+first_rom_bank[0x143]);
+		if(first_rom_bank[0x143] == 0 ) { //regular gameboy game
+			System.out.println("Cartridge appears to be a GameBoy game (first_rom_bank[0x0147] = "+first_rom_bank[0x143]+")");
+		}
+		else {
+			System.out.println("Cartridge could be a ColorGameBoy game (first_rom_bank[0x0147] = "+first_rom_bank[0x143]+")");
+		}
 
 		// Determine ROM size
 		switch(first_rom_bank[0x0148])	{
-			case 0x00: ROM = new int[2][0x81]; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
-			case 0x01: ROM = new int[4][0x81]; System.out.println("ROM size = 64KByte (4 banks)"); break;
-			case 0x02: ROM = new int[8][0x81]; System.out.println("ROM size = 128KByte (8 banks)"); break;
-			case 0x03: ROM = new int[16][0x81]; System.out.println("ROM size = 256KByte (16 banks)"); break;
-			case 0x04: ROM = new int[32][0x81]; System.out.println("ROM size = 512KByte (32 banks)"); break;
+			case 0x00: ROM = new int[2][ROM_BANK_SIZE]; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
+			case 0x01: ROM = new int[4][ROM_BANK_SIZE]; System.out.println("ROM size = 64KByte (4 banks)"); break;
+			case 0x02: ROM = new int[8][ROM_BANK_SIZE]; System.out.println("ROM size = 128KByte (8 banks)"); break;
+			case 0x03: ROM = new int[16][ROM_BANK_SIZE]; System.out.println("ROM size = 256KByte (16 banks)"); break;
+			case 0x04: ROM = new int[32][ROM_BANK_SIZE]; System.out.println("ROM size = 512KByte (32 banks)"); break;
 			case 0x05: ROM = new int[64][ROM_BANK_SIZE]; System.out.println("ROM size = 1MByte (64 banks) - only 63 banks used by MBC1"); break;
-			case 0x06: ROM = new int[128][0x81]; System.out.println("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
-			case 0x07: ROM = new int[256][0x81]; System.out.println("ROM size = 4MByte (256 banks)"); break;
-			case 0x52: ROM = new int[72][0x81]; System.out.println("ROM size = 1.1MByte (72 banks)"); break;
-			case 0x53: ROM = new int[80][0x81]; System.out.println("ROM size = 1.2MByte (80 banks)"); break;
-			case 0x54: ROM = new int[96][0x81]; System.out.println("ROM size = 1.5MByte (96 banks)"); break;
+			case 0x06: ROM = new int[128][ROM_BANK_SIZE]; System.out.println("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
+			case 0x07: ROM = new int[256][ROM_BANK_SIZE]; System.out.println("ROM size = 4MByte (256 banks)"); break;
+			case 0x52: ROM = new int[72][ROM_BANK_SIZE]; System.out.println("ROM size = 1.1MByte (72 banks)"); break;
+			case 0x53: ROM = new int[80][ROM_BANK_SIZE]; System.out.println("ROM size = 1.2MByte (80 banks)"); break;
+			case 0x54: ROM = new int[96][ROM_BANK_SIZE]; System.out.println("ROM size = 1.5MByte (96 banks)"); break;
 		} // switch(header[0x0148])
 
 		// Determine RAM size
 		switch(first_rom_bank[0x0149]) {
-			case 0x00: RAM = null; System.out.println("Card has no RAM"); break;
+			case 0x00: RAM = new int[1][0]; System.out.println("Card has no RAM"); break;
 			case 0x01: RAM = new int[0][2 * 1024]; System.out.println("Card has 2KBytes of RAM"); break;
 			case 0x02: RAM = new int[0][8 * 1024]; System.out.println("Card has 8Kbytes of RAM"); break;
 			case 0x03: RAM = new int[4][8 * 1024]; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
@@ -135,11 +139,12 @@ public class Cartridge {
 
 	public int read(int index) {
 		switch(MBC) {
+			case 0x00: //MBC0	/*HAX*/
 			case 0x13: //MBC3 TODO: RTC CRAP
 				if(index < 0x4000) return ROM[0][index];
 				if((index >= 0x4000) && (index < 0x8000)) return ROM[CurrentROMBank][index-0x4000];
 				if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];
-				System.out.println("Error: Reading from cardridge with a non cardridge address!");
+				System.out.println("Error: Reading from cartridge with a non cartridge address!");
 				return -1;
 			case 0x0019:
 			case 0x001A:
@@ -151,7 +156,7 @@ public class Cartridge {
 				if(index < 0x4000) return ROM[0][index];
 				if((index >= 0x4000) && (index < 0x8000)) return ROM[CurrentROMBank][index-0x4000];
 				if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];
-				System.out.println("Error: Reading from cardridge with a non cardridge address!");
+				System.out.println("Error: Reading from cartridge with a non cartridge address!");
 				return -1;
 			default:
 				System.out.println("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
