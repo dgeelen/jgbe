@@ -362,24 +362,37 @@ public class CPU
 
 		protected int checkInterrupts() { //handle interrupt priorities
 			if(IME) { // If interrupts enabled
-				int ir=IOP[0x0f]&IER;
+				int ir=IOP[0x0f]&IE; //First Requested interrupts
 				if((ir&(1<<0))!=0) { //VBlANK
-
+					interrupt(0x40);
 				}
 				else if((ir&(1<<1))!=0) { //LCD STAT
+					interrupt(0x48);
 				}
 				else if((ir&(1<<2))!=0) { //Timer
+					interrupt(0x50);
 				}
 				else if((ir&(1<<3))!=0) { //Serial
+					interrupt(0x58);
 				}
 				else if((ir&(1<<4))!=0) { //Joypad
+					interrupt(0x60);
 				}
 			}
 			return 0; // No interrupts to service
 		}
 
 		protected void interrupt(int i) { //execute interrupt #i
-
+			switch(i) {
+  			case 0x40: // V-Blank
+  			case 0x48: // LCD STAT
+  			case 0x50: // Timer
+  			case 0x58: // Serial
+  			case 0x60: // Joypad
+  			default:
+  				System.out.println("TODO: Unhandled interrupt #"+i);
+  				break;
+  		}
 		}
 
 		protected int rol(int value) {
