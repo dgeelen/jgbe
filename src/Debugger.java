@@ -20,13 +20,41 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public JTextField cmds;
 	private Disassembler deasm;
 	private int memaddr=0;
-	private Color UpdateColor = Color.RED;
+	private Color UpdateColor = new Color(255,200,200);
+	private TheRunner runner;
 	swinggui gui;
+	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
 	public Debugger(swinggui gui) {
 		this.gui=gui;
 		deasm= new Disassembler(gui.cpu);
+		runner=null;
 		createAndShowGUI();
 		update();
+	}
+
+	public class TheRunner implements Runnable {
+		public Boolean happy;
+	 	public TheRunner() { //Pass something
+	 		this.happy = true;
+	 	}
+		public void run() {
+			while(happy) {
+				System.out.printf(".");
+				try{
+					Thread.sleep(100);
+				}
+				catch( InterruptedException e ) {
+					System.out.println("Interrupted Exception caught");
+				}
+			}
+		happy=true;
+		}
+		synchronized public boolean isHappy(){
+			return happy;
+		}
+		synchronized public void setHappy(boolean b){
+			happy=b;
+		}
 	}
 
 	public class MyCellRenderer extends DefaultTableCellRenderer { //for coloring cells
@@ -65,6 +93,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		regs1 = new JTable(1,8);
 		regs1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		regs1.setTableHeader(null);
+		regs1.setFont(MonoFont);
 		scroll = new JScrollPane(regs1);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
@@ -75,6 +104,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		regs2.setColumnSelectionAllowed(false);
 		regs2.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		regs2.setTableHeader(null);
+		regs2.setFont(MonoFont);
 		scroll = new JScrollPane(regs2);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
@@ -86,6 +116,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		contentPane.add( scroll, BorderLayout.LINE_END );
 		mem = new JTable(8,8+2);
 		mem.setTableHeader(null);
+		mem.setFont(MonoFont);
 		scroll = new JScrollPane(mem);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 131));
@@ -100,7 +131,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		TableColumnModel m = instrs.getColumnModel();
 		TableColumn c = m.getColumn(0);
 		MyCellRenderer r = new MyCellRenderer(new Color(222,222,255), 7);
-		r.setFont(new Font("Bitstream Vera Sans Mono",0, 12));
+		r.setFont(MonoFont);
 		c.setCellRenderer(r);
 
 		scroll = new JScrollPane(instrs);
@@ -113,6 +144,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		contentPane.add( scroll, BorderLayout.LINE_END );
 		cmds = new JTextField();
 		cmds.addActionListener(this);
+		cmds.setFont(MonoFont);
 		scroll = new JScrollPane(cmds);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 20));
@@ -161,7 +193,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 
 	}
 
-	private void updateRegisters() {
+	private void updateRegisters() { //TODO: Dit moet makkelijker kunnen ...
 		TableColumnModel m = regs1.getColumnModel();
 		TableColumn c;
 		String s;
@@ -250,6 +282,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public void actionPerformed( ActionEvent e ) {
 		JTextField f = ( JTextField )( e.getSource() );
 		if(f==cmds) {
+			if( runner != null ) { //There is a thread running, stop it
+				runner.setHappy(false);
+				while(!runner.isHappy()) {}
+				runner=null;
+			}
 			String s=cmds.getText().trim();
 			cmds.selectAll();
 			System.out.println("Command='"+s+"'");
@@ -257,6 +294,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				System.out.println("SingleStep");
 				gui.cpu.nextinstruction();
 				update();
+			}
+			if(s.charAt(0)=='g') {
+				System.out.println("Starting new Runner");
+				runner = new TheRunner();
+				new Thread(runner).start();
 			}
 		}
 		else {
