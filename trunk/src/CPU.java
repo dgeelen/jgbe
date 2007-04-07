@@ -1717,6 +1717,10 @@ public class CPU
 					VBLANKcntdwn += 456;   // 4194304/9198
 					VC.renderNextScanline();
 				}
+				// [0 <= VBLANKcntdwn < 456]
+				// [0..80)   [80..252)   [252..456)
+				// mode 2    mode 3      mode 0
+				// when LY>144 then mode 1
 			}
 			return res;
 		}

@@ -134,7 +134,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		}
 	}
 
-
 	private int seekBackOneInstruction(int pc) {
 		int j=Math.max(pc-3,0);
 		int i=deasm.instructionLength(j);
@@ -261,7 +260,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		}
 		else {
 			System.out.println( "Action event i an instance of " + getClassName( f ));
-			}
+		}
 	}
 
 	public void itemStateChanged( ItemEvent e ) {

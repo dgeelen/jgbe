@@ -3,8 +3,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class VideoController {
-	private Image img;
-	protected boolean imgready=false;
+	private JPanel listener = null;
+	private Image[] img;
+	private int img_draw=0; // which_img_to_draw_for_double_buffering=0;
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
 	protected int OAM[];
@@ -33,14 +34,18 @@ public class VideoController {
 		Gray[1]=new Color(64,64,64);
 		Gray[2]=new Color(128,128,128);
 		Gray[3]=new Color(192,192,192);
-		img = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+		img=new Image[2];
+		img[0] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+		img[1] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 	}
 
+	public void addListener(JPanel panel)
+	{
+		listener = panel; // only 1 listener at a time currently :-p
+	}
+	
 	public Image getImage() {
-		if (!imgready)
-			return null;
-		imgready = false;
-		return img;
+		return img[img_draw^1]; // display image not being drawn to
 	}
 
 	public void setBGColData(int value) {
@@ -77,7 +82,7 @@ public class VideoController {
 		* Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
-		Graphics g = img.getGraphics();
+		Graphics g = img[img_draw].getGraphics();
 		int prevrambank = CurrentVRAMBank;
 		if((LCDC&(1<<7))!=0) { //LCD enabled
 			//System.out.println("rendering scanline");
@@ -168,13 +173,10 @@ public class VideoController {
 	}
 
 	public boolean renderNextScanline() {
-		if (LY < 144) renderScanLine(LY);
 		++LY;
-		if (LY == 154) {
-			imgready = false;
+		if (LY >= 154)
 			LY = 0;
-		}
-		
+
 		STAT &= ~(1<<2);             // clear coincidence bit
 		if (LY==LYC) {               // if equal
 			STAT |= 1<<2;              // then set it
@@ -183,13 +185,15 @@ public class VideoController {
 		}
 
 		if (LY < 144) {              // HBLANK
+			renderScanLine(LY);
 			STAT &= ~(3);              // mode=0
-			if ((STAT&(1<<3))!=0)
-				cpu.triggerInterrupt(1); //request STAT/HBlank
+			if ((STAT&(1<<3))!=0)      // if HBlank is enabled in STAT reg
+				cpu.triggerInterrupt(1); // request int STAT/HBlank
 		}
-		
+
 		if (LY == 144) {             // VBLANK
-			imgready = true;
+			img_draw ^= 1;
+			if (listener != null) listener.updateUI();
 			STAT &= ~(3);
 			STAT |= 1;                 // mode=1
 			if ((STAT&(1<<4))!=0)      // if VBlank is enabled in STAT reg
