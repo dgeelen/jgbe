@@ -895,7 +895,7 @@ public class CPU
 					ld8b( B, readmem8b( H,L ) );
 					break;
 				case 0x47: // LD   B,A
-					ld8b( C, regs[A] );
+					ld8b( B, regs[A] );
 					break;
 				case 0x48: // LD   C,B
 					ld8b( C, regs[B] );
