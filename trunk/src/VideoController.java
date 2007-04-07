@@ -1,7 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class VideoController {
+	private Image img;
+	protected boolean imgready=false;
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
 	protected int OAM[];
@@ -30,6 +33,14 @@ public class VideoController {
 		Gray[1]=new Color(64,64,64);
 		Gray[2]=new Color(128,128,128);
 		Gray[3]=new Color(192,192,192);
+		img = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+	}
+
+	public Image getImage() {
+		if (!imgready)
+			return null;
+		imgready = false;
+		return img;
 	}
 
 	public void setBGColData(int value) {
@@ -55,13 +66,7 @@ public class VideoController {
 		return BGPD[BGPI&0x3f];
 	}
 
-	public void renderBackGroundMap(Graphics g) {
-		for(int i=0; i<144; ++i) {
-			renderScanLine(g, i);
-		}
-	}
-
-	public void renderScanLine(Graphics g, int linenumber) {
+	public void renderScanLine(int linenumber) {
 		/* FF40 - LCDC - LCD Control (R/W)
 		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
 		* Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
@@ -72,6 +77,7 @@ public class VideoController {
 		* Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
+		Graphics g = img.getGraphics();
 		int prevrambank = CurrentVRAMBank;
 		if((LCDC&(1<<7))!=0) { //LCD enabled
 			//System.out.println("rendering scanline");
@@ -161,11 +167,14 @@ public class VideoController {
 		selectVRAMBank(prevrambank);
 	}
 
-	public boolean renderNextScanline(Graphics g) {
-		if (LY < 144) renderScanLine(g, LY);
+	public boolean renderNextScanline() {
+		if (LY < 144) renderScanLine(LY);
 		++LY;
-		if (LY == 154) LY = 0;
-
+		if (LY == 154) {
+			imgready = false;
+			LY = 0;
+		}
+		
 		STAT &= ~(1<<2);             // clear coincidence bit
 		if (LY==LYC) {               // if equal
 			STAT |= 1<<2;              // then set it
@@ -180,6 +189,7 @@ public class VideoController {
 		}
 		
 		if (LY == 144) {             // VBLANK
+			imgready = true;
 			STAT &= ~(3);
 			STAT |= 1;                 // mode=1
 			if ((STAT&(1<<4))!=0)      // if VBlank is enabled in STAT reg
@@ -188,17 +198,6 @@ public class VideoController {
 		}
 
 		return (LY == 144);
-	}
-
-	public void renderImage(Graphics g) {	//g is a reference to the display
-/*		int width = (g.getClipBounds()).width;
-		int height = (g.getClipBounds()).height;
-		System.out.println("Graphics g width="+width+ " height="+height);
-		for(int i=0; i<height; i+=4) {
-			g.drawLine(0,0,width,i);
-		}
-		g.drawRect(20,20,20,20);*/
-		renderBackGroundMap(g);
 	}
 
 	public int read(int index) {
