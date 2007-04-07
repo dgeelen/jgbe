@@ -159,6 +159,7 @@ public class CPU
 						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 						break;
 				}
+				//System.out.printf("TODO: CPU.read(): IOP[$%04x] = $%04x\n",index, b);
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
 				b = HRAM[index-0xff80];
@@ -1007,7 +1008,7 @@ public class CPU
 					break;
 				case 0x76: // HALT
 					if ((IE==0) || (!IME))
-						System.out.println("PANIC: we will never unhalt!!!");
+						System.out.println("PANIC: we will never unhalt!!!\n");
 					halted = true;
 					break;
 				case 0x77: // LD   (HL),A
@@ -1336,6 +1337,15 @@ public class CPU
 					push( regs[A]<<8 | regs[F]);
 					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
+				case 0xf8:{// LD  A, (SP+dd)
+					int x = read(PC++);
+					x ^= 0x80;
+					x -= 0x80;
+					x += SP;
+					regs[A] = read(x);
+					SP = regs[H]<<8 | regs[L];
+					curcycles += 4; // takes 8 instead of 4 cycles
+				};break;
 				case 0xf9: // LD SP, HL
 					SP = regs[H]<<8 | regs[L];
 					curcycles += 4; // takes 8 instead of 4 cycles
