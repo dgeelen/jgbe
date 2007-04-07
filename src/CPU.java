@@ -100,8 +100,8 @@ public class CPU
 				b=read(index-0x2000);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
-				System.out.println("TODO: CPU.read(): Sprite Attribute Table");
-				b=0;
+				//System.out.println("TODO: CPU.read(): Sprite Attribute Table");
+				b=VC.OAM[index&0xff];
 			}
 			else if(index < 0xff00) { //Not Usable
 				System.out.println("WARNING: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
@@ -214,7 +214,8 @@ public class CPU
 				write(index-0x2000, value);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
-				System.out.println("TODO: CPU.write(): Sprite Attribute Table");
+				//System.out.println("TODO: CPU.write(): Sprite Attribute Table");
+				VC.OAM[index&0xff]=value;
 			}
 			else if(index < 0xff00) { //Not Usable
 				System.out.println("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff)");

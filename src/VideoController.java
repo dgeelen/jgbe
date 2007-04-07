@@ -4,7 +4,7 @@ import java.awt.*;
 public class VideoController {
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
-	private int OAM[];
+	protected int OAM[];
 	protected int LY=0;
 	protected int SCX=0;
 	protected int SCY=0;
