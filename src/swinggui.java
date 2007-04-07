@@ -203,7 +203,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			gui.createAndShowGUI();
 			gui.cpu.reset();
 
-			/*DEBUGGER* /
+			/*DEBUGGER*/
 			final Debugger dbgr=new Debugger(gui); //The GUI to which this debugger belongs
 //			Debugger.createAndShowGUI();
 			/*///END DEBUGGER
