@@ -347,7 +347,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					update();
 				}
 			}
-<<<<<<< .mine
 			if(s.charAt(0)=='r') {
 				try {
 					if (runner.getStatus() == 1) {
