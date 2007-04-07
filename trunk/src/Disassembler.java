@@ -49,6 +49,34 @@ public class Disassembler
       return -1;
     }
 
+    public static final int instructionLength(int PC) { //Teh CopyPaste crappyness :)
+      int instr=cpu.read(PC);
+      int i=-1;
+      int bytecount=1;
+      String op="";
+      if(instr==0xcb) {
+	      instr=cpu.read(PC+1);
+        op = opcode[instr+0x100];
+				bytecount=2;
+      }
+      else {
+        op = opcode[instr];
+      }
+      i=op.indexOf("IMM08");
+      if(i>-1) {
+        bytecount=2;
+			}
+			i=op.indexOf("IMM16");
+			if(i>-1) {
+				bytecount=3;
+			}
+			i=op.indexOf("[n]");
+			if(i>-1) { //specialcase
+				bytecount=2;
+			}
+			return bytecount;
+		}
+
     public static final String disassemble(int PC) {
       int instr=cpu.read(PC);
       int immediate=-1;

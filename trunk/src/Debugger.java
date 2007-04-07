@@ -13,9 +13,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public JTable mem;
 	public JTable instrs;
 	public JTextField cmds;
+	private Disassembler deasm;
 	swinggui gui;
 	public Debugger(swinggui gui) {
 		this.gui=gui;
+		deasm= new Disassembler(gui.cartridge, gui.cpu);
 		createAndShowGUI();
 		update();
 	}
@@ -39,6 +41,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		contentPane.add( scroll, BorderLayout.NORTH );
 
 		regs2 = new JTable(1,4);
+		regs2.setCellSelectionEnabled(false);
+		regs2.setColumnSelectionAllowed(false);
 		regs2.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		regs2.setTableHeader(null);
 		scroll = new JScrollPane(regs2);
@@ -53,9 +57,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll = new JScrollPane(mem);
 		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
 		contentPane.add( scroll, BorderLayout.LINE_END );
+
 		contentPane.add( new JLabel("- Instructions -"), BorderLayout.LINE_END );
-		instrs = new JTable(16,5);
-		contentPane.add( instrs, BorderLayout.LINE_END );
+		instrs = new JTable(16,1);
+		scroll = new JScrollPane(instrs);
+		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 		contentPane.add( new JLabel("- Commands -"), BorderLayout.LINE_END );
 		cmds = new JTextField();
 		contentPane.add( cmds, BorderLayout.LINE_END );
@@ -63,7 +70,16 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 
 	public void update() {
 		updateRegisters();
+		updateInstructions();
 	}
+	private void updateInstructions() {
+		int pc=gui.cpu.PC;
+		for(int i=0; i<16; ++i) {
+			instrs.setValueAt(deasm.disassemble(pc), i,0);
+			pc+=deasm.instructionLength(pc);
+		}
+	}
+
 	private void updateRegisters() {
 		regs1.setValueAt(String.format("A=$%02x",gui.cpu.regs[gui.cpu.A]), 0,0);
 		regs1.setValueAt(String.format("B=$%02x",gui.cpu.regs[gui.cpu.B]), 0,1);
