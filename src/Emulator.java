@@ -53,7 +53,7 @@ public class Emulator {
 			System.out.println("Succesfully loaded ROM :)");
 			CPU cpu = new CPU(cartridge);
 			TestSuite t = new TestSuite(cpu);
-			Disassembler deasm = new Disassembler( cartridge, cpu);
+			Disassembler deasm = new Disassembler(cpu);
 			if(true){
 				if(t.diagnose(true)==0) {
 					cpu.reset();

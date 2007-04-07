@@ -18,7 +18,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	swinggui gui;
 	public Debugger(swinggui gui) {
 		this.gui=gui;
-		deasm= new Disassembler(gui.cartridge, gui.cpu);
+		deasm= new Disassembler(gui.cpu);
 		createAndShowGUI();
 		update();
 	}

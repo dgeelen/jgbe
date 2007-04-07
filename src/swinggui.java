@@ -212,7 +212,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			while(x > 0) {
 				if (fulldebug) gui.cpu.printCPUstatus();
 				gui.cpu.nextinstruction();
-				if ((gui.cpu.TotalInstrCount % 10000) == 0) {
+				if ((gui.cpu.TotalInstrCount % 1000) == 0) {
 					if (gui.VC.renderNextScanline(gui.img[gui.which_img_to_draw_for_double_buffering^1].getGraphics())) {
 						gui.which_img_to_draw_for_double_buffering^=1;
 						gui.grfx.updateUI();

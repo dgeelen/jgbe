@@ -52,7 +52,7 @@ public class CPU
 		protected VideoController VC;
 
 		public CPU( Cartridge cartridge ) {
-			deasm = new Disassembler( cartridge, this );
+			deasm = new Disassembler(this);
 			VC = new VideoController(this);
 			this.cartridge = cartridge;
 			reset();
