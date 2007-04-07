@@ -37,7 +37,6 @@ public class CPU
 		protected int PC=0;         ///< Program counter
 		protected int SP=0;         ///< Stack Pointer
 		protected int IE=0;         ///< Interrupt Enable (allowed interrupts)
-		protected int IF=0;         ///< Interrupt Enable (requested interrupts)
 		protected boolean IME=true; ///< Interrupt Master Enable
 		//IO
 		public int DirectionKeyStatus=0; //bitmask
@@ -117,7 +116,7 @@ public class CPU
 						}
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W)
-						b=IOP[index&0xff];
+						b = IOP[0x0f];
 						break;
 					case 0xff40: // LCDC register
 						b = VC.LCDC;
@@ -213,8 +212,8 @@ public class CPU
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
 						IOP[index&0xff]=value;
 						break;
-					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being executed)
-						IOP[index&0xff]=value;
+					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
+						IOP[0x0f] = value;
 						break;
 					case 0xff24: // FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
 					case 0xff25: // FF25 - NR51 - Selection of Sound output terminal (R/W)
@@ -362,24 +361,29 @@ public class CPU
 
 		protected int checkInterrupts() { //handle interrupt priorities
 			if(IME) { // If interrupts enabled
-				int ir=IOP[0x0f]&IE; //First Requested interrupts
+				int ir = IOP[0x0f]&IE; //First Requested interrupts
 				if((ir&(1<<0))!=0) { //VBlANK
+					IOP[0x0f] &= ~(1<<0);
 					interrupt(0x40);
 					return 1;
 				}
-				else if((ir&(1<<1))!=0) { //LCD STAT
+				else if ((ir&(1<<1))!=0) { //LCD STAT
+					IOP[0x0f] &= ~(1<<1);
 					interrupt(0x48);
 					return 1;
 				}
-				else if((ir&(1<<2))!=0) { //Timer
+				else if ((ir&(1<<2))!=0) { //Timer
+					IOP[0x0f] &= ~(1<<2);
 					interrupt(0x50);
 					return 1;
 				}
-				else if((ir&(1<<3))!=0) { //Serial
+				else if ((ir&(1<<3))!=0) { //Serial
+					IOP[0x0f] &= ~(1<<3);
 					interrupt(0x58);
 					return 1;
 				}
-				else if((ir&(1<<4))!=0) { //Joypad
+				else if ((ir&(1<<4))!=0) { //Joypad
+					IOP[0x0f] &= ~(1<<4);
 					interrupt(0x60);
 					return 1;
 				}
@@ -388,16 +392,9 @@ public class CPU
 		}
 
 		protected void interrupt(int i) { //execute interrupt #i
-			switch(i) {
-  			case 0x40: // V-Blank
-  			case 0x48: // LCD STAT
-  			case 0x50: // Timer
-  			case 0x58: // Serial
-  			case 0x60: // Joypad
-  			default:
-  				System.out.println("TODO: Unhandled interrupt #"+i);
-  				break;
-  		}
+			IME = false;
+			push(PC + 2);
+			PC = i;
 		}
 
 		protected int rol(int value) {
@@ -618,7 +615,7 @@ public class CPU
 			curcycles = 0;
 			boolean nop=false;
 			//System.out.printf("Executing instruction $%02x\n", instr);
-			if(checkInterrupts()!=0) return 0;
+			if(checkInterrupts()!=0) return 12; // 12 cycles for this?
 			int instr = read(PC++);
 			switch ( instr ) {
 				case 0x00:  // NOP
