@@ -32,7 +32,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		runthread = new Thread(runner);
 		runthread.start();
 		while (runner.getStatus() != 1) {};
-		runthread.suspend();
+//		runthread.suspend();
 		createAndShowGUI();
 		update();
 	}
@@ -40,11 +40,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public class TheRunner implements Runnable {
 		private int status;
 		private CPU cpu;
+		private int stopaddr;
 		synchronized public int getStatus() {
 			return status;
 		}
 		synchronized public void setStatus(int val) {
 			status = val;
+		}
+
+		public void setBreakPoint(int addr) {
+			if (getStatus()==1)
+				stopaddr = addr;
 		}
 
 		public TheRunner(CPU tcpu) { //Pass something
@@ -56,7 +62,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			while (true) {
 				setStatus(1);
 				while (getStatus() == 1) {
-					// do nothing
+					try {
+					Thread.sleep(100);
+					} catch (java.lang.InterruptedException e) {
+					}
 				}
 				setStatus(3);
 				while (getStatus() == 3) {
@@ -302,17 +311,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				update();
 			}
 			if(s.charAt(0)=='g') {
-				System.out.println("Starting execution");
-				runner.setStatus(2);
-				runthread.resume();
-				while (runner.getStatus() != 3) {};
+				if (runner.getStatus() == 1) {
+					runner.setStatus(2);
+					while (runner.getStatus() != 3) {};
+				}
 			}
 			if(s.charAt(0)=='b') {
-				System.out.println("Stopping execution");
-				runner.setStatus(0);
-				while (runner.getStatus() != 1) {};
-				runthread.suspend();
-				update();
+				if (runner.getStatus() == 3) {
+					runner.setStatus(0);
+					while (runner.getStatus() != 1) {};
+					update();
+				}
 			}
 			if(s.charAt(0)=='m') {
 				try {
