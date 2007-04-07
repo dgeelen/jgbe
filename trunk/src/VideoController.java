@@ -241,4 +241,8 @@ public class VideoController {
 	public void selectVRAMBank(int i) {
 		CurrentVRAMBank=i;
 	}
+	
+	public int getcurVRAMBank() {
+		return CurrentVRAMBank;
+	}
 }
