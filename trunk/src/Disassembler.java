@@ -193,6 +193,57 @@ public class Disassembler
       return prefix + s + (new String(whitespace, 0, 18 - s.length())) + "// "+op ;
     }
 
+    public static final String simple_disasm(int PC) {
+      int instr=cpu.read(PC);
+      int immediate=-1;
+      int bytecount=1;
+			int i;
+      String op="";
+      if(instr==0xcb) {
+	      instr=cpu.read(PC+1);
+        op = opcode[instr+0x100];
+				bytecount=2;
+      }
+      else {
+        op = opcode[instr];
+      }
+			String s=op;
+      i=op.indexOf("IMM08");
+      if(i>-1) {
+        immediate = cpu.read(PC+1);
+        s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+        bytecount=2;
+			}
+			i=op.indexOf("IMM16");
+			if(i>-1) {
+				immediate=(cpu.read(PC+2)<<8)|cpu.read(PC+1); //little endian
+				s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
+				bytecount=3;
+			}
+			i=s.indexOf("[n]");
+			if(i>-1) { //specialcase
+				immediate=cpu.read(PC+1);
+				bytecount=2;
+				s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+			}
+			i=op.indexOf("dd");
+			if(i>-1) { //specialcase
+				immediate=cpu.read(PC+1);
+				bytecount=2;
+				s=String.format(s.substring(0,i)+"$%02x"+s.substring(i+2),immediate);
+			}
+
+			String prefix=String.format("$%04x: ",PC);
+			for(i=0; i<bytecount;  ++i) {
+				prefix+=String.format("$%02x ", cpu.read(PC+i));
+			}
+			for(; i<3; ++i) {
+			  prefix+=String.format("    ", cpu.read(PC+i));
+			}
+      return prefix + " " + s;
+    }
+
+
     public static void main(String[] args)
     {
         System.out.println(Disassembler.disassemble(0));

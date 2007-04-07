@@ -78,7 +78,7 @@ public class CPU
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
 				b=-1;
-				}
+			}
 			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 				b=cartridge.read(index);
 			}
