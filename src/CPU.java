@@ -397,6 +397,10 @@ public class CPU
 			PC = i;
 		}
 
+		protected void triggerInterrupt(int i) { // requent interrupt with bit nr #i
+			IOP[0x0f] |= (1<<i);
+		}
+
 		protected int rol(int value) {
 			int res = value;
 			res <<= 1;
