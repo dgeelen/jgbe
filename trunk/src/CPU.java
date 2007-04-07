@@ -34,6 +34,9 @@ public class CPU
 
 		private int curcycles;
 
+		private int DIVcntdwn = 0;
+		private int TIMAcntdwn = 0;
+
 		protected int PC=0;         ///< Program counter
 		protected int SP=0;         ///< Stack Pointer
 		protected int IE=0;         ///< Interrupt Enable (allowed interrupts)
@@ -114,6 +117,12 @@ public class CPU
 						if((b&(1<<5))==0) { // Buttons, 0=select
 							b|=ButtonKeyStatus;
 						}
+						break;
+					case 0xff04: // DIV
+					case 0xff05: // TIMA
+					case 0xff06: // TMA
+					case 0xff07: // TAC
+						b = IOP[index-0xff00];
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W)
 						b = IOP[0x0f];
@@ -214,6 +223,14 @@ public class CPU
 				switch(index) {
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
 						IOP[index&0xff]=value;
+						break;
+					case 0xff04: // DIV
+						IOP[0x04] = 0;
+						break;
+					case 0xff05: // TIMA
+					case 0xff06: // TMA
+					case 0xff07: // TAC
+						IOP[index-0xff00] = value;
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
 						IOP[0x0f] = value;
@@ -1517,6 +1534,30 @@ public class CPU
 		public int nextinstruction() {
 			int res = execute();
 			lastException = (res!=0) ? 0 : 1;
+			if (res > 0) {
+				//clockfreq = 4194304hz
+				DIVcntdwn -= res;
+				if (DIVcntdwn < 0) {
+					DIVcntdwn += 256; // == 4194304/16384
+					++IOP[0x04];
+					IOP[0x04] &= 0xff;
+				}
+				int tac = IOP[0x07];
+				if ((tac&4)!=0) {
+					TIMAcntdwn -= res;
+					if (TIMAcntdwn < 0) {
+						if ((tac&3)==0) TIMAcntdwn += 1024; // == 4194304/4096
+						if ((tac&3)==1) TIMAcntdwn +=   16; // == 4194304/262144
+						if ((tac&3)==2) TIMAcntdwn +=   64; // == 4194304/65536
+						if ((tac&3)==3) TIMAcntdwn +=  256; // == 4194304/16384
+						++IOP[0x05];
+						if (IOP[0x05] > 0xff) {
+							IOP[0x05] = IOP[0x06];
+							triggerInterrupt(2);
+						}
+					}
+				}
+			}
 			return res;
 		}
 
