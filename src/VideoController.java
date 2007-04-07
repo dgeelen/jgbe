@@ -14,7 +14,7 @@ public class VideoController {
 	protected int BGPI=0;    //BCPS/BGPI - CGB Mode Only - Background Palette Index
 	private int BGPD[];  //CPD/BGPD - CGB Mode Only - Background Palette Data
 	private Color BGPC[][];
-	private CPU cpu; // dont think we need this...
+	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
 	private Color Gray[];
 
 	public VideoController(CPU cpu) {
@@ -99,7 +99,7 @@ public class VideoController {
 				selectVRAMBank(1);
 				int TileAttr = read(BGTileMap + rtx + (rty*32)); // get attributes of current tile
 				selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
-				if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip 
+				if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip
 				if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
 
 				int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
@@ -137,10 +137,10 @@ public class VideoController {
 							selectVRAMBank(1);
 							int TileAttr = read(WindowTileMap + rtx + (rty*32)); // get attributes of current tile
 							selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
-							if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip 
+							if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip
 							if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
 							*/
-							
+
 							int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
 							int d1 = read(TileData + offset);     // lsb bit of col is in here
 							int d2 = read(TileData + offset + 1); // msb bit of col is in here
@@ -148,7 +148,7 @@ public class VideoController {
 
 							//now we should do some pallete stuff....
 							g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
-							
+
 							g.drawRect(x, linenumber, x, linenumber);
 							System.out.println("drawing window rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 						}

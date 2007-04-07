@@ -34,9 +34,11 @@ public class CPU
 
 		private int curcycles;
 
-		protected int IR;
-		protected int PC;
-		protected int SP;
+		protected int IR=0;
+		protected int PC=0;
+		protected int SP=0;
+		protected int IER=0;
+		protected boolean IME=true;
 		//IO
 		public int DirectionKeyStatus=0; //bitmask
 		public int ButtonKeyStatus=0; //bitmask
@@ -114,6 +116,9 @@ public class CPU
 							b|=ButtonKeyStatus;
 						}
 						break;
+					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W)
+						b=IOP[index&0xff];
+						break;
 					case 0xff40: // LCDC register
 						b = VC.LCDC;
 						break;
@@ -147,8 +152,8 @@ public class CPU
 				b = HRAM[index-0xff80];
 			}
 			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
-				System.out.println("TODO: CPU.read(): Read from Interrupt Enable Register (0xffff)");
-				b=0;
+				//System.out.println("TODO: CPU.read(): Read from Interrupt Enable Register (0xffff)");
+				b=IER;
 			}
 			else {
 				System.out.println("ERROR: CPU.read(): Out of range memory access: $"+index);
@@ -206,7 +211,11 @@ public class CPU
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
-							IOP[index-0xff00]=value;
+						IOP[index&0xff]=value;
+						break;
+					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being executed)
+						IOP[index&0xff]=value;
+						checkInterrupts();
 						break;
 					case 0xff24: // FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
 					case 0xff25: // FF25 - NR51 - Selection of Sound output terminal (R/W)
@@ -262,8 +271,10 @@ public class CPU
 			else if(index < 0xffff) { //High RAM (HRAM)
 				HRAM[index-0xff80] = value;
 			}
-			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
-				System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
+			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
+				//System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
+				IER=value; // Interrupt Enable Register
+				checkInterrupts();
 			}
 			else {
 				System.out.println("ERROR: CPU.write(): Out of range memory access: $"+index);
@@ -349,6 +360,10 @@ public class CPU
 
 		protected void writemem8b( int H, int L, int val ) {
 			write(( regs[H]<<8 )|regs[L], val );
+		}
+
+		protected void checkInterrupts() { //handle interrupt priorities
+		//if(bla) interrupt(n)
 		}
 
 		protected void interrupt(int i) { //execute interrupt #i
