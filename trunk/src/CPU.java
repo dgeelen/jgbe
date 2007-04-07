@@ -126,6 +126,12 @@ public class CPU
 					case 0xff44: // vblank ???
 						b = 0x91;//vblank hax
 						break;
+					case 0xff4a: // WY
+						b = VC.WY;
+						break;
+					case 0xff4b: // WX
+						b = VC.WX;
+						break;
 					default:
 						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 						break;
@@ -209,6 +215,12 @@ public class CPU
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
 							write(0xfe00|i, read(i+(value<<8)));
 						}
+						break;
+					case 0xff4a: // WY
+						VC.WY = value;
+						break;
+					case 0xff4b: // WX
+						VC.WX = value;
 						break;
 					case 0xff4f: // FF4F - VBK - CGB Mode Only - VRAM Bank
 						VC.selectVRAMBank(value&1);
