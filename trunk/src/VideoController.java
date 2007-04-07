@@ -5,6 +5,7 @@ public class VideoController {
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
 	private int OAM[];
+	protected int LY=0;
 	protected int SCX=0;
 	protected int SCY=0;
 	protected int WX=0;
@@ -158,6 +159,12 @@ public class VideoController {
 		selectVRAMBank(prevrambank);
 	}
 
+	public boolean renderNextScanline(Graphics g) {
+		if (LY < 144) renderScanLine(g, LY);
+		++LY;
+		if (LY == 154) LY = 0;
+		return (LY == 144);
+	}
 
 	public void renderImage(Graphics g) {	//g is a reference to the display
 /*		int width = (g.getClipBounds()).width;

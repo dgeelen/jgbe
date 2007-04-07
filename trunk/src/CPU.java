@@ -123,8 +123,8 @@ public class CPU
 					case 0xff43: // SCX
 						b = VC.SCX;
 						break;
-					case 0xff44: // vblank ???
-						b = 0x91;//vblank hax
+					case 0xff44: // LY
+						b = VC.LY;
 						break;
 					case 0xff4a: // WY
 						b = VC.WY;
@@ -220,6 +220,9 @@ public class CPU
 						break;
 					case 0xff43: // SCX
 						VC.SCX = value;
+						break;
+					case 0xff44: // LY
+						VC.LY = 0; // can only be set to 0
 						break;
 					case 0xff46: // FF46 - DMA - DMA Transfer and Start Address (W)
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
