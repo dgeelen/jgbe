@@ -208,6 +208,10 @@ public class CPU
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
 							IOP[index-0xff00]=value;
 						break;
+					case 0xff24: // FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
+					case 0xff25: // FF25 - NR51 - Selection of Sound output terminal (R/W)
+					case 0xff26: // FF26 - NR52 - Sound on/off
+
 					case 0xff40: // LCDC register
 						VC.LCDC = value;
 						break;
@@ -267,7 +271,7 @@ public class CPU
 			//TODO: Switch to bank 0
 			PC = 0x100; //ROM Entry point on bank 0
 			//AF=$01B0
-			regs[A]=0x11; // CGB sets this to 0x11
+			regs[A]=0x11; // CGB sets this to 0x11 instead of 0x01 for GB
 			regs[F]=0xb0;
 			//BC=$0013
 			regs[B]=0x00;
@@ -342,6 +346,10 @@ public class CPU
 
 		protected void writemem8b( int H, int L, int val ) {
 			write(( regs[H]<<8 )|regs[L], val );
+		}
+
+		protected void interrupt(int i) { //execute interrupt #i
+
 		}
 
 		protected int rol(int value) {
@@ -716,6 +724,10 @@ public class CPU
 					int h = read( PC++ );
 					SP = l | (h<<8);
 				};break;
+				case 0x32: // LDD	HL,A
+					writemem8b(H,L, regs[A]);
+					dec16b(H, L);
+					break;
 				case 0x33: // INC SP
 					++SP; //16-bit inc/dec doesnt affect any flags
 					SP&=0xffff;
