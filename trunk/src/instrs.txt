@@ -246,7 +246,7 @@ DI
 PUSH AF
 OR   IMM08
 RST  &30
-LD   A, SP+dd
+LD   A, [SP+dd]
 LD   SP, HL
 LD   A, [IMM16]
 EI
