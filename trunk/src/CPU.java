@@ -1217,13 +1217,33 @@ public class CPU
 					regs[B] = x >> 8;
 					regs[C] = x&0xff;
 				};break;
+				case 0xc2: // JMP NZ, nn
+					if (( regs[FLAG_REG]&ZF_Mask )!=ZF_Mask )
+						JPnn();
+					else
+						PC+=2;
+					if (curcycles == 12) curcycles = 16;
+					if (curcycles ==  4) curcycles = 12;
+					break;
 				case 0xc3: // JPNNNN
 					JPnn();
 					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
+				case 0xc4: // CALL NZ, &0000
+					if (( regs[FLAG_REG]&ZF_Mask )!=ZF_Mask ) {
+						push( PC+2 );
+						JPnn();
+					} else
+						PC += 2;
+					if (curcycles == 20) curcycles = 24;
+					if (curcycles ==  4) curcycles = 12;
+					break;
 				case 0xc5: // PUSH BC
 					push( regs[B]<<8 | regs[C]);
 					curcycles += 4; // takes 16 instead of 12 cycles
+					break;
+				case 0xc6: // ADD  A, n
+					add8b(A, read(PC++));
 					break;
 				case 0xc8: // RET  Z
 					if ((regs[F]&ZF_Mask) == ZF_Mask)
@@ -1257,6 +1277,9 @@ public class CPU
 					push( PC+2 );
 					JPnn();
 					break;
+				case 0xce: // ADC  A, n
+					adc(A, read(PC++));
+					break;
 				case 0xd0: // RET  NC
 					if ((regs[F]&CF_Mask) != CF_Mask)
 						PC = pop();
@@ -1280,6 +1303,10 @@ public class CPU
 					push( regs[D]<<8 | regs[E]);
 					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
+				case 0xd7: // RST &10
+					push(PC);
+					PC = 0x10;
+					break;
 				case 0xd9: // RETI
 					curcycles += 4; // takes 16 instead of 12 cycles
 					IME = true;
@@ -1292,6 +1319,9 @@ public class CPU
 						PC+=2;
 					if (curcycles == 12) curcycles = 16;
 					if (curcycles ==  4) curcycles = 12;
+					break;
+				case 0xde: // SBC A, n
+					sbc(A, read(PC++));
 					break;
 				case 0xe0: // LDH  (n), A
 					write( 0xff00 | read( PC++ ), regs[A] );
