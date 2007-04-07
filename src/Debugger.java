@@ -161,9 +161,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	}
 
 	public void update() {
-		updateRegisters();
-		updateMemory();
-		updateInstructions();
+		if (runner.getStatus() == 1) {
+			updateRegisters();
+			updateMemory();
+			updateInstructions();
+		}
 	}
 
 	public void updateMemory() {
@@ -310,6 +312,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				runner.setStatus(0);
 				while (runner.getStatus() != 1) {};
 				runthread.suspend();
+				update();
 			}
 			if(s.charAt(0)=='m') {
 				try {
