@@ -208,11 +208,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 				if (fulldebug) gui.cpu.printCPUstatus();
 				gui.cpu.nextinstruction();
 				if ((gui.cpu.TotalInstrCount % 10000) == 0) {
-					gui.cpu.triggerInterrupt(1); // LCD STAT
 					if (gui.VC.renderNextScanline(gui.img[gui.which_img_to_draw_for_double_buffering^1].getGraphics())) {
 						gui.which_img_to_draw_for_double_buffering^=1;
 						gui.grfx.updateUI();
-						gui.cpu.triggerInterrupt(0); // LCD VBLANK
 					}
 				}
 				if (gui.cpu.exception()!=0) {
