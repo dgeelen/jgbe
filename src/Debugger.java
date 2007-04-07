@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.JTable.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -115,7 +116,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		j=Math.max(pc-1,0);
 		i=deasm.instructionLength(j);
 		if(i==1) return j;
-		return -1;
+		return j;
 	}
 
 	private void updateInstructions() {
@@ -124,7 +125,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			pc=seekBackOneInstruction(pc);
 			}
 		for(int i=0; i<16; ++i) {
-			instrs.setValueAt(deasm.disassemble(pc), i,0);
+			if (i==7) pc=gui.cpu.PC;
+			instrs.setValueAt(deasm.simple_disasm(pc), i,0);
 			pc+=deasm.instructionLength(pc);
 		}
 	}
@@ -146,10 +148,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.NF_Mask ) == gui.cpu.NF_Mask )?"N ":"n ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.HC_Mask ) == gui.cpu.HC_Mask )?"H ":"h ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.CF_Mask ) == gui.cpu.CF_Mask )?"C ":"c ";
-		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<3 ) ) == ( 1 <<3 ) )?"1 ":"0 ";
-		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<2 ) ) == ( 1 <<2 ) )?"1 ":"0 ";
-		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<1 ) ) == ( 1 <<1 ) )?"1 ":"0 ";
-		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
 		regs2.setValueAt(flags, 0,3);
 	}
 
