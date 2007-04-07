@@ -28,18 +28,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public Debugger(swinggui gui) {
 		this.gui=gui;
 		deasm= new Disassembler(gui.cpu);
-		runner = new TheRunner(gui.cpu);
+//		runthread.suspend();
+		createAndShowGUI();
+		runner = new TheRunner(this);
 		runthread = new Thread(runner);
 		runthread.start();
 		while (runner.getStatus() != 1) {};
-//		runthread.suspend();
-		createAndShowGUI();
-		update();
 	}
 
 	public class TheRunner implements Runnable {
 		private int status;
-		private CPU cpu;
+		private Debugger dbg;
 		private int stopaddr;
 		synchronized public int getStatus() {
 			return status;
@@ -53,14 +52,15 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				stopaddr = addr;
 		}
 
-		public TheRunner(CPU tcpu) { //Pass something
+		public TheRunner(Debugger tdbg) { //Pass something
 	 		setStatus(0);
-			cpu = tcpu;
+			dbg = tdbg;
 	 	}
 
 		public void run() {
 			while (true) {
 				setStatus(1);
+				dbg.update();
 				while (getStatus() == 1) {
 					try {
 					Thread.sleep(100);
@@ -69,7 +69,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				}
 				setStatus(3);
 				while (getStatus() == 3) {
-					cpu.nextinstruction();
+					dbg.gui.cpu.nextinstruction();
+					if (dbg.gui.cpu.PC == stopaddr) {
+						setStatus(0);
+					}
 				}
 			}
 		}
@@ -169,7 +172,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		contentPane.add( scroll, BorderLayout.LINE_END );
 	}
 
-	public void update() {
+	synchronized public void update() {
 		if (runner.getStatus() == 1) {
 			updateRegisters();
 			updateMemory();
@@ -343,6 +346,24 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					while (runner.getStatus() != 1) {};
 					update();
 				}
+			}
+<<<<<<< .mine
+			if(s.charAt(0)=='r') {
+				try {
+					if (runner.getStatus() == 1) {
+						String ss = s.substring( s.lastIndexOf(" ") + 1);
+						if( ss.charAt(0)=='$' ) {
+							runner.setBreakPoint(Integer.parseInt( ss.substring(1), 16 ));
+							runner.setStatus(2);
+							while (runner.getStatus() == 2) {};
+						}
+					}
+				}
+				catch ( NumberFormatException ee ) {
+						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				}
+				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
+				update();
 			}
 			i=s.indexOf("=");
 			if(i>-1) { //assignment
