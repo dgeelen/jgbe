@@ -15,6 +15,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public JTable instrs;
 	public JTextField cmds;
 	private Disassembler deasm;
+	private int memaddr=0;
 	swinggui gui;
 	public Debugger(swinggui gui) {
 		this.gui=gui;
@@ -57,7 +58,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.LINE_END );
-		mem = new JTable(8,16+2);
+		mem = new JTable(8,8+2);
 		mem.setTableHeader(null);
 		scroll = new JScrollPane(mem);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
@@ -88,8 +89,20 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 
 	public void update() {
 		updateRegisters();
+		updateMemory();
 		updateInstructions();
 	}
+
+	public void updateMemory() {
+		int m=memaddr;
+		for(int i=0; i<8; ++i) {
+			mem.setValueAt(String.format("$%04x",m), i,0);
+			for(int j=2; j<10; ++j) {
+				mem.setValueAt(String.format("$%02x",gui.cpu.read(m++)), i,j);
+			}
+		}
+	}
+
 	private void updateInstructions() {
 		int pc=gui.cpu.PC;
 		for(int i=0; i<16; ++i) {
