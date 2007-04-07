@@ -170,6 +170,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		if(f==cmds) {
 			String s=cmds.getText().trim();
 			cmds.selectAll();
+			System.out.println("Command='"+s+"'");
+			if(s.equals("s")) {
+				System.out.println("SingleStep");
+				gui.cpu.nextinstruction();
+				update();
+			}
 		}
 		else {
 			System.out.println( "Action event i an instance of " + getClassName( f ));
