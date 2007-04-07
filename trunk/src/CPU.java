@@ -226,7 +226,7 @@ public class CPU
 						VC.LCDC = value;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
-						VC.STAT = value&0xf0; //lower 4bits are readonly
+						VC.STAT = (VC.STAT&0x0f)|(value&0xf0); //lower 4bits are readonly
 						break;
 					case 0xff42: // SCY
 						VC.SCY = value;
