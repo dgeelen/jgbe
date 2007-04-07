@@ -81,6 +81,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.LINE_END );
 		cmds = new JTextField();
+		cmds.addActionListener(this);
 		scroll = new JScrollPane(cmds);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 20));
@@ -161,11 +162,18 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		frame.pack();
 		frame.setSize(new Dimension(480,640));
 		frame.setVisible( true );
+		//frame.addKeyListener(this); TODO: Shortcut keys
 	}
 
 	public void actionPerformed( ActionEvent e ) {
-		JMenuItem source = ( JMenuItem )( e.getSource() );
-		System.out.println( "Menu Item source: " + source.getText() + " (an instance of " + getClassName( source ) + ")" );
+		JTextField f = ( JTextField )( e.getSource() );
+		if(f==cmds) {
+			String s=cmds.getText().trim();
+			cmds.selectAll();
+		}
+		else {
+			System.out.println( "Action event i an instance of " + getClassName( f ));
+			}
 	}
 
 	public void itemStateChanged( ItemEvent e ) {
