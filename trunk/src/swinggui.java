@@ -32,6 +32,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 
 		public swinggui() {
 			cartridge = new Cartridge("Pokemon Blue.gb");
+			//cartridge = new Cartridge("../roms/Metal Slug.gb");
 			if(cartridge.getError()!=null) {
 				System.out.println("ERROR: "+cartridge.getError());
 			}

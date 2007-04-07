@@ -10,18 +10,46 @@ public class VideoController {
 	protected int WX=0;
 	protected int WY=0;
 	protected int LCDC=0;
+	protected int BGPI=0;    //BCPS/BGPI - CGB Mode Only - Background Palette Index
+	private int BGPD[];  //CPD/BGPD - CGB Mode Only - Background Palette Data
+	private Color BGPC[][];
 	private CPU cpu; // dont think we need this...
 	private Color Gray[];
 
 	public VideoController(CPU cpu) {
 		VRAM = new int[2][0x2000]; //8k per bank
 		OAM = new int[0xa0]; //Sprite Attribute Table
+		BGPD = new int[8*4*2];
+		BGPC = new Color[8][4];
 		this.cpu = cpu;
 		Gray = new Color[4];
 		Gray[0]=new Color(0,0,0);
 		Gray[1]=new Color(64,64,64);
 		Gray[2]=new Color(128,128,128);
 		Gray[3]=new Color(192,192,192);
+	}
+
+	public void setBGColData(int value) {
+		BGPD[BGPI&0x3f] = value;
+
+		// calculate color now
+		int base = (BGPI & 0x3e);
+		int data = BGPD[base] | (BGPD[base+1]<<8);
+		int palnum = base >> 3;
+		int colnum = (base >> 1) & 3;
+		int r = (data >>  0) & 0x1F;
+		int g = (data >>  5) & 0x1F;
+		int b = (data >> 10) & 0x1F;
+
+		BGPC[palnum][colnum] = new Color(r<<3, g<<3, b<<3); // TODO gb->vga rgb conv
+
+		if ((BGPI&(1<<7))!=0)
+			++BGPI;
+		System.out.println("setting GBC pal data");
+	}
+
+	public int getBGColData() {
+		return BGPD[BGPI&0x3f];
 	}
 
 	public void renderBackGroundMap(Graphics g) {

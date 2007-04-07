@@ -73,6 +73,8 @@ public class Cartridge {
 		// Detect MBC type
 		MBC = first_rom_bank[0x0147];
 
+		System.out.println("[0x143] = "+first_rom_bank[0x143]);
+
 		// Determine ROM size
 		switch(first_rom_bank[0x0148])	{
 			case 0x00: ROM = new int[2][0x81]; System.out.println("ROM size = 32KByte (no ROM banking)"); break;

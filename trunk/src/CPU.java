@@ -132,6 +132,12 @@ public class CPU
 					case 0xff4b: // WX
 						b = VC.WX;
 						break;
+					case 0xff68: // BGPI
+						b = VC.BGPI;
+						break;
+					case 0xff69: // BGPD
+						b = VC.getBGColData();
+						break;
 					default:
 						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 						break;
@@ -232,6 +238,12 @@ public class CPU
 					case 0xff55: // FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 						System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");
 						break;
+					case 0xff68: // BGPI
+						VC.BGPI = value;;
+						break;
+					case 0xff69: // BGPD
+						VC.setBGColData(value);
+						break;
 					case 0xff70: //FF70 - SVBK - CGB Mode Only - WRAM Bank
 						CurrentWRAMBank=Math.max(value&0x07, 1);
 						break;
@@ -255,7 +267,7 @@ public class CPU
 			//TODO: Switch to bank 0
 			PC = 0x100; //ROM Entry point on bank 0
 			//AF=$01B0
-			regs[A]=0x01;
+			regs[A]=0x11; // CGB sets this to 0x11
 			regs[F]=0xb0;
 			//BC=$0013
 			regs[B]=0x00;
