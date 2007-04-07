@@ -300,6 +300,20 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				runner = new TheRunner();
 				new Thread(runner).start();
 			}
+			if(s.charAt(0)=='m') {
+				try {
+					String ss = s.substring( s.lastIndexOf(" ") + 1);
+					if( ss.charAt(0)=='$' )
+						memaddr = Integer.parseInt( ss.substring(1), 16 );
+					else
+						memaddr = Integer.parseInt( ss );
+				}
+				catch ( NumberFormatException ee ) {
+						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				}
+				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
+				update();
+			}
 		}
 		else {
 			System.out.println( "Action event i an instance of " + getClassName( f ));
