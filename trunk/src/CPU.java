@@ -278,6 +278,7 @@ public class CPU
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
 				//System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
 				IE=value; // Interrupt Enable Register
+				System.out.println("IE write: VBlank="+(IE&1)+" STAT="+((IE&2)>>1)+" Timer="+((IE&4)>>2)+" Serial="+((IE&8)>>3)+" Joypad="+((IE&16)>>4 ));
 			}
 			else {
 				System.out.println("ERROR: CPU.write(): Out of range memory access: $"+index);
@@ -404,7 +405,7 @@ public class CPU
 			PC = i;
 		}
 
-		protected void triggerInterrupt(int i) { // requent interrupt with bit nr #i
+		protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
 			IOP[0x0f] |= (1<<i);
 		}
 

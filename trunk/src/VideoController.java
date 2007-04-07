@@ -160,7 +160,7 @@ public class VideoController {
 		selectVRAMBank(prevrambank);
 		//System.out.println("VC: Requesting STAT");
 		STAT&=0xfc; //Set HBlank, mode=0
-		cpu.IOP[0x0f]|=2; //request STAT
+		cpu.triggerInterrupt(1); //request STAT
 	}
 
 	public boolean renderNextScanline(Graphics g) {
