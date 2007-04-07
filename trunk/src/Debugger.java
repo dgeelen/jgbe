@@ -8,7 +8,8 @@ import java.awt.image.BufferedImage;
 
 public class Debugger implements ActionListener, ItemListener, KeyListener { //GUI
 	public static boolean RIGHT_TO_LEFT = false;
-	public JTable regs;
+	public JTable regs1;
+	public JTable regs2;
 	public JTable mem;
 	public JTable instrs;
 	public JTextField cmds;
@@ -27,22 +28,31 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			contentPane.setComponentOrientation(
 				java.awt.ComponentOrientation.RIGHT_TO_LEFT );
 		}
+		JScrollPane scroll;
 		contentPane.add( new JLabel("- Registers -"), BorderLayout.LINE_END );
-		regs = new JTable(2,8);
-		System.out.println("REGSIZE="+regs.getSize());
-		System.out.println("REGh="+regs.getHeight());
-
-		regs.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		JScrollPane scroll = new JScrollPane(regs);
-		scroll.setMaximumSize(new Dimension(555, Integer.MAX_VALUE));
-		//scroll.setMaximumSize(new Dimension(555, Integer.MAX_VALUE));
-		scroll.setPreferredSize(new Dimension(555, regs.getHeight()));
-		System.out.println("REGSIZE="+regs.getSize());
-		System.out.println("REGh="+regs.getHeight());
+		regs1 = new JTable(1,8);
+		regs1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		regs1.setTableHeader(null);
+		scroll = new JScrollPane(regs1);
+		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(640, 19));
 		contentPane.add( scroll, BorderLayout.NORTH );
+
+		regs2 = new JTable(1,4);
+		regs2.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		regs2.setTableHeader(null);
+		scroll = new JScrollPane(regs2);
+		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(640, 19));
+		contentPane.add( scroll, BorderLayout.NORTH );
+
+
 		contentPane.add( new JLabel("- Memory -"), BorderLayout.LINE_END );
 		mem = new JTable(8,16+2);
-		contentPane.add( mem, BorderLayout.LINE_END );
+		mem.setTableHeader(null);
+		scroll = new JScrollPane(mem);
+		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 		contentPane.add( new JLabel("- Instructions -"), BorderLayout.LINE_END );
 		instrs = new JTable(16,5);
 		contentPane.add( instrs, BorderLayout.LINE_END );
@@ -55,23 +65,27 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		updateRegisters();
 	}
 	private void updateRegisters() {
-		regs.setValueAt(String.format("A=$%02x",gui.cpu.regs[gui.cpu.A]), 0,0);
-		regs.setValueAt(String.format("B=$%02x",gui.cpu.regs[gui.cpu.B]), 0,1);
-		regs.setValueAt(String.format("C=$%02x",gui.cpu.regs[gui.cpu.C]), 0,2);
-		regs.setValueAt(String.format("D=$%02x",gui.cpu.regs[gui.cpu.D]), 0,3);
-		regs.setValueAt(String.format("E=$%02x",gui.cpu.regs[gui.cpu.E]), 0,4);
-		regs.setValueAt(String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]), 0,5);
-		regs.setValueAt(String.format("H=$%02x",gui.cpu.regs[gui.cpu.H]), 0,6);
-		regs.setValueAt(String.format("L=$%02x",gui.cpu.regs[gui.cpu.L]), 0,7);
-		regs.setValueAt(String.format("PC=$%04x",gui.cpu.PC), 1,0);
-		regs.setValueAt(String.format("SP=$%04x",gui.cpu.SP), 1,1);
-		regs.setValueAt(String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]), 1,6);
-		String flags = "";
+		regs1.setValueAt(String.format("A=$%02x",gui.cpu.regs[gui.cpu.A]), 0,0);
+		regs1.setValueAt(String.format("B=$%02x",gui.cpu.regs[gui.cpu.B]), 0,1);
+		regs1.setValueAt(String.format("C=$%02x",gui.cpu.regs[gui.cpu.C]), 0,2);
+		regs1.setValueAt(String.format("D=$%02x",gui.cpu.regs[gui.cpu.D]), 0,3);
+		regs1.setValueAt(String.format("E=$%02x",gui.cpu.regs[gui.cpu.E]), 0,4);
+		regs1.setValueAt(String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]), 0,5);
+		regs1.setValueAt(String.format("H=$%02x",gui.cpu.regs[gui.cpu.H]), 0,6);
+		regs1.setValueAt(String.format("L=$%02x",gui.cpu.regs[gui.cpu.L]), 0,7);
+		regs2.setValueAt(String.format("PC=$%04x",gui.cpu.PC), 0,0);
+		regs2.setValueAt(String.format("SP=$%04x",gui.cpu.SP), 0,1);
+		//regs2.setValueAt(String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]), 0,4);
+		String flags = "F=";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.ZF_Mask ) == gui.cpu.ZF_Mask )?"Z ":"z ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.NF_Mask ) == gui.cpu.NF_Mask )?"N ":"n ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.HC_Mask ) == gui.cpu.HC_Mask )?"H ":"h ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.CF_Mask ) == gui.cpu.CF_Mask )?"C ":"c ";
-		regs.setValueAt(flags, 1,7);
+		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<3 ) ) == ( 1 <<3 ) )?"1 ":"0 ";
+		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<2 ) ) == ( 1 <<2 ) )?"1 ":"0 ";
+		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<1 ) ) == ( 1 <<1 ) )?"1 ":"0 ";
+		flags += (( gui.cpu.regs[gui.cpu.F] & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
+		regs2.setValueAt(flags, 0,3);
 	}
 
 	private void createAndShowGUI() {
