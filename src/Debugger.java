@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 
 public class Debugger implements ActionListener, ItemListener, KeyListener { //GUI
 	public static boolean RIGHT_TO_LEFT = false;
+	private static final int aaarg=650;
 	public JTable regs1;
 	public JTable regs2;
 	public JTable mem;
@@ -36,8 +37,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		regs1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		regs1.setTableHeader(null);
 		scroll = new JScrollPane(regs1);
-		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
-		scroll.setPreferredSize(new Dimension(640, 19));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.NORTH );
 
 		regs2 = new JTable(1,4);
@@ -46,8 +47,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		regs2.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		regs2.setTableHeader(null);
 		scroll = new JScrollPane(regs2);
-		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
-		scroll.setPreferredSize(new Dimension(640, 19));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.NORTH );
 
 
@@ -55,13 +56,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		mem = new JTable(8,16+2);
 		mem.setTableHeader(null);
 		scroll = new JScrollPane(mem);
-		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 131));
 		contentPane.add( scroll, BorderLayout.LINE_END );
 
 		contentPane.add( new JLabel("- Instructions -"), BorderLayout.LINE_END );
 		instrs = new JTable(16,1);
+		instrs.setTableHeader(null);
+		instrs.setFont(new Font("Bitstream Vera Sans Mono",0, 12));
 		scroll = new JScrollPane(instrs);
-		scroll.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 259));
 		contentPane.add( scroll, BorderLayout.LINE_END );
 		contentPane.add( new JLabel("- Commands -"), BorderLayout.LINE_END );
 		cmds = new JTextField();
