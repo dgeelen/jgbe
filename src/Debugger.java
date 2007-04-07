@@ -22,38 +22,47 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	private int memaddr=0;
 	private Color UpdateColor = new Color(255,200,200);
 	private TheRunner runner;
+	private Thread runthread;
 	swinggui gui;
 	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
 	public Debugger(swinggui gui) {
 		this.gui=gui;
 		deasm= new Disassembler(gui.cpu);
-		runner=null;
+		runner = new TheRunner(gui.cpu);
+		runthread = new Thread(runner);
+		runthread.start();
+		while (runner.getStatus() != 1) {};
+		runthread.suspend();
 		createAndShowGUI();
 		update();
 	}
 
 	public class TheRunner implements Runnable {
-		public Boolean happy;
-	 	public TheRunner() { //Pass something
-	 		this.happy = true;
+		private int status;
+		private CPU cpu;
+		synchronized public int getStatus() {
+			return status;
+		}
+		synchronized public void setStatus(int val) {
+			status = val;
+		}
+
+		public TheRunner(CPU tcpu) { //Pass something
+	 		setStatus(0);
+			cpu = tcpu;
 	 	}
+
 		public void run() {
-			while(happy) {
-				System.out.printf(".");
-				try{
-					Thread.sleep(100);
+			while (true) {
+				setStatus(1);
+				while (getStatus() == 1) {
+					// do nothing
 				}
-				catch( InterruptedException e ) {
-					System.out.println("Interrupted Exception caught");
+				setStatus(3);
+				while (getStatus() == 3) {
+					cpu.nextinstruction();
 				}
 			}
-		happy=true;
-		}
-		synchronized public boolean isHappy(){
-			return happy;
-		}
-		synchronized public void setHappy(boolean b){
-			happy=b;
 		}
 	}
 
@@ -282,11 +291,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public void actionPerformed( ActionEvent e ) {
 		JTextField f = ( JTextField )( e.getSource() );
 		if(f==cmds) {
-			if( runner != null ) { //There is a thread running, stop it
-				runner.setHappy(false);
-				while(!runner.isHappy()) {}
-				runner=null;
-			}
 			String s=cmds.getText().trim();
 			cmds.selectAll();
 			System.out.println("Command='"+s+"'");
@@ -296,9 +300,16 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				update();
 			}
 			if(s.charAt(0)=='g') {
-				System.out.println("Starting new Runner");
-				runner = new TheRunner();
-				new Thread(runner).start();
+				System.out.println("Starting execution");
+				runner.setStatus(2);
+				runthread.resume();
+				while (runner.getStatus() != 3) {};
+			}
+			if(s.charAt(0)=='b') {
+				System.out.println("Stopping execution");
+				runner.setStatus(0);
+				runthread.resume();
+				while (runner.getStatus() != 1) {};
 			}
 			if(s.charAt(0)=='m') {
 				try {
