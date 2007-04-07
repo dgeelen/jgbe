@@ -361,7 +361,20 @@ public class CPU
 		}
 
 		protected int checkInterrupts() { //handle interrupt priorities
-		//if(bla) interrupt(n)
+			if(IME) { // If interrupts enabled
+				int ir=IOP[0x0f]&IER;
+				if((ir&(1<<0))!=0) { //VBlANK
+
+				}
+				else if((ir&(1<<1))!=0) { //LCD STAT
+				}
+				else if((ir&(1<<2))!=0) { //Timer
+				}
+				else if((ir&(1<<3))!=0) { //Serial
+				}
+				else if((ir&(1<<4))!=0) { //Joypad
+				}
+			}
 			return 0; // No interrupts to service
 		}
 
@@ -587,7 +600,7 @@ public class CPU
 			curcycles = 0;
 			boolean nop=false;
 			//System.out.printf("Executing instruction $%02x\n", instr);
-			if(checkInterrupts()!=0) return true;
+			if(checkInterrupts()!=0) return 0;
 			int instr = read(PC++);
 			switch ( instr ) {
 				case 0x00:  // NOP
