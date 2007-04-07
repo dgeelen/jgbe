@@ -308,8 +308,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			if(s.charAt(0)=='b') {
 				System.out.println("Stopping execution");
 				runner.setStatus(0);
-				runthread.resume();
 				while (runner.getStatus() != 1) {};
+				runthread.suspend();
 			}
 			if(s.charAt(0)=='m') {
 				try {
