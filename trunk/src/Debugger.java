@@ -97,10 +97,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		contentPane.add( scroll, BorderLayout.LINE_END );
 		instrs = new JTable(16,1);
 		instrs.setTableHeader(null);
-		instrs.setFont(new Font("Bitstream Vera Sans Mono",0, 12));
 		TableColumnModel m = instrs.getColumnModel();
 		TableColumn c = m.getColumn(0);
-		c.setCellRenderer(new MyCellRenderer(new Color(222,222,255), 7));
+		MyCellRenderer r = new MyCellRenderer(new Color(222,222,255), 7);
+		r.setFont(new Font("Bitstream Vera Sans Mono",0, 12));
+		c.setCellRenderer(r);
 
 		scroll = new JScrollPane(instrs);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
