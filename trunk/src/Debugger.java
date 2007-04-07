@@ -6,6 +6,9 @@ import java.awt.event.*;
 import java.util.LinkedList;
 import java.net.*;
 import java.awt.image.BufferedImage;
+import javax.swing.table.*;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 
 public class Debugger implements ActionListener, ItemListener, KeyListener { //GUI
 	public static boolean RIGHT_TO_LEFT = false;
@@ -17,12 +20,34 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public JTextField cmds;
 	private Disassembler deasm;
 	private int memaddr=0;
+	private Color UpdateColor = Color.RED;
 	swinggui gui;
 	public Debugger(swinggui gui) {
 		this.gui=gui;
 		deasm= new Disassembler(gui.cpu);
 		createAndShowGUI();
 		update();
+	}
+
+	public class MyCellRenderer extends DefaultTableCellRenderer { //for coloring cells
+		private Color C;
+		private int Row=-1;
+		public MyCellRenderer(Color c) {
+			super();
+			this.C=c;
+		}
+		public MyCellRenderer(Color c, int r) {
+			super();
+			this.C=c;
+			Row=r;
+		}
+
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+			setText(String.valueOf(value));
+			if((this.Row==-1)||(this.Row==row)) setBackground(C);
+			else setBackground(Color.WHITE);
+			return this;
+		}
 	}
 
 	public void addComponentsToPane( Container contentPane ) {
@@ -73,6 +98,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		instrs = new JTable(16,1);
 		instrs.setTableHeader(null);
 		instrs.setFont(new Font("Bitstream Vera Sans Mono",0, 12));
+		TableColumnModel m = instrs.getColumnModel();
+		TableColumn c = m.getColumn(0);
+		c.setCellRenderer(new MyCellRenderer(new Color(222,222,255), 7));
+
 		scroll = new JScrollPane(instrs);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 259));
@@ -129,26 +158,81 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			instrs.setValueAt(deasm.simple_disasm(pc), i,0);
 			pc+=deasm.instructionLength(pc);
 		}
+
 	}
 
 	private void updateRegisters() {
-		regs1.setValueAt(String.format("A=$%02x",gui.cpu.regs[gui.cpu.A]), 0,0);
-		regs1.setValueAt(String.format("B=$%02x",gui.cpu.regs[gui.cpu.B]), 0,1);
-		regs1.setValueAt(String.format("C=$%02x",gui.cpu.regs[gui.cpu.C]), 0,2);
-		regs1.setValueAt(String.format("D=$%02x",gui.cpu.regs[gui.cpu.D]), 0,3);
-		regs1.setValueAt(String.format("E=$%02x",gui.cpu.regs[gui.cpu.E]), 0,4);
-		regs1.setValueAt(String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]), 0,5);
-		regs1.setValueAt(String.format("H=$%02x",gui.cpu.regs[gui.cpu.H]), 0,6);
-		regs1.setValueAt(String.format("L=$%02x",gui.cpu.regs[gui.cpu.L]), 0,7);
-		regs2.setValueAt(String.format("PC=$%04x",gui.cpu.PC), 0,0);
-		regs2.setValueAt(String.format("SP=$%04x",gui.cpu.SP), 0,1);
-		//regs2.setValueAt(String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]), 0,4);
+		TableColumnModel m = regs1.getColumnModel();
+		TableColumn c;
+		String s;
+		String r;
+		s=""+(String)regs1.getValueAt(0,0);
+		r=String.format("A=$%02x",gui.cpu.regs[gui.cpu.A]);
+		regs1.setValueAt(r, 0,0);
+		c = m.getColumn(0);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		s=""+(String)regs1.getValueAt(0,1);
+		r=String.format("B=$%02x",gui.cpu.regs[gui.cpu.B]);
+		regs1.setValueAt(r, 0,1);
+		c = m.getColumn(1);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		s=""+(String)regs1.getValueAt(0,2);
+		r=String.format("C=$%02x",gui.cpu.regs[gui.cpu.C]);
+		regs1.setValueAt(r, 0,2);
+		c = m.getColumn(2);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		s=""+(String)regs1.getValueAt(0,3);
+		r=String.format("D=$%02x",gui.cpu.regs[gui.cpu.D]);
+		regs1.setValueAt(r, 0,3);
+		c = m.getColumn(3);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		s=""+(String)regs1.getValueAt(0,4);
+		r=String.format("E=$%02x",gui.cpu.regs[gui.cpu.E]);
+		regs1.setValueAt(r, 0,4);
+		c = m.getColumn(4);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		s=""+(String)regs1.getValueAt(0,5);
+		r=String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]);
+		regs1.setValueAt(r, 0,5);
+		c = m.getColumn(5);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		s=""+(String)regs1.getValueAt(0,6);
+		r=String.format("H=$%02x",gui.cpu.regs[gui.cpu.H]);
+		regs1.setValueAt(r, 0,6);
+		c = m.getColumn(6);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		s=""+(String)regs1.getValueAt(0,7);
+		r=String.format("L=$%02x",gui.cpu.regs[gui.cpu.L]);
+		regs1.setValueAt(r, 0,7);
+		c = m.getColumn(7);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+		m = regs2.getColumnModel();
+		r = String.format("PC=$%04x",gui.cpu.PC);
+		regs2.setValueAt(r, 0,0);
+
+		s = ""+(String)regs2.getValueAt(0,1);
+		r = String.format("SP=$%04x",gui.cpu.SP);
+		regs2.setValueAt(r, 0,1);
+		c = m.getColumn(1);
+		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
 		String flags = "F=";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.ZF_Mask ) == gui.cpu.ZF_Mask )?"Z ":"z ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.NF_Mask ) == gui.cpu.NF_Mask )?"N ":"n ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.HC_Mask ) == gui.cpu.HC_Mask )?"H ":"h ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.CF_Mask ) == gui.cpu.CF_Mask )?"C ":"c ";
+		s = ""+(String)regs2.getValueAt(0,3);
 		regs2.setValueAt(flags, 0,3);
+		c = m.getColumn(3);
+		c.setCellRenderer( s.equals(flags) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
 	}
 
 	private void createAndShowGUI() {
