@@ -17,17 +17,28 @@ public class VideoController {
 	protected int WY=0;
 	protected int LCDC=0;
 	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
+	
 	protected int BGPI=0;    //BCPS/BGPI - CGB Mode Only - Background Palette Index
-	private int BGPD[];  //CPD/BGPD - CGB Mode Only - Background Palette Data
+	private int BGPD[];      //BCPD/BGPD - CGB Mode Only - Background Palette Data
 	private Color BGPC[][];
+
+	protected int OBPI=0;    //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
+	private int OBPD[];      //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
+	private Color OBPC[][];
+
+
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
 	private Color Gray[];
 
 	public VideoController(CPU cpu) {
 		VRAM = new int[2][0x2000]; //8k per bank
 		OAM = new int[0xa0]; //Sprite Attribute Table
+
 		BGPD = new int[8*4*2];
 		BGPC = new Color[8][4];
+		OBPD = new int[8*4*2];
+		OBPC = new Color[8][4];
+
 		this.cpu = cpu;
 		Gray = new Color[4];
 		Gray[0]=new Color(0,0,0);
@@ -64,11 +75,32 @@ public class VideoController {
 
 		if ((BGPI&(1<<7))!=0)
 			++BGPI;
-		System.out.println("setting GBC pal data");
 	}
 
 	public int getBGColData() {
 		return BGPD[BGPI&0x3f];
+	}
+
+	public void setOBColData(int value) {
+		OBPD[OBPI&0x3f] = value;
+
+		// calculate color now
+		int base = (OBPI & 0x3e);
+		int data = OBPD[base] | (OBPD[base+1]<<8);
+		int palnum = base >> 3;
+		int colnum = (base >> 1) & 3;
+		int r = (data >>  0) & 0x1F;
+		int g = (data >>  5) & 0x1F;
+		int b = (data >> 10) & 0x1F;
+
+		OBPC[palnum][colnum] = new Color(r<<3, g<<3, b<<3); // TODO gb->vga rgb conv
+
+		if ((OBPI&(1<<7))!=0)
+			++OBPI;
+	}
+
+	public int getOBColData() {
+		return OBPD[OBPI&0x3f];
 	}
 
 	public void renderScanLine(int linenumber) {
@@ -114,13 +146,14 @@ public class VideoController {
 				selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
 				if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip
 				if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
+				int palnr = TileAttr & 7;
 
 				int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
 				int d1 = read(TileData + offset);     // lsb bit of col is in here
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
 				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 				//now we should do some pallete stuff....
-				g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
+				g.setColor(BGPC[palnr][col]);// System.out.println((col&1)|(col&2));
 				//g.setColor(new Color((col&1)*255,(col>>1)*255,255));
 				g.drawRect(x, linenumber, x, linenumber);
 				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
@@ -163,10 +196,20 @@ public class VideoController {
 							g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
 
 							g.drawRect(x, linenumber, x, linenumber);
-							System.out.println("drawing window rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
+							//System.out.println("drawing window rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 						}
 					}
 				}
+			}
+
+			if((LCDC&(1<<2))!=0) { // sprites enabled
+				//System.out.println(" sprite size = 8x" + (((LCDC&(1<<2))!=0) ? 16 : 8));
+				boolean spr8x16 = ((LCDC&(1<<2))!=0);
+
+				int SprOAM = 0xfe00;
+				int SprPat = 0x8000;
+
+				// TODO
 			}
 		}
 		selectVRAMBank(prevrambank);
