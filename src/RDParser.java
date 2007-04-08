@@ -1,11 +1,12 @@
 import java.util.Vector;
 public class RDParser {
-	char[] input;
-	int parsingPosition;
-	boolean[] isLeftAssociative;
-	boolean[] isBinary;
-	boolean[] isOperator;
-	int[] presedence;
+	private char[] input;
+	private int parsingPosition;
+	private boolean[] isLeftAssociative;
+	private boolean[] isBinary;
+	private boolean[] isOperator;
+	private int[] presedence;
+	protected boolean parseError;
 	public class flup {
 		protected String s;
 		protected int i;
@@ -70,6 +71,7 @@ public class RDParser {
 			}
 		else {
 			System.out.println("Error: Expected '"+((char)e)+"'");
+			parseError=true;
 			return false;
 		}
 	}
@@ -194,6 +196,7 @@ public class RDParser {
 		}
 		else {
 			System.out.println(ident+"Error: No case for P('"+((char)Next())+"')");
+			parseError=true;
 			return -1;
 		}
 	}
@@ -264,7 +267,12 @@ public class RDParser {
 			}
 			System.out.println(input);
 			parsingPosition=0;
-			return Expr(0, "");
+			parseError=false;
+			int r=Expr(0, "");
+			if(!parseError)
+				return r;
+			else return
+				-1;
 		}
 		else return -1;
 	}
