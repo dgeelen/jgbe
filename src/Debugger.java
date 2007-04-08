@@ -63,7 +63,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				dbg.update();
 				while (getStatus() == 1) {
 					try {
-					Thread.sleep(100);
+						Thread.sleep(100);
 					} catch (java.lang.InterruptedException e) {
 					}
 				}
@@ -71,6 +71,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				while (getStatus() == 3) {
 					dbg.gui.cpu.nextinstruction();
 					if (dbg.gui.cpu.PC == stopaddr) {
+						setStatus(0);
+					}
+					if (dbg.gui.cpu.exception() != 0) {
 						setStatus(0);
 					}
 				}
