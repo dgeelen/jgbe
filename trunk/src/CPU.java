@@ -1617,6 +1617,54 @@ public class CPU
 				case 0xcb: // prefix instruction
 					instr = read( PC++ );
 					switch ( instr ) {
+						case 0x00: // RLC  B
+							regs[B] = rolc(regs[B]);
+							break;
+						case 0x01: // RLC  C
+							regs[C] = rolc(regs[C]);
+							break;
+						case 0x02: // RLC  D
+							regs[D] = rolc(regs[D]);
+							break;
+						case 0x03: // RLC  E
+							regs[E] = rolc(regs[E]);
+							break;
+						case 0x04: // RLC  H
+							regs[H] = rolc(regs[H]);
+							break;
+						case 0x05: // RLC  L
+							regs[L] = rolc(regs[L]);
+							break;
+						case 0x06: // RLC  (HL)
+							writemem8b(H, L, rolc(readmem8b(H, L)));
+							break;
+						case 0x07: // RLC  A
+							regs[A] = rolc(regs[A]);
+							break;
+						case 0x08: // RRC  B
+							regs[B] = rorc(regs[B]);
+							break;
+						case 0x09: // RRC  C
+							regs[C] = rorc(regs[C]);
+							break;
+						case 0x0a: // RRC  D
+							regs[D] = rorc(regs[D]);
+							break;
+						case 0x0b: // RRC  E
+							regs[E] = rorc(regs[E]);
+							break;
+						case 0x0c: // RRC  H
+							regs[H] = rorc(regs[H]);
+							break;
+						case 0x0d: // RRC  L
+							regs[L] = rorc(regs[L]);
+							break;
+						case 0x0e: // RRC  (HL)
+							writemem8b(H, L, rorc(readmem8b(H, L)));
+							break;
+						case 0x0f: // RRC  A
+							regs[A] = rorc(regs[A]);
+							break;
 						case 0x10: // RL  B
 							regs[B] = rol(regs[B]);
 							break;
@@ -1688,6 +1736,30 @@ public class CPU
 							break;
 						case 0x27: // SLA  A
 							regs[A] = shla(regs[A]);
+							break;
+						case 0x28: // SRA  B
+							regs[B] = shra(regs[B]);
+							break;
+						case 0x29: // SRA  C
+							regs[C] = shra(regs[C]);
+							break;
+						case 0x2a: // SRA  D
+							regs[D] = shra(regs[D]);
+							break;
+						case 0x2b: // SRA  E
+							regs[E] = shra(regs[E]);
+							break;
+						case 0x2c: // SRA  H
+							regs[H] = shra(regs[H]);
+							break;
+						case 0x2d: // SRA  L
+							regs[L] = shra(regs[L]);
+							break;
+						case 0x2e: // SRA  (HL)
+							writemem8b(H, L, shra(readmem8b(H, L)));
+							break;
+						case 0x2f: // SRA  A
+							regs[A] = shra(regs[A]);
 							break;
 						case 0x30: // SWAP B
 							regs[B] = ((regs[B]&0x0f)<< 4) | ((regs[B]&0xf0) >> 4);
