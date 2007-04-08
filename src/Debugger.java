@@ -321,10 +321,23 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		}
 		return -1;
 	}
+/*
+	//String[] values = s.trim().split(" ");
+	private int Eval(String[] s, i, j) { // return value of string
+		if(s[i]=='(') {
+			if(s[j]=')')
+				return Eval(s,i+1,j-1);
+			else {
+				System.out.println("Parse error: missing brace");
+				return 0;
+			}
+		}
+		if(s[i]=='-') {
+			return Eval();
+		}
+		return 42;
+	} */
 
-	private String Substitute(String s) { // replace all variable references by their values
-		return "String";
-	}
 	public void actionPerformed( ActionEvent e ) {
 		JTextField f = ( JTextField )( e.getSource() );
 		if(f==cmds) {
@@ -381,7 +394,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			i=s.indexOf("=");
 			if(i>-1) { //assignment
 				String l = s.substring(0,i).trim();
-				String r = Substitute(s.substring(i).trim());
+			//	String r = Substitute(s.substring(i).trim());
 				//if(ss.equals("A")) gui.cpu.regs[A] =
 			}
 			if(s.charAt(0)=='m') {
