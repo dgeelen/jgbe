@@ -45,7 +45,10 @@ public class RDParser {
 	}
 
 	private int Next() {
-		return input[parsingPosition];
+		if(parsingPosition<input.length)
+			return input[parsingPosition];
+		else
+			return -1;
 	}
 
 	private boolean Expect(int e) {
@@ -122,7 +125,7 @@ public class RDParser {
 		System.out.println(ident+"Expr("+p+") Next()="+((char)Next()));
 		int t1=P(ident+"  ");
 		System.out.println(ident+"t1="+t1);
-		while(isBinary[Next()] && presedence[Next()]>=p ) {
+		while((Next()!=-1) &&isBinary[Next()] && presedence[Next()]>=p ) {
 			System.out.println(ident+"Expr while Next()="+((char)Next()));
 			int op = Next();
 			Consume();
@@ -135,18 +138,25 @@ public class RDParser {
 			System.out.println(ident+"op="+((char)op));
 			switch(op) {
 				case '+':
+					System.out.println(ident+" op=+, t1+t2="+(t1+t2));
 					return t1+t2;
 				case '-':
+					System.out.println(ident+" op=-, t1-t2="+(t1-t2));
 					return t1-t2;
 				case '*':
+					System.out.println(ident+" op=*, t1*t2="+(t1*t2));
 					return t1*t2;
 				case '/':
+					System.out.println(ident+" op=/, t1/t2="+(t1/t2));
 					return t1/t2;
 				case '^':
+					System.out.println(ident+" op=^, t1^t2="+(t1^t2));
 					return t1^t2;
 				case '&':
+					System.out.println(ident+" op=&, t1&t2="+(t1&t2));
 					return t1&t2;
 				case '|':
+					System.out.println(ident+" op=|, t1|t2="+(t1|t2));
 					return t1|t2;
 				default:
 					System.out.println(ident+"Unknown binary operator '"+((char)op)+"'");
