@@ -28,7 +28,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 
 		public swinggui() {
 			//cartridge = new Cartridge("Pokemon Blue.gb");
-			cartridge = new Cartridge("../roms/Metal Slug.gb");
+			cartridge = new Cartridge("Metal Slug.gb");
 			//cartridge = new Cartridge("tetris.gb");
 			if(cartridge.getError()!=null) {
 				System.out.println("ERROR: "+cartridge.getError());
@@ -123,6 +123,45 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		public void keyPressed(KeyEvent e) {
 			switch(e.getKeyCode()){
 				case KeyEvent.VK_Z:
+					cpu.ButtonKeyStatus&=~1; // A
+					cpu.triggerInterrupt(0x60);
+					break;
+				case KeyEvent.VK_X:
+					cpu.ButtonKeyStatus&=~2; // B
+					cpu.triggerInterrupt(0x60);
+					break;
+				case KeyEvent.VK_MINUS:
+					cpu.ButtonKeyStatus&=~4; // Select
+					cpu.triggerInterrupt(0x60);
+					break;
+				case KeyEvent.VK_EQUALS:
+					cpu.ButtonKeyStatus&=~8; // Start
+					cpu.triggerInterrupt(0x60);
+					break;
+				case KeyEvent.VK_RIGHT:
+					cpu.DirectionKeyStatus&=~1; // Right
+					cpu.triggerInterrupt(0x60);
+					break;
+				case KeyEvent.VK_LEFT:
+					cpu.DirectionKeyStatus&=~2; // Left
+					cpu.triggerInterrupt(0x60);
+					break;
+				case KeyEvent.VK_UP:
+					cpu.DirectionKeyStatus&=~4; // Up
+					cpu.triggerInterrupt(0x60);
+					break;
+				case KeyEvent.VK_DOWN:
+					cpu.DirectionKeyStatus&=~8; // Down
+					cpu.triggerInterrupt(0x60);
+					break;
+				default:
+					System.out.println("keyPressed");
+					break;
+				}
+		}
+		public void keyReleased(KeyEvent e) {
+			switch(e.getKeyCode()){
+				case KeyEvent.VK_Z:
 					cpu.ButtonKeyStatus|=1; // A
 					break;
 				case KeyEvent.VK_X:
@@ -132,7 +171,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 					cpu.ButtonKeyStatus|=4; // Select
 					break;
 				case KeyEvent.VK_EQUALS:
-					cpu.ButtonKeyStatus|=8; // Select
+					cpu.ButtonKeyStatus|=8; // Start
 					break;
 				case KeyEvent.VK_RIGHT:
 					cpu.DirectionKeyStatus|=1; // Right
@@ -145,37 +184,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 					break;
 				case KeyEvent.VK_DOWN:
 					cpu.DirectionKeyStatus|=8; // Down
-					break;
-				default:
-					System.out.println("keyPressed");
-					break;
-				}
-		}
-		public void keyReleased(KeyEvent e) {
-			switch(e.getKeyCode()){
-				case KeyEvent.VK_Z:
-					cpu.ButtonKeyStatus&=~1; // A
-					break;
-				case KeyEvent.VK_X:
-					cpu.ButtonKeyStatus&=~2; // B
-					break;
-				case KeyEvent.VK_MINUS:
-					cpu.ButtonKeyStatus&=~4; // Select
-					break;
-				case KeyEvent.VK_EQUALS:
-					cpu.ButtonKeyStatus&=~8; // Select
-					break;
-				case KeyEvent.VK_RIGHT:
-					cpu.DirectionKeyStatus&=~1; // Right
-					break;
-				case KeyEvent.VK_LEFT:
-					cpu.DirectionKeyStatus&=~2; // Left
-					break;
-				case KeyEvent.VK_UP:
-					cpu.DirectionKeyStatus&=~4; // Up
-					break;
-				case KeyEvent.VK_DOWN:
-					cpu.DirectionKeyStatus&=~8; // Down
 					break;
 				default:
 					System.out.println("keyReleased" + e.getKeyCode());
