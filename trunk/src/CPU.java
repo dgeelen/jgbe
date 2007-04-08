@@ -162,6 +162,12 @@ public class CPU
 					case 0xff69: // BGPD
 						b = VC.getBGColData();
 						break;
+					case 0xff6a: // OBPI
+						b = VC.OBPI;
+						break;
+					case 0xff6b: // OBPD
+						b = VC.getOBColData();
+						break;
 					default:
 						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 						break;
@@ -293,6 +299,12 @@ public class CPU
 						break;
 					case 0xff69: // BGPD
 						VC.setBGColData(value);
+						break;
+					case 0xff6a: // OBPI
+						VC.OBPI = value;;
+						break;
+					case 0xff6b: // OBPD
+						VC.setOBColData(value);
 						break;
 					case 0xff70: //FF70 - SVBK - CGB Mode Only - WRAM Bank
 						CurrentWRAMBank=Math.max(value&0x07, 1);
