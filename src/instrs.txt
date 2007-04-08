@@ -56,7 +56,7 @@ LD   [HL], IMM08
 SCF
 JR   C, IMM08
 ADD  HL, SP
-LDD  A, HL
+LDD  A, [HL]
 DEC  SP
 INC  A
 DEC  A
