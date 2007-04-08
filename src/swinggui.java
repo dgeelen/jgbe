@@ -124,35 +124,35 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			switch(e.getKeyCode()){
 				case KeyEvent.VK_Z:
 					cpu.ButtonKeyStatus&=~1; // A
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_X:
 					cpu.ButtonKeyStatus&=~2; // B
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_MINUS:
 					cpu.ButtonKeyStatus&=~4; // Select
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_EQUALS:
 					cpu.ButtonKeyStatus&=~8; // Start
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_RIGHT:
 					cpu.DirectionKeyStatus&=~1; // Right
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_LEFT:
 					cpu.DirectionKeyStatus&=~2; // Left
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_UP:
 					cpu.DirectionKeyStatus&=~4; // Up
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_DOWN:
 					cpu.DirectionKeyStatus&=~8; // Down
-					cpu.triggerInterrupt(0x60);
+					cpu.triggerInterrupt(4);
 					break;
 				default:
 					System.out.println("keyPressed");

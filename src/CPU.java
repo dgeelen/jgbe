@@ -45,7 +45,7 @@ public class CPU
 		protected boolean halted=false;
 		//IO
 		public int DirectionKeyStatus=0; //bitmask
-		public int ButtonKeyStatus=0; //bitmask
+		public int ButtonKeyStatus=0x3f; //bitmask
 		//CPU Class variables
 		private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
 		private int lastException=0;
@@ -1530,7 +1530,7 @@ public class CPU
 						SP &= 0xffff;
 						regs[F] |= CF_Mask;
 					}
-					if ((SP >> 8) != (o >> 8)) 
+					if ((SP >> 8) != (o >> 8))
 						regs[F] |= HC_Mask;
 					curcycles += 8; // takes 16 instead of 8 cycles
 				};break;
