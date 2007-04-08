@@ -213,10 +213,10 @@ public class CPU
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
 				cartridge.write(index, value);
 			}
-			else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+			else if(index < 0xa000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
 				VC.write(index, value);
 			}
-			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
+			else if(index < 0xc000) { //8KB External RAM     (in cartridge, switchable bank, if any)
 				cartridge.write(index, value);
 			}
 			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
@@ -229,8 +229,7 @@ public class CPU
 				write(index-0x2000, value);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
-				//System.out.println("TODO: CPU.write(): Sprite Attribute Table");
-				VC.OAM[index&0xff]=value;
+				VC.write(index, value);
 			}
 			else if(index < 0xff00) { //Not Usable
 				System.out.println("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff)");
@@ -251,15 +250,15 @@ public class CPU
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
 						IOP[0x0f] = value;
 						break;
-					case 0xff24: // FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
-					case 0xff25: // FF25 - NR51 - Selection of Sound output terminal (R/W)
-					case 0xff26: // FF26 - NR52 - Sound on/off
+					//case 0xff24: // FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
+					//case 0xff25: // FF25 - NR51 - Selection of Sound output terminal //(R/W)
+					//case 0xff26: // FF26 - NR52 - Sound on/off
 
 					case 0xff40: // LCDC register
 						VC.LCDC = value;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
-						VC.STAT = (VC.STAT&0x0f)|(value&0xf0); //lower 4bits are readonly
+						VC.STAT = (VC.STAT&7)|(value&~7); //lower 3bits are readonly
 						break;
 					case 0xff42: // SCY
 						VC.SCY = value;
@@ -277,6 +276,7 @@ public class CPU
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
 							write(0xfe00|i, read(i+(value<<8)));
 						}
+						curcycles = 4; // apps usually (and SHOULD) wait for this themselves
 						break;
 					case 0xff4a: // WY
 						VC.WY = value;
@@ -2555,7 +2555,7 @@ public class CPU
 		public int nextinstruction() {
 			int res = execute();
 			lastException = (res!=0) ? 0 : 1;
-			if (res > 0) {
+			if (res > 0)  {
 				//clockfreq = 4194304hz
 				DIVcntdwn -= res;
 				if (DIVcntdwn < 0) {
@@ -2583,12 +2583,19 @@ public class CPU
 				if (VBLANKcntdwn < 0) {
 					VBLANKcntdwn += 456;   // 4194304/9198
 					VC.renderNextScanline();
+					if ((IOP[0x0f]&3)!=0) {
+						//System.out.printf("triggered STAT  PC=$%04x  IF=$%02x  IE=$%02x  IME=%b\n", PC, IOP[0x0f], IE, IME);
+						//System.out.println("res="+res+"  cnt="+ VBLANKcntdwn);
+					}
 				}
 				// [0 <= VBLANKcntdwn < 456]
 				// [0..80)   [80..252)   [252..456)
 				// mode 2    mode 3      mode 0
 				// when LY>144 then mode 1
 			}
+			if (res > 30)
+				System.out.printf("res=%i  PC=$%04x",res, PC);
+
 			return res;
 		}
 
