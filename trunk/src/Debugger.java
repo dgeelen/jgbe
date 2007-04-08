@@ -390,44 +390,44 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 						gui.cpu.regs[gui.cpu.A]=v&0xFF;
 						update();
 					}
-					if(l.equals("B")){
+					else if(l.equals("B")){
 						gui.cpu.regs[gui.cpu.B]=v&0xFF;
 						update();
 					}
-					if(l.equals("C")){
+					else if(l.equals("C")){
 						gui.cpu.regs[gui.cpu.C]=v&0xFF;
 						update();
 					}
-					if(l.equals("D")){
+					else if(l.equals("D")){
 						gui.cpu.regs[gui.cpu.D]=v&0xFF;
 						update();
 					}
-					if(l.equals("E")){
+					else if(l.equals("E")){
 						gui.cpu.regs[gui.cpu.E]=v&0xFF;
 						update();
 					}
-					if(l.equals("F")){
+					else if(l.equals("F")){
 						gui.cpu.regs[gui.cpu.F]=v&0xFF;
 						update();
 					}
-					if(l.equals("H")){
+					else if(l.equals("H")){
 						gui.cpu.regs[gui.cpu.H]=v&0xFF;
 						update();
 					}
-					if(l.equals("L")){
+					else if(l.equals("L")){
 						gui.cpu.regs[gui.cpu.L]=v&0xFF;
 						update();
 					}
-					if(l.equals("HL")){
+					else if(l.equals("HL")){
 						gui.cpu.regs[gui.cpu.H]=(v>>8)&0xFF;
 						gui.cpu.regs[gui.cpu.L]=v&0xFF;
 						update();
 					}
-					if(l.equals("PC")){
+					else if(l.equals("PC")){
 						gui.cpu.PC=v&0xFFFF;
 						update();
 					}
-					if(l.equals("SP")){
+					else if(l.equals("SP")){
 						gui.cpu.SP=v&0xFFFF;
 						update();
 					}
