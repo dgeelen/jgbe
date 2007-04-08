@@ -138,25 +138,25 @@ public class RDParser {
 			System.out.println(ident+"op="+((char)op));
 			switch(op) {
 				case '+':
-					System.out.println(ident+" op=+, t1+t2="+(t1+t2));
+					System.out.println(ident+"t1="+t1+" t2="+t2+" t1+t2="+(t1+t2));
 					return t1+t2;
 				case '-':
-					System.out.println(ident+" op=-, t1-t2="+(t1-t2));
+					System.out.println(ident+"t1="+t1+" t2="+t2+" t1-t2="+(t1-t2));
 					return t1-t2;
 				case '*':
-					System.out.println(ident+" op=*, t1*t2="+(t1*t2));
+					System.out.println(ident+"t1="+t1+" t2="+t2+" t1*t2="+(t1*t2));
 					return t1*t2;
 				case '/':
-					System.out.println(ident+" op=/, t1/t2="+(t1/t2));
+					System.out.println(ident+"t1="+t1+" t2="+t2+" t1/t2="+(t1/t2));
 					return t1/t2;
 				case '^':
-					System.out.println(ident+" op=^, t1^t2="+(t1^t2));
-					return t1^t2;
+					System.out.println(ident+"t1="+t1+" t2="+t2+" t1^t2="+(int)Math.round(Math.pow(t1, t2)));
+					return (int)Math.round(Math.pow(t1, t2));
 				case '&':
-					System.out.println(ident+" op=&, t1&t2="+(t1&t2));
+					System.out.println(ident+"t1="+t1+" t2="+t2+" t1&t2="+(t1&t2));
 					return t1&t2;
 				case '|':
-					System.out.println(ident+" op=|, t1|t2="+(t1|t2));
+					System.out.println(ident+"t1="+t1+" t2="+t2+" t1|t2="+(t1|t2));
 					return t1|t2;
 				default:
 					System.out.println(ident+"Unknown binary operator '"+((char)op)+"'");
@@ -186,5 +186,7 @@ public class RDParser {
 		RDParser parser=new RDParser();
 		//System.out.println(parser.Evaluate("  -   2*(3+ 2^ (4-1  ) )"));
 		System.out.println(parser.Evaluate("(12+34)*5"));
+		System.out.println("--------------------------");
+		System.out.println(parser.Evaluate("2^4"));
 	}
 }
