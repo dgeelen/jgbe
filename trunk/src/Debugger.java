@@ -43,8 +43,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public class TheRunner implements Runnable {
 		private int status;
 		private Debugger dbg;
-		private int stopaddr = 0;
-		private int watchaddr = 0;
+		private int stopaddr = -1;
+		private int watchaddr = -1;
 		synchronized public int getStatus() {
 			return status;
 		}
@@ -79,12 +79,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				}
 				setStatus(3);
 				while (getStatus() == 3) {
-					int wval = (watchaddr>0) ? dbg.gui.cpu.read(watchaddr) : 0;
+					int wval = (watchaddr>=0) ? dbg.gui.cpu.read(watchaddr) : 0;
 					dbg.gui.cpu.nextinstruction();
 					if (dbg.gui.cpu.PC == stopaddr) {
 						setStatus(0);
 					}
-					if ((watchaddr>0) && (wval != dbg.gui.cpu.read(watchaddr))) {
+					if ((watchaddr>=0) && (wval != dbg.gui.cpu.read(watchaddr))) {
 						setStatus(0);
 					}
 					if (dbg.gui.cpu.exception() != 0) {
