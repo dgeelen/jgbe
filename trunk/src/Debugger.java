@@ -334,6 +334,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				gui.cpu.nextinstruction();
 				update();
 			}
+			if(s.equals("reset")) {
+				gui.cpu.reset();
+				update();
+			}
+			if(s.equals("so")) {
+				if (runner.getStatus() == 1) {
+					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
+					runner.setStatus(2);
+					while (runner.getStatus() == 2) {};
+				}
+			}
 			if(s.charAt(0)=='g') {
 				if (runner.getStatus() == 1) {
 					runner.setStatus(2);

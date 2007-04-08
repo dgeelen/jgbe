@@ -788,6 +788,12 @@ public class CPU
 				case 0x23: // INC HL
 					inc16b(H, L);
 					break;
+				case 0x24: // INC H
+					inc8b(H);
+					break;
+				case 0x25: // DEC H
+					dec8b(H);
+					break;
 				case 0x26: // LD   H, n
 					regs[H] = read( PC++ );
 					break;
@@ -1408,14 +1414,25 @@ public class CPU
 					push( regs[A]<<8 | regs[F]);
 					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
-				case 0xf8:{// LD  A, (SP+dd)
+				case 0xf8:{// LD  HL, SP+dd
+					regs[H] = SP >> 8;
+					regs[L] = SP & 0xff;
 					int x = read(PC++);
 					x ^= 0x80;
 					x -= 0x80;
-					x += SP;
-					regs[A] = read(x);
-					SP = regs[H]<<8 | regs[L];
-					curcycles += 4; // takes 8 instead of 4 cycles
+					if (x>=0)
+						add8b(L, x);
+					else
+						sub8b(L, -x);
+					int fmask = ((regs[F]&CF_Mask)==CF_Mask) ? HC_Mask : 0;
+					if (x>=0)
+						adc(H, 0);
+					else
+						sbc(H, 0);
+					regs[F] &= CF_Mask;
+					regs[F] |= fmask;
+
+					curcycles += 4; // takes 12 instead of 8 cycles
 				};break;
 				case 0xf9: // LD SP, HL
 					SP = regs[H]<<8 | regs[L];
