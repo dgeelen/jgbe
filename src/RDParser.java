@@ -1,3 +1,4 @@
+import java.util.Vector;
 public class RDParser {
 	char[] input;
 	int parsingPosition;
@@ -5,6 +6,16 @@ public class RDParser {
 	boolean[] isBinary;
 	boolean[] isOperator;
 	int[] presedence;
+	public class flup {
+		protected String s;
+		protected int i;
+		public flup(String str, int val) {
+			this.s=str;
+			this.i=val;
+		}
+	}
+	Vector<flup> vars;
+
 	public RDParser() {
 		isLeftAssociative=new boolean[256];
 		isBinary=new boolean[256];
@@ -42,6 +53,7 @@ public class RDParser {
 		presedence['*']=3;
 		presedence['/']=3;
 		presedence['^']=4;
+		vars=new Vector<flup>();
 	}
 
 	private int Next() {
@@ -66,35 +78,21 @@ public class RDParser {
 	}
 
 	public void addVariable(String str, int value) {
+		vars.add(new flup(str, value));
 	}
-
-/*	private int symNumber(String ident,int Base) {
-		int i=0;
-		while( (i+parsingPosition<input.length) && (input[parsingPosition+i]>='0') &&(input[parsingPosition+i]<='9') ) {
-			++i;
-			}
-		int n=0;
-		int t=1;
-		int p=parsingPosition+i;
-		for(--i;i>=0; i--) {
-			System.out.println(ident+"i="+i+" pp="+parsingPosition + " il="+input.length+" i+pp="+(parsingPosition+i)+" n="+n+" c="+(input[parsingPosition+i]));
-			n=n+t*(input[parsingPosition+i]-'0');
-			t=t*Base;
-			}
-		//n=n+f*t;
-		parsingPosition=p;
-		System.out.println(ident+"symNumber="+n+" Next()="+((char)Next())+" pp="+parsingPosition);
-		return n;
-	} */
 
 	private boolean inBase(int Base, char c) {
 		switch(Base) {
+			case 0: //alphanumeric
+				if((c>='A')&&(c<='Z')) return true;
+				if((c>='a')&&(c<='z')) return true;
+				return false;
 			case 16:
-			if((c>='A')&&(c<='F')) return true;
-			if((c>='a')&&(c<='f')) return true;
+				if((c>='A')&&(c<='F')) return true;
+				if((c>='a')&&(c<='f')) return true;
 			case 10:
 			default:
-			if((c>='0')&&(c<='9')) return true;
+				if((c>='0')&&(c<='9')) return true;
 		}
 		return false;
 	}
@@ -121,7 +119,7 @@ public class RDParser {
 		int n=0;
 		int i=0;
 		String s="";
-		System.out.println("base="+Base);
+		System.out.println(ident+"symNumber: base="+Base);
 		switch(Base) {
 			case 16:
 				++i; //skip '$'
@@ -140,41 +138,26 @@ public class RDParser {
 				parsingPosition+=i;
 				return StrToInt(s);
 		}
+	}
 
-
-
-
-	/*
+	private flup checkVariable() {
 		int i=0;
-		int n=0;
-		int t=1;
-		int p=parsingPosition;
-		switch(Base){
-			case 16:
-				int q=input[parsingPosition]
-				while(q>-1) {
-				if
+		flup f=null;
+		String s="";
+		while((i+parsingPosition<input.length) && inBase(0, input[parsingPosition+i])) {
+					s+=input[parsingPosition+i];
+					++i;
 				}
-
-				while((i+parsingPosition<input.length) && ( ((input[parsingPosition+i]>='0') &&(input[parsingPosition+i]<='9')) || ((input[parsingPosition+i]>='a')&&(input[parsingPosition+i]<='f')) || ((input[parsingPosition+i]>='A')&&(input[parsingPosition+i]<='F')) )) ++i;
-				p+=i;
-			for(--i;i>=0; i--) {
-				System.out.println(ident+"i="+i+" pp="+parsingPosition + " il="+input.length+" i+pp="+(parsingPosition+i)+" n="+n+" c="+(input[parsingPosition+i]));
-				int j=(input[parsingPosition+i]);
-				n=n+t*j;
-				t=t*Base;
-				}
-
-			case 10:
-			case default:
-				while((i+parsingPosition<input.length) && ( ((input[parsingPosition+i]>='0') &&(input[parsingPosition+i]<='9')))) ++i;
-		}*/
-
-		//return n;
+		for(int k=0; k<vars.size(); ++k) {
+			flup ff=vars.elementAt(k);
+			if(ff.s.equals(s)) f=ff;
+		}
+		return f;
 	}
 
 	private int P(String ident) {
-		System.out.println(ident+"P() Next()="+((char)Next()));
+		flup f=checkVariable();
+		System.out.println(ident+"P() Next()="+((char)Next())+" f="+f);
 		if(isOperator[Next()]&&(!isBinary[Next()])) {
 			int op=Next();
 			Consume();
@@ -204,6 +187,11 @@ public class RDParser {
 			int t=symNumber(ident+"  ",16);
 			return t;
 		}
+		else if(f!=null) {
+			System.out.println(ident+"Found a variable : "+f.s+" value="+f.i);
+			parsingPosition+=f.s.length();
+			return f.i;
+		}
 		else {
 			System.out.println(ident+"Error: No case for P('"+((char)Next())+"')");
 			return -1;
@@ -220,33 +208,40 @@ public class RDParser {
 			Consume();
 			int t2=0;
 			if(isLeftAssociative[op]) //Inverted?!
-				t2=Expr(presedence[op], ident+"  ");
-			else
 				t2=Expr(presedence[op]+1, ident+"  ");
+			else
+				t2=Expr(presedence[op], ident+"  ");
 			System.out.println(ident+"t2="+t2);
 			System.out.println(ident+"op="+((char)op));
 			switch(op) {
 				case '+':
 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1+t2="+(t1+t2));
-					return t1+t2;
+					t1= t1+t2;
+					break;
 				case '-':
 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1-t2="+(t1-t2));
-					return t1-t2;
+					t1= t1-t2;
+					break;
 				case '*':
 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1*t2="+(t1*t2));
-					return t1*t2;
+					t1= t1*t2;
+					break;
 				case '/':
 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1/t2="+(t1/t2));
-					return t1/t2;
+					t1= t1/t2;
+					break;
 				case '^':
 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1^t2="+(int)Math.round(Math.pow(t1, t2)));
-					return (int)Math.round(Math.pow(t1, t2));
+					t1= (int)Math.round(Math.pow(t1, t2));
+					break;
 				case '&':
 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1&t2="+(t1&t2));
-					return t1&t2;
+					t1= t1&t2;
+					break;
 				case '|':
 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1|t2="+(t1|t2));
-					return t1|t2;
+					t1= t1|t2;
+					break;
 				default:
 					System.out.println(ident+"Unknown binary operator '"+((char)op)+"'");
 					return -1;
