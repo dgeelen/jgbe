@@ -83,6 +83,10 @@ public class RDParser {
 		vars.add(new flup(str, value));
 	}
 
+	public void removeVariables() {
+		vars=new Vector<flup>();
+	}
+
 	private boolean inBase(int Base, char c) {
 		switch(Base) {
 			case 0: //alphanumeric
@@ -99,7 +103,7 @@ public class RDParser {
 		return false;
 	}
 
-	private int StrToInt(String in) {
+	public int StrToInt(String in) {
 		String s=in.trim();
 		try {
 			int i=s.indexOf("$");
