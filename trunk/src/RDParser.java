@@ -68,7 +68,7 @@ public class RDParser {
 	public void addVariable(String str, int value) {
 	}
 
-	private int symNumber(String ident) {
+/*	private int symNumber(String ident,int Base) {
 		int i=0;
 		while( (i+parsingPosition<input.length) && (input[parsingPosition+i]>='0') &&(input[parsingPosition+i]<='9') ) {
 			++i;
@@ -79,12 +79,98 @@ public class RDParser {
 		for(--i;i>=0; i--) {
 			System.out.println(ident+"i="+i+" pp="+parsingPosition + " il="+input.length+" i+pp="+(parsingPosition+i)+" n="+n+" c="+(input[parsingPosition+i]));
 			n=n+t*(input[parsingPosition+i]-'0');
-			t=t*10;
+			t=t*Base;
 			}
 		//n=n+f*t;
 		parsingPosition=p;
 		System.out.println(ident+"symNumber="+n+" Next()="+((char)Next())+" pp="+parsingPosition);
 		return n;
+	} */
+
+	private boolean inBase(int Base, char c) {
+		switch(Base) {
+			case 16:
+			if((c>='A')&&(c<='F')) return true;
+			if((c>='a')&&(c<='f')) return true;
+			case 10:
+			default:
+			if((c>='0')&&(c<='9')) return true;
+		}
+		return false;
+	}
+
+	private int StrToInt(String in) {
+		String s=in.trim();
+		try {
+			int i=s.indexOf("$");
+			if(i>-1) { //Hex
+				return Integer.parseInt( s.substring(i+1), 16 );
+			}
+			else {
+				return Integer.parseInt( s, 10 );
+			}
+		}
+		catch ( NumberFormatException ee ) {
+				System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+		}
+		return -1;
+	}
+
+
+	private int symNumber(String ident, int Base) {
+		int n=0;
+		int i=0;
+		String s="";
+		System.out.println("base="+Base);
+		switch(Base) {
+			case 16:
+				++i; //skip '$'
+				while((i+parsingPosition<input.length) && inBase(16, input[parsingPosition+i])) {
+					s+=input[parsingPosition+i];
+					++i;
+				}
+				parsingPosition+=i;
+				return StrToInt("$"+s);
+			case 10:
+			default:
+				while((i+parsingPosition<input.length) && inBase(10, input[parsingPosition+i])) {
+					s+=input[parsingPosition+i];
+					++i;
+				}
+				parsingPosition+=i;
+				return StrToInt(s);
+		}
+
+
+
+
+	/*
+		int i=0;
+		int n=0;
+		int t=1;
+		int p=parsingPosition;
+		switch(Base){
+			case 16:
+				int q=input[parsingPosition]
+				while(q>-1) {
+				if
+				}
+
+				while((i+parsingPosition<input.length) && ( ((input[parsingPosition+i]>='0') &&(input[parsingPosition+i]<='9')) || ((input[parsingPosition+i]>='a')&&(input[parsingPosition+i]<='f')) || ((input[parsingPosition+i]>='A')&&(input[parsingPosition+i]<='F')) )) ++i;
+				p+=i;
+			for(--i;i>=0; i--) {
+				System.out.println(ident+"i="+i+" pp="+parsingPosition + " il="+input.length+" i+pp="+(parsingPosition+i)+" n="+n+" c="+(input[parsingPosition+i]));
+				int j=(input[parsingPosition+i]);
+				n=n+t*j;
+				t=t*Base;
+				}
+
+			case 10:
+			case default:
+				while((i+parsingPosition<input.length) && ( ((input[parsingPosition+i]>='0') &&(input[parsingPosition+i]<='9')))) ++i;
+		}*/
+
+		//return n;
 	}
 
 	private int P(String ident) {
@@ -111,8 +197,11 @@ public class RDParser {
 				return -1;
 		}
 		else if( (Next()>='0') && (Next()<='9')) {
-			int t=symNumber(ident+"  ");
-			//Consume();
+			int t=symNumber(ident+"  ", 10);
+			return t;
+		}
+		else if(Next()=='$') { //Hexnumber
+			int t=symNumber(ident+"  ",16);
 			return t;
 		}
 		else {
@@ -190,6 +279,9 @@ public class RDParser {
 		//System.out.println(parser.Evaluate("  -   2*(3+ 2^ (4-1  ) )"));
 		//System.out.println(parser.Evaluate("(12+34)*5"));
 		//System.out.println("--------------------------");
+		parser.addVariable("A", 1);
+		parser.addVariable("B", 2);
+		parser.addVariable("HL", 3);
 		if(args.length>0) System.out.println(parser.Evaluate(args[0]));
 	}
 }
