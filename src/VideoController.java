@@ -157,17 +157,17 @@ public class VideoController {
 				g.drawRect(x, linenumber, 0, 0);
 			}
 
-			if(((LCDC&(1<<5))!=0)
+			if(((LCDC&(1<<5))!=0)			 //window display enabled
 			&& (WX >= 0) && (WX < 167) // yes this is 160+7
-			&& (WY >= 0) && (WY < 144)){ //window display enabled
+			&& (WY >= 0) && (WY < 144)){
 				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
 				if (linenumber >= WY) { // does window have height, width? doest seem so...
 					ry  = linenumber - WY;
 					rty = ry >> 3; // tile y
 					rsy = ry & 7;  // y offs
 					for (int x = (WX - 7); x < 160; ++x) {
-						int rx = x - WX; // no wrapping here?
-						if ((rx >= 0) && (rx < 255)) { // bound correct?
+						int rx = x - (WX - 7); // no wrapping here?
+						if (x >= 0) { // bound correct?
 							int rtx = rx >> 3; // tile x
 							int rsx = rx & 7; // x offs
 
