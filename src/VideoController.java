@@ -154,7 +154,7 @@ public class VideoController {
 				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 				
 				g.setColor(BGPC[palnr][col]);
-				g.drawRect(x, linenumber, x, linenumber);
+				g.drawRect(x, linenumber, 0, 0);
 			}
 
 			if(((LCDC&(1<<5))!=0)
@@ -189,7 +189,7 @@ public class VideoController {
 							int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 
 							g.setColor(BGPC[palnr][col]);
-							g.drawRect(x, linenumber, x, linenumber);
+							g.drawRect(x, linenumber, 0, 0);
 						}
 					}
 				}
@@ -232,7 +232,7 @@ public class VideoController {
 
 							if (col != 0) { // 0 is transparent color
 								g.setColor(OBPC[palnr][col]);
-								g.drawRect(sprX - 8 + x, linenumber, sprX - 8 + x, linenumber);
+								g.drawRect(sprX - 8 + x, linenumber, 0, 0);
 							}
 						}
 					}
