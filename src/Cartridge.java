@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.zip.*;
 
 public class Cartridge {
 	// the size of the ROM banks in byte
@@ -30,7 +31,12 @@ public class Cartridge {
 		 *         the cartridge is loaded into memory
 		 */
 		this.file_name = file_name;
-		loadFromFile();
+		try {
+			loadFromFile();
+		}
+		catch (java.io.IOException e) {
+			System.out.println("error loading cartridge from file!: " + e.getMessage());
+		}
 	}
 
 	public String getError() {
@@ -42,7 +48,35 @@ public class Cartridge {
 		return err_msg;
 	}
 
-	private void loadFromFile() {
+	private DataInputStream getDataStream(String fname) throws java.io.IOException
+	{
+    int dotPos = fname.lastIndexOf(".");
+    String fext = fname.substring(dotPos);
+		if ((fext.equals(".gb")) || (fext.equals(".cgb"))) {
+			// plain files
+			FileInputStream fistream = new FileInputStream(fname);
+			BufferedInputStream bistream = new BufferedInputStream(fistream);
+			DataInputStream distream = new DataInputStream(bistream);
+			return distream;
+		}
+		if (fext.equals(".zip")) {
+			// Open the ZIP file
+			FileInputStream fistream = new FileInputStream(fname);
+			ZipInputStream zistream = new ZipInputStream(fistream);
+
+			// Get the first entry
+			ZipEntry entry = zistream.getNextEntry();
+
+			BufferedInputStream bistream = new BufferedInputStream(zistream);
+			DataInputStream distream = new DataInputStream(bistream);
+
+			return distream;
+		}
+		throw new java.io.IOException("unknow file type");
+	}
+
+
+	private void loadFromFile() throws java.io.IOException {
 		/**
 		 * loadFromFile loads a cartidge from a file
 		 * pre:  true
@@ -56,19 +90,11 @@ public class Cartridge {
 		 * used to initialize RAM and ROM banks
 		 */
 		int[] first_rom_bank = new int[ROM_BANK_SIZE];
-		System.out.println("Attempting to load ROM: `"+file_name+"'");
-		try {
-			FileInputStream fistream = new FileInputStream(file_name);
-			BufferedInputStream bistream = new BufferedInputStream(fistream);
-			DataInputStream distream = new DataInputStream(bistream);
+		DataInputStream distream = getDataStream(file_name);
 
-			// load first ROM bank into memory
-			for(int i = 0; i < ROM_BANK_SIZE; ++i)
-				first_rom_bank[i] = distream.readUnsignedByte();
-		}
-		catch(Exception e) {
-			err_msg = "Error while loading ROM bank #0 " + e.getMessage();
-		}
+		// load first ROM bank into memory
+		for(int i = 0; i < ROM_BANK_SIZE; ++i)
+			first_rom_bank[i] = distream.readUnsignedByte();
 
 		// Detect MBC type
 		MBC = first_rom_bank[0x0147];
@@ -109,32 +135,18 @@ public class Cartridge {
 		}
 		System.out.println("ROM Name appears to be `"+title+"'");
 		// load entire ROM/RAM into memory
-		int t = 0;
-		try	{
-			FileInputStream fistream = new FileInputStream(file_name);
-			BufferedInputStream bistream = new BufferedInputStream(fistream);
-			DataInputStream distream = new DataInputStream(bistream);
-
-			// load ROM into memory
-			System.out.println("Trying to load "+ROM.length+" banks from ROM");
-			for(int i = 0; i < ROM.length; i++) {
-				for(int j = 0; j < ROM_BANK_SIZE; j++) {
-					ROM[i][j] = distream.readUnsignedByte();
-				}
+			
+		System.out.println("Trying to load "+ROM.length+" banks from ROM");
+		for(int j = 0; j < ROM_BANK_SIZE; j++)
+			ROM[0][j] = first_rom_bank[j];
+		for(int i = 1; i < ROM.length; i++) {
+			for(int j = 0; j < ROM_BANK_SIZE; j++) {
+				ROM[i][j] = distream.readUnsignedByte();
 			}
-
-			t = 1;
-			// load RAM into memory
-			/*for(int i = 0; i < RAM.length; i++)
-					for(int j = 0; j < RAM[i].length; j++)
-						RAM[i][j] = distream.readUnsignedByte();*/
-
-			t = 2;
-			System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
 		}
-		catch(Exception e) {
-			err_msg = "Error while loading ROM/RAM " + e.toString() + " " + t;
-		}
+		
+		System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
+		distream.close(); // lets be nice :-p
 	}
 
 	public int read(int index) {
