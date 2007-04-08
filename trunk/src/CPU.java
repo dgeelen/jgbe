@@ -431,7 +431,7 @@ public class CPU
 		protected void interrupt(int i) { //execute interrupt #i
 			System.out.println("INTERRUPT: " + i);
 			IME = false;
-			push(PC + 2);
+			push(PC);
 			PC = i;
 		}
 
@@ -715,6 +715,8 @@ public class CPU
 				case 0x06:  // LD  B, n
 					regs[B] = read( PC++ );
 					break;
+				//case 0x08:  // LD (nn),SP
+				//	uh? 16bit memwrite?
 				case 0x07:  // RLCA
 					regs[A] = rolc(regs[A]);
 					regs[F] &= ~ZF_Mask;
@@ -765,6 +767,9 @@ public class CPU
 				case 0x16: // LD   D, n
 					regs[D] = read( PC++ );
 					break;
+				case 0x17: // RLA
+					regs[A] = ror(regs[A]);
+					break;
 				case 0x18:{// JR   &00
 					int x = read( PC++ );
 					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -787,6 +792,9 @@ public class CPU
 					break;
 				case 0x1e: // LD   E, n
 					regs[E] = read( PC++ );
+					break;
+				case 0x1f: // RRA
+					regs[A] = ror(regs[A]);
 					break;
 				case 0x20: // JR NZ, n
 					curcycles += 4; // takes 12;8 instead of 8;4 cycles
@@ -816,6 +824,8 @@ public class CPU
 				case 0x26: // LD   H, n
 					regs[H] = read( PC++ );
 					break;
+				//case 0x27: // DAA
+				//	uhoh.... evil instr?
 				case 0x28: // JR   Z, n
 					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
@@ -875,6 +885,14 @@ public class CPU
 					writemem8b(H,L, regs[A]);
 					regs[A] = x;
 				};break;
+				case 0x35:{// DEC (HL)
+					// this is a tad hacky? TODO?
+					int x = regs[A];
+					regs[A] = readmem8b(H, L);
+					dec8b(A);
+					writemem8b(H,L, regs[A]);
+					regs[A] = x;
+				};break;
 				case 0x36: // LD (HL), n
 					writemem8b(H,L, read(PC++));
 					break;
@@ -889,6 +907,9 @@ public class CPU
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
 					}
 					else ++PC;
+					break;
+				case 0x39: // ADD HL, SP
+					add16bHL(SP >> 8, SP & 0xff);
 					break;
 				case 0x3a: // LDD A, (HL)
 					regs[A] = readmem8b(H, L);
@@ -1335,6 +1356,10 @@ public class CPU
 				case 0xc6: // ADD  A, n
 					add8b(A, read(PC++));
 					break;
+				case 0xc7: // RST &00
+					push(PC);
+					PC = 0x00;
+					break;
 				case 0xc8: // RET  Z
 					if ((regs[F]&ZF_Mask) == ZF_Mask)
 						PC = pop();
@@ -1353,6 +1378,8 @@ public class CPU
 					if (curcycles == 12) curcycles = 16;
 					if (curcycles ==  4) curcycles = 12;
 					break;
+				//case 0xcb: prefix
+				//	prefix instrs are at the end
 				case 0xcc: // CALL Z, &0000
 					if (( regs[FLAG_REG]&ZF_Mask )==ZF_Mask ) {
 						push( PC+2 );
@@ -1369,6 +1396,10 @@ public class CPU
 					break;
 				case 0xce: // ADC  A, n
 					adc(A, read(PC++));
+					break;
+				case 0xcf: // RST &08
+					push(PC);
+					PC = 0x08;
 					break;
 				case 0xd0: // RET  NC
 					if ((regs[F]&CF_Mask) != CF_Mask)
@@ -1387,6 +1418,17 @@ public class CPU
 					else
 						PC+=2;
 					if (curcycles == 12) curcycles = 16;
+					if (curcycles ==  4) curcycles = 12;
+					break;
+				//case 0xd3
+				//	missing instruction
+				case 0xd4: // CALL NC, &0000
+					if (( regs[FLAG_REG]&CF_Mask )==0 ) {
+						push( PC+2 );
+						JPnn();
+					} else
+						PC += 2;
+					if (curcycles == 20) curcycles = 24;
 					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xd5: // PUSH DE
@@ -1411,16 +1453,33 @@ public class CPU
 					IME = true;
 					PC = pop();
 					break;
-				case 0xda: //D4 JMP CF,&0000
-					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask )
+				case 0xda: // JMP C,&0000
+					if (( regs[FLAG_REG]&CF_Mask )!= 0 )
 						JPnn();
 					else
 						PC+=2;
 					if (curcycles == 12) curcycles = 16;
 					if (curcycles ==  4) curcycles = 12;
 					break;
+				//case 0xdb:
+				//	missing instruction
+				case 0xdc: // CALL C, &0000
+					if (( regs[FLAG_REG]&CF_Mask )!=0 ) {
+						push( PC+2 );
+						JPnn();
+					} else
+						PC += 2;
+					if (curcycles == 20) curcycles = 24;
+					if (curcycles ==  4) curcycles = 12;
+					break;
+				//case 0xdd:
+				//	missing instruction
 				case 0xde: // SBC A, n
 					sbc(A, read(PC++));
+					break;
+				case 0xdf: // RST &18
+					push(PC);
+					PC = 0x18;
 					break;
 				case 0xe0: // LDH  (n), A
 					write( 0xff00 | read( PC++ ), regs[A] );
@@ -1433,6 +1492,10 @@ public class CPU
 				case 0xe2: // LD (C), A
 					write( 0xff00 | regs[C], regs[A] );
 					break;
+				//case 0xe3:
+				//	missing instruction
+				//case 0xe4:
+				//	missing instruction
 				case 0xe5: // PUSH HL
 					push( regs[H]<<8 | regs[L]);
 					curcycles += 4; // takes 16 instead of 12 cycles
@@ -1440,6 +1503,25 @@ public class CPU
 				case 0xe6: // AND nn
 					and(read(PC++));
 					break;
+				case 0xe7: // RST &20
+					push(PC);
+					PC = 0x20;
+					break;
+				case 0xe8:{// ADD SP,dd
+					int o = SP;
+					int x = read(PC++);
+					x ^= 0x80;
+					x -= 0x80;
+					SP += x;
+					regs[F] = 0;
+					if ((SP & ~0xffff) != 0) {
+						SP &= 0xffff;
+						regs[F] |= CF_Mask;
+					}
+					if ((SP >> 8) != (o >> 8)) 
+						regs[F] |= HC_Mask;
+					curcycles += 8; // takes 16 instead of 8 cycles
+				};break;
 				case 0xe9: // JP  HL
 					PC = (regs[H]<<8) | regs[L];
 					break;
@@ -1448,8 +1530,18 @@ public class CPU
 					int b = read( PC++ );
 					write((b<<8) | a, regs[A] );
 				};break;
+				//case 0xeb:
+				//	missing instruction
+				//case 0xec:
+				//	missing instruction
+				//case 0xed:
+				//	missing instruction
 				case 0xee: // XOR   &00
 					xor( read( PC++ ) );
+					break;
+				case 0xef: // RST &28
+					push(PC);
+					PC = 0x28;
 					break;
 				case 0xf0: // LDH A, (n)
 					regs[A] = read( 0xff00 | read( PC++ ) );
@@ -1459,15 +1551,25 @@ public class CPU
 					regs[A] = x >> 8;
 					regs[F] = x&0xff;
 				};break;
+				case 0xf2: // LD  A, (C)
+					// is really LDH?
+					regs[A] = read( 0xff00 | regs[C] );
+					break;
 				case 0xf3: // DI
 					IME = false;
 					break;
+				//case 0xf4:
+				//	missing instruction
 				case 0xf5: // PUSH AF
 					push( regs[A]<<8 | regs[F]);
 					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xf6: // OR  n
 					or(read(PC++));
+					break;
+				case 0xf7: // RST &30
+					push(PC);
+					PC = 0x30;
 					break;
 				case 0xf8:{// LD  HL, SP+dd
 					regs[H] = SP >> 8;
@@ -1501,6 +1603,10 @@ public class CPU
 				case 0xfb: // EI
 					IME = true;
 					break;
+				//case 0xfc:
+				//	missing instruction
+				//case 0xfd:
+				//	missing instruction
 				case 0xfe: // CP n
 					cp( read( PC++ ) );
 					break;
