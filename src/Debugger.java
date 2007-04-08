@@ -43,7 +43,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public class TheRunner implements Runnable {
 		private int status;
 		private Debugger dbg;
-		private int stopaddr;
+		private int stopaddr = 0;
+		private int watchaddr = 0;
 		synchronized public int getStatus() {
 			return status;
 		}
@@ -54,6 +55,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		public void setBreakPoint(int addr) {
 			if (getStatus()==1)
 				stopaddr = addr;
+		}
+
+		public void setWatchPoint(int addr) {
+			if (getStatus()==1)
+				watchaddr = addr;
 		}
 
 		public TheRunner(Debugger tdbg) { //Pass something
@@ -73,8 +79,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				}
 				setStatus(3);
 				while (getStatus() == 3) {
+					int wval = (watchaddr>0) ? dbg.gui.cpu.read(watchaddr) : 0;
 					dbg.gui.cpu.nextinstruction();
 					if (dbg.gui.cpu.PC == stopaddr) {
+						setStatus(0);
+					}
+					if ((watchaddr>0) && (wval != dbg.gui.cpu.read(watchaddr))) {
 						setStatus(0);
 					}
 					if (dbg.gui.cpu.exception() != 0) {
@@ -322,6 +332,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					runner.setStatus(2);
 					while (runner.getStatus() == 2) {};
 				}
+			}
+			if(s.charAt(0)=='w') {
+				String ss = s.substring( s.lastIndexOf(" ") + 1);
+				if( ss.charAt(0)=='$' )
+					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
 			}
 			if(s.charAt(0)=='g') {
 				if (runner.getStatus() == 1) {

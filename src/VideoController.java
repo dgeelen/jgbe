@@ -152,11 +152,9 @@ public class VideoController {
 				int d1 = read(TileData + offset);     // lsb bit of col is in here
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
 				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
-				//now we should do some pallete stuff....
-				g.setColor(BGPC[palnr][col]);// System.out.println((col&1)|(col&2));
-				//g.setColor(new Color((col&1)*255,(col>>1)*255,255));
+				
+				g.setColor(BGPC[palnr][col]);
 				g.drawRect(x, linenumber, x, linenumber);
-				//System.out.println("drawing rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 			}
 
 			if(((LCDC&(1<<5))!=0)
@@ -165,10 +163,10 @@ public class VideoController {
 				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
 				if (linenumber >= WY) { // does window have height, width? doest seem so...
 					ry  = linenumber - WY;
-					rty = ry >> 3; // tile x
-					rsy = ry & 7; // x offs
-					for (int x = 0; x < 160; ++x) {
-						int rx = WX - 7 - x; // no wrapping here?
+					rty = ry >> 3; // tile y
+					rsy = ry & 7;  // y offs
+					for (int x = (WX - 7); x < 160; ++x) {
+						int rx = x - WX; // no wrapping here?
 						if ((rx >= 0) && (rx < 255)) { // bound correct?
 							int rtx = rx >> 3; // tile x
 							int rsx = rx & 7; // x offs
@@ -178,38 +176,67 @@ public class VideoController {
 							if (TileData == 0x8800)
 								TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
 
-							// window has tile attrs?
-							/*
 							selectVRAMBank(1);
 							int TileAttr = read(WindowTileMap + rtx + (rty*32)); // get attributes of current tile
 							selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
 							if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip
 							if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
-							*/
+							int palnr = TileAttr & 7;
 
 							int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
 							int d1 = read(TileData + offset);     // lsb bit of col is in here
 							int d2 = read(TileData + offset + 1); // msb bit of col is in here
 							int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 
-							//now we should do some pallete stuff....
-							g.setColor(Gray[col]);// System.out.println((col&1)|(col&2));
-
+							g.setColor(BGPC[palnr][col]);
 							g.drawRect(x, linenumber, x, linenumber);
-							//System.out.println("drawing window rect Color(" + (col&1)+","+(col>>1)+",1) at (" +(x-SCX) + "," + linenumber +")");
 						}
 					}
 				}
 			}
 
-			if((LCDC&(1<<2))!=0) { // sprites enabled
-				//System.out.println(" sprite size = 8x" + (((LCDC&(1<<2))!=0) ? 16 : 8));
+			if((LCDC&(1<<1))!=0) { // sprites enabled
 				boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
-				int SprOAM = 0xfe00;
-				int SprPat = 0x8000;
+				int sprOAM = 0xfe00;
+				int sprPat = 0x8000;
 
-				// TODO
+				for (int spr = 0; spr < 40; ++spr) {
+					int sprY    = read(sprOAM + (spr*4) + 0);
+					int sprX    = read(sprOAM + (spr*4) + 1);
+					int sprNum  = read(sprOAM + (spr*4) + 2);
+					int sprAttr = read(sprOAM + (spr*4) + 3);
+					
+					int ofsY = linenumber - sprY + 16;
+
+					//check if sprite is visible on this scanline
+					if ((ofsY >= 0) && (ofsY < (spr8x16 ? 16 : 8))
+					&&  (sprX > 0) && (sprX < 168)) {
+						if ((sprAttr&(1<<6))!=0) ofsY = (spr8x16 ? 15 : 7) - ofsY;  // vert  flip
+						if (spr8x16) {
+							sprNum &= ~1;
+							sprNum |= (ofsY >= 8) ? 1 : 0;
+							ofsY &= 7;
+						}
+						for (int x = 0; x < 8; ++x) {
+							int ofsX = x;
+							if ((sprAttr&(1<<5))!=0) ofsX = 7 - ofsX;  // horiz flip
+
+							selectVRAMBank((sprAttr>>3)&1);          // vram bank nr
+							int palnr = sprAttr & 7;
+
+							int offset = (sprNum*16) + (ofsY*2); // start with offset that describes that tile, and our line
+							int d1 = read(sprPat + offset);     // lsb bit of col is in here
+							int d2 = read(sprPat + offset + 1); // msb bit of col is in here
+							int col = ((d1>>(7-ofsX))&1) + (((d2>>(7-ofsX))&1)<<1);
+
+							if (col != 0) { // 0 is transparent color
+								g.setColor(OBPC[palnr][col]);
+								g.drawRect(sprX - 8 + x, linenumber, sprX - 8 + x, linenumber);
+							}
+						}
+					}
+				}
 			}
 		}
 		selectVRAMBank(prevrambank);
