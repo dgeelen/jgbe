@@ -126,14 +126,14 @@ public class RDParser {
 		int t1=P(ident+"  ");
 		System.out.println(ident+"t1="+t1);
 		while((Next()!=-1) &&isBinary[Next()] && presedence[Next()]>=p ) {
-			System.out.println(ident+"Expr while Next()="+((char)Next()));
 			int op = Next();
+			System.out.println(ident+"Expr while Next()="+((char)Next())+" isleftass="+isLeftAssociative[op]);
 			Consume();
 			int t2=0;
-			if(isLeftAssociative[op])
-				t2=Expr(presedence[op]+1, ident+"  ");
-			else
+			if(isLeftAssociative[op]) //Inverted?!
 				t2=Expr(presedence[op], ident+"  ");
+			else
+				t2=Expr(presedence[op]+1, ident+"  ");
 			System.out.println(ident+"t2="+t2);
 			System.out.println(ident+"op="+((char)op));
 			switch(op) {
@@ -167,26 +167,29 @@ public class RDParser {
 	}
 
 	public int Evaluate(String str) {
-		input = str.toCharArray();
-		int i=0;
-		int j=1;
-		while((j!=str.length()) && (i!=str.length()) ){
-			if(input[i]==' ') {
-				input[i]=input[j];
-				input[j++]=' ';
-				}
-			else {++i;}
+		if(str!=null && str.length()>0) {
+			input = str.toCharArray();
+			int i=0;
+			int j=1;
+			while((j!=str.length()) && (i!=str.length()) ){
+				if(input[i]==' ') {
+					input[i]=input[j];
+					input[j++]=' ';
+					}
+				else {++i;}
+			}
+			System.out.println(input);
+			parsingPosition=0;
+			return Expr(0, "");
 		}
-		System.out.println(input);
-		parsingPosition=0;
-		return Expr(0, "");
+		else return -1;
 	}
 
 	public static void main( String[] args ) {
 		RDParser parser=new RDParser();
 		//System.out.println(parser.Evaluate("  -   2*(3+ 2^ (4-1  ) )"));
-		System.out.println(parser.Evaluate("(12+34)*5"));
-		System.out.println("--------------------------");
-		System.out.println(parser.Evaluate("2^4"));
+		//System.out.println(parser.Evaluate("(12+34)*5"));
+		//System.out.println("--------------------------");
+		if(args.length>0) System.out.println(parser.Evaluate(args[0]));
 	}
 }
