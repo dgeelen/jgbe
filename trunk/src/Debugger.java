@@ -25,15 +25,19 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	private Thread runthread;
 	swinggui gui;
 	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
+	private RDParser parser;
+	private int[] oldRegVal;
 	public Debugger(swinggui gui) {
 		this.gui=gui;
 		deasm= new Disassembler(gui.cpu);
+		oldRegVal=new int[10];
 //		runthread.suspend();
 		createAndShowGUI();
 		runner = new TheRunner(this);
 		runthread = new Thread(runner);
 		runthread.start();
 		while (runner.getStatus() != 1) {};
+		parser=new RDParser();
 	}
 
 	public class TheRunner implements Runnable {
@@ -222,75 +226,66 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	private void updateRegisters() { //TODO: Dit moet makkelijker kunnen ...
 		TableColumnModel m = regs1.getColumnModel();
 		TableColumn c;
-		String s;
-		String r;
-		s=""+(String)regs1.getValueAt(0,0);
-		r=String.format("A=$%02x",gui.cpu.regs[gui.cpu.A]);
-		regs1.setValueAt(r, 0,0);
+		DefaultTableCellRenderer normal=new DefaultTableCellRenderer();
+		MyCellRenderer colored = new MyCellRenderer(UpdateColor);
+
+		regs1.setValueAt(String.format("A=$%02x",gui.cpu.regs[gui.cpu.A]), 0,0);
 		c = m.getColumn(0);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[0]==gui.cpu.regs[gui.cpu.A] ? normal : colored );
+		oldRegVal[0]=gui.cpu.regs[gui.cpu.A];
 
-		s=""+(String)regs1.getValueAt(0,1);
-		r=String.format("B=$%02x",gui.cpu.regs[gui.cpu.B]);
-		regs1.setValueAt(r, 0,1);
+		regs1.setValueAt(String.format("B=$%02x",gui.cpu.regs[gui.cpu.B]), 0,1);
 		c = m.getColumn(1);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[1]==gui.cpu.regs[gui.cpu.B] ? new DefaultTableCellRenderer() : new MyCellRenderer(UpdateColor) );
+		oldRegVal[1]=gui.cpu.regs[gui.cpu.B];
 
-		s=""+(String)regs1.getValueAt(0,2);
-		r=String.format("C=$%02x",gui.cpu.regs[gui.cpu.C]);
-		regs1.setValueAt(r, 0,2);
+		regs1.setValueAt(String.format("C=$%02x",gui.cpu.regs[gui.cpu.C]), 0,2);
 		c = m.getColumn(2);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[2]==gui.cpu.regs[gui.cpu.C] ? normal : colored );
+		oldRegVal[2]=gui.cpu.regs[gui.cpu.C];
 
-		s=""+(String)regs1.getValueAt(0,3);
-		r=String.format("D=$%02x",gui.cpu.regs[gui.cpu.D]);
-		regs1.setValueAt(r, 0,3);
+		regs1.setValueAt(String.format("D=$%02x",gui.cpu.regs[gui.cpu.D]), 0,3);
 		c = m.getColumn(3);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[3]==gui.cpu.regs[gui.cpu.D] ? normal : colored );
+		oldRegVal[3]=gui.cpu.regs[gui.cpu.D];
 
-		s=""+(String)regs1.getValueAt(0,4);
-		r=String.format("E=$%02x",gui.cpu.regs[gui.cpu.E]);
-		regs1.setValueAt(r, 0,4);
+		regs1.setValueAt(String.format("E=$%02x",gui.cpu.regs[gui.cpu.E]), 0,4);
 		c = m.getColumn(4);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[4]==gui.cpu.regs[gui.cpu.E] ? normal : colored );
+		oldRegVal[4]=gui.cpu.regs[gui.cpu.E];
 
-		s=""+(String)regs1.getValueAt(0,5);
-		r=String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]);
-		regs1.setValueAt(r, 0,5);
+		regs1.setValueAt(String.format("F=$%02x",gui.cpu.regs[gui.cpu.F]), 0,5);
 		c = m.getColumn(5);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[5]==gui.cpu.regs[gui.cpu.F] ? normal : colored );
+		oldRegVal[5]=gui.cpu.regs[gui.cpu.F];
 
-		s=""+(String)regs1.getValueAt(0,6);
-		r=String.format("H=$%02x",gui.cpu.regs[gui.cpu.H]);
-		regs1.setValueAt(r, 0,6);
+		regs1.setValueAt(String.format("H=$%02x",gui.cpu.regs[gui.cpu.H]), 0,6);
 		c = m.getColumn(6);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[6]==gui.cpu.regs[gui.cpu.H] ? normal : colored );
+		oldRegVal[6]=gui.cpu.regs[gui.cpu.H];
 
-		s=""+(String)regs1.getValueAt(0,7);
-		r=String.format("L=$%02x",gui.cpu.regs[gui.cpu.L]);
-		regs1.setValueAt(r, 0,7);
+		regs1.setValueAt(String.format("L=$%02x",gui.cpu.regs[gui.cpu.L]), 0,7);
 		c = m.getColumn(7);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[7]==gui.cpu.regs[gui.cpu.L] ? normal : colored );
+		oldRegVal[7]=gui.cpu.regs[gui.cpu.L];
 
 		m = regs2.getColumnModel();
-		r = String.format("PC=$%04x",gui.cpu.PC);
-		regs2.setValueAt(r, 0,0);
+		regs2.setValueAt(String.format("PC=$%04x",gui.cpu.PC), 0,0);
+		oldRegVal[8]=gui.cpu.PC;
 
-		s = ""+(String)regs2.getValueAt(0,1);
-		r = String.format("SP=$%04x",gui.cpu.SP);
-		regs2.setValueAt(r, 0,1);
+		regs2.setValueAt(String.format("SP=$%04x",gui.cpu.SP), 0,1);
 		c = m.getColumn(1);
-		c.setCellRenderer( s.equals(r) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[9]==gui.cpu.SP ? normal : colored);
+		oldRegVal[9]=gui.cpu.SP;
 
 		String flags = "F=";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.ZF_Mask ) == gui.cpu.ZF_Mask )?"Z ":"z ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.NF_Mask ) == gui.cpu.NF_Mask )?"N ":"n ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.HC_Mask ) == gui.cpu.HC_Mask )?"H ":"h ";
 		flags += (( gui.cpu.regs[gui.cpu.F] & gui.cpu.CF_Mask ) == gui.cpu.CF_Mask )?"C ":"c ";
-		s = ""+(String)regs2.getValueAt(0,3);
 		regs2.setValueAt(flags, 0,3);
 		c = m.getColumn(3);
-		c.setCellRenderer( s.equals(flags) ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[5]==gui.cpu.regs[gui.cpu.F] ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
 	}
 
 	private void createAndShowGUI() {
@@ -304,39 +299,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		frame.setVisible( true );
 		//frame.addKeyListener(this); TODO: Shortcut keys
 	}
-
-	private int StrToInt(String in) {
-		String s=in.trim();
-		try {
-			int i=s.indexOf("$");
-			if(i>-1) { //Hex
-				return Integer.parseInt( s.substring(i+1), 16 );
-			}
-			else {
-				return Integer.parseInt( s, 10 );
-			}
-		}
-		catch ( NumberFormatException ee ) {
-				System.out.println( ee.getMessage() + " is not a valid format for an integer." );
-		}
-		return -1;
-	}
-/*
-	//String[] values = s.trim().split(" ");
-	private int Eval(String[] s, i, j) { // return value of string
-		if(s[i]=='(') {
-			if(s[j]=')')
-				return Eval(s,i+1,j-1);
-			else {
-				System.out.println("Parse error: missing brace");
-				return 0;
-			}
-		}
-		if(s[i]=='-') {
-			return Eval();
-		}
-		return 42;
-	} */
 
 	public void actionPerformed( ActionEvent e ) {
 		JTextField f = ( JTextField )( e.getSource() );
@@ -394,12 +356,73 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			i=s.indexOf("=");
 			if(i>-1) { //assignment
 				String l = s.substring(0,i).trim();
-			//	String r = Substitute(s.substring(i).trim());
-				//if(ss.equals("A")) gui.cpu.regs[A] =
+				updateRegisters(); //sets the variables
+				parser.removeVariables();
+				parser.addVariable("A", oldRegVal[0]);
+				parser.addVariable("B", oldRegVal[1]);
+				parser.addVariable("C", oldRegVal[2]);
+				parser.addVariable("D", oldRegVal[3]);
+				parser.addVariable("E", oldRegVal[4]);
+				parser.addVariable("F", oldRegVal[5]);
+				parser.addVariable("H", oldRegVal[6]);
+				parser.addVariable("L", oldRegVal[7]);
+				parser.addVariable("SP", oldRegVal[8]);
+				parser.addVariable("PC", oldRegVal[9]);
+				parser.addVariable("HL", oldRegVal[7]|(oldRegVal[6]<<8));
+				int v = parser.Evaluate(s.substring(i+1).trim());
+				if(!parser.parseError) {
+					if(l.equals("A")){
+						gui.cpu.regs[gui.cpu.A]=v&0xFF;
+						update();
+					}
+					if(l.equals("B")){
+						gui.cpu.regs[gui.cpu.B]=v&0xFF;
+						update();
+					}
+					if(l.equals("C")){
+						gui.cpu.regs[gui.cpu.C]=v&0xFF;
+						update();
+					}
+					if(l.equals("D")){
+						gui.cpu.regs[gui.cpu.D]=v&0xFF;
+						update();
+					}
+					if(l.equals("E")){
+						gui.cpu.regs[gui.cpu.E]=v&0xFF;
+						update();
+					}
+					if(l.equals("F")){
+						gui.cpu.regs[gui.cpu.F]=v&0xFF;
+						update();
+					}
+					if(l.equals("H")){
+						gui.cpu.regs[gui.cpu.H]=v&0xFF;
+						update();
+					}
+					if(l.equals("L")){
+						gui.cpu.regs[gui.cpu.L]=v&0xFF;
+						update();
+					}
+					if(l.equals("HL")){
+						gui.cpu.regs[gui.cpu.H]=(v>>8)&0xFF;
+						gui.cpu.regs[gui.cpu.L]=v&0xFF;
+						update();
+					}
+					if(l.equals("PC")){
+						gui.cpu.PC=v&0xFFFF;
+						update();
+					}
+					if(l.equals("SP")){
+						gui.cpu.SP=v&0xFFFF;
+						update();
+					}
+					else {
+						System.out.println("Assignment to '"+l+"' with v="+v);
+					}
+				}
 			}
 			if(s.charAt(0)=='m') {
-				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
-				memaddr = StrToInt(s.substring(1));
+				memaddr = parser.StrToInt(s.substring(1));
 				update();
 			}
 		}
