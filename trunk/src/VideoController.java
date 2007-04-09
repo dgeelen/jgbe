@@ -1,10 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 
 public class VideoController {
 	private JPanel listener = null;
-	private Image drawImg[];
+	private BufferedImage drawImg[];
 	private int curDrawImg = 0;
 	private int blitImg[][]=new int[160][144];
 
@@ -30,6 +30,7 @@ public class VideoController {
 
 	/* caching vars */
 	private Color Colors[] = new Color[8*4*2];
+	private int Colorsint[][] = new int[8*4*2][3];
 	private int patpix[][][] = new int[4096][8][8]; // see updatepatpix()
 	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
 	private boolean anydirty = true;                // see updatepatpix()
@@ -45,14 +46,17 @@ public class VideoController {
 		Gray[1]=new Color(64,64,64);
 		Gray[2]=new Color(128,128,128);
 		Gray[3]=new Color(192,192,192);
-		drawImg=new Image[2];
-		drawImg[0]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-		drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+		drawImg=new BufferedImage[2];
+		drawImg[0]=new BufferedImage(160, 144, BufferedImage.TYPE_INT_RGB);
+		drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_INT_RGB);
 	}
 
 	final public void addListener(JPanel panel)
 	{
 		listener = panel; // only 1 listener at a time currently :-p
+		//drawImg[0]=panel.createVolatileImage(160, 144);
+		//drawImg[1]=panel.createVolatileImage(160, 144);
+		//drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 	}
 
 	final public Image getImage() {
@@ -64,13 +68,15 @@ public class VideoController {
 	}
 
 	final private void blitImage() {
-		Graphics g = drawImg[curDrawImg^1].getGraphics();
+		//Graphics g = drawImg[curDrawImg^1].getGraphics();
+		WritableRaster wr = drawImg[curDrawImg^1].getRaster();
 		for (int x = 0; x < 160; ++x) {
 			for (int y = 0; y < 144; ++y) {
 				int col = blitImg[x][y];
 				if ((col >= 0) && (col < (8*4*2)))
-					g.setColor(Colors[col]);
-				g.drawRect(x, y, 0, 0);
+					//g.setColor(Colors[col]);
+					//g.drawRect(x, y, 0, 0);
+					wr.setPixel(x,y, Colorsint[col]);
 			}
 		}
 		curDrawImg ^= 1;
@@ -97,6 +103,9 @@ public class VideoController {
 		// fading issue is somethere else, maybe int timing issue?
 
 		Colors[(palnum << 2) | colnum | 0x20] = new Color(r, g, b);
+		Colorsint[(palnum << 2) | colnum | 0x20][0] = r;
+		Colorsint[(palnum << 2) | colnum | 0x20][1] = g;
+		Colorsint[(palnum << 2) | colnum | 0x20][2] = b;
 
 		if ((BGPI&(1<<7))!=0)
 			++BGPI;
@@ -123,6 +132,9 @@ public class VideoController {
 		b <<= 3; b |= (b >> 5);
 
 		Colors[(palnum << 2) | colnum] = new Color(r, g, b);
+		Colorsint[(palnum << 2) | colnum][0] = r;
+		Colorsint[(palnum << 2) | colnum][1] = g;
+		Colorsint[(palnum << 2) | colnum][2] = b;
 
 		if ((OBPI&(1<<7))!=0)
 			++OBPI;
