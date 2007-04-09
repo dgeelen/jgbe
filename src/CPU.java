@@ -34,6 +34,9 @@ public class CPU
 
 		private int curcycles;
 
+		boolean doublespeed = false;
+		boolean speedswitch = false;
+
 		private int DIVcntdwn = 0;
 		private int TIMAcntdwn = 0;
 		private int VBLANKcntdwn = 0;
@@ -201,6 +204,9 @@ public class CPU
 					case 0xff4b: // WX
 						b = VC.WX;
 						break;
+					case 0xff4d: // KEY1 - CGB Mode Only - Prepare Speed Switch
+						b = doublespeed ? (1<<7) : 0;
+						break;
 					case 0xff4f: // VRAM bank nr
 						b = VC.getcurVRAMBank();
 						break;
@@ -343,6 +349,9 @@ public class CPU
 						break;
 					case 0xff4b: // WX
 						VC.WX = value;
+						break;
+					case 0xff4d: // KEY1 - CGB Mode Only - Prepare Speed Switch
+						speedswitch = ((value&1)!=0);
 						break;
 					case 0xff4f: // FF4F - VBK - CGB Mode Only - VRAM Bank
 						VC.selectVRAMBank(value&1);
@@ -813,6 +822,11 @@ public class CPU
 					if ((IE==0) || (!IME))
 						System.out.println("PANIC: we will never unhalt!!!\n");
 					//halted = true;
+					if (speedswitch) {
+						System.out.println("Speed switch!");
+						doublespeed = !doublespeed;
+						speedswitch = false;
+					}
 					break;
 				case 0x11: // LD DE, nn
 					regs[E] = read( PC++ );
@@ -2633,7 +2647,10 @@ public class CPU
 					}
 				}
 
-				VBLANKcntdwn -= res;
+				if (doublespeed)
+					VBLANKcntdwn -= res/2; // more instrs per vblank int
+			 	else 
+					VBLANKcntdwn -= res;
 				if (VBLANKcntdwn < 0) {
 					VBLANKcntdwn += 456;   // 4194304/9198
 					VC.renderNextScanline();
@@ -2646,6 +2663,7 @@ public class CPU
 				// [0..80)   [80..252)   [252..456)
 				// mode 2    mode 3      mode 0
 				// when LY>144 then mode 1
+
 			}
 			if (res > 30)
 				System.out.printf("res=%i  PC=$%04x",res, PC);
