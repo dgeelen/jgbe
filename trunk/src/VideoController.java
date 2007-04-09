@@ -177,148 +177,6 @@ public class VideoController {
 		//alldirty = false;
 	}
 
-	public void renderScanLine(int linenumber) {
-		/* FF40 - LCDC - LCD Control (R/W)
-		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
-		* Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
-		* Bit 5 - Window Display Enable          (0=Off, 1=On)
-		* Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)
-		* Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)
-		* Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)
-		* Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
-		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
-		*/
-		int prevrambank = getcurVRAMBank();
-		if((LCDC&(1<<7))!=0) { //LCD enabled
-
-			updatepatpix();
-
-			//System.out.println("rendering scanline");
-			int TileData = ((LCDC&(1<<4))==0) ? 0x8800 : 0x8000;
-
-			int BGTileMap = ((LCDC&(1<<3))==0) ? 0x9800 : 0x9c00;
-
-			/* When Bit 0 is cleared, the background and window lose their priority - the sprites will be always
-			 * displayed on top of background and window, independently of the priority flags in OAM and BG Map
-			 * attributes.
-			 */
-			int BGPrio = (LCDC&(1<<0)); // ok dunno what exactly this does atm
-
-			int wndX = 160;
-			if(((LCDC&(1<<5))!=0)			 //window display enabled
-			&& (WX >= 0) && (WX < 167) // yes this is 160+7
-			&& (WY >= 0) && (WY < 144)
-			&& (linenumber >= WY))
-				wndX = (WX - 7);         // [-8 < wndX < 160]
-
-			int ry = (SCY+linenumber)&0xFF;
-			int rty = ry >> 3; // tile x
-			int rsy = ry & 7; // x offs
-			for (int x = 0; x < wndX; ++x) { // dont draw bg where window starts
-				int rx = (SCX+x)&0xff; // it wraps, too
-				int rtx = rx >> 3; // tile x
-				int rsx = rx & 7; // x offs
-
-				selectVRAMBank(0);	// should read directly form VRAM[][]? need to change all offsets
-				int TileNum = read(BGTileMap + rtx + (rty*32)); // get number of current tile
-				if (TileData == 0x8800) {
-					TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
-					TileNum += 0x80;
-				}
-
-				selectVRAMBank(1);
-				int TileAttr = read(BGTileMap + rtx + (rty*32)); // get attributes of current tile
-
-				if ((TileAttr&(1<<3))!=0) TileNum |= (1<<9);  // bank select
-				if ((TileAttr&(1<<5))!=0) TileNum |= (1<<10); // horiz flip
-				if ((TileAttr&(1<<6))!=0) TileNum |= (1<<11); // vert flip
-
-				int palnr = TileAttr & 7;
-
-				int col = patpix[TileNum][rsy][rsx];
-
-				drawPixel(x, linenumber, palnr | 0x08, col);
-			}
-
-			if (wndX < 160) { // window doesnt have height, width
-				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
-				ry  = linenumber - WY;
-				rty = ry >> 3; // tile y
-				rsy = ry & 7;  // y offs
-				for (int x = Math.max(wndX, 0); x < 160; ++x) { // [wndX <= x < 160]
-					int rx = x - wndX; // [-8 < wndX < 160] && [wndX <= x < 160] => [0 <= rx < 167]
-					int rtx = rx >> 3; // tile x
-					int rsx = rx & 7;  // x offs
-
-					selectVRAMBank(0);	// should read directly form VRAM[][]? need to change all offsets
-					int TileNum = read(WindowTileMap + rtx + (rty*32)); // get number of current tile
-					if (TileData == 0x8800) {
-						TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
-						TileNum += 0x80;
-					}
-
-					selectVRAMBank(1);
-					int TileAttr = read(WindowTileMap + rtx + (rty*32)); // get attributes of current tile
-
-					if ((TileAttr&(1<<3))!=0) TileNum |= (1<<9);  // bank select
-					if ((TileAttr&(1<<5))!=0) TileNum |= (1<<10); // horiz flip
-					if ((TileAttr&(1<<6))!=0) TileNum |= (1<<11); // vert flip
-
-					int palnr = TileAttr & 7;
-
-					int col = patpix[TileNum][rsy][rsx];
-
-					drawPixel(x, linenumber, palnr | 0x08, col);
-				}
-			}
-
-			if((LCDC&(1<<1))!=0) { // sprites enabled
-				boolean spr8x16 = ((LCDC&(1<<2))!=0);
-
-				int sprOAM = 0xfe00;
-				int sprPat = 0x8000;
-
-				for (int spr = 0; spr < 40; ++spr) {
-					int sprY    = read(sprOAM + (spr*4) + 0);
-					int sprX    = read(sprOAM + (spr*4) + 1);
-					int sprNum  = read(sprOAM + (spr*4) + 2);
-					int sprAttr = read(sprOAM + (spr*4) + 3);
-					
-					int ofsY = linenumber - sprY + 16;
-
-					//check if sprite is visible on this scanline
-					if ((ofsY >= 0) && (ofsY < (spr8x16 ? 16 : 8))
-					&&  (sprX > 0) && (sprX < 168)) {
-						if ((sprAttr&(1<<6))!=0) ofsY = (spr8x16 ? 15 : 7) - ofsY;  // vert  flip
-						if (spr8x16) {
-							sprNum &= ~1;
-							sprNum |= (ofsY >= 8) ? 1 : 0;
-							ofsY &= 7;
-						}
-						for (int x = 0; x < 8; ++x) {
-							int ofsX = x;
-
-							if ((sprAttr&(1<<3))!=0) sprNum |= (1<<9);  // bank select
-							if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
-							//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
-
-							int palnr = sprAttr & 7;
-
-							int col = patpix[sprNum][ofsY][ofsX];
-					
-							int rx = sprX - 8 + x;
-							// 0 is transparent color
-							if((col != 0) && (rx >= 0) && (rx < 160)) {
-								drawPixel(rx, linenumber, palnr, col);
-							}
-						}
-					}
-				}
-			}
-		}
-		selectVRAMBank(prevrambank);
-	}
-
 	public boolean renderNextScanline() {
 		++LY;
 		if (LY >= 154)
@@ -332,7 +190,7 @@ public class VideoController {
 		}
 
 		if (LY < 144) {              // HBLANK
-			renderScanLine(LY);
+			renderScanLine(); // renders LY
 			STAT &= ~(3);              // mode=0
 			if ((STAT&(1<<3))!=0)      // if HBlank is enabled in STAT reg
 				cpu.triggerInterrupt(1); // request int STAT/HBlank
@@ -399,5 +257,159 @@ public class VideoController {
 	
 	public int getcurVRAMBank() {
 		return CurrentVRAMBank/0x2000;
+	}
+
+	/* rendering of scanline starts here */
+	// some global vars for render procedure
+	private int windX;
+	private int TileData;
+	private int BGTileMap;
+	private int WindowTileMap;
+
+	private void renderScanLine() {
+		/* FF40 - LCDC - LCD Control (R/W)
+		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
+		* Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+		* Bit 5 - Window Display Enable          (0=Off, 1=On)
+		* Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)
+		* Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)
+		* Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)
+		* Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
+		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
+		*/
+		if((LCDC&(1<<7))!=0) { //LCD enabled
+
+			updatepatpix();
+
+			TileData = ((LCDC&(1<<4))==0) ? 0x0800 : 0x0000;
+			BGTileMap = ((LCDC&(1<<3))==0) ? 0x1800 : 0x1c00;
+			WindowTileMap = ((LCDC&(1<<6))==0) ? 0x1800 : 0x1c00;
+
+			/* When Bit 0 is cleared, the background and window lose their priority - the sprites will be always
+			 * displayed on top of background and window, independently of the priority flags in OAM and BG Map
+			 * attributes.
+			 */
+			int BGPrio = (LCDC&(1<<0)); // ok dunno what exactly this does atm
+
+			windX = 160;
+			if(((LCDC&(1<<5))!=0)			 //window display enabled
+			&& (WX >= 0) && (WX < 167) // yes this is 160+7
+			&& (WY >= 0) && (WY < 144)
+			&& (LY >= WY))
+				windX = (WX - 7);         // [-8 < wndX < 160]
+
+			renderScanlineBG();
+
+			if (windX < 160) { // window doesnt have height, width
+				renderScanlineWindow();
+			}
+
+			if((LCDC&(1<<1))!=0) { // sprites enabled
+				renderScanlineSprites();
+			}
+		}
+	}
+
+	private void renderScanlineBG() {
+		int ry = (SCY+LY)&0xFF;
+		int rty = ry >> 3; // tile x
+		int rsy = ry & 7; // x offs
+		for (int x = 0; x < windX; ++x) { // dont draw bg where window starts
+			int rx = (SCX+x)&0xff; // it wraps, too
+			int rtx = rx >> 3; // tile x
+			int rsx = rx & 7; // x offs
+
+			int TileNum = VRAM[BGTileMap + rtx + (rty*32)]; // get number of current tile
+			if (TileData == 0x0800) {
+				TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
+				TileNum += 0x80;
+			}
+
+			// get attributes of current tile
+			int TileAttr = VRAM[0x2000 + BGTileMap + rtx + (rty*32)];
+
+			if ((TileAttr&(1<<3))!=0) TileNum |= (1<<9);  // bank select
+			if ((TileAttr&(1<<5))!=0) TileNum |= (1<<10); // horiz flip
+			if ((TileAttr&(1<<6))!=0) TileNum |= (1<<11); // vert flip
+
+			int palnr = TileAttr & 7;
+
+			int col = patpix[TileNum][rsy][rsx];
+
+			drawPixel(x, LY, palnr | 0x08, col);
+		}
+	}
+
+	private void renderScanlineWindow() {
+		int ry  = LY - WY;
+		int rty = ry >> 3; // tile y
+		int rsy = ry & 7;  // y offs
+		for (int x = Math.max(windX, 0); x < 160; ++x) { // [wndX <= x < 160]
+			int rx = x - windX; // [-8 < wndX < 160] && [wndX <= x < 160] => [0 <= rx < 167]
+			int rtx = rx >> 3; // tile x
+			int rsx = rx & 7;  // x offs
+
+			int TileNum = VRAM[WindowTileMap + rtx + (rty*32)]; // get number of current tile
+			if (TileData == 0x0800) {
+				TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
+				TileNum += 0x80;
+			}
+
+			int TileAttr = VRAM[0x2000 + WindowTileMap + rtx + (rty*32)]; // get attributes of current tile
+
+			if ((TileAttr&(1<<3))!=0) TileNum |= (1<<9);  // bank select
+			if ((TileAttr&(1<<5))!=0) TileNum |= (1<<10); // horiz flip
+			if ((TileAttr&(1<<6))!=0) TileNum |= (1<<11); // vert flip
+
+			int palnr = TileAttr & 7;
+
+			int col = patpix[TileNum][rsy][rsx];
+
+			drawPixel(x, LY, palnr | 0x08, col);
+		}
+	}
+
+	private void renderScanlineSprites() {
+		boolean spr8x16 = ((LCDC&(1<<2))!=0);
+
+		int sprOAM = 0xfe00;
+		int sprPat = 0x8000;
+
+		for (int spr = 0; spr < 40; ++spr) {
+			int sprY    = read(sprOAM + (spr*4) + 0);
+			int sprX    = read(sprOAM + (spr*4) + 1);
+			int sprNum  = read(sprOAM + (spr*4) + 2);
+			int sprAttr = read(sprOAM + (spr*4) + 3);
+
+			int ofsY = LY - sprY + 16;
+
+			//check if sprite is visible on this scanline
+			if ((ofsY >= 0) && (ofsY < (spr8x16 ? 16 : 8))
+			&&  (sprX > 0) && (sprX < 168)) {
+				if ((sprAttr&(1<<6))!=0) ofsY = (spr8x16 ? 15 : 7) - ofsY;  // vert  flip
+				if (spr8x16) {
+					sprNum &= ~1;
+					sprNum |= (ofsY >= 8) ? 1 : 0;
+					ofsY &= 7;
+				}
+				for (int x = 0; x < 8; ++x) {
+					int ofsX = x;
+
+					if ((sprAttr&(1<<3))!=0) sprNum |= (1<<9);  // bank select
+					if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
+					//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
+
+					int palnr = sprAttr & 7;
+
+					int col = patpix[sprNum][ofsY][ofsX];
+
+					int rx = sprX - 8 + x;
+					// 0 is transparent color
+					if((col != 0) && (rx >= 0) && (rx < 160)) {
+						drawPixel(rx, LY, palnr, col);
+					}
+				}
+			}
+		}
 	}
 }
