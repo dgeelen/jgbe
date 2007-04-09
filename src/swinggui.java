@@ -13,6 +13,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		protected VideoController VC;
 		protected Cartridge cartridge;
 		protected CPU cpu;
+		private int fps;
 
 		public class DrawingArea extends JPanel{
 			VideoController VC;
@@ -23,6 +24,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				g.drawImage(cpu.VC.getImage(),0,0, this);
+				++fps;
     	}
 		}
 
@@ -82,10 +84,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			contentPane.add( grfx, BorderLayout.CENTER );
 		}
 
+		JFrame frame;
+		
 		private void createAndShowGUI() {
 			JFrame.setDefaultLookAndFeelDecorated( true );
 
-			JFrame frame = new JFrame( "JGameBoy Emulator V0.01" );
+			frame = new JFrame( "JGameBoy Emulator V0.01" );
 			frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 			frame.setBounds( 60,60,100,100 );
 
@@ -99,10 +103,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		}
 
 		public void actionPerformed( ActionEvent e ) {
-			JMenuItem source = ( JMenuItem )( e.getSource() );
-			String s = "Menu Item source: " + source.getText()
-			           + " (an instance of " + getClassName( source ) + ")";
-			System.out.println( s );
+			//JMenuItem source = ( JMenuItem )( e.getSource() );
+			//String s = "Menu Item source: " + source.getText()
+			//           + " (an instance of " + getClassName( source ) + ")";
+			//System.out.println("timer!");
+			frame.setTitle("" + fps + " - JGameBoy Emulator V0.01");
+			fps = 0;
 		}
 
 		public void itemStateChanged( ItemEvent e ) {
@@ -205,6 +211,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			gui.createAndShowGUI();
 			gui.cpu.reset();
 			gui.cpu.VC.addListener(gui.grfx);
+
+			Timer timer = new Timer(1000, gui);
+			timer.setInitialDelay(1000);
+			timer.start(); 
 
 			/*DEBUGGER*/
 			final Debugger dbgr=new Debugger(gui); //The GUI to which this debugger belongs
