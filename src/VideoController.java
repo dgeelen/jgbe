@@ -50,20 +50,20 @@ public class VideoController {
 		drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 	}
 
-	public void addListener(JPanel panel)
+	final public void addListener(JPanel panel)
 	{
 		listener = panel; // only 1 listener at a time currently :-p
 	}
 
-	public Image getImage() {
+	final public Image getImage() {
 		return drawImg[curDrawImg]; // display image not being drawn to
 	}
 
-	private void drawPixel(int x, int y, int pal, int col) {
+	final private void drawPixel(int x, int y, int pal, int col) {
 		blitImg[x][y] = (pal << 2) | col;
 	}
 
-	private void blitImage() {
+	final private void blitImage() {
 		Graphics g = drawImg[curDrawImg^1].getGraphics();
 		for (int x = 0; x < 160; ++x) {
 			for (int y = 0; y < 144; ++y) {
@@ -76,7 +76,7 @@ public class VideoController {
 		curDrawImg ^= 1;
 	}
 
-	public void setBGColData(int value) {
+	final public void setBGColData(int value) {
 		BGPD[BGPI&0x3f] = value;
 
 		// calculate color now
@@ -102,11 +102,11 @@ public class VideoController {
 			++BGPI;
 	}
 
-	public int getBGColData() {
+	final public int getBGColData() {
 		return BGPD[BGPI&0x3f];
 	}
 
-	public void setOBColData(int value) {
+	final public void setOBColData(int value) {
 		OBPD[OBPI&0x3f] = value;
 
 		// calculate color now
@@ -128,7 +128,7 @@ public class VideoController {
 			++OBPI;
 	}
 
-	public int getOBColData() {
+	final public int getOBColData() {
 		return OBPD[OBPI&0x3f];
 	}
 
@@ -146,7 +146,7 @@ public class VideoController {
 	 *  patpix[2048..3072-1] hold patterns flipped y-wise
 	 *  patpix[3072..3072-1] hold patterns flipped x-wise and y-wise
 	 */
-	private void updatepatpix() {
+	final private void updatepatpix() {
 		if (!anydirty/* && !alldirty*/)
 			return;
 
@@ -177,7 +177,7 @@ public class VideoController {
 		//alldirty = false;
 	}
 
-	public boolean renderNextScanline() {
+	final public boolean renderNextScanline() {
 		++LY;
 		if (LY >= 154)
 			LY = 0;
@@ -209,7 +209,7 @@ public class VideoController {
 		return (LY == 144);
 	}
 
-	public int read(int index) {
+	final public int read(int index) {
 		if(index<0x8000) {
 			System.out.println("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
@@ -228,7 +228,7 @@ public class VideoController {
 		return VRAM[index+CurrentVRAMBank];
 	}
 
-	public void write(int index, int value) {
+	final public void write(int index, int value) {
 		if(index<0x8000) {
 			System.out.println("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
@@ -249,24 +249,31 @@ public class VideoController {
 		}
 	}
 
-	public void selectVRAMBank(int i) {
+	final public void selectVRAMBank(int i) {
 		CurrentVRAMBank=i*0x2000;
 		if ((i <0) || (i > 1))
 			System.out.printf("current offset=%x\n",CurrentVRAMBank);
 	}
 	
-	public int getcurVRAMBank() {
+	final public int getcurVRAMBank() {
 		return CurrentVRAMBank/0x2000;
 	}
 
 	/* rendering of scanline starts here */
 	// some global vars for render procedure
-	private int windX;
 	private int TileData;
 	private int BGTileMap;
 	private int WindowTileMap;
+	private int bgY;
+	private int bgTileY;
+	private int bgOffsY;
+	private int bgX;
+	private int bgTileX;
+	private int bgOffsX;
+	private int windX;
+	private int tilebufBG[] = new int[0x200]; // ? max here could be lower?
 
-	private void renderScanLine() {
+	final private void renderScanLine() {
 		/* FF40 - LCDC - LCD Control (R/W)
 		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
 		* Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
@@ -310,37 +317,67 @@ public class VideoController {
 		}
 	}
 
-	private void renderScanlineBG() {
-		int ry = (SCY+LY)&0xFF;
-		int rty = ry >> 3; // tile x
-		int rsy = ry & 7; // x offs
-		for (int x = 0; x < windX; ++x) { // dont draw bg where window starts
-			int rx = (SCX+x)&0xff; // it wraps, too
-			int rtx = rx >> 3; // tile x
-			int rsx = rx & 7; // x offs
+	final private void calcBGTileBuf() {
+		int tileMap = BGTileMap + bgTileX + (bgTileY*32);
+		int attrMap = tileMap + 0x2000;
+		int bufMap = 0;
+		int cnt = ((windX+7) >> 3) + 1;
 
-			int TileNum = VRAM[BGTileMap + rtx + (rty*32)]; // get number of current tile
+		for (int i = 0; i < cnt; ++i) {
+			int tile = VRAM[tileMap++];
+			int attr = VRAM[attrMap++];
 			if (TileData == 0x0800) {
-				TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
-				TileNum += 0x80;
+				tile ^= 0x80;
+				tile += 0x80;
 			}
-
-			// get attributes of current tile
-			int TileAttr = VRAM[0x2000 + BGTileMap + rtx + (rty*32)];
-
-			if ((TileAttr&(1<<3))!=0) TileNum |= (1<<9);  // bank select
-			if ((TileAttr&(1<<5))!=0) TileNum |= (1<<10); // horiz flip
-			if ((TileAttr&(1<<6))!=0) TileNum |= (1<<11); // vert flip
-
-			int palnr = TileAttr & 7;
-
-			int col = patpix[TileNum][rsy][rsx];
-
-			drawPixel(x, LY, palnr | 0x08, col);
+			tilebufBG[bufMap++] = tile |
+			 ((attr & 0x08) << 6) |      // bank select
+			 ((attr & 0x60) << 5);       // horiz/vert flip
+			tilebufBG[bufMap++] = attr&7;// pal select
+			if ((tileMap&31)==0) tileMap -= 32;
+			if ((attrMap&31)==0) attrMap -= 32;
 		}
+
 	}
 
-	private void renderScanlineWindow() {
+	final private void renderScanlineBG() {
+		int bufMap = 0;
+		bgY     = (SCY+LY)&0xFF;
+		bgTileY = bgY >> 3;
+		bgOffsY = bgY & 7;
+		bgX     = SCX; // it wraps, too
+		bgTileX = bgX >> 3; // tile x
+		bgOffsX = bgX & 7; // x offs
+
+		calcBGTileBuf();
+
+		int cnt = windX;
+
+		int TileNum = tilebufBG[bufMap++];
+		int TilePal = tilebufBG[bufMap++];
+		int curX = 0;
+
+		for (int t = bgOffsX; t < 8; ++t, --cnt)
+			//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
+			blitImg[curX++][LY] = (TilePal << 2) | 0x20 | patpix[TileNum][bgOffsY][t];
+
+		if (cnt == 0) return;
+
+		while (cnt>=8) {
+			TileNum = tilebufBG[bufMap++];
+			TilePal = tilebufBG[bufMap++];
+			for (int t = 0; t < 8; ++t, --cnt)
+				//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
+				blitImg[curX++][LY] = (TilePal << 2) | 0x20 | patpix[TileNum][bgOffsY][t];
+		}
+		TileNum = tilebufBG[bufMap++];
+		TilePal = tilebufBG[bufMap++];
+		for (int t = 0; cnt > 0; --cnt, ++t)
+			//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
+			blitImg[curX++][LY] = (TilePal << 2) | 0x20 | patpix[TileNum][bgOffsY][t];
+	}
+
+	final private void renderScanlineWindow() {
 		int ry  = LY - WY;
 		int rty = ry >> 3; // tile y
 		int rsy = ry & 7;  // y offs
@@ -369,17 +406,14 @@ public class VideoController {
 		}
 	}
 
-	private void renderScanlineSprites() {
+	final private void renderScanlineSprites() {
 		boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
-		int sprOAM = 0xfe00;
-		int sprPat = 0x8000;
-
 		for (int spr = 0; spr < 40; ++spr) {
-			int sprY    = read(sprOAM + (spr*4) + 0);
-			int sprX    = read(sprOAM + (spr*4) + 1);
-			int sprNum  = read(sprOAM + (spr*4) + 2);
-			int sprAttr = read(sprOAM + (spr*4) + 3);
+			int sprY    = OAM[(spr*4) + 0];
+			int sprX    = OAM[(spr*4) + 1];
+			int sprNum  = OAM[(spr*4) + 2];
+			int sprAttr = OAM[(spr*4) + 3];
 
 			int ofsY = LY - sprY + 16;
 
@@ -412,4 +446,4 @@ public class VideoController {
 			}
 		}
 	}
-}
+}                                                                                                     
