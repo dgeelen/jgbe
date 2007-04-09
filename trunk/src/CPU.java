@@ -59,7 +59,7 @@ public class CPU
 			reset();
 		}
 
-		protected int read(int index) {
+		final protected int read(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -188,7 +188,7 @@ public class CPU
 			return b;
 		}
 
-		private void write(int index, int value) {
+		final private void write(int index, int value) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -327,7 +327,7 @@ public class CPU
 			}
 		}
 
-		public void reset() {
+		final public void reset() {
 			//TODO: Switch to bank 0
 			PC = 0x100; //ROM Entry point on bank 0
 			//AF=$01B0
@@ -381,11 +381,11 @@ public class CPU
 			write(0xffff, 0x00); // [$FFFF] = $00   ; IE
 		}
 
-		protected int cycles() {
+		final protected int cycles() {
 			return TotalInstrCount;
 		}
 
-		protected void printCPUstatus() {
+		final protected void printCPUstatus() {
 			String flags = "";
 			flags += (( regs[FLAG_REG] & ZF_Mask ) == ZF_Mask )?"Z ":"z ";
 			flags += (( regs[FLAG_REG] & NF_Mask ) == NF_Mask )?"N ":"n ";
@@ -400,15 +400,15 @@ public class CPU
 			System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
 			System.out.println( "  "+deasm.disassemble( PC ) );
 		}
-		protected int readmem8b( int H, int L ) {
+		final protected int readmem8b( int H, int L ) {
 			return read(( regs[H]<<8 )|regs[L] );
 		}
 
-		protected void writemem8b( int H, int L, int val ) {
+		final protected void writemem8b( int H, int L, int val ) {
 			write(( regs[H]<<8 )|regs[L], val );
 		}
 
-		protected int checkInterrupts() { //handle interrupt priorities
+		final protected int checkInterrupts() { //handle interrupt priorities
 			if(IME) { // If interrupts enabled
 				int ir = IOP[0x0f]&IE; //First Requested interrupts
 				if((ir&(1<<0))!=0) { //VBlANK
@@ -440,18 +440,18 @@ public class CPU
 			return 0; // No interrupts to service
 		}
 
-		protected void interrupt(int i) { //execute interrupt #i
+		final protected void interrupt(int i) { //execute interrupt #i
 			System.out.println("INTERRUPT: " + i);
 			IME = false;
 			push(PC);
 			PC = i;
 		}
 
-		protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
+		final protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
 			IOP[0x0f] |= (1<<i);
 		}
 
-		protected int shla(int value) {
+		final protected int shla(int value) {
 			int res = value;
 			res <<= 1;
 			regs[F] = 0;
@@ -461,7 +461,7 @@ public class CPU
 			return res;
 		}
 
-		protected int shra(int value) {
+		final protected int shra(int value) {
 			int res = value;
 			res >>= 1;
 			regs[F] = 0;
@@ -471,7 +471,7 @@ public class CPU
 			return res;
 		}
 
-		protected int shrl(int value) {
+		final protected int shrl(int value) {
 			int res = value;
 			res >>= 1;
 			regs[F] = 0;
@@ -480,7 +480,7 @@ public class CPU
 			return res;
 		}
 
-		protected int rol(int value) {
+		final protected int rol(int value) {
 			int res = value;
 			res <<= 1;
 			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1 : 0;
@@ -491,7 +491,7 @@ public class CPU
 			return res;
 		}
 
-		protected int rolc(int value) {
+		final protected int rolc(int value) {
 			int res = value;
 			res <<= 1;
 			res |= (res > 0xff) ? 1 : 0;
@@ -502,7 +502,7 @@ public class CPU
 			return res;
 		}
 
-		protected int ror(int value) {
+		final protected int ror(int value) {
 			int res = value;
 			res >>= 1;
 			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1<<7 : 0;
@@ -513,7 +513,7 @@ public class CPU
 			return res;
 		}
 
-		protected int rorc(int value) {
+		final protected int rorc(int value) {
 			int res = value;
 			res >>= 1;
 			res |= ((value&1)==1) ? 1<<7 : 0;
@@ -524,7 +524,7 @@ public class CPU
 			return res;
 		}
 
-		protected void inc8b( int reg_index ) {
+		final protected void inc8b( int reg_index ) {
 			// Clear & Set HC
 			regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
 			regs[FLAG_REG] = regs[FLAG_REG] | (((( regs[reg_index] & 0xF ) + 1 ) & 0x10 ) << 1 );
@@ -540,7 +540,7 @@ public class CPU
 			regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
 		}
 
-		protected void dec8b( int reg_index ) {
+		final protected void dec8b( int reg_index ) {
 			// Clear & Set HC
 			regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
 			regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index] & 0xF )==0 )?HC_Mask:0 );
@@ -556,7 +556,7 @@ public class CPU
 			regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
 		}
 
-		protected void inc16b(int ri1, int ri2 ) {
+		final protected void inc16b(int ri1, int ri2 ) {
 			curcycles += 4; // 16-bit add takes time
 			// 16-bit inc/dec doesnt affect any flags
 			++regs[ri2];
@@ -567,7 +567,7 @@ public class CPU
 			}
 		}
 
-		protected void dec16b(int ri1, int ri2 ) {
+		final protected void dec16b(int ri1, int ri2 ) {
 			curcycles += 4; // 16-bit add takes time
 			// 16-bit inc/dec doesnt affect any flags
 			--regs[ri2];
@@ -578,7 +578,7 @@ public class CPU
 			}
 		}
 
-		protected void add8b( int dest, int val ) {
+		final protected void add8b( int dest, int val ) {
 			// Clear all flags (including ZF)
 			regs[FLAG_REG] = ( regs[FLAG_REG] & 0x00 );
 
@@ -598,7 +598,7 @@ public class CPU
 			regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
 		}
 
-		protected void sub8b( int dest, int val ) {
+		final protected void sub8b( int dest, int val ) {
 			// clear all flags except NF which is set
 			regs[FLAG_REG] = NF_Mask;
 
@@ -618,7 +618,7 @@ public class CPU
 			regs[FLAG_REG] |= regs[dest]==0 ? ZF_Mask : 0;
 		}
 
-		protected void add16bHL(int val1, int val2) {
+		final protected void add16bHL(int val1, int val2) {
 			curcycles += 4; // 16-bit add takes time
 			int fmask = regs[F] & ZF_Mask; // zero flag should be unaffected
 			add8b(L, val2);
@@ -629,64 +629,56 @@ public class CPU
 			regs[F] |= fmask;
 		}
 
-		protected void ld8b( int dest, int val ) {
+		final protected void ld8b( int dest, int val ) {
 			regs[dest] = val;
 		}
 
-		protected void cp( int val ) {
+		final protected void cp( int val ) {
 			int i= regs[A];
 			sub8b( A, val );
 			regs[A] = i;
 		}
 
-		protected void xor( int val ) {
+		final protected void xor( int val ) {
 			regs[F]=0;
 			regs[A]^=val;
 			regs[F]|=( regs[A]==0?ZF_Mask:0 );
 		}
 
-		protected void or( int val ) {
+		final protected void or( int val ) {
 			regs[F]=0;
 			regs[A]|=val;
 			regs[F]|=( regs[A]==0?ZF_Mask:0 );
 		}
 
-		protected void and( int val ) {
+		final protected void and( int val ) {
 			regs[F]=HC_Mask;
 			regs[A]&=val;
 			regs[F]|=( regs[A]==0?ZF_Mask:0 );
 		}
 
-		protected void JPnn() {
+		final protected void JPnn() {
 			int i=read( PC++ );
 			int j=read( PC++ );
 			//System.out.println( "i="+i+ " j="+j );
 			PC = j<<8|i; //Should be endian correct
 		}
 
-		protected void JRe( int e ) {
-			PC += e;
-		}
-
-		protected void sbc( int dest, int val ) {
+		final protected void sbc( int dest, int val ) {
 			sub8b( dest, val+(( regs[FLAG_REG]&CF_Mask ) >> CF_Shift ) );
 		}
 
-		protected void adc( int dest, int val ) {
+		final protected void adc( int dest, int val ) {
 			add8b( dest, val+(( regs[FLAG_REG]&CF_Mask ) >> CF_Shift ) );
 		}
 
-		protected void JRcce( boolean cc, int e ) {
-			if ( cc ) JRe( e );
-		}
-
-		protected void push( int val ) {
+		final protected void push( int val ) {
 			//Should be endian correct
 			write( --SP, ( val>>8 )&0xff );
 			write( --SP, val&0xff );
 		}
 
-		protected int pop() {
+		final protected int pop() {
 			//Should be endian correct
 			int l = read( SP++ );
 			int h = read( SP++ );
@@ -694,7 +686,7 @@ public class CPU
 		}
 
 		static int nopCount=0;
-		private int execute() {
+		final private int execute() {
 			curcycles = 0;
 			boolean nop=false;
 			//System.out.printf("Executing instruction $%02x\n", instr);
@@ -2552,7 +2544,7 @@ public class CPU
 			return curcycles;
 		}
 
-		public int nextinstruction() {
+		final public int nextinstruction() {
 			int res = execute();
 			lastException = (res!=0) ? 0 : 1;
 			if (res > 0)  {
@@ -2599,7 +2591,7 @@ public class CPU
 			return res;
 		}
 
-		protected int exception() {
+		final protected int exception() {
 			return lastException;
 		}
 
