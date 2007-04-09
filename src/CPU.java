@@ -103,7 +103,7 @@ public class CPU
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
 				//System.out.println("TODO: CPU.read(): Sprite Attribute Table");
-				b=VC.OAM[index&0xff];
+				b=VC.read(index);
 			}
 			else if(index < 0xff00) { //Not Usable
 				System.out.println("WARNING: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
