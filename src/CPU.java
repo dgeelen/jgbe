@@ -51,10 +51,12 @@ public class CPU
 		private int lastException=0;
 		private Disassembler deasm;
 		protected VideoController VC;
+		protected AudioController AC;
 
 		public CPU( Cartridge cartridge ) {
 			deasm = new Disassembler(this);
 			VC = new VideoController(this);
+			AC = new AudioController();
 			this.cartridge = cartridge;
 			reset();
 		}
@@ -128,6 +130,15 @@ public class CPU
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W)
 						b = IOP[0x0f];
+						break;
+					/* AUDIO IO PORTS */
+					case 0xff10: case 0xff11: case 0xff12: case 0xff13: case 0xff14: case 0xff15: case 0xff16: case 0xff17:
+					case 0xff18: case 0xff19: case 0xff1a: case 0xff1b: case 0xff1c: case 0xff1d: case 0xff1e: case 0xff1f:
+					case 0xff20: case 0xff21: case 0xff22: case 0xff23: case 0xff24: case 0xff25: case 0xff26: case 0xff27:
+					case 0xff28: case 0xff29: case 0xff2a: case 0xff2b: case 0xff2c: case 0xff2d: case 0xff2e: case 0xff2f:
+					case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34: case 0xff35: case 0xff36: case 0xff37:
+					case 0xff38: case 0xff39: case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
+						b = AC.read(index);
 						break;
 					case 0xff40: // LCDC register
 						b = VC.LCDC;
@@ -250,10 +261,15 @@ public class CPU
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
 						IOP[0x0f] = value;
 						break;
-					//case 0xff24: // FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
-					//case 0xff25: // FF25 - NR51 - Selection of Sound output terminal //(R/W)
-					//case 0xff26: // FF26 - NR52 - Sound on/off
-
+					/* AUDIO IO PORTS */
+					case 0xff10: case 0xff11: case 0xff12: case 0xff13: case 0xff14: case 0xff15: case 0xff16: case 0xff17:
+					case 0xff18: case 0xff19: case 0xff1a: case 0xff1b: case 0xff1c: case 0xff1d: case 0xff1e: case 0xff1f:
+					case 0xff20: case 0xff21: case 0xff22: case 0xff23: case 0xff24: case 0xff25: case 0xff26: case 0xff27:
+					case 0xff28: case 0xff29: case 0xff2a: case 0xff2b: case 0xff2c: case 0xff2d: case 0xff2e: case 0xff2f:
+					case 0xff30: case 0xff31: case 0xff32: case 0xff33: case 0xff34: case 0xff35: case 0xff36: case 0xff37:
+					case 0xff38: case 0xff39: case 0xff3a: case 0xff3b: case 0xff3c: case 0xff3d: case 0xff3e: case 0xff3f:
+						AC.write(index, value);
+						break;
 					case 0xff40: // LCDC register
 						VC.LCDC = value;
 						break;
@@ -320,7 +336,7 @@ public class CPU
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
 				//System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
 				IE=value; // Interrupt Enable Register
-				System.out.println("IE write: VBlank="+(IE&1)+" STAT="+((IE&2)>>1)+" Timer="+((IE&4)>>2)+" Serial="+((IE&8)>>3)+" Joypad="+((IE&16)>>4 ));
+				//System.out.println("IE write: VBlank="+(IE&1)+" STAT="+((IE&2)>>1)+" Timer="+((IE&4)>>2)+" Serial="+((IE&8)>>3)+" Joypad="+((IE&16)>>4 ));
 			}
 			else {
 				System.out.println("ERROR: CPU.write(): Out of range memory access: $"+index);
@@ -441,7 +457,7 @@ public class CPU
 		}
 
 		final protected void interrupt(int i) { //execute interrupt #i
-			System.out.println("INTERRUPT: " + i);
+			//System.out.println("INTERRUPT: " + i);
 			IME = false;
 			push(PC);
 			PC = i;
