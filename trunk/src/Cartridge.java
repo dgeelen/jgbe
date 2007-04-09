@@ -8,8 +8,10 @@ public class Cartridge {
 	// RAM/ROM
 	private int[][] RAM;               // RAM [banknr][index]
 	private int[][] ROM;               // ROM [banknr][index]
-	private int[][] mem_to_read = ROM; // The memory to read from
 
+	protected int[][] MM_ROM;
+	protected int[][] MM_RAM;
+	
 	private String  file_name;
 	private String  err_msg;            // message in case of an error
 
@@ -17,8 +19,8 @@ public class Cartridge {
 
 	private boolean ram_enabled = false;// Whether RAM is enabled to read and write
 	private boolean RTCRegisterEnabled=false;
-	private int     CurrentROMBank = 0;    // The ROM bank to read/write
-	private int     CurrentRAMBank = 0;    // The RAM bank to read/write
+	protected int     CurrentROMBank = 0;    // The ROM bank to read/write
+	protected int     CurrentRAMBank = 0;    // The RAM bank to read/write
 	private int     CurrentRTCRegister=0;
 
 	public Cartridge(String file_name) {
@@ -36,6 +38,7 @@ public class Cartridge {
 		}
 		catch (java.io.IOException e) {
 			System.out.println("error loading cartridge from file!: " + e.getMessage());
+			err_msg = e.getMessage();
 		}
 	}
 
@@ -52,7 +55,7 @@ public class Cartridge {
 	{
     int dotPos = fname.lastIndexOf(".");
     String fext = fname.substring(dotPos);
-		if ((fext.equals(".gb")) || (fext.equals(".cgb"))) {
+		if ((fext.equals(".gb")) || (fext.equals(".cgb")) || (fext.equals(".gbc")) ) {
 			// plain files
 			FileInputStream fistream = new FileInputStream(fname);
 			BufferedInputStream bistream = new BufferedInputStream(fistream);
@@ -122,10 +125,11 @@ public class Cartridge {
 
 		// Determine RAM size
 		switch(first_rom_bank[0x0149]) {
-			case 0x00: RAM = new int[1][0]; System.out.println("Card has no RAM"); break;
-			case 0x01: RAM = new int[0][2 * 1024]; System.out.println("Card has 2KBytes of RAM"); break;
-			case 0x02: RAM = new int[0][8 * 1024]; System.out.println("Card has 8Kbytes of RAM"); break;
+			case 0x00: RAM = new int[0][0]; System.out.println("Card has no RAM"); break;
+			case 0x01: RAM = new int[1][2 * 1024]; System.out.println("Card has 2KBytes of RAM"); break;
+			case 0x02: RAM = new int[1][8 * 1024]; System.out.println("Card has 8Kbytes of RAM"); break;
 			case 0x03: RAM = new int[4][8 * 1024]; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
+			case 0x04: RAM = new int[16][8 * 1024]; System.out.println("Card has 128 KBytes of RAM (16 banks of 8KBytes each)"); break;
 		} // switch(header[0x0149])
 
 		String title="";
@@ -148,8 +152,28 @@ public class Cartridge {
 		}
 		System.out.printf("\n");
 		
-		System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
+		//System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
+		initMemMap();
 		distream.close(); // lets be nice :-p
+	}
+
+	private final void initMemMap() {
+		MM_ROM = new int[ROM.length<<2][ROM_BANK_SIZE>>2];
+		for (int i = 0; i < ROM.length; ++i) {
+			for (int j = 0; j < ROM_BANK_SIZE; ++j) {
+				MM_ROM[(i*4)+(j>>12)][j&0x0FFF] = ROM[i][j];
+			}
+		}
+		if (RAM.length>0) {
+			MM_RAM = new int[RAM.length<<1][4 * 1024]; // little bit too much maybe
+			for (int i = 0; i < RAM.length; ++i) {
+				for (int j = 0; j < RAM[i].length; ++j) {
+					MM_RAM[(i*2)+(j>>12)][j&0x0FFF] = RAM[i][j];
+				}
+			}
+		} else {
+			MM_RAM = new int[1][]; // to prevent bound errors...
+		}
 	}
 
 	public int read(int index) {
@@ -285,7 +309,7 @@ public class Cartridge {
 				}
 				if((index>=0x4000)&&(index<0x6000)) { //4000-5FFF - RAM Bank Number
 					if (value < 0x10)
-						CurrentRAMBank=value;
+						CurrentRAMBank= value % RAM.length;
 				}
 				if((index>=0xa000) && (index<0xc000)){
 					RAM[CurrentRAMBank][index-0xa000] = value;
