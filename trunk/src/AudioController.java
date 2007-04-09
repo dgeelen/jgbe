@@ -42,7 +42,7 @@ public class AudioController {
 	private int audioBufferIndex;
 	private int IO[];
 	private final int sampleRate=22050;
-
+	private int cyclesLeftToRender;
 	public class SoundRegister {
 		// Shared by more than one
 		public int WaveDuty;
@@ -67,6 +67,11 @@ public class AudioController {
 		public boolean use15bitcounter;
 		public int DividingRatio;
 	}
+	private SoundRegister SR1;
+	private SoundRegister SR2;
+	private SoundRegister SR3;
+	private SoundRegister SR4;
+	//private SoundRegister SR5; //On cartridge, not used atm
 
 	public AudioController() {
 		try {
@@ -84,6 +89,27 @@ public class AudioController {
 		}
 		catch (Exception e) {
 				System.out.println("Error while opening sound output, sound will be unavailable ("+e+")");
+		}
+		cyclesLeftToRender=0;
+  	SR1=new SoundRegister();
+		SR2=new SoundRegister();
+		SR3=new SoundRegister();
+		SR4=new SoundRegister();
+	}
+	static byte bla=0;
+	public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
+		cyclesLeftToRender+=nrCycles;
+		float rate=(4194304/(float)sampleRate);
+		if(cyclesLeftToRender/rate >= 1.0) {
+			//DO SOMETHING CLEVER WITH ALL AUDIO REGISTERS
+
+			bla=(byte)(((int)bla)^cyclesLeftToRender);
+			audioBuffer[audioBufferIndex++]=(byte)(cyclesLeftToRender);
+			cyclesLeftToRender-=rate;
+		}
+		if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
+			audioSource.write(audioBuffer, 0, audioBufferIndex);
+			audioBufferIndex=0;
 			}
 	}
 
