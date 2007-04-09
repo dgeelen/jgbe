@@ -47,7 +47,7 @@ public class CPU
 		protected boolean IME=true; ///< Interrupt Master Enable
 		protected boolean halted=false;
 		//IO
-		public int DirectionKeyStatus=0; //bitmask
+		public int DirectionKeyStatus=0x0f; //bitmask
 		public int ButtonKeyStatus=0x3f; //bitmask
 		//CPU Class variables
 		private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
@@ -162,6 +162,10 @@ public class CPU
 							b|=ButtonKeyStatus;
 						}
 						break;
+					case 0xff01: // SB - Serial transfer data (R/W)
+					case 0xff02: // SC - Serial Transfer Control (R/W)
+						//yes fallthrough works here
+					//case 0xff03 ! dont break above ports
 					case 0xff04: // DIV
 					case 0xff05: // TIMA
 					case 0xff06: // TMA
@@ -197,6 +201,11 @@ public class CPU
 						break;
 					case 0xff45: // LYC
 						b = VC.LYC;
+						break;
+					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
+					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
+					case 0xff49: // OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
+						b = IOP[index-0xff00];
 						break;
 					case 0xff4a: // WY
 						b = VC.WY;
@@ -300,6 +309,24 @@ public class CPU
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
 						IOP[index&0xff]=value;
 						break;
+					case 0xff01: // SB - Serial transfer data (R/W)
+						IOP[0x01]=value;
+						break;
+					case 0xff02: // SC - Serial Transfer Control (R/W)
+						IOP[0x02]=value;
+						if ((value&(1<<7))!=0) {
+							// transfer! (we do it instantly...)
+							if ((value&(1<<0))!=0) {
+								// internal clock, this 'works' without other GB
+								IOP[0x01] = 0xFF; // 'works'
+								IOP[0x02] &= ~(1<<7); // 'transfer' finished
+								triggerInterrupt(3);
+							}
+							else {
+								// external clock, nothing will happen
+							}
+						}
+						break;
 					case 0xff04: // DIV
 						IOP[0x04] = 0;
 						break;
@@ -343,6 +370,12 @@ public class CPU
 							write(0xfe00|i, read(i+(value<<8)));
 						}
 						curcycles = 4; // apps usually (and SHOULD) wait for this themselves
+						break;
+					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
+					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
+					case 0xff49: // OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
+						IOP[index-0xff00] = value;
+						VC.setMonoColData(index-0xff47, value);
 						break;
 					case 0xff4a: // WY
 						VC.WY = value;

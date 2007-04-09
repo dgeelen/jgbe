@@ -29,18 +29,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		}
 
 		public swinggui() {
-			//cartridge = new Cartridge("../../roms/Pokemon Blue.zip");
-			cartridge = new Cartridge("Metal Slug.gb");
-			//cartridge = new Cartridge("tetris.gb");
-			if(cartridge.getError()!=null) {
-				System.out.println("ERROR: "+cartridge.getError());
-			}
-			else {
-				System.out.println("Succesfully loaded ROM :)");
-				cpu = new CPU(cartridge);
-				VC = cpu.VC;
-				TestSuite t = new TestSuite(cpu);
-			}
 		}
 
 		private JMenuBar createJMenuBar() {
@@ -123,7 +111,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		}
 
 		public void keyTyped(KeyEvent e) {
-			System.out.println("keyTyped");
+			//System.out.println("keyTyped");
 		}
 
 		public void keyPressed(KeyEvent e) {
@@ -207,6 +195,26 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
+
+			if (args.length == 0) {
+				System.out.println();
+				System.out.println("ERROR: missing argument");
+				System.out.println();
+				System.out.println("USAGE: java swinggui [ROMFILE]");
+				System.out.println();
+				return;
+			}
+			gui.cartridge = new Cartridge(args[0]);
+			if(gui.cartridge.getError()!=null) {
+				System.out.println("ERROR: "+gui.cartridge.getError());
+				return;
+			}
+			else {
+				System.out.println("Succesfully loaded ROM :)");
+				gui.cpu = new CPU(gui.cartridge);
+				gui.VC = gui.cpu.VC;
+				TestSuite t = new TestSuite(gui.cpu);
+			}
 
 			gui.createAndShowGUI();
 			gui.cpu.reset();
