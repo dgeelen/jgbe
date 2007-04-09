@@ -30,7 +30,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 
 		public swinggui() {
 			//cartridge = new Cartridge("../../roms/Pokemon Blue.zip");
-			cartridge = new Cartridge("../../roms/Metal Slug.zip");
+			cartridge = new Cartridge("Metal Slug.gb");
 			//cartridge = new Cartridge("tetris.gb");
 			if(cartridge.getError()!=null) {
 				System.out.println("ERROR: "+cartridge.getError());
@@ -85,7 +85,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 		}
 
 		JFrame frame;
-		
+
 		private void createAndShowGUI() {
 			JFrame.setDefaultLookAndFeelDecorated( true );
 
@@ -214,7 +214,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 
 			Timer timer = new Timer(1000, gui);
 			timer.setInitialDelay(1000);
-			timer.start(); 
+			timer.start();
 
 			/*DEBUGGER*/
 			final Debugger dbgr=new Debugger(gui); //The GUI to which this debugger belongs

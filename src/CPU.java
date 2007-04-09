@@ -81,7 +81,7 @@ public class CPU
 			rMemMap[0x6] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|2];
 			rMemMap[0x7] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|3];
 
-			// 0x8 // TODO: somehow fit VRAM in here, difficult cause its 
+			// 0x8 // TODO: somehow fit VRAM in here, difficult cause its
 			// 0x9 //       not in 0xFFF chunks (and VC doesnt want it that way)
 
 			// cartridge RAM (can be switchable)
@@ -271,7 +271,7 @@ public class CPU
 			}
 			else if(index < 0x8000) { //cartridge ROM
 				cartridge.write(index, value);
-				
+
 				refreshMemMap();
 			}
 			else if(index < 0xa000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
@@ -2647,10 +2647,14 @@ public class CPU
 					}
 				}
 
-				if (doublespeed)
+				if (doublespeed) {
 					VBLANKcntdwn -= res/2; // more instrs per vblank int
-			 	else 
+					AC.render(res>>1); //render enough sound bytes for res Cycles
+				}
+			 	else {
 					VBLANKcntdwn -= res;
+					AC.render(res); //render enough sound bytes for res Cycles
+				}
 				if (VBLANKcntdwn < 0) {
 					VBLANKcntdwn += 456;   // 4194304/9198
 					VC.renderNextScanline();
