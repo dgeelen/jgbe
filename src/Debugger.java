@@ -341,7 +341,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			if(s.charAt(0)=='g') {
 				if (runner.getStatus() == 1) {
 					runner.setStatus(2);
-					while (runner.getStatus() != 3) {};
+					while (runner.getStatus() == 2) {};
 				}
 			}
 			if(s.charAt(0)=='b') {
@@ -381,8 +381,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				parser.addVariable("F", oldRegVal[5]);
 				parser.addVariable("H", oldRegVal[6]);
 				parser.addVariable("L", oldRegVal[7]);
-				parser.addVariable("SP", oldRegVal[8]);
-				parser.addVariable("PC", oldRegVal[9]);
+				parser.addVariable("PC", oldRegVal[8]);
+				parser.addVariable("SP", oldRegVal[9]);
 				parser.addVariable("HL", oldRegVal[7]|(oldRegVal[6]<<8));
 				int v = parser.Evaluate(s.substring(i+1).trim());
 				if(!parser.parseError) {

@@ -59,6 +59,40 @@ public class CPU
 			AC = new AudioController();
 			this.cartridge = cartridge;
 			reset();
+			refreshMemMap();
+		}
+
+		final private int[][] rMemMap = new int[0x10][];
+		final private int[][] wMemMap = new int[0x10][];
+
+		final private void refreshMemMap() {
+			// cartridge ROM bank 0 (read only, write has special functions)
+			rMemMap[0x0] = cartridge.MM_ROM[0];
+			rMemMap[0x1] = cartridge.MM_ROM[1];
+			rMemMap[0x2] = cartridge.MM_ROM[2];
+			rMemMap[0x3] = cartridge.MM_ROM[3];
+
+			// cartridge ROM switchable bank (read only, write has special functions)
+			rMemMap[0x4] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|0];
+			rMemMap[0x5] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|1];
+			rMemMap[0x6] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|2];
+			rMemMap[0x7] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|3];
+
+			// 0x8 // TODO: somehow fit VRAM in here, difficult cause its 
+			// 0x9 //       not in 0xFFF chunks (and VC doesnt want it that way)
+
+			// cartridge RAM (can be switchable)
+			rMemMap[0xA] = wMemMap[0xA] = cartridge.MM_RAM[(cartridge.CurrentRAMBank<<1)|0];
+			rMemMap[0xB] = wMemMap[0xB] = cartridge.MM_RAM[(cartridge.CurrentRAMBank<<1)|1];
+
+			// WRAM, bank 0 and a switchable bank
+			rMemMap[0xC] = wMemMap[0xC] = WRAM[0];
+			rMemMap[0xD] = wMemMap[0xD] = WRAM[CurrentWRAMBank];
+
+			// echo..
+			rMemMap[0xE] = wMemMap[0xE] = rMemMap[0xC];
+
+			// 0xF // lots of special stuff here...
 		}
 
 		final protected int read(int index) {
@@ -77,6 +111,9 @@ public class CPU
 			 * FFFF        Interrupt Enable Register
 			 */
 			curcycles+=4;
+			int mmi=index>>12;
+			if (rMemMap[mmi]!=null)
+				return rMemMap[mmi][index&0x0FFF];
 			int b=0; // b==byte read
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
@@ -88,10 +125,10 @@ public class CPU
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
 				b=cartridge.read(index);
 			}
-			else if(index < 0xA000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+			else if(index < 0xa000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
 				b=VC.read(index);
 			}
-			else if(index < 0xC000) { //8KB External RAM     (in cartridge, switchable bank, if any)
+			else if(index < 0xc000) { //8KB External RAM     (in cartridge, switchable bank, if any)
 				b=cartridge.read(index);
 			}
 			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
@@ -179,6 +216,9 @@ public class CPU
 					case 0xff6b: // OBPD
 						b = VC.getOBColData();
 						break;
+					case 0xff70: // SVBK - CGB Mode Only - WRAM Bank
+						b = CurrentWRAMBank;
+						break;
 					default:
 						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
 						break;
@@ -215,14 +255,18 @@ public class CPU
 			 * FFFF        Interrupt Enable Register
 			 */
 			curcycles+=4;
+			int mmi=index>>12;
+			if (wMemMap[mmi]!=null) {
+				wMemMap[mmi][index&0x0FFF] = value;
+				return;
+			}
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.write(): No negative addresses in GameBoy memorymap.");
 			}
-			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+			else if(index < 0x8000) { //cartridge ROM
 				cartridge.write(index, value);
-			}
-			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
-				cartridge.write(index, value);
+				
+				refreshMemMap();
 			}
 			else if(index < 0xa000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
 				VC.write(index, value);
@@ -324,6 +368,7 @@ public class CPU
 						break;
 					case 0xff70: //FF70 - SVBK - CGB Mode Only - WRAM Bank
 						CurrentWRAMBank=Math.max(value&0x07, 1);
+						refreshMemMap();
 						break;
 					default:
 						System.out.printf("TODO: CPU.write(): Write to IO port $%04x\n",index);
@@ -712,6 +757,7 @@ public class CPU
 			}
 			if (halted) return 4;
 			int instr = read(PC++);
+
 			switch ( instr ) {
 				case 0x00:  // NOP
 					nop=true;
@@ -766,7 +812,7 @@ public class CPU
 					// pretend stop==halt
 					if ((IE==0) || (!IME))
 						System.out.println("PANIC: we will never unhalt!!!\n");
-					halted = true;
+					//halted = true;
 					break;
 				case 0x11: // LD DE, nn
 					regs[E] = read( PC++ );
