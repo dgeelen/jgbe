@@ -82,6 +82,14 @@ public class VideoController {
 		curDrawImg ^= 1;
 	}
 
+	final public void setMonoColData(int index, int value) {
+		// index = 0 -> FF47 - BGP - BG Palette Data (R/W) - Non CGB Mode Only
+		// index = 1 -> FF48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
+		// index = 2 -> FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
+
+		// TODO: do something here...
+	}
+
 	final public void setBGColData(int value) {
 		BGPD[BGPI&0x3f] = value;
 
