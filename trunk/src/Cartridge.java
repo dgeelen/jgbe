@@ -137,13 +137,16 @@ public class Cartridge {
 		// load entire ROM/RAM into memory
 			
 		System.out.println("Trying to load "+ROM.length+" banks from ROM");
+		System.out.printf("loading");
 		for(int j = 0; j < ROM_BANK_SIZE; j++)
 			ROM[0][j] = first_rom_bank[j];
 		for(int i = 1; i < ROM.length; i++) {
 			for(int j = 0; j < ROM_BANK_SIZE; j++) {
 				ROM[i][j] = distream.readUnsignedByte();
 			}
+			System.out.printf(".");
 		}
+		System.out.printf("\n");
 		
 		System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
 		distream.close(); // lets be nice :-p
