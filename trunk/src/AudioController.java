@@ -1,40 +1,128 @@
 import javax.sound.sampled.*;
-
+// Sound IO ports:
+// FF10 - NR10 - Channel 1 Sweep register (R/W)
+// FF11 - NR11 - Channel 1 Sound length/Wave pattern duty (R/W)
+// FF12 - NR12 - Channel 1 Volume Envelope (R/W)
+// FF13 - NR13 - Channel 1 Frequency lo (Write Only)
+// FF14 - NR14 - Channel 1 Frequency hi (R/W)
+// FF15 - ???
+// FF16 - NR21 - Channel 2 Sound Length/Wave Pattern Duty (R/W)
+// FF17 - NR22 - Channel 2 Volume Envelope (R/W)
+// FF18 - NR23 - Channel 2 Frequency lo data (W)
+// FF19 - NR24 - Channel 2 Frequency hi data (R/W)
+// FF1A - NR30 - Channel 3 Sound on/off (R/W)
+// FF1B - NR31 - Channel 3 Sound Length
+// FF1C - NR32 - Channel 3 Select output level (R/W)
+// FF1D - NR33 - Channel 3 Frequency's lower data (W)
+// FF1E - NR34 - Channel 3 Frequency's higher data (R/W)
+// FF1F - ???
+// FF20 - NR41 - Channel 4 Sound Length (R/W)
+// FF21 - NR42 - Channel 4 Volume Envelope (R/W)
+// FF22 - NR43 - Channel 4 Polynomial Counter (R/W)
+// FF23 - NR44 - Channel 4 Counter/consecutive; Inital (R/W)
+// FF24 - NR50 - Channel control / ON-OFF / Volume (R/W)
+// FF25 - NR51 - Selection of Sound output terminal (R/W)
+// FF26 - NR52 - Sound on/off
+// FF27 - ???
+// FF28 - ???
+// FF29 - ???
+// FF2A - ???
+// FF2B - ???
+// FF2C - ???
+// FF2D - ???
+// FF2E - ???
+// FF2F - ???
+// FF30-FF3F - Wave Pattern RAM
 public class AudioController {
+	private boolean isEnabled=true;
+	private AudioFormat myAudioFormat;
+	private DataLine.Info myLineInfo;
+	private SourceDataLine audioSource;
+	private byte audioBuffer[];
+	private int audioBufferIndex;
+	private int IO[];
+	private final int sampleRate=22050;
 
-	public static void main(String[] args) {
-		int seconds = 2;
-		int sampleRate = 22050;
-		double frequency = 1000.0;
-		double RAD = 2.0 * Math.PI;
+	public class SoundRegister {
+		// Shared by more than one
+		public int WaveDuty;
+		public int SoundLength;
+		public boolean UseSoundLength;
+		public int EnvelopeVolume;
+		public int EnvelopeDirection;
+		public int EnvelopeSweepCount;
+		public boolean Consecutive;
+		public int Frequency;
+		// S01 specific
+		// Sweep
+		public int SweepTime;
+		public int SweepDir;
+		public int ShiftCount;
+		// S02 specific
+		// S03 specific
+		public boolean Enabled;
+		public int OutputLevel; // ShiftCount
+		// S04 specific //meh, check this later
+		public int ShiftFrequency;
+		public boolean use15bitcounter;
+		public int DividingRatio;
+	}
+
+	public AudioController() {
 		try {
-			AudioFormat af = new AudioFormat((float)sampleRate,8,1,true,true);
-			DataLine.Info info = new DataLine.Info(SourceDataLine.class,af);
-			SourceDataLine source = (SourceDataLine)AudioSystem.getLine(info);
-			source.open(af);
-			source.start();
-			byte[] buf = new byte[sampleRate * seconds];
-/*			for (int i=0; i<buf.length; i++) {
-			buf[i] = (byte)(Math.sin(RAD*frequency/sampleRate*i)*127.0);
-	//                System.out.println(buf[i]);
-			} */
-			int x=0x11;
-			int y=0x11;
-			int z=0x11;
-			while(true) {
-				x=y^z;
-				z=(y+z)&0xff;
-				y=(x<<2)^(x>>2);
-				buf[0]=(byte)(x>127?0:127);
-				source.write(buf,0,1);
-				}
+			myAudioFormat = new AudioFormat((float)sampleRate,8,1,true,true);
+			myLineInfo = new DataLine.Info(SourceDataLine.class,myAudioFormat);
+			audioSource = (SourceDataLine)AudioSystem.getLine(myLineInfo);
+			audioSource.open(myAudioFormat);
+			audioSource.start();
+			audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
+			int audioBufferIndex=0;
+			IO = new int[0x30];
 /*			source.drain();
 			source.stop();
 			source.close(); */
 		}
 		catch (Exception e) {
-				System.out.println(e);
+				System.out.println("Error while opening sound output, sound will be unavailable ("+e+")");
 			}
-		System.exit(0);
+	}
+
+	public int read(int index) {
+		int i=(index&0xff)-0x10;
+		if((i<0)||(i>0x3f)) {
+			System.out.println("SoundController: Error: reading from non sound-address:"+index);
+			return -1;
+			}
+		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
+			System.out.println("Sound disabled: Reads are undefined!");
+			return 0;
+		}
+		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
+			System.out.println("Warning: read from unknown IO address, acting as normal RAM...");
+		}
+		return IO[i];
+	}
+
+	public void write(int index, int value) {
+		int i=(index&0xff)-0x10;
+		if((i<0)||(i>0x3f)) {
+			System.out.println("SoundController: Error: writing to non sound-address:"+index);
+			return;
+			}
+		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
+			System.out.println("Sound disabled: Writes are undefined!");
+		}
+		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
+			System.out.println("Warning: writing to unknown IO address, acting as normal RAM...");
+		}
+		switch(i) {
+			case 0x00: // FF10 - NR10 - Channel 1 Sweep register (R/W)
+
+			case 0x01: // FF11 - NR11 - Channel 1 Sound length/Wave pattern duty (R/W)
+			case 0x02: // FF12 - NR12 - Channel 1 Volume Envelope (R/W)
+			case 0x03: // FF13 - NR13 - Channel 1 Frequency lo (Write Only)
+			case 0x04: // FF14 - NR14 - Channel 1 Frequency hi (R/W)
+		}
+		IO[i]=value;
 	}
 }
