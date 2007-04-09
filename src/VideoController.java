@@ -4,8 +4,10 @@ import java.awt.image.BufferedImage;
 
 public class VideoController {
 	private JPanel listener = null;
-	private Image[] img;
-	private int img_draw=0; // which_img_to_draw_for_double_buffering=0;
+	private Image drawImg[];
+	private int curDrawImg = 0;
+	private int blitImg[][];
+
 	private int VRAM[][];
 	private int CurrentVRAMBank=0;
 	protected int OAM[];
@@ -20,11 +22,10 @@ public class VideoController {
 	
 	protected int BGPI=0;    //BCPS/BGPI - CGB Mode Only - Background Palette Index
 	private int BGPD[];      //BCPD/BGPD - CGB Mode Only - Background Palette Data
-	private Color BGPC[][];
+	private Color Colors[];
 
 	protected int OBPI=0;    //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
 	private int OBPD[];      //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
-	private Color OBPC[][];
 
 
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
@@ -35,9 +36,8 @@ public class VideoController {
 		OAM = new int[0xa0]; //Sprite Attribute Table
 
 		BGPD = new int[8*4*2];
-		BGPC = new Color[8][4];
 		OBPD = new int[8*4*2];
-		OBPC = new Color[8][4];
+		Colors = new Color[8*4*2];
 
 		this.cpu = cpu;
 		Gray = new Color[4];
@@ -45,18 +45,36 @@ public class VideoController {
 		Gray[1]=new Color(64,64,64);
 		Gray[2]=new Color(128,128,128);
 		Gray[3]=new Color(192,192,192);
-		img=new Image[2];
-		img[0] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-		img[1] = new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+		drawImg=new Image[2];
+		drawImg[0]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+		drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
+		blitImg=new int[160][144];
 	}
 
 	public void addListener(JPanel panel)
 	{
 		listener = panel; // only 1 listener at a time currently :-p
 	}
-	
+
 	public Image getImage() {
-		return img[img_draw^1]; // display image not being drawn to
+		return drawImg[curDrawImg]; // display image not being drawn to
+	}
+
+	private void drawPixel(int x, int y, int pal, int col) {
+		blitImg[x][y] = (pal << 2) | col;
+	}
+
+	private void blitImage() {
+		Graphics g = drawImg[curDrawImg^1].getGraphics();
+		for (int x = 0; x < 160; ++x) {
+			for (int y = 0; y < 144; ++y) {
+				int col = blitImg[x][y];
+				if ((col >= 0) && (col < (8*4*2)))
+					g.setColor(Colors[col]);
+				g.drawRect(x, y, 0, 0);
+			}
+		}
+		curDrawImg ^= 1;
 	}
 
 	public void setBGColData(int value) {
@@ -71,7 +89,7 @@ public class VideoController {
 		int g = (data >>  5) & 0x1F;
 		int b = (data >> 10) & 0x1F;
 
-		BGPC[palnum][colnum] = new Color(r<<3, g<<3, b<<3); // TODO gb->vga rgb conv
+		Colors[(palnum << 2) | colnum | 0x20] = new Color(r<<3, g<<3, b<<3); // TODO gb->vga rgb conv
 
 		if ((BGPI&(1<<7))!=0)
 			++BGPI;
@@ -93,7 +111,7 @@ public class VideoController {
 		int g = (data >>  5) & 0x1F;
 		int b = (data >> 10) & 0x1F;
 
-		OBPC[palnum][colnum] = new Color(r<<3, g<<3, b<<3); // TODO gb->vga rgb conv
+		Colors[(palnum << 2) | colnum] = new Color(r<<3, g<<3, b<<3); // TODO gb->vga rgb conv
 
 		if ((OBPI&(1<<7))!=0)
 			++OBPI;
@@ -114,7 +132,6 @@ public class VideoController {
 		* Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
-		Graphics g = img[img_draw].getGraphics();
 		int prevrambank = CurrentVRAMBank;
 		if((LCDC&(1<<7))!=0) { //LCD enabled
 			//System.out.println("rendering scanline");
@@ -128,10 +145,17 @@ public class VideoController {
 			 */
 			int BGPrio = (LCDC&(1<<0)); // ok dunno what exactly this does atm
 
+			int wndX = 160;
+			if(((LCDC&(1<<5))!=0)			 //window display enabled
+			&& (WX >= 0) && (WX < 167) // yes this is 160+7
+			&& (WY >= 0) && (WY < 144)
+			&& (linenumber >= WY))
+				wndX = (WX - 7);         // [-8 < wndX < 160]
+
 			int ry = (SCY+linenumber)&0xFF;
 			int rty = ry >> 3; // tile x
 			int rsy = ry & 7; // x offs
-			for (int x = 0; x < 160; ++x) {
+			for (int x = 0; x < wndX; ++x) { // dont draw bg where window starts
 				int rx = (SCX+x)&0xff; // it wraps, too
 				int rtx = rx >> 3; // tile x
 				int rsx = rx & 7; // x offs
@@ -152,46 +176,38 @@ public class VideoController {
 				int d1 = read(TileData + offset);     // lsb bit of col is in here
 				int d2 = read(TileData + offset + 1); // msb bit of col is in here
 				int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
-				
-				g.setColor(BGPC[palnr][col]);
-				g.drawRect(x, linenumber, 0, 0);
+
+				drawPixel(x, linenumber, palnr | 0x08, col);
 			}
 
-			if(((LCDC&(1<<5))!=0)			 //window display enabled
-			&& (WX >= 0) && (WX < 167) // yes this is 160+7
-			&& (WY >= 0) && (WY < 144)){
+			if (wndX < 160) { // window doesnt have height, width
 				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x9800 : 0x9c00;
-				if (linenumber >= WY) { // does window have height, width? doest seem so...
-					ry  = linenumber - WY;
-					rty = ry >> 3; // tile y
-					rsy = ry & 7;  // y offs
-					for (int x = (WX - 7); x < 160; ++x) {
-						int rx = x - (WX - 7); // no wrapping here?
-						if (x >= 0) { // bound correct?
-							int rtx = rx >> 3; // tile x
-							int rsx = rx & 7; // x offs
+				ry  = linenumber - WY;
+				rty = ry >> 3; // tile y
+				rsy = ry & 7;  // y offs
+				for (int x = Math.max(wndX, 0); x < 160; ++x) { // [wndX <= x < 160]
+					int rx = x - wndX; // [-8 < wndX < 160] && [wndX <= x < 160] => [0 <= rx < 167]
+					int rtx = rx >> 3; // tile x
+					int rsx = rx & 7;  // x offs
 
-							selectVRAMBank(0);	// should read directly form VRAM[][]? need to change all offsets
-							int TileNum = read(WindowTileMap + rtx + (rty*32)); // get number of current tile
-							if (TileData == 0x8800)
-								TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
+					selectVRAMBank(0);	// should read directly form VRAM[][]? need to change all offsets
+					int TileNum = read(WindowTileMap + rtx + (rty*32)); // get number of current tile
+					if (TileData == 0x8800)
+						TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
 
-							selectVRAMBank(1);
-							int TileAttr = read(WindowTileMap + rtx + (rty*32)); // get attributes of current tile
-							selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
-							if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip
-							if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
-							int palnr = TileAttr & 7;
+					selectVRAMBank(1);
+					int TileAttr = read(WindowTileMap + rtx + (rty*32)); // get attributes of current tile
+					selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
+					if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip
+					if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
+					int palnr = TileAttr & 7;
 
-							int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
-							int d1 = read(TileData + offset);     // lsb bit of col is in here
-							int d2 = read(TileData + offset + 1); // msb bit of col is in here
-							int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
+					int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
+					int d1 = read(TileData + offset);     // lsb bit of col is in here
+					int d2 = read(TileData + offset + 1); // msb bit of col is in here
+					int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
 
-							g.setColor(BGPC[palnr][col]);
-							g.drawRect(x, linenumber, 0, 0);
-						}
-					}
+					drawPixel(x, linenumber, palnr | 0x08, col);
 				}
 			}
 
@@ -230,9 +246,10 @@ public class VideoController {
 							int d2 = read(sprPat + offset + 1); // msb bit of col is in here
 							int col = ((d1>>(7-ofsX))&1) + (((d2>>(7-ofsX))&1)<<1);
 
-							if (col != 0) { // 0 is transparent color
-								g.setColor(OBPC[palnr][col]);
-								g.drawRect(sprX - 8 + x, linenumber, 0, 0);
+							int rx = sprX - 8 + x;
+							// 0 is transparent color
+							if((col != 0) && (rx >= 0) && (rx < 160)) {
+								drawPixel(rx, linenumber, palnr, col);
 							}
 						}
 					}
@@ -262,7 +279,7 @@ public class VideoController {
 		}
 
 		if (LY == 144) {             // VBLANK
-			img_draw ^= 1;
+			blitImage();
 			if (listener != null) listener.updateUI();
 			STAT &= ~(3);
 			STAT |= 1;                 // mode=1
