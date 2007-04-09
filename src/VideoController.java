@@ -252,20 +252,21 @@ public class VideoController {
 
 					selectVRAMBank(0);	// should read directly form VRAM[][]? need to change all offsets
 					int TileNum = read(WindowTileMap + rtx + (rty*32)); // get number of current tile
-					if (TileData == 0x8800)
+					if (TileData == 0x8800) {
 						TileNum ^= 0x80; // this should do: -128 -> 0 ; 0 -> 128 ; -1 -> 127 ; 1 -> 129 ; 127 -> 255
+						TileNum += 0x80;
+					}
 
 					selectVRAMBank(1);
 					int TileAttr = read(WindowTileMap + rtx + (rty*32)); // get attributes of current tile
-					selectVRAMBank((TileAttr>>3)&1);          // vram bank nr
-					if ((TileAttr&(1<<5))!=0) rsx = 7 - rsx;  // horiz flip
-					if ((TileAttr&(1<<6))!=0) rsy = 7 - rsy;  // vert  flip
+
+					if ((TileAttr&(1<<3))!=0) TileNum |= (1<<9);  // bank select
+					if ((TileAttr&(1<<5))!=0) TileNum |= (1<<10); // horiz flip
+					if ((TileAttr&(1<<6))!=0) TileNum |= (1<<11); // vert flip
+
 					int palnr = TileAttr & 7;
 
-					int offset = (TileNum*16) + (rsy*2); // start with offset that describes that tile, and our line
-					int d1 = read(TileData + offset);     // lsb bit of col is in here
-					int d2 = read(TileData + offset + 1); // msb bit of col is in here
-					int col = ((d1>>(7-rsx))&1) + (((d2>>(7-rsx))&1)<<1);
+					int col = patpix[TileNum][rsy][rsx];
 
 					drawPixel(x, linenumber, palnr | 0x08, col);
 				}
@@ -296,16 +297,15 @@ public class VideoController {
 						}
 						for (int x = 0; x < 8; ++x) {
 							int ofsX = x;
-							if ((sprAttr&(1<<5))!=0) ofsX = 7 - ofsX;  // horiz flip
 
-							selectVRAMBank((sprAttr>>3)&1);          // vram bank nr
+							if ((sprAttr&(1<<3))!=0) sprNum |= (1<<9);  // bank select
+							if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
+							//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
+
 							int palnr = sprAttr & 7;
 
-							int offset = (sprNum*16) + (ofsY*2); // start with offset that describes that tile, and our line
-							int d1 = read(sprPat + offset);     // lsb bit of col is in here
-							int d2 = read(sprPat + offset + 1); // msb bit of col is in here
-							int col = ((d1>>(7-ofsX))&1) + (((d2>>(7-ofsX))&1)<<1);
-
+							int col = patpix[sprNum][ofsY][ofsX];
+					
 							int rx = sprX - 8 + x;
 							// 0 is transparent color
 							if((col != 0) && (rx >= 0) && (rx < 160)) {
