@@ -172,7 +172,7 @@ public class Cartridge {
 				}
 			}
 		} else {
-			MM_RAM = new int[1][]; // to prevent bound errors...
+			MM_RAM = new int[2][]; // to prevent bound errors...
 		}
 	}
 
