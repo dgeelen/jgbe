@@ -57,16 +57,21 @@ public class CPU
 		protected AudioController AC;
 
 		public CPU( Cartridge cartridge ) {
+			this.cartridge = cartridge;
 			deasm = new Disassembler(this);
 			VC = new VideoController(this);
 			AC = new AudioController();
-			this.cartridge = cartridge;
 			reset();
 			refreshMemMap();
 		}
 
 		final private int[][] rMemMap = new int[0x10][];
 		final private int[][] wMemMap = new int[0x10][];
+
+		public boolean isCGB() {
+			System.out.println("[0x0143] = " + read(0x0143));
+			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
+		}
 
 		final private void refreshMemMap() {
 			// cartridge ROM bank 0 (read only, write has special functions)
@@ -123,6 +128,7 @@ public class CPU
 				b=-1;
 			}
 			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+				System.out.println("Cartridge: " + cartridge);
 				b=cartridge.read(index);
 			}
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
