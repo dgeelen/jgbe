@@ -643,6 +643,50 @@ public class AudioController {
 		RATE = (1<<21) / sampleRate;
 	}
 
+	void s1_init() {
+		S1.swcnt = 0;
+		S1.swfreq = ((IO[0x04]&7)<<8) + IO[0x03];
+		S1.envol = IO[0x02] >> 4;
+		S1.endir = (IO[0x02]>>3) & 1;
+		S1.endir |= S1.endir - 1;
+		S1.enlen = (IO[0x02] & 7) << 15;
+		if (S1.on==0) S1.pos = 0;
+		S1.on = 1;
+		S1.cnt = 0;
+		S1.encnt = 0;
+	}
+
+	void s2_init() {
+		S2.envol = IO[0x07] >> 4;
+		S2.endir = (IO[0x07]>>3) & 1;
+		S2.endir |= S2.endir - 1;
+		S2.enlen = (IO[0x07] & 7) << 15;
+		if (S2.on==0) S2.pos = 0;
+		S2.on = 1;
+		S2.cnt = 0;
+		S2.encnt = 0;
+	}
+
+	void s3_init() {
+		int i;
+		if (S3.on==0) S3.pos = 0;
+		S3.cnt = 0;
+		S3.on = IO[0x0a] >> 7;
+		if (S3.on) for (i = 0; i < 16; i++)
+			IO[i+0x20] = 0x13 ^ IO[i+0x21];
+	}
+
+	void s4_init() {
+		S4.envol = IO[0x11] >> 4;
+		S4.endir = (IO[0x11]>>3) & 1;
+		S4.endir |= S4.endir - 1;
+		S4.enlen = (IO[0x11] & 7) << 15;
+		S4.on = 1;
+		S4.pos = 0;
+		S4.cnt = 0;
+		S4.encnt = 0;
+	}
+
 	final private void s1_freq_d(int d) {
 		if (RATE > (d<<4)) S1.freq = 0;
 		else S1.freq = (RATE << 17)/d;
@@ -769,6 +813,7 @@ public class AudioController {
 				s <<= 2;
 				if ((IO[0x15] & 1)!=0) r += s;
 				if ((IO[0x15] & 16)!=0) l += s;
+				System.out.println("S1 l="+l+" r="+r);
 			}
 
 			if (S2.on!=0)
@@ -787,6 +832,7 @@ public class AudioController {
 				s <<= 2;
 				if ((IO[0x15] & 2)!=0) r += s;
 				if ((IO[0x15] & 32)!=0) l += s;
+				System.out.println("S2 l="+l+" r="+r);
 			}
 
 			if (S3.on!=0)
@@ -802,6 +848,7 @@ public class AudioController {
 				else s = 0;
 				if ((IO[0x15] & 4)!=0) r += s;
 				if ((IO[0x15] & 64)!=0) l += s;
+				System.out.println("S3 l="+l+" r="+r);
 			}
 
 			if (S4.on!=0)
@@ -824,6 +871,7 @@ public class AudioController {
 				s += s << 1;
 				if ((IO[0x15] & 8)!=0) r += s;
 				if ((IO[0x15] & 128)!=0) l += s;
+				System.out.println("S4 l="+l+" r="+r);
 			}
 
 			l *= (IO[0x14] & 0x07);
@@ -849,8 +897,9 @@ public class AudioController {
 			} */
 
 			//TODO: Assume Stereo
-			audioBuffer[audioBufferIndex++]=(byte)(l+128);
-			audioBuffer[audioBufferIndex++]=(byte)(r+128);
+			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
+			audioBuffer[audioBufferIndex++]=(byte)(r);
+			System.out.println("L="+l+" R="+r);
 			//System.out.println("SOUND_MIX");
 			if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
 				audioSource.write(audioBuffer, 0, audioBufferIndex);
