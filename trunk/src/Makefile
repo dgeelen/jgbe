@@ -1,6 +1,6 @@
-CFILES:=$(shell ls *.java | sed s:\.java:\.class:g)
+CLASSFILES:=$(shell ls *.java | sed s:\.java:\.class:g)
 
-all: $(CFILES)
+all: $(CLASSFILES)
 
 %.class: %.java
 	javac -O $<
