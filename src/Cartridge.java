@@ -11,7 +11,7 @@ public class Cartridge {
 
 	protected int[][] MM_ROM;
 	protected int[][] MM_RAM;
-	
+
 	private String  file_name;
 	private String  err_msg;            // message in case of an error
 
@@ -139,7 +139,7 @@ public class Cartridge {
 		}
 		System.out.println("ROM Name appears to be `"+title+"'");
 		// load entire ROM/RAM into memory
-			
+
 		System.out.println("Trying to load "+ROM.length+" banks from ROM");
 		System.out.printf("loading");
 		for(int j = 0; j < ROM_BANK_SIZE; j++)
@@ -151,7 +151,7 @@ public class Cartridge {
 			System.out.printf(".");
 		}
 		System.out.printf("\n");
-		
+
 		//System.out.println("Cartridge is using " + (ROM.length * ROM[0].length + RAM.length * RAM[0].length)+" bytes of ROM and RAM");
 		initMemMap();
 		distream.close(); // lets be nice :-p
@@ -180,6 +180,10 @@ public class Cartridge {
 		switch(MBC) {
 			case 0x00: //MBC0	/*HAX*/
 			case 0x13: //MBC3 TODO: RTC CRAP
+			case 0x000F:
+			case 0x0010:
+			case 0x0011:
+			case 0x0012:
 				if(index < 0x4000) return ROM[0][index];
 				if((index >= 0x4000) && (index < 0x8000)) return ROM[CurrentROMBank][index-0x4000];
 				if((index >= 0xA000) && (index < 0xC000)) return RAM[CurrentRAMBank][index-0xa000];

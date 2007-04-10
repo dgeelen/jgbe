@@ -13,6 +13,8 @@ public class VideoController {
 	private int VRAM[]=new int[0x4000]; //8k per bank;
 	private int OAM[]=new int[0xa0]; //Sprite Attribute Table;
 
+	protected boolean isCGB;
+
 	protected int LY=0;
 	protected int LYC=0;
 	protected int SCX=0;
@@ -21,7 +23,12 @@ public class VideoController {
 	protected int WY=0;
 	protected int LCDC=0;
 	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
-	
+
+	protected int GRAYSHADES[][] = { {0xFF, 0xFF, 0xFF},   // WHITE
+	                                 {0xD3, 0xD3, 0xD3},   // LIGHTGRAY
+	                                 {0xBE, 0xBE, 0xBE},   // DARKGRAY
+	                                 {0x00, 0x00, 0x00} }; // BLACK
+
 	protected int BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
 	private int BGPD[]=new int[8*4*2]; //BCPD/BGPD - CGB Mode Only - Background Palette Data
 
@@ -49,6 +56,8 @@ public class VideoController {
 		drawImg=new BufferedImage[2];
 		drawImg[0]=new BufferedImage(160, 144, BufferedImage.TYPE_INT_RGB);
 		drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_INT_RGB);
+		this.isCGB = cpu.isCGB();
+		System.out.println("isCGB: " + isCGB);
 	}
 
 	final public void addListener(JPanel panel)
@@ -87,7 +96,14 @@ public class VideoController {
 		// index = 1 -> FF48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
 		// index = 2 -> FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
 
-		// TODO: do something here...
+		if (isCGB) return;
+
+		if (index==0) index= (0x20>>2);
+		else --index;
+		Colorsint[(index<<2) | 0]=GRAYSHADES[(value>>0)&3];
+		Colorsint[(index<<2) | 1]=GRAYSHADES[(value>>2)&3];
+		Colorsint[(index<<2) | 2]=GRAYSHADES[(value>>4)&3];
+		Colorsint[(index<<2) | 3]=GRAYSHADES[(value>>6)&3];
 	}
 
 	final public void setBGColData(int value) {
@@ -101,7 +117,7 @@ public class VideoController {
 		int r = (data >>  0) & 0x1F;
 		int g = (data >>  5) & 0x1F;
 		int b = (data >> 10) & 0x1F;
-		
+
 		r <<= 3; r |= (r >> 5);
 		g <<= 3; g |= (g >> 5);
 		b <<= 3; b |= (b >> 5);
@@ -274,7 +290,7 @@ public class VideoController {
 		if ((i <0) || (i > 1))
 			System.out.printf("current offset=%x\n",CurrentVRAMBank);
 	}
-	
+
 	final public int getcurVRAMBank() {
 		return CurrentVRAMBank/0x2000;
 	}
@@ -453,7 +469,11 @@ public class VideoController {
 					if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
 					//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
 
-					int palnr = sprAttr & 7;
+					int palnr;
+					if (isCGB)
+						palnr = sprAttr & 7;
+					else
+						palnr = (sprAttr>>4)&1;
 
 					int col = patpix[sprNum][ofsY][ofsX];
 
@@ -466,4 +486,4 @@ public class VideoController {
 			}
 		}
 	}
-}                                                                                                     
+}
