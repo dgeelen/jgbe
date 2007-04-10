@@ -111,7 +111,7 @@ public class Cartridge {
 		}
 
 		// Determine ROM size (need 4 memmap entries per bank)
-		int rom_mm_size;
+		int rom_mm_size = 0;
 		switch(MM_ROM[0][0x0148])	{
 			case 0x00: rom_mm_size =   2 << 2; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
 			case 0x01: rom_mm_size =   4 << 2; System.out.println("ROM size = 64KByte (4 banks)"); break;
@@ -127,7 +127,7 @@ public class Cartridge {
 		} // switch(header[0x0148])
 
 		// Determine RAM size (1 memmap entry per 4 KBytes (round up)
-		int ram_mm_size;
+		int ram_mm_size = 0;
 		switch(MM_ROM[0][0x0149]) {
 			case 0x00: ram_mm_size =  0; System.out.println("Card has no RAM"); break;
 			case 0x01: ram_mm_size =  1; System.out.println("Card has 2KBytes of RAM"); break;
