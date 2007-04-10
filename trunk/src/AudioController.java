@@ -594,7 +594,7 @@ public class AudioController {
 	private int audioBufferIndex;
 	private int IO[];
 	private int WAVE[] = cgbwave;
-	private final int sampleRate=22050;
+	private final int sampleRate=22050;//44100;//22050;
 	private int cyclesLeftToRender;
 	private int TimerCountDown;     // 256hz
 	private boolean SweepTimerTick; // 128hz
@@ -625,7 +625,7 @@ public class AudioController {
 			audioSource.start();
 			audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
 			int audioBufferIndex=0;
-			IO = new int[0x30];
+			IO = new int[0x20]; //WAVERAM in WAVE
 /*			source.drain();
 			source.stop();
 			source.close(); */
@@ -672,8 +672,9 @@ public class AudioController {
 		if (S3.on==0) S3.pos = 0;
 		S3.cnt = 0;
 		S3.on = IO[0x0a] >> 7;
-		if (S3.on) for (i = 0; i < 16; i++)
-			IO[i+0x20] = 0x13 ^ IO[i+0x21];
+		if (S3.on!=0) for (i = 0; i < 15; i++)
+			WAVE[i] = 0x13 ^ WAVE[i+1];
+			WAVE[15]= 0x13 ^ IO[15];//Something random, this seems to be what GNUBoy does (Bug?)
 	}
 
 	void s4_init() {
@@ -703,7 +704,7 @@ public class AudioController {
 	}
 
 	final private void s3_freq() {
-		int d = 2048 - (((IO[0x0e]&7)<<8) + IO[0x2d]);
+		int d = 2048 - (((IO[0x0e]&7)<<8) + IO[0x0d]);
 		if (RATE > (d<<3)) S3.freq = 0;
 		else S3.freq = (RATE << 21)/d;
 	}
@@ -813,7 +814,7 @@ public class AudioController {
 				s <<= 2;
 				if ((IO[0x15] & 1)!=0) r += s;
 				if ((IO[0x15] & 16)!=0) l += s;
-				System.out.println("S1 l="+l+" r="+r);
+// 				System.out.println("S1 l="+l+" r="+r);
 			}
 
 			if (S2.on!=0)
@@ -832,7 +833,7 @@ public class AudioController {
 				s <<= 2;
 				if ((IO[0x15] & 2)!=0) r += s;
 				if ((IO[0x15] & 32)!=0) l += s;
-				System.out.println("S2 l="+l+" r="+r);
+// 				System.out.println("S2 l="+l+" r="+r);
 			}
 
 			if (S3.on!=0)
@@ -848,7 +849,7 @@ public class AudioController {
 				else s = 0;
 				if ((IO[0x15] & 4)!=0) r += s;
 				if ((IO[0x15] & 64)!=0) l += s;
-				System.out.println("S3 l="+l+" r="+r);
+// 				System.out.println("S3 l="+l+" r="+r);
 			}
 
 			if (S4.on!=0)
@@ -871,7 +872,7 @@ public class AudioController {
 				s += s << 1;
 				if ((IO[0x15] & 8)!=0) r += s;
 				if ((IO[0x15] & 128)!=0) l += s;
-				System.out.println("S4 l="+l+" r="+r);
+// 				System.out.println("S4 l="+l+" r="+r);
 			}
 
 			l *= (IO[0x14] & 0x07);
@@ -899,9 +900,10 @@ public class AudioController {
 			//TODO: Assume Stereo
 			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
 			audioBuffer[audioBufferIndex++]=(byte)(r);
-			System.out.println("L="+l+" R="+r);
+// 			System.out.println("L="+l+" R="+r);
 			//System.out.println("SOUND_MIX");
-			if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
+// 			if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
+				if(audioBufferIndex>((audioBuffer.length)>>6)) { //every 1/64 sec
 				audioSource.write(audioBuffer, 0, audioBufferIndex);
 				audioBufferIndex=0;
 				//System.out.println("AUDIO_WRITE");
@@ -914,6 +916,7 @@ public class AudioController {
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
 		cyclesLeftToRender+=nrCycles;
 		sound_mix();
+		//sound_mix(); //FIXME: HAX
 /*		TimerCountDown-=nrCycles;
 		if(TimerCountDown<=0) {
 			TimerCountDown=16384+TimerCountDown; //reset timer
@@ -947,21 +950,137 @@ public class AudioController {
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
 			System.out.println("Warning: read from unknown IO address, acting as normal RAM...");
 		}
+		else if(i>=0x20) { //WAVERAM
+			return WAVE[i&0x0f];
+		}
+		sound_mix(); //???
 		return IO[i];
 	}
 
 	public void write(int index, int value) {
 		int i=(index&0xff)-0x10;
-		if((i<0)||(i>0x3f)) {
+		if((i<0)||(i>0x2f)) {
 			System.out.println("SoundController: Error: writing to non sound-address:"+index);
 			return;
 			}
 		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
 			System.out.println("Sound disabled: Writes are undefined!");
+			return;
 		}
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
 			System.out.println("Warning: writing to unknown IO address, acting as normal RAM...");
+			return;
 		}
+		if ((i & 0xF0) == 0x20) {
+			if (S3.on!=0) sound_mix();
+			if (S3.on==0) {
+				WAVE[i&0x0f] = value;
+				}
+			return;
+		}
+		sound_mix();
+		IO[i]=value;
+		switch (i) {
+		case 0x00:
+//			IO[i] = value;
+			S1.swlen = ((value>>4) & 7) << 14;
+			S1.swfreq = ((IO[0x04]&7)<<8) + IO[0x03];
+			break;
+		case 0x01:
+//			IO[i] = value;
+			S1.len = (64-(value&63)) << 13;
+			break;
+		case 0x02:
+//			R_NR12 = b;
+			S1.envol = value >> 4;
+			S1.endir = (value>>3) & 1;
+			S1.endir |= S1.endir - 1;
+			S1.enlen = (value & 7) << 15;
+			break;
+		case 0x03:
+//			R_NR13 = b;
+			s1_freq();
+			break;
+		case 0x04:
+//			R_NR14 = b;
+			s1_freq();
+			if ((value & 128)!=0) s1_init();
+			break;
+		case 0x06:
+//			R_NR21 = b;
+			S2.len = (64-(value&63)) << 13;
+			break;
+		case 0x07:
+// 			R_NR22 = b;
+			S2.envol = value >> 4;
+			S2.endir = (value>>3) & 1;
+			S2.endir |= S2.endir - 1;
+			S2.enlen = (value & 7) << 15;
+			break;
+		case 0x08:
+// 			R_NR23 = b;
+			s2_freq();
+			break;
+		case 0x09:
+// 			R_NR24 = b;
+			s2_freq();
+			if ((value & 128)!=0) s2_init();
+			break;
+		case 0x0a:
+// 			R_NR30 = b;
+			if ((value & 128)==0) S3.on = 0;
+			break;
+		case 0x0b:
+// 			R_NR31 = b;
+			S3.len = (256-value) << 13;
+			break;
+/*		case 0x0c:
+			R_NR32 = b;
+			break;*/
+		case 0x0d:
+// 			R_NR33 = b;
+			s3_freq();
+			break;
+		case 0x0e:
+// 			R_NR34 = b;
+			s3_freq();
+			if ((value & 128)!=0) s3_init();
+			break;
+		case 0x10:
+// 			R_NR41 = b;
+			S4.len = (64-(value&63)) << 13;
+			break;
+		case 0x11:
+// 			R_NR42 = b;
+			S4.envol = value >> 4;
+			S4.endir = (value>>3) & 1;
+			S4.endir |= S4.endir - 1;
+			S4.enlen = (value & 7) << 15;
+			break;
+		case 0x12:
+// 			R_NR43 = b;
+			s4_freq();
+			break;
+		case 0x13:
+// 			R_NR44 = b;
+			if ((value & 128)!=0) s4_init();
+			break;
+/*		case 0x14:
+			R_NR50 = b;
+			break;
+		case RI_NR51:
+			R_NR51 = b;
+			break;*/
+		case 0x16:
+// 			R_NR52 = b;
+			if ((value & 128)==0)
+				sound_off();
+			break;
+		default:
+			return;
+		}
+
+
 		/*switch(i) {
 			case 0x00: // FF10 - NR10 - Channel 1 Sweep register (R/W)
 				S1.SweepTime   = (value&0x70)>>4;
@@ -986,6 +1105,6 @@ public class AudioController {
 				S1.Frequency   = (S1.freq&0xff)|((value&0x07)<<8);
 				break;
 		}*/
-		IO[i]=value;
+
 	}
 }
