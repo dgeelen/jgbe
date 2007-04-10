@@ -69,7 +69,7 @@ public class CPU
 		final private int[][] wMemMap = new int[0x10][];
 
 		public boolean isCGB() {
-			System.out.println("[0x0143] = " + read(0x0143));
+			System.out.println("** <INSERT DESCRIPTIVE TEXT HERE> ** [0x0143] = " + read(0x0143));
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
 
@@ -118,6 +118,7 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
+
 			curcycles+=4;
 			int mmi=index>>12;
 			if (rMemMap[mmi]!=null)
@@ -128,7 +129,7 @@ public class CPU
 				b=-1;
 			}
 			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
-				System.out.println("Cartridge: " + cartridge);
+				//System.out.println("Cartridge: " + cartridge);
 				b=cartridge.read(index);
 			}
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
