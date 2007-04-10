@@ -1,7 +1,9 @@
-all: clean swinggui.class Emulator.class
+CFILES:=$(shell ls *.java | sed s:\.java:\.class:g)
+
+all: $(CFILES)
 
 %.class: %.java
-	javac $<
+	javac -O $<
 
 clean:
 	rm -f *.class
