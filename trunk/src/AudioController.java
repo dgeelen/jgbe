@@ -594,7 +594,7 @@ public class AudioController {
 	private int audioBufferIndex;
 	private int IO[];
 	private int WAVE[] = cgbwave;
-	private final int sampleRate=22050;//44100;//22050;
+	private final int sampleRate=44100;//22050;
 	private int cyclesLeftToRender;
 	private int TimerCountDown;     // 256hz
 	private boolean SweepTimerTick; // 128hz
@@ -618,7 +618,7 @@ public class AudioController {
 
 	public AudioController() {
 		try {
-			myAudioFormat = new AudioFormat((float)sampleRate,8,1,true,true);
+			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			myLineInfo = new DataLine.Info(SourceDataLine.class,myAudioFormat);
 			audioSource = (SourceDataLine)AudioSystem.getLine(myLineInfo);
 			audioSource.open(myAudioFormat);
@@ -877,8 +877,8 @@ public class AudioController {
 
 			l *= (IO[0x14] & 0x07);
 			r *= ((IO[0x14] & 0x70)>>4);
-			l >>= 4;
-			r >>= 4;
+			l >>= 3;//hax, was 4
+			r >>= 3;//hax, was 4
 
 			if (l > 127) l = 127;
 			else if (l < -128) l = -128;
@@ -899,8 +899,12 @@ public class AudioController {
 
 			//TODO: Assume Stereo
 			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
-			audioBuffer[audioBufferIndex++]=(byte)(r);
-// 			System.out.println("L="+l+" R="+r);
+
+// 			audioBuffer[audioBufferIndex++]=(byte)(l+r);//MONO;
+			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
+			audioBuffer[audioBufferIndex++]=(byte)(r);//;
+			//System.out.println(audioBuffer[audioBufferIndex-1]);
+ 			//System.out.println("L="+l+" R="+r);
 			//System.out.println("SOUND_MIX");
 // 			if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
 				if(audioBufferIndex>((audioBuffer.length)>>6)) { //every 1/64 sec
@@ -915,7 +919,10 @@ public class AudioController {
 	static byte bla=0;
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
 		cyclesLeftToRender+=nrCycles;
+		int i=cyclesLeftToRender;
+		cyclesLeftToRender>>=1;
 		sound_mix();
+		cyclesLeftToRender<<=1;
 		//sound_mix(); //FIXME: HAX
 /*		TimerCountDown-=nrCycles;
 		if(TimerCountDown<=0) {
