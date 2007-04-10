@@ -58,11 +58,11 @@ public class CPU
 
 		public CPU( Cartridge cartridge ) {
 			this.cartridge = cartridge;
+			refreshMemMap();
 			deasm = new Disassembler(this);
 			VC = new VideoController(this);
 			AC = new AudioController();
 			reset();
-			refreshMemMap();
 		}
 
 		final private int[][] rMemMap = new int[0x10][];
@@ -461,6 +461,7 @@ public class CPU
 			write(0xff05, 0x00); // [$FF05] = $00   ; TIMA
 			write(0xff06, 0x00); // [$FF06] = $00   ; TMA
 			write(0xff07, 0x00); // [$FF07] = $00   ; TAC
+			write(0xff26, 0xf1); // [$FF26] = $F1-GB, $F0-SGB ; NR52
 			write(0xff10, 0x80); // [$FF10] = $80   ; NR10
 			write(0xff11, 0xbf); // [$FF11] = $BF   ; NR11
 			write(0xff12, 0xf3); // [$FF12] = $F3   ; NR12
@@ -478,7 +479,6 @@ public class CPU
 			write(0xff23, 0xbf); // [$FF23] = $BF   ; NR30
 			write(0xff24, 0x77); // [$FF24] = $77   ; NR50
 			write(0xff25, 0xf3); // [$FF25] = $F3   ; NR51
-			write(0xff26, 0xf1); // [$FF26] = $F1-GB, $F0-SGB ; NR52
 			write(0xff40, 0x91); // [$FF40] = $91   ; LCDC
 			write(0xff42, 0x00); // [$FF42] = $00   ; SCY
 			write(0xff43, 0x00); // [$FF43] = $00   ; SCX
