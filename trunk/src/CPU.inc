@@ -1,3 +1,217 @@
+#define ZFLAG(n) ( (n) ? 0 : FZ )
+
+
+#define PUSH(w) ( (SP -= 2), (writew(xSP, (w))) )
+#define POP(w) ( ((w) = readw(xSP)), (SP += 2) )
+
+
+#define FETCH_OLD ( mbc.rmap[PC>>12] \
+? mbc.rmap[PC>>12][PC++] \
+: mem_read(PC++) )
+
+#define FETCH (readb(PC++))
+
+
+#define INC(r) { ((r)++); \
+F = (F & (FL|FC)) | incflag_table[(r)]; }
+
+#define DEC(r) { ((r)--); \
+F = (F & (FL|FC)) | decflag_table[(r)]; }
+
+#define INCW(r) ( (r)++ )
+
+#define DECW(r) ( (r)-- )
+
+#define ADD(n) { \
+W(acc) = (un16)A + (un16)(n); \
+F = (ZFLAG(LB(acc))) \
+| (FH & ((A ^ (n) ^ LB(acc)) << 1)) \
+| (HB(acc) << 4); \
+A = LB(acc); }
+
+#define ADC(n) { \
+W(acc) = (un16)A + (un16)(n) + (un16)((F&FC)>>4); \
+F = (ZFLAG(LB(acc))) \
+| (FH & ((A ^ (n) ^ LB(acc)) << 1)) \
+| (HB(acc) << 4); \
+A = LB(acc); }
+
+#define ADDW(n) { \
+DW(acc) = (un32)HL + (un32)(n); \
+F = (F & (FZ)) \
+| (FH & ((H ^ ((n)>>8) ^ HB(acc)) << 1)) \
+| (acc.b[HI][LO] << 4); \
+HL = W(acc); }
+
+#define ADDSP(n) { \
+DW(acc) = (un32)SP + (un32)(n8)(n); \
+F = (FH & (((SP>>8) ^ ((n)>>8) ^ HB(acc)) << 1)) \
+| (acc.b[HI][LO] << 4); \
+SP = W(acc); }
+
+#define LDHLSP(n) { \
+DW(acc) = (un32)SP + (un32)(n8)(n); \
+F = (FH & (((SP>>8) ^ ((n)>>8) ^ HB(acc)) << 1)) \
+| (acc.b[HI][LO] << 4); \
+HL = W(acc); }
+
+#define CP(n) { \
+W(acc) = (un16)A - (un16)(n); \
+F = FN \
+| (ZFLAG(LB(acc))) \
+| (FH & ((A ^ (n) ^ LB(acc)) << 1)) \
+| ((un8)(-(n8)HB(acc)) << 4); }
+
+#define SUB(n) { CP((n)); A = LB(acc); }
+
+#define SBC(n) { \
+W(acc) = (un16)A - (un16)(n) - (un16)((F&FC)>>4); \
+F = FN \
+| (ZFLAG((n8)LB(acc))) \
+| (FH & ((A ^ (n) ^ LB(acc)) << 1)) \
+| ((un8)(-(n8)HB(acc)) << 4); \
+A = LB(acc); }
+
+#define AND(n) { A &= (n); \
+F = ZFLAG(A) | FH; }
+
+#define XOR(n) { A ^= (n); \
+F = ZFLAG(A); }
+
+#define OR(n) { A |= (n); \
+F = ZFLAG(A); }
+
+#define RLCA(r) { (r) = ((r)>>7) | ((r)<<1); \
+F = (((r)&0x01)<<4); }
+
+#define RRCA(r) { (r) = ((r)<<7) | ((r)>>1); \
+F = (((r)&0x80)>>3); }
+
+#define RLA(r) { \
+LB(acc) = (((r)&0x80)>>3); \
+(r) = ((r)<<1) | ((F&FC)>>4); \
+F = LB(acc); }
+
+#define RRA(r) { \
+LB(acc) = (((r)&0x01)<<4); \
+(r) = ((r)>>1) | ((F&FC)<<3); \
+F = LB(acc); }
+
+#define RLC(r) { RLCA(r); F |= ZFLAG(r); }
+#define RRC(r) { RRCA(r); F |= ZFLAG(r); }
+#define RL(r) { RLA(r); F |= ZFLAG(r); }
+#define RR(r) { RRA(r); F |= ZFLAG(r); }
+
+#define SLA(r) { \
+LB(acc) = (((r)&0x80)>>3); \
+(r) <<= 1; \
+F = ZFLAG((r)) | LB(acc); }
+
+#define SRA(r) { \
+LB(acc) = (((r)&0x01)<<4); \
+(r) = (un8)(((n8)(r))>>1); \
+F = ZFLAG((r)) | LB(acc); }
+
+#define SRL(r) { \
+LB(acc) = (((r)&0x01)<<4); \
+(r) >>= 1; \
+F = ZFLAG((r)) | LB(acc); }
+
+#define CPL(r) { \
+(r) = ~(r); \
+F |= (FH|FN); }
+
+#define SCF { F = (F & (FZ)) | FC; }
+
+#define CCF { F = (F & (FZ|FC)) ^ FC; }
+
+#define DAA { \
+A += (LB(acc) = daa_table[((((int)F)&0x70)<<4) | A]); \
+F = (F & (FN)) | ZFLAG(A) | daa_carry_table[LB(acc)>>2]; }
+
+#define SWAP(r) { \
+(r) = swap_table[(r)]; \
+F = ZFLAG((r)); }
+
+#define BIT(n,r) { F = (F & FC) | ZFLAG(((r) & (1 << (n)))) | FH; }
+#define RES(n,r) { (r) &= ~(1 << (n)); }
+#define SET(n,r) { (r) |= (1 << (n)); }
+
+#define CB_REG_CASES(r, n) \
+case 0x00|(n): RLC(r); break; \
+case 0x08|(n): RRC(r); break; \
+case 0x10|(n): RL(r); break; \
+case 0x18|(n): RR(r); break; \
+case 0x20|(n): SLA(r); break; \
+case 0x28|(n): SRA(r); break; \
+case 0x30|(n): SWAP(r); break; \
+case 0x38|(n): SRL(r); break; \
+case 0x40|(n): BIT(0, r); break; \
+case 0x48|(n): BIT(1, r); break; \
+case 0x50|(n): BIT(2, r); break; \
+case 0x58|(n): BIT(3, r); break; \
+case 0x60|(n): BIT(4, r); break; \
+case 0x68|(n): BIT(5, r); break; \
+case 0x70|(n): BIT(6, r); break; \
+case 0x78|(n): BIT(7, r); break; \
+case 0x80|(n): RES(0, r); break; \
+case 0x88|(n): RES(1, r); break; \
+case 0x90|(n): RES(2, r); break; \
+case 0x98|(n): RES(3, r); break; \
+case 0xA0|(n): RES(4, r); break; \
+case 0xA8|(n): RES(5, r); break; \
+case 0xB0|(n): RES(6, r); break; \
+case 0xB8|(n): RES(7, r); break; \
+case 0xC0|(n): SET(0, r); break; \
+case 0xC8|(n): SET(1, r); break; \
+case 0xD0|(n): SET(2, r); break; \
+case 0xD8|(n): SET(3, r); break; \
+case 0xE0|(n): SET(4, r); break; \
+case 0xE8|(n): SET(5, r); break; \
+case 0xF0|(n): SET(6, r); break; \
+case 0xF8|(n): SET(7, r); break;
+
+
+#define ALU_CASES(base, imm, op, label) \
+case (imm): b = FETCH; goto label; \
+case (base): b = B; goto label; \
+case (base)+1: b = C; goto label; \
+case (base)+2: b = D; goto label; \
+case (base)+3: b = E; goto label; \
+case (base)+4: b = H; goto label; \
+case (base)+5: b = L; goto label; \
+case (base)+6: b = readb(HL); goto label; \
+case (base)+7: b = A; \
+label: op(b); break;
+
+
+
+
+
+
+
+
+#define JR ( PC += 1+(n8)readb(PC) )
+#define JP ( PC = readw(PC) )
+
+#define CALL ( PUSH(PC+2), JP )
+
+#define NOJR ( clen--, PC++ )
+#define NOJP ( clen--, PC+=2 )
+#define NOCALL ( clen-=3, PC+=2 )
+#define NORET ( clen-=3 )
+
+#define RST(n) { PUSH(PC); PC = (n); }
+
+#define RET ( POP(PC) )
+
+#define EI ( IMA = 1 )
+#define DI ( cpu.halt = IMA = IME = 0 )
+
+
+
+#define PRE_INT ( DI, PUSH(PC) )
+#define THROW_INT(n) ( (IF &= ~(1<<(n))), (PC = 0x40+((n)<<3)) )
 
 #define const private final
 #define byte int
