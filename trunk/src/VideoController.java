@@ -83,6 +83,9 @@ public class VideoController {
 		blitImg[y][x] = (pal << 2) | col;
 	}
 
+	static long lastms = System.currentTimeMillis();
+
+	static int fps23fix=0;
 	final private void blitImage() {
 		//Graphics g = drawImg[curDrawImg^1].getGraphics();
 		WritableRaster wr = drawImg[curDrawImg^1].getRaster();
@@ -97,6 +100,24 @@ public class VideoController {
 			}
 		}
 		curDrawImg ^= 1;
+
+		long ct = System.currentTimeMillis();
+		int sleeptime=0;
+		try {
+			if(fps23fix<2) {
+				sleeptime=17;
+			}
+			else {
+				sleeptime=16;
+				fps23fix=0;
+			}
+			++fps23fix;
+			sleeptime-=(int)(ct-lastms);
+			sleeptime+=4;
+			lastms = ct;
+			Thread.sleep(Math.max(0,sleeptime));
+		} catch (java.lang.InterruptedException e) {
+		}
 	}
 
 	final public void setMonoColData(int index, int value) {

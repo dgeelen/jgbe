@@ -252,39 +252,3 @@ public class Disassembler
         System.out.println(Disassembler.disassemble(255));
     }
 }
-
-
-/*      if(op.indexOf("IMM16")>-1) {
-        //immediate= (cart.read(PC+1)<<8)|cart.read(PC+2);
-        immediate=(cart.read(PC+2)<<8)|cart.read(PC+1); //little endian
-      }
-      if(op.indexOf("IMM08")>-1) {
-        immediate= cart.read(PC+1);
-      }
-      if(op.indexOf("[")>-1) {
-        i = op.indexOf("[");
-        int j = op.indexOf("]");
-        immediate = Math.max(regval(op.substring(i+1,j)), immediate);
-        if(immediate == -1){ //One of the special cases (LDH etc)
-            if(op.indexOf("LDH")>-1) {
-                immediate=0xff00|cart.read(PC+1);
-            }
-        }
-        s=String.format(op.substring(0,i+1)+"$%04x"+op.substring(j),immediate);
-      }
-      if(immediate>-1) {
-        i = op.indexOf("IMM16");
-        if(i>-1) {
-          s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
-          }
-        else {
-          i=op.indexOf("IMM08");
-          s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
-        }
-      }
-      if((i=op.indexOf(","))>-1) {
-      	int j=op.indexOf(" ");
-      	immediate = regval(op.substring(j,i));
-				System.out.println(op.substring(j,i)+"= "+immediate);
-
-      }*/
