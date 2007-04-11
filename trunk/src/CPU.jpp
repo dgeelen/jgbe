@@ -34,8 +34,6 @@ public class CPU
 		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
 		private int CurrentWRAMBank=1;
 
-		private int curcycles;
-
 		boolean doublespeed = false;
 		boolean speedswitch = false;
 
@@ -121,7 +119,6 @@ public class CPU
 			 * FFFF        Interrupt Enable Register
 			 */
 
-			curcycles+=4;
 			int mm[]=rMemMap[index>>12];
 			if (mm!=null)
 				return mm[index&0x0FFF];
@@ -279,7 +276,6 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-			curcycles+=4;
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
 				mm[index&0x0FFF] = value;
@@ -379,7 +375,6 @@ public class CPU
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
 							write(0xfe00|i, read(i+(value<<8)));
 						}
-						curcycles = 4; // apps usually (and SHOULD) wait for this themselves
 						break;
 					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
 					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
@@ -654,7 +649,6 @@ public class CPU
 		}
 
 		final protected void inc16b(int ri1, int ri2 ) {
-			curcycles += 4; // 16-bit add takes time
 			// 16-bit inc/dec doesnt affect any flags
 			++regs[ri2];
 			if (regs[ri2]>0xFF) {
@@ -665,7 +659,6 @@ public class CPU
 		}
 
 		final protected void dec16b(int ri1, int ri2 ) {
-			curcycles += 4; // 16-bit add takes time
 			// 16-bit inc/dec doesnt affect any flags
 			--regs[ri2];
 			if (regs[ri2]<0) {
@@ -716,7 +709,6 @@ public class CPU
 		}
 
 		final protected void add16bHL(int val1, int val2) {
-			curcycles += 4; // 16-bit add takes time
 			int fmask = regs[F] & ZF_Mask; // zero flag should be unaffected
 			add8b(L, val2);
 			fmask |= ((regs[F]&CF_Mask)==CF_Mask) ? HC_Mask : 0;
@@ -786,7 +778,7 @@ public class CPU
 
 		static int nopCount=0;
 		final private int execute() {
-			curcycles = 0;
+			int cycles;
 			boolean nop=false;
 			//System.out.printf("Executing instruction $%02x\n", instr);
 			if(checkInterrupts()!=0) {
@@ -794,9 +786,10 @@ public class CPU
 				return 12; // 12 cycles for this?
 			}
 			if (halted) return 4;
-			int instr = read(PC++);
+			int op = read(PC++);
+			cycles = cycles_table[op];
 
-			switch ( instr ) {
+			switch ( op ) {
 				case 0x00:  // NOP
 					nop=true;
 					break;
@@ -888,7 +881,6 @@ public class CPU
 				case 0x18:{// JR   &00
 					int x = read( PC++ );
 					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-					curcycles += 4; // takes 12 instead of 8 cycles
 				};break;
 				case 0x19: // ADD HL, DE
 					add16bHL(regs[D], regs[E]);
@@ -912,7 +904,6 @@ public class CPU
 					regs[A] = ror(regs[A]);
 					break;
 				case 0x20: // JR NZ, n
-					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -948,7 +939,6 @@ public class CPU
 					regs[A] &= 0xff;
 				};break;
 				case 0x28: // JR   Z, n
-					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -978,7 +968,6 @@ public class CPU
 					xor( 0xFF );
 					break;
 				case 0x30: // JR NC, n
-					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&CF_Mask )!=CF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -1022,7 +1011,6 @@ public class CPU
 					regs[F] |= CF_Mask;
 					break;
 				case 0x38: // JR C, n
-					curcycles += 4; // takes 12;8 instead of 8;4 cycles
 					if (( regs[F]&CF_Mask )==CF_Mask ) {
 						int x = read( PC++ );
 						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -1441,8 +1429,6 @@ public class CPU
 				case 0xc0: // RET  NZ
 					if ((regs[F]&ZF_Mask) != ZF_Mask)
 						PC = pop();
-					if (curcycles == 8) curcycles = 20;
-					if (curcycles == 4) curcycles =  8;
 					break;
 				case 0xc1:{// POP BC
 					int x = pop();
@@ -1454,12 +1440,9 @@ public class CPU
 						JPnn();
 					else
 						PC+=2;
-					if (curcycles == 12) curcycles = 16;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xc3: // JPNNNN
 					JPnn();
-					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xc4: // CALL NZ, &0000
 					if (( regs[FLAG_REG]&ZF_Mask )!=ZF_Mask ) {
@@ -1467,12 +1450,9 @@ public class CPU
 						JPnn();
 					} else
 						PC += 2;
-					if (curcycles == 20) curcycles = 24;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xc5: // PUSH BC
 					push( regs[B]<<8 | regs[C]);
-					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xc6: // ADD  A, n
 					add8b(A, read(PC++));
@@ -1484,11 +1464,8 @@ public class CPU
 				case 0xc8: // RET  Z
 					if ((regs[F]&ZF_Mask) == ZF_Mask)
 						PC = pop();
-					if (curcycles == 8) curcycles = 20;
-					if (curcycles == 4) curcycles =  8;
 					break;
 				case 0xc9: // RET
-					curcycles += 4; // takes 16 instead of 12 cycles
 					PC = pop();
 					break;
 				case 0xca: // JMP Z, nn
@@ -1496,8 +1473,6 @@ public class CPU
 						JPnn();
 					else
 						PC+=2;
-					if (curcycles == 12) curcycles = 16;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				//case 0xcb: prefix
 				//	prefix instrs are at the end
@@ -1507,11 +1482,8 @@ public class CPU
 						JPnn();
 					} else
 						PC += 2;
-					if (curcycles == 20) curcycles = 24;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xcd: // CALL &0000
-					curcycles += 4; // takes 24 instead of 20 cycles
 					push( PC+2 );
 					JPnn();
 					break;
@@ -1525,8 +1497,6 @@ public class CPU
 				case 0xd0: // RET  NC
 					if ((regs[F]&CF_Mask) != CF_Mask)
 						PC = pop();
-					if (curcycles == 8) curcycles = 20;
-					if (curcycles == 4) curcycles =  8;
 					break;
 				case 0xd1:{// POP DE
 					int x = pop();
@@ -1538,8 +1508,6 @@ public class CPU
 						JPnn();
 					else
 						PC+=2;
-					if (curcycles == 12) curcycles = 16;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				//case 0xd3
 				//	missing instruction
@@ -1549,12 +1517,9 @@ public class CPU
 						JPnn();
 					} else
 						PC += 2;
-					if (curcycles == 20) curcycles = 24;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				case 0xd5: // PUSH DE
 					push( regs[D]<<8 | regs[E]);
-					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xd6: // SUB A, n
 					sub8b(A, read(PC++));
@@ -1566,11 +1531,8 @@ public class CPU
 				case 0xd8: // RET  C
 					if ((regs[F]&CF_Mask) == CF_Mask)
 						PC = pop();
-					if (curcycles == 8) curcycles = 20;
-					if (curcycles == 4) curcycles =  8;
 					break;
 				case 0xd9: // RETI
-					curcycles += 4; // takes 16 instead of 12 cycles
 					IME = true;
 					PC = pop();
 					break;
@@ -1579,8 +1541,6 @@ public class CPU
 						JPnn();
 					else
 						PC+=2;
-					if (curcycles == 12) curcycles = 16;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				//case 0xdb:
 				//	missing instruction
@@ -1590,8 +1550,6 @@ public class CPU
 						JPnn();
 					} else
 						PC += 2;
-					if (curcycles == 20) curcycles = 24;
-					if (curcycles ==  4) curcycles = 12;
 					break;
 				//case 0xdd:
 				//	missing instruction
@@ -1619,7 +1577,6 @@ public class CPU
 				//	missing instruction
 				case 0xe5: // PUSH HL
 					push( regs[H]<<8 | regs[L]);
-					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xe6: // AND nn
 					and(read(PC++));
@@ -1641,7 +1598,6 @@ public class CPU
 					}
 					if ((SP >> 8) != (o >> 8))
 						regs[F] |= HC_Mask;
-					curcycles += 8; // takes 16 instead of 8 cycles
 				};break;
 				case 0xe9: // JP  HL
 					PC = (regs[H]<<8) | regs[L];
@@ -1683,7 +1639,6 @@ public class CPU
 				//	missing instruction
 				case 0xf5: // PUSH AF
 					push( regs[A]<<8 | regs[F]);
-					curcycles += 4; // takes 16 instead of 12 cycles
 					break;
 				case 0xf6: // OR  n
 					or(read(PC++));
@@ -1709,12 +1664,9 @@ public class CPU
 						sbc(H, 0);
 					regs[F] &= CF_Mask;
 					regs[F] |= fmask;
-
-					curcycles += 4; // takes 12 instead of 8 cycles
 				};break;
 				case 0xf9: // LD SP, HL
 					SP = regs[H]<<8 | regs[L];
-					curcycles += 4; // takes 8 instead of 4 cycles
 					break;
 				case 0xfa:{// LD A, (nn)
 					int a = read( PC++ );
@@ -1737,8 +1689,9 @@ public class CPU
 					PC = 0x38;
 					break;
 				case 0xcb: // prefix instruction
-					instr = read( PC++ );
-					switch ( instr ) {
+					op = read( PC++ );
+					cycles = cb_cycles_table[op];
+					switch ( op ) {
 						case 0x00: // RLC  B
 							regs[B] = rolc(regs[B]);
 							break;
@@ -2638,20 +2591,21 @@ public class CPU
 							regs[A] |= ( 1 << 7 );
 							break;
 						default:
-							System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , instr );
+							System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
 							PC -= 2; // we failed to execute the instruction, so restore PC
 							return 0;
 					}
 					break;
 				default:
-					System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
+					System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , op );
 					PC -= 1; // we failed to execute the instruction, so restore PC
 					return 0;
 			}
 			PC &= 0xffff;
 			SP &= 0xffff;
 			++TotalInstrCount;
-			TotalCycleCount += curcycles;
+			cycles *= 4;
+			TotalCycleCount += cycles;
 			++nopCount;
 			if (!nop)
 				nopCount=0;
@@ -2659,7 +2613,7 @@ public class CPU
 				System.out.println( "Executing a lot of NOPs, aborting!" );
 				return 0;
 			}*/
-			return curcycles;
+			return cycles;
 		}
 
 		final public int nextinstruction() {
