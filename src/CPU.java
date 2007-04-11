@@ -243,6 +243,7 @@ public class CPU
 						break;
 					default:
 						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
+						b=0xff; // GnuBoy compat
 						break;
 				}
 				//System.out.printf("TODO: CPU.read(): IOP[$%04x] = $%04x\n",index, b);
@@ -816,8 +817,14 @@ public class CPU
 				case 0x06:  // LD  B, n
 					regs[B] = read( PC++ );
 					break;
-				//case 0x08:  // LD (nn),SP
-				//	uh? 16bit memwrite?
+				case 0x08:{ // LD (nn),SP
+					//	uh? 16bit memwrite? plz check for errors, I'm totally confused with the Endianness :)
+					int i=read( PC++ );
+					int j=read( PC++ );
+					int l=((j<<8|i)+1)&0xffff;
+					writemem8b(j,i, SP&0xff);
+					writemem8b(l>>8,l&0xff, SP>>8);
+					}; break;
 				case 0x07:  // RLCA
 					regs[A] = rolc(regs[A]);
 					regs[F] &= ~ZF_Mask;
