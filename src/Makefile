@@ -13,6 +13,8 @@ all: $(JAVAFILES) swinggui.class $(CLASSFILES)
 	gcc -E -x c $< | grep -v "^#" > $@
 	cp $@ .$@.bpp
 
+CPU.java: CPU.inc
+
 clean:
 	rm -f $(CLASSFILES)
 	touch - $(JPPFILES)
