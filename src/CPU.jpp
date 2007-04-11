@@ -14,6 +14,8 @@ public class CPU
 		protected static final int HC_Mask  = 1 << HC_Shift;
 		protected static final int CF_Mask  = 1 << CF_Shift;
 
+		#include "CPU.inc"
+
 		protected int TotalInstrCount = 0;
 		protected int TotalCycleCount = 0;
 
@@ -120,9 +122,9 @@ public class CPU
 			 */
 
 			curcycles+=4;
-			int mmi=index>>12;
-			if (rMemMap[mmi]!=null)
-				return rMemMap[mmi][index&0x0FFF];
+			int mm[]=rMemMap[index>>12];
+			if (mm!=null)
+				return mm[index&0x0FFF];
 			int b=0; // b==byte read
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
@@ -278,9 +280,9 @@ public class CPU
 			 * FFFF        Interrupt Enable Register
 			 */
 			curcycles+=4;
-			int mmi=index>>12;
-			if (wMemMap[mmi]!=null) {
-				wMemMap[mmi][index&0x0FFF] = value;
+			int mm[]=wMemMap[index>>12];
+			if (mm!=null) {
+				mm[index&0x0FFF] = value;
 				return;
 			}
 			if(index<0) { //Invalid
@@ -2718,5 +2720,4 @@ public class CPU
 		final protected int exception() {
 			return lastException;
 		}
-#include "CPU.inc"
 }
