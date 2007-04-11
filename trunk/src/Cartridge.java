@@ -204,6 +204,7 @@ public class Cartridge {
 	public int read(int index) {
 		switch(MBC) {
 			case 0x00: //MBC0	/*HAX*/
+			case 0x01:
 			case 0x0013:
 			case 0x000F:
 			case 0x0010:
