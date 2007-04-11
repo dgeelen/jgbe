@@ -204,22 +204,11 @@ public class Cartridge {
 
 	public int read(int index) {
 		switch(MBC) {
-			case 0x00: //MBC0	/*HAX*/
-			case 0x01:
-			case 0x0013:
-			case 0x000F:
-			case 0x0010:
-			case 0x0011:
-			case 0x0012:
+			case 3:
 				//MBC3 TODO: RTC CRAP
 				System.out.println("Error: not using memmap, or reading from cartridge with a non cartridge address!");
 				return MM_ROM[index>>12][index&0x0fff];
-			case 0x0019:
-			case 0x001A:
-			case 0x001B:
-			case 0x001C:
-			case 0x001D:
-			case 0x001E:
+			case 5:
 				// MBC5
 				System.out.println("Error: not using memmap, or reading from cartridge with a non cartridge address!");
 				return -1;
@@ -231,9 +220,7 @@ public class Cartridge {
 
 	public void write(int index, int value) {        // TODO fatsoenlijk
 		switch (MBC) {
-			case 0x0001:
-			case 0x0002:
-			case 0x0003:
+			case 1:
 				// MBC1
 				if ((0xA000 <= index) && (index <= 0xBFFF))	{
 						// RAM Bank 00-03, if any
@@ -246,8 +233,7 @@ public class Cartridge {
 				}
 				// TODO all option
 				break;
-			case 0x0005:
-			case 0x0006:
+			case 2:
 				// MBC2
 				// 0000-3FFF - ROM Bank 00 (Read Only)0000-3FFF - ROM Bank 00 (Read Only)
 				// 4000-7FFF - ROM Bank 01-0F (Read Only)
@@ -271,11 +257,7 @@ public class Cartridge {
 					}
 				}
 				break;
-			case 0x000F:
-			case 0x0010:
-			case 0x0011:
-			case 0x0012:
-			case 0x0013:
+			case 3:
 				// MBC3
 				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
 					if(value==0x0a) ram_enabled = true;
@@ -308,17 +290,10 @@ public class Cartridge {
 				}
 				if(((index>=0x8000)&&(index<0xa000)) || ((index>0xc000))) System.out.println("WARNING: Cartridge.write(): Unsupported address for write");
 				break;
-			case 0x0015:
-			case 0x0016:
-			case 0x0017:
+			case 4:
 				// MBC4
 				break;
-			case 0x0019:
-			case 0x001A:
-			case 0x001B:
-			case 0x001C:
-			case 0x001D:
-			case 0x001E:
+			case 5:
 				// MBC5
 				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
 					if(value==0x0a) ram_enabled = true;
