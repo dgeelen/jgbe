@@ -43,10 +43,14 @@ public class VideoController {
 	private boolean anydirty = true;                // see updatepatpix()
 	private boolean alldirty = true;                // see updatepatpix()
 
+	/* Scaling */
+	private int image_width;
+	private int image_height;
+
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
 	private Color Gray[];
 
-	public VideoController(CPU cpu) {
+	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
 		Gray = new Color[4];
 		Gray[0]=new Color(0,0,0);
@@ -54,10 +58,10 @@ public class VideoController {
 		Gray[2]=new Color(128,128,128);
 		Gray[3]=new Color(192,192,192);
 		drawImg=new BufferedImage[2];
-		drawImg[0]=new BufferedImage(160, 144, BufferedImage.TYPE_INT_RGB);
-		drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_INT_RGB);
+		scale (image_width, image_height);
 		this.isCGB = cpu.isCGB();
-		System.out.println("isCGB: " + isCGB);
+		this.image_width = image_width;
+		this.image_height = image_height;
 	}
 
 	final public void addListener(JPanel panel)
@@ -68,7 +72,13 @@ public class VideoController {
 		//drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 	}
 
+	public void scale(int width, int height) {
+		drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+	}
+
 	final public Image getImage() {
+		// return ((VolatileImage)drawImg[curDrawImg]).getScaledInstance(image_width, image_height,Image.SCALE_FAST); // display image not being drawn to
 		return drawImg[curDrawImg]; // display image not being drawn to
 	}
 
@@ -359,7 +369,7 @@ public class VideoController {
 	}
 
 	private int lbgTileY = -1;
-	
+
 	final private void calcBGTileBuf() {
 		/*	not really 100% correct...
 				if (lbgTileY==bgTileY)

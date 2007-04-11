@@ -94,7 +94,7 @@ public class Cartridge {
 		 * used to initialize RAM and ROM banks
 		 */
 		MM_ROM[0] = new int[MEMMAP_SIZE]; // init first memmap chunk
-		
+
 		DataInputStream distream = getDataStream(file_name);
 
 		// load first memmap chunk into memory
@@ -164,7 +164,7 @@ public class Cartridge {
 			MM_ROM[i] = dummy_mm;
 		for (int i = ram_mm_size; i < MAX_RAM_MM; ++i)
 			MM_RAM[i] = dummy_mm;
-		
+
 		distream.close(); // lets be nice :-p
 	}
 
