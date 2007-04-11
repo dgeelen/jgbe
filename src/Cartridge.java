@@ -20,7 +20,7 @@ public class Cartridge {
 
 	private boolean ram_enabled = false;// Whether RAM is enabled to read and write
 	private boolean RTCRegisterEnabled=false;
-	protected int     CurrentROMBank = 0;    // The ROM bank to read/write
+	protected int     CurrentROMBank = 1;    // The ROM bank to read/write
 	protected int     CurrentRAMBank = 0;    // The RAM bank to read/write
 	private int     CurrentRTCRegister=0;
 
@@ -102,12 +102,45 @@ public class Cartridge {
 			MM_ROM[0][i] = distream.readUnsignedByte();
 
 		// Detect MBC type
-		MBC = MM_ROM[0][0x0147];
+		System.out.printf("Cartridge MBC type:");
+		switch(MM_ROM[0][0x0147]) {
+			case 0x00: MBC=0; System.out.printf("ROM ONLY"); break;
+			case 0x01: MBC=1; System.out.printf("MBC1"); break;
+			case 0x02: MBC=1; System.out.printf("MBC1+RAM"); break;
+			case 0x03: MBC=1; System.out.printf("MBC1+RAM+BATTERY"); break;
+			case 0x05: MBC=2; System.out.printf("MBC2"); break;
+			case 0x06: MBC=2; System.out.printf("MBC2+BATTERY"); break;
+			case 0x08: MBC=0; System.out.printf("ROM+RAM"); break;
+			case 0x09: MBC=0; System.out.printf("ROM+RAM+BATTERY"); break;
+			case 0x0b: MBC=-1; System.out.printf("MMM01"); break;
+			case 0x0c: MBC=-1; System.out.printf("MMM01+RAM"); break;
+			case 0x0d: MBC=-1; System.out.printf("MMM01+RAM+BATTERY"); break;
+			case 0x0f: MBC=3; System.out.printf("MBC3+TIMER+BATTERY"); break;
+			case 0x10: MBC=3; System.out.printf("MBC3+TIMER+RAM+BATTERY"); break;
+			case 0x11: MBC=3; System.out.printf("MBC3"); break;
+			case 0x12: MBC=3; System.out.printf("MBC3+RAM"); break;
+			case 0x13: MBC=3; System.out.printf("MBC3+RAM+BATTERY"); break;
+			case 0x15: MBC=4; System.out.printf("MBC4"); break;
+			case 0x16: MBC=4; System.out.printf("MBC4+RAM"); break;
+			case 0x17: MBC=4; System.out.printf("MBC4+RAM+BATTERY"); break;
+			case 0x19: MBC=5; System.out.printf("MBC5"); break;
+			case 0x1a: MBC=5; System.out.printf("MBC5+RAM"); break;
+			case 0x1b: MBC=5; System.out.printf("MBC5+RAM+BATTERY"); break;
+			case 0x1c: MBC=5; System.out.printf("MBC5+RUMBLE"); break;
+			case 0x1d: MBC=5; System.out.printf("MBC5+RUMBLE+RAM"); break;
+			case 0x1e: MBC=5; System.out.printf("MBC5+RUMBLE+RAM+BATTERY"); break;
+			case 0xfc: MBC=-2; System.out.printf("POCKET CAMERA"); break;
+			case 0xfd: MBC=-5; System.out.printf("BANDAI TAMA5"); break;
+			case 0xfe: MBC=-42; System.out.printf("HuC3"); break;
+			case 0xff: MBC=-99; System.out.printf("HuC1+RAM+BATTERY"); break;
+			default:  MBC=-666; System.out.println("*UNKNOWN*"); throw new java.io.IOException("unknow MBC type");
+		}
+		System.out.println(" (MBC"+MBC+")");
 		if(MM_ROM[0][0x0143] == 0 ) { //regular gameboy game
-			System.out.println("Cartridge appears to be a GameBoy game (first_rom_bank[0x0147] = "+MM_ROM[0][0x143]+")");
+			System.out.println("Cartridge appears to be a GameBoy game");
 		}
 		else {
-			System.out.println("Cartridge could be a ColorGameBoy game (first_rom_bank[0x0147] = "+MM_ROM[0][0x143]+")");
+			System.out.println("Cartridge could be a ColorGameBoy game");
 		}
 
 		// Determine ROM size (need 4 memmap entries per bank)
@@ -178,7 +211,7 @@ public class Cartridge {
 			case 0x0012:
 				//MBC3 TODO: RTC CRAP
 				System.out.println("Error: not using memmap, or reading from cartridge with a non cartridge address!");
-				return -1;
+				return MM_ROM[index>>12][index&0x0fff];
 			case 0x0019:
 			case 0x001A:
 			case 0x001B:

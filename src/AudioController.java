@@ -902,20 +902,45 @@ public class AudioController {
 			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
 
 // 			audioBuffer[audioBufferIndex++]=(byte)(l+r);//MONO;
+			if (audioBufferIndex == 22050) audioBufferIndex-=2;
 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
 			//System.out.println(audioBuffer[audioBufferIndex-1]);
  			//System.out.println("L="+l+" R="+r);
 			//System.out.println("SOUND_MIX");
 // 			if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
-				if(audioBufferIndex>((audioBuffer.length)>>6)) { //every 1/64 sec
-				audioSource.write(audioBuffer, 0, Math.min(audioBufferIndex,audioSource.available()));
-				audioBufferIndex=0;
-				//System.out.println("AUDIO_WRITE");
+
+
+			long ct = System.currentTimeMillis();
+			int dif=(int)(ct-lastms);
+			if(  dif > 16 ) {
+				int towrite=Math.min(audioBufferIndex, ((sampleRate/1000)*dif)<<1);
+ 				audioSource.write(audioBuffer, 0, towrite);
+ 				audioBufferIndex=0;
+				lastms+=dif;
 			}
+
+// 			if(audioBufferIndex>((audioBuffer.length)>>6)) { //every 1/64 sec
+// 				int towrite = (audioBuffer.length)>>6;
+// 				towrite -= (audioSource.getBufferSize()-audioSource.available());
+// 				towrite &= ~1;
+// 				towrite<<=1;
+// 				towrite = Math.min(towrite, audioBufferIndex);
+// 				audioSource.write(audioBuffer, 0, towrite);
+//
+// 				System.arraycopy(audioBuffer, towrite, audioBuffer, 0, audioBufferIndex-towrite);
+//
+//
+// 				Math.min(audioBufferIndex,(int)(System.currentTimeMillis()-lastms)*(sampleRate/1000)));
+// 				audioBufferIndex -= towrite;
+// 				//System.out.println("AUDIO_WRITE");
+// 				lastms += 16;
+// 			}
 		}
 		IO[0x16] = (IO[0x16]&0xf0) | S1.on | (S2.on<<1) | (S3.on<<2) | (S4.on<<3);
 	}
+
+	static long lastms = System.currentTimeMillis();
 
 	static byte bla=0;
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle

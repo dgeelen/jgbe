@@ -78,9 +78,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					}
 				}
 				setStatus(3);
+				int cycling = 69905;
+				long curms = System.currentTimeMillis();
+
 				while (getStatus() == 3) {
 					int wval = (watchaddr>=0) ? dbg.gui.cpu.read(watchaddr) : 0;
-					dbg.gui.cpu.nextinstruction();
+					cycling -= dbg.gui.cpu.nextinstruction();
 					if (dbg.gui.cpu.PC == stopaddr) {
 						setStatus(0);
 					}
@@ -228,6 +231,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		for(int i=0; i<16; ++i) {
 			if (i==7) pc=gui.cpu.PC;
 			instrs.setValueAt(deasm.simple_disasm(pc), i,0);
+// 			instrs.setValueAt(deasm.disassemble(pc), i,0);
 			pc+=deasm.instructionLength(pc);
 		}
 
