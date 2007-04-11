@@ -307,8 +307,6 @@ private final static int daa_carry_table[] =
   private int[][] WRAM = new int[0x08][0x10000];
   private int CurrentWRAMBank=1;
 
-  private int curcycles;
-
   boolean doublespeed = false;
   boolean speedswitch = false;
 
@@ -379,7 +377,6 @@ private final static int daa_carry_table[] =
   }
 
   final protected int read(int index) {
-   curcycles+=4;
    int mm[]=rMemMap[index>>12];
    if (mm!=null)
     return mm[index&0x0FFF];
@@ -523,7 +520,6 @@ private final static int daa_carry_table[] =
   }
 
   final private void write(int index, int value) {
-   curcycles+=4;
    int mm[]=wMemMap[index>>12];
    if (mm!=null) {
     mm[index&0x0FFF] = value;
@@ -623,7 +619,6 @@ private final static int daa_carry_table[] =
       for(int i=0; i<0xa0; ++i){
        write(0xfe00|i, read(i+(value<<8)));
       }
-      curcycles = 4;
       break;
      case 0xff47:
      case 0xff48:
@@ -898,7 +893,6 @@ private final static int daa_carry_table[] =
   }
 
   final protected void inc16b(int ri1, int ri2 ) {
-   curcycles += 4;
 
    ++regs[ri2];
    if (regs[ri2]>0xFF) {
@@ -909,7 +903,6 @@ private final static int daa_carry_table[] =
   }
 
   final protected void dec16b(int ri1, int ri2 ) {
-   curcycles += 4;
 
    --regs[ri2];
    if (regs[ri2]<0) {
@@ -960,7 +953,6 @@ private final static int daa_carry_table[] =
   }
 
   final protected void add16bHL(int val1, int val2) {
-   curcycles += 4;
    int fmask = regs[F] & ZF_Mask;
    add8b(L, val2);
    fmask |= ((regs[F]&CF_Mask)==CF_Mask) ? HC_Mask : 0;
@@ -1030,7 +1022,7 @@ private final static int daa_carry_table[] =
 
   static int nopCount=0;
   final private int execute() {
-   curcycles = 0;
+   int cycles;
    boolean nop=false;
 
    if(checkInterrupts()!=0) {
@@ -1038,9 +1030,10 @@ private final static int daa_carry_table[] =
     return 12;
    }
    if (halted) return 4;
-   int instr = read(PC++);
+   int op = read(PC++);
+   cycles = cycles_table[op];
 
-   switch ( instr ) {
+   switch ( op ) {
     case 0x00:
      nop=true;
      break;
@@ -1132,7 +1125,6 @@ private final static int daa_carry_table[] =
     case 0x18:{
      int x = read( PC++ );
      PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-     curcycles += 4;
     };break;
     case 0x19:
      add16bHL(regs[D], regs[E]);
@@ -1156,7 +1148,6 @@ private final static int daa_carry_table[] =
      regs[A] = ror(regs[A]);
      break;
     case 0x20:
-     curcycles += 4;
      if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
       int x = read( PC++ );
       PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -1192,7 +1183,6 @@ private final static int daa_carry_table[] =
      regs[A] &= 0xff;
     };break;
     case 0x28:
-     curcycles += 4;
      if (( regs[F]&ZF_Mask )==ZF_Mask ) {
       int x = read( PC++ );
       PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -1222,7 +1212,6 @@ private final static int daa_carry_table[] =
      xor( 0xFF );
      break;
     case 0x30:
-     curcycles += 4;
      if (( regs[F]&CF_Mask )!=CF_Mask ) {
       int x = read( PC++ );
       PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -1266,7 +1255,6 @@ private final static int daa_carry_table[] =
      regs[F] |= CF_Mask;
      break;
     case 0x38:
-     curcycles += 4;
      if (( regs[F]&CF_Mask )==CF_Mask ) {
       int x = read( PC++ );
       PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
@@ -1685,8 +1673,6 @@ private final static int daa_carry_table[] =
     case 0xc0:
      if ((regs[F]&ZF_Mask) != ZF_Mask)
       PC = pop();
-     if (curcycles == 8) curcycles = 20;
-     if (curcycles == 4) curcycles = 8;
      break;
     case 0xc1:{
      int x = pop();
@@ -1698,12 +1684,9 @@ private final static int daa_carry_table[] =
       JPnn();
      else
       PC+=2;
-     if (curcycles == 12) curcycles = 16;
-     if (curcycles == 4) curcycles = 12;
      break;
     case 0xc3:
      JPnn();
-     curcycles += 4;
      break;
     case 0xc4:
      if (( regs[FLAG_REG]&ZF_Mask )!=ZF_Mask ) {
@@ -1711,12 +1694,9 @@ private final static int daa_carry_table[] =
       JPnn();
      } else
       PC += 2;
-     if (curcycles == 20) curcycles = 24;
-     if (curcycles == 4) curcycles = 12;
      break;
     case 0xc5:
      push( regs[B]<<8 | regs[C]);
-     curcycles += 4;
      break;
     case 0xc6:
      add8b(A, read(PC++));
@@ -1728,11 +1708,8 @@ private final static int daa_carry_table[] =
     case 0xc8:
      if ((regs[F]&ZF_Mask) == ZF_Mask)
       PC = pop();
-     if (curcycles == 8) curcycles = 20;
-     if (curcycles == 4) curcycles = 8;
      break;
     case 0xc9:
-     curcycles += 4;
      PC = pop();
      break;
     case 0xca:
@@ -1740,8 +1717,6 @@ private final static int daa_carry_table[] =
       JPnn();
      else
       PC+=2;
-     if (curcycles == 12) curcycles = 16;
-     if (curcycles == 4) curcycles = 12;
      break;
 
 
@@ -1751,11 +1726,8 @@ private final static int daa_carry_table[] =
       JPnn();
      } else
       PC += 2;
-     if (curcycles == 20) curcycles = 24;
-     if (curcycles == 4) curcycles = 12;
      break;
     case 0xcd:
-     curcycles += 4;
      push( PC+2 );
      JPnn();
      break;
@@ -1769,8 +1741,6 @@ private final static int daa_carry_table[] =
     case 0xd0:
      if ((regs[F]&CF_Mask) != CF_Mask)
       PC = pop();
-     if (curcycles == 8) curcycles = 20;
-     if (curcycles == 4) curcycles = 8;
      break;
     case 0xd1:{
      int x = pop();
@@ -1782,8 +1752,6 @@ private final static int daa_carry_table[] =
       JPnn();
      else
       PC+=2;
-     if (curcycles == 12) curcycles = 16;
-     if (curcycles == 4) curcycles = 12;
      break;
 
 
@@ -1793,12 +1761,9 @@ private final static int daa_carry_table[] =
       JPnn();
      } else
       PC += 2;
-     if (curcycles == 20) curcycles = 24;
-     if (curcycles == 4) curcycles = 12;
      break;
     case 0xd5:
      push( regs[D]<<8 | regs[E]);
-     curcycles += 4;
      break;
     case 0xd6:
      sub8b(A, read(PC++));
@@ -1810,11 +1775,8 @@ private final static int daa_carry_table[] =
     case 0xd8:
      if ((regs[F]&CF_Mask) == CF_Mask)
       PC = pop();
-     if (curcycles == 8) curcycles = 20;
-     if (curcycles == 4) curcycles = 8;
      break;
     case 0xd9:
-     curcycles += 4;
      IME = true;
      PC = pop();
      break;
@@ -1823,8 +1785,6 @@ private final static int daa_carry_table[] =
       JPnn();
      else
       PC+=2;
-     if (curcycles == 12) curcycles = 16;
-     if (curcycles == 4) curcycles = 12;
      break;
 
 
@@ -1834,8 +1794,6 @@ private final static int daa_carry_table[] =
       JPnn();
      } else
       PC += 2;
-     if (curcycles == 20) curcycles = 24;
-     if (curcycles == 4) curcycles = 12;
      break;
 
 
@@ -1863,7 +1821,6 @@ private final static int daa_carry_table[] =
 
     case 0xe5:
      push( regs[H]<<8 | regs[L]);
-     curcycles += 4;
      break;
     case 0xe6:
      and(read(PC++));
@@ -1885,7 +1842,6 @@ private final static int daa_carry_table[] =
      }
      if ((SP >> 8) != (o >> 8))
       regs[F] |= HC_Mask;
-     curcycles += 8;
     };break;
     case 0xe9:
      PC = (regs[H]<<8) | regs[L];
@@ -1927,7 +1883,6 @@ private final static int daa_carry_table[] =
 
     case 0xf5:
      push( regs[A]<<8 | regs[F]);
-     curcycles += 4;
      break;
     case 0xf6:
      or(read(PC++));
@@ -1953,12 +1908,9 @@ private final static int daa_carry_table[] =
       sbc(H, 0);
      regs[F] &= CF_Mask;
      regs[F] |= fmask;
-
-     curcycles += 4;
     };break;
     case 0xf9:
      SP = regs[H]<<8 | regs[L];
-     curcycles += 4;
      break;
     case 0xfa:{
      int a = read( PC++ );
@@ -1981,8 +1933,9 @@ private final static int daa_carry_table[] =
      PC = 0x38;
      break;
     case 0xcb:
-     instr = read( PC++ );
-     switch ( instr ) {
+     op = read( PC++ );
+     cycles = cb_cycles_table[op];
+     switch ( op ) {
       case 0x00:
        regs[B] = rolc(regs[B]);
        break;
@@ -2882,20 +2835,21 @@ private final static int daa_carry_table[] =
        regs[A] |= ( 1 << 7 );
        break;
       default:
-       System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , instr );
+       System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
        PC -= 2;
        return 0;
      }
      break;
     default:
-     System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , instr );
+     System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , op );
      PC -= 1;
      return 0;
    }
    PC &= 0xffff;
    SP &= 0xffff;
    ++TotalInstrCount;
-   TotalCycleCount += curcycles;
+   cycles *= 4;
+   TotalCycleCount += cycles;
    ++nopCount;
    if (!nop)
     nopCount=0;
@@ -2903,7 +2857,7 @@ private final static int daa_carry_table[] =
 
 
 
-   return curcycles;
+   return cycles;
   }
 
   final public int nextinstruction() {
