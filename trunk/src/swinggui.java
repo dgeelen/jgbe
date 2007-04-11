@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.net.*;
 import java.awt.image.BufferedImage;
 
-public class swinggui implements ActionListener, ItemListener, KeyListener {
+public class swinggui implements ActionListener, ItemListener, KeyListener, ComponentListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
 		private static JMenuBar menubar;
@@ -85,9 +85,22 @@ public class swinggui implements ActionListener, ItemListener, KeyListener {
 			frame.setJMenuBar( createJMenuBar() );
 			addComponentsToPane( frame.getContentPane() );
 
+			frame.addComponentListener(this);
+			frame.setLocationRelativeTo(null);
+
 			frame.pack();
 			frame.setVisible( true );
 
+		}
+
+		public void componentHidden(ComponentEvent e) {}
+		public void componentMoved(ComponentEvent e) {}
+		public void componentShown(ComponentEvent e) {}
+
+		public void componentResized(ComponentEvent e) {
+			cpu.VC.scale(e.getComponent().getWidth() - 10,
+			             e.getComponent().getHeight() - 55);
+			System.out.println("Window resized");
 		}
 
 		public void actionPerformed( ActionEvent e ) {

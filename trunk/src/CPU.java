@@ -60,8 +60,8 @@ public class CPU
 			this.cartridge = cartridge;
 			refreshMemMap();
 			deasm = new Disassembler(this);
-			VC = new VideoController(this);
-			AC = new AudioController();
+			VC = new VideoController(this, 160, 144);
+			AC = new AudioController(this);
 			reset();
 		}
 

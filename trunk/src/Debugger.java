@@ -305,6 +305,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		//Set up the content pane and add swing components to it
 		addComponentsToPane( frame.getContentPane() );
 		frame.pack();
+		frame.setLocation(00, 0);
 		frame.setSize(new Dimension(480,640));
 		frame.setVisible( true );
 		//frame.addKeyListener(this); TODO: Shortcut keys
