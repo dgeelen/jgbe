@@ -430,28 +430,29 @@ public class VideoController {
 
 		int cnt = windX;
 
-		int TileNum = tilebufBG[bufMap++];
+		int PatLine[] = patpix[tilebufBG[bufMap++]][bgOffsY];
 		int TilePal = tilebufBG[bufMap++];
 		int curX = 0;
 
 		for (int t = bgOffsX; t < 8; ++t, --cnt)
 			//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
-			blitLine[curX++] = TilePal | patpix[TileNum][bgOffsY][t];
+			blitLine[curX++] = TilePal | PatLine[t];
 
 		if (cnt == 0) return;
 
 		while (cnt>=8) {
-			TileNum = tilebufBG[bufMap++];
+			PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
 			TilePal = tilebufBG[bufMap++];
-			for (int t = 0; t < 8; ++t, --cnt)
+			for (int t = 0; t < 8; ++t)
 				//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
-				blitLine[curX++] = TilePal | patpix[TileNum][bgOffsY][t];
+				blitLine[curX++] = TilePal | PatLine[t];
+			cnt -= 8;
 		}
-		TileNum = tilebufBG[bufMap++];
+		PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
 		TilePal = tilebufBG[bufMap++];
 		for (int t = 0; cnt > 0; --cnt, ++t)
 			//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
-			blitLine[curX++] = TilePal | patpix[TileNum][bgOffsY][t];
+			blitLine[curX++] = TilePal | PatLine[t];
 	}
 
 	final private void renderScanlineWindow() {
@@ -460,7 +461,7 @@ public class VideoController {
 		int rsy = ry & 7;  // y offs
 		for (int x = Math.max(windX, 0); x < 160; ++x) { // [wndX <= x < 160]
 			int rx = x - windX; // [-8 < wndX < 160] && [wndX <= x < 160] => [0 <= rx < 167]
-			int rtx = rx >> 3; // tile x
+			int rtx = rx >> 3; // tile xx
 			int rsx = rx & 7;  // x offs
 
 			int TileNum = VRAM[WindowTileMap + rtx + (rty*32)]; // get number of current tile
@@ -503,23 +504,23 @@ public class VideoController {
 					sprNum |= (ofsY >= 8) ? 1 : 0;
 					ofsY &= 7;
 				}
-				for (int x = 0; x < 8; ++x) {
-					int ofsX = x;
 
-					if ((sprAttr&(1<<3))!=0) sprNum |= (1<<9);  // bank select
-					if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
-					//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
+				if ((sprAttr&(1<<3))!=0) sprNum |= (1<<9);  // bank select
+				if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
+				//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
 
-					int palnr;
-					if (isCGB)
-						palnr = sprAttr & 7;
-					else
-						palnr = (sprAttr>>4)&1;
+				int palnr;
+				if (isCGB)
+					palnr = sprAttr & 7;
+				else
+					palnr = (sprAttr>>4)&1;
 
-					int col = patpix[sprNum][ofsY][ofsX];
+				int[] PatLine = patpix[sprNum][ofsY];
 
-					int rx = sprX - 8 + x;
+				for (int ofsX = 0; ofsX < 8; ++ofsX) {
+					int rx = sprX - 8 + ofsX;
 					// 0 is transparent color
+					int col = PatLine[ofsX];
 					if((col != 0) && (rx >= 0) && (rx < 160)) {
 						drawPixel(rx, LY, palnr, col);
 					}
