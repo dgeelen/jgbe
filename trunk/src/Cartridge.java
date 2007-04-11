@@ -192,7 +192,8 @@ public class Cartridge {
 		for (int i = 0; i < ram_mm_size; ++i)
 			MM_RAM[i] = new int[MEMMAP_SIZE];
 
-		int dummy_mm[] = new int[MEMMAP_SIZE]; // protection against roms access outside of valid address space
+		// for protection against roms access outside of valid address space
+		int dummy_mm[] = new int[MEMMAP_SIZE];
 		for (int i = rom_mm_size; i < MAX_ROM_MM; ++i)
 			MM_ROM[i] = dummy_mm;
 		for (int i = ram_mm_size; i < MAX_RAM_MM; ++i)
