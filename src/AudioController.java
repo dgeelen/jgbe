@@ -594,7 +594,7 @@ public class AudioController {
 	private int audioBufferIndex;
 	private int IO[];
 	private int WAVE[] = cgbwave;
-	private final int sampleRate=44100;//22050;
+	private final int sampleRate=22050;//44100;//22050;
 	private int cyclesLeftToRender;
 	private int TimerCountDown;     // 256hz
 	private boolean SweepTimerTick; // 128hz
@@ -613,10 +613,11 @@ public class AudioController {
 	private SoundRegister S3;
 	private SoundRegister S4;
 	//private SoundRegister SR5; //On cartridge, not used atm
+	protected CPU cpu;
 
 
-
-	public AudioController() {
+	public AudioController(CPU cpu) {
+		this.cpu=cpu;
 		try {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			myLineInfo = new DataLine.Info(SourceDataLine.class,myAudioFormat);
@@ -710,7 +711,7 @@ public class AudioController {
 	}
 
 	final private void s4_freq() {
-		S4.freq = (freqtab[IO[0x12]&7] >> (IO[0x17] >> 4)) * RATE;
+		S4.freq = (freqtab[IO[0x12]&7] >> (IO[0x12] >> 4)) * RATE;
 		if ((S4.freq >> 18)!=0) S4.freq = 1<<18;
 	}
 
@@ -738,7 +739,7 @@ public class AudioController {
 		s4_freq();
 	}
 
-	final private void sound_off() {
+	final protected void sound_off() {
 		IO[0x00] = 0x80;
 		IO[0x01] = 0xBF;
 		IO[0x02] = 0xF3;
@@ -765,7 +766,7 @@ public class AudioController {
 		if (pcm.hz) snd.rate = (1<<21) / pcm.hz;
 		else snd.rate = 0;
 */		//memcpy(WAVE, hw.cgb ? cgbwave : dmgwave, 16);
-		WAVE=cgbwave;//CGB?cgbwave:dmgwave); TODO!
+		WAVE=cpu.isCGB()?cgbwave:dmgwave;
 		//memcpy(ram.hi+0x30, WAVE, 16);
 		for (int i = 0; i < 0xf; ++i)
 			IO[i] = WAVE[i];
@@ -908,7 +909,7 @@ public class AudioController {
 			//System.out.println("SOUND_MIX");
 // 			if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
 				if(audioBufferIndex>((audioBuffer.length)>>6)) { //every 1/64 sec
-				audioSource.write(audioBuffer, 0, audioBufferIndex);
+				audioSource.write(audioBuffer, 0, Math.min(audioBufferIndex,audioSource.available()));
 				audioBufferIndex=0;
 				//System.out.println("AUDIO_WRITE");
 			}
@@ -976,6 +977,7 @@ public class AudioController {
 		}
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
 			System.out.println("Warning: writing to unknown IO address, acting as normal RAM...");
+			IO[i]=value;
 			return;
 		}
 		if ((i & 0xF0) == 0x20) {
