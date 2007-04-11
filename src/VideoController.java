@@ -67,6 +67,9 @@ public class VideoController {
 	}
 
 	public void scale(int width, int height) {
+		if (width < 160)  width = 160;
+		if (height < 144) height = 144;
+
 		drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 	}
