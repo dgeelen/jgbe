@@ -154,6 +154,7 @@ public class Cartridge {
 			case 0x05: rom_mm_size =  64 << 2; System.out.println("ROM size = 1MByte (64 banks) - only 63 banks used by MBC1"); break;
 			case 0x06: rom_mm_size = 128 << 2; System.out.println("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
 			case 0x07: rom_mm_size = 256 << 2; System.out.println("ROM size = 4MByte (256 banks)"); break;
+			case 0x08: rom_mm_size = 512 << 2; System.out.println("ROM size = 8MByte (512 banks)"); break;
 			case 0x52: rom_mm_size =  72 << 2; System.out.println("ROM size = 1.1MByte (72 banks)"); break;
 			case 0x53: rom_mm_size =  80 << 2; System.out.println("ROM size = 1.2MByte (80 banks)"); break;
 			case 0x54: rom_mm_size =  96 << 2; System.out.println("ROM size = 1.5MByte (96 banks)"); break;
