@@ -43,10 +43,6 @@ public class VideoController {
 	private boolean anydirty = true;                // see updatepatpix()
 	private boolean alldirty = true;                // see updatepatpix()
 
-	/* Scaling */
-	private int image_width;
-	private int image_height;
-
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
 	private Color Gray[];
 
@@ -60,8 +56,6 @@ public class VideoController {
 		drawImg=new BufferedImage[2];
 		scale (image_width, image_height);
 		this.isCGB = cpu.isCGB();
-		this.image_width = image_width;
-		this.image_height = image_height;
 	}
 
 	final public void addListener(JPanel panel)
