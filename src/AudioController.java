@@ -1001,7 +1001,7 @@ public class AudioController {
 			return;
 		}
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
-			System.out.println("Warning: writing to unknown IO address, acting as normal RAM...");
+			System.out.println("AudioController: Warning: writing to unknown IO address, acting as normal RAM...");
 			IO[i]=value;
 			return;
 		}

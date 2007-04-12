@@ -20,6 +20,7 @@ public class Cartridge {
 
 	private boolean ram_enabled = false;// Whether RAM is enabled to read and write
 	private boolean RTCRegisterEnabled=false;
+	private int RomRamModeSelect=0; // 0 = rom, 1=ram
 	protected int     CurrentROMBank = 1;    // The ROM bank to read/write
 	protected int     CurrentRAMBank = 0;    // The RAM bank to read/write
 	private int     CurrentRTCRegister=0;
@@ -223,16 +224,31 @@ public class Cartridge {
 		switch (MBC) {
 			case 1:
 				// MBC1
-				if ((0xA000 <= index) && (index <= 0xBFFF))	{
+				if ((index>=0x0000) && (index <0x2000)) { // RAM Enable
+					if ((value&0x0f) == 0x0A) ram_enabled = true; // 0x0Ah enable
+					else ram_enabled = false;
+				}
+				else if(index<0x4000)  { // 2000-3FFF - ROM Bank Number (Write Only)
+					CurrentROMBank=Math.max(1, value&0x1f);
+					//System.out.println("Selecting ROM bank"+CurrentROMBank);
+				}
+				else if(index<0x6000) { // 4000-5FFF - RAM Bank Number - or - Upper Bits of ROM Bank Number (Write Only)
+					if(RomRamModeSelect==0) { //Select ROM
+						CurrentROMBank=(CurrentROMBank&0x1f)|((value&0x03)<<5); //or shl 4? (Error in docs??)
+						//System.out.println("Selecting ROM bank"+CurrentROMBank);
+					}
+					else { // Select RAM
+						CurrentRAMBank=value&0x03;
+					}
+				}
+				else if(index<0x8000) { //6000-7FFF - ROM/RAM Mode Select (Write Only)
+					RomRamModeSelect=value&1;
+				}
+				else if ((index>=0xA000) && (index <= 0xBFFF))	{
 						// RAM Bank 00-03, if any
+						System.out.println("TODO: MBC1 writing to RAM");
 				}
-				else if ((0x0000 <= index) && (index <= 0x1FFF)) {
-					// RAM Enable
-					// 0x0Ah enable
-					if (value == 0x0A) ram_enabled = true;
-					else               ram_enabled = false;
-				}
-				// TODO all option
+				else System.out.printf("TODO: Cartridge writing to $%04x\n", index); // TODO all option
 				break;
 			case 2:
 				// MBC2
