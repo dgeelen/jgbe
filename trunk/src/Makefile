@@ -1,7 +1,7 @@
 JPPFILES:=$(shell ls *.jpp)
-JAVAFILES=$(shell echo $(JPPFILES) | sed s:\.jpp:\.java:g)
+JAVAFILES:=$(shell ls *.jpp | sed s:\.jpp:\.java:g)
 CLASSFILES:=$(shell ls *.java | sed s:\.java:\.class:g)
-CLASSFILES+=$(shell echo $(JAVAFILES) | sed s:\.java:\.class:g)
+CLASSFILES+=$(shell ls *.jpp | sed s:\.jpp:\.java:g | sed s:\.java:\.class:g)
 
 all: $(JAVAFILES) swinggui.class $(CLASSFILES)
 
@@ -9,7 +9,8 @@ all: $(JAVAFILES) swinggui.class $(CLASSFILES)
 	javac -O $<
 
 %.java: %.jpp
-	diff -u $@ .$@.bpp | gcc -E -x c $< | grep -v "^#" > $@
+	diff -u $@ .$@.bpp
+	gcc -E -x c $< | grep -v "^#" > $@
 	cp $@ .$@.bpp
 
 CPU.java: CPU.inc
