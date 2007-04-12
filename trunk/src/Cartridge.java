@@ -13,6 +13,8 @@ public class Cartridge {
 	protected int[][] MM_ROM = new int[MAX_ROM_MM][];
 	protected int[][] MM_RAM = new int[MAX_RAM_MM][];;
 
+	protected int[] BIOS_ROM = new int[0x100];
+
 	private String  file_name;
 	private String  err_msg;            // message in case of an error
 
@@ -42,6 +44,8 @@ public class Cartridge {
 			System.out.println("error loading cartridge from file!: " + e.getMessage());
 			err_msg = e.getMessage();
 		}
+
+		new Bios("Gameboy Boot.gb", BIOS_ROM);
 	}
 
 	public String getError() {

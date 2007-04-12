@@ -73,9 +73,14 @@ public class CPU
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
 
+		boolean BIOS_enabled = false;
+
 		final private void refreshMemMap() {
+			if (BIOS_enabled)
+				rMemMap[0x0] = null;
+			else
+				rMemMap[0x0] = cartridge.MM_ROM[0];			
 			// cartridge ROM bank 0 (read only, write has special functions)
-			rMemMap[0x0] = cartridge.MM_ROM[0];
 			rMemMap[0x1] = cartridge.MM_ROM[1];
 			rMemMap[0x2] = cartridge.MM_ROM[2];
 			rMemMap[0x3] = cartridge.MM_ROM[3];
@@ -128,8 +133,20 @@ public class CPU
 				b=-1;
 			}
 			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
-				//System.out.println("Cartridge: " + cartridge);
-				b=cartridge.read(index);
+				if (index < 0x100) {
+					b = cartridge.BIOS_ROM[index];
+				    //System.out.println("reading from BIOS rom");
+				}
+				else if (index == 0x100) {
+				    System.out.println("reading from 0x100, disabled BIOS rom");
+					BIOS_enabled = false;
+					refreshMemMap();
+					b = read(index);
+				}
+				else {
+					b = cartridge.MM_ROM[0][index];
+				    System.out.println("reading from non-BIOS rom");
+				}
 			}
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
 				b=cartridge.read(index);
@@ -444,7 +461,11 @@ public class CPU
 
 		final public void reset() {
 			//TODO: Switch to bank 0
-			PC = 0x100; //ROM Entry point on bank 0
+			//PC = 0x100;
+			BIOS_enabled = true;
+			refreshMemMap();
+			PC = 0x000;
+			
 			//AF=$01B0
 			regs[A]=0x11; // CGB sets this to 0x11 instead of 0x01 for GB
 			regs[F]=0xb0;
