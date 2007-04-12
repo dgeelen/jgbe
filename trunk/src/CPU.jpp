@@ -194,7 +194,7 @@ public class CPU
 						b = VC.LCDC;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
-						b = VC.STAT;
+						b = VC.STAT|(((new java.util.Random()).nextInt(2))<<1); //HAX I wanna play!!!
 						break;
 					case 0xff42: // SCY
 						b = VC.SCY;
@@ -371,11 +371,17 @@ public class CPU
 					case 0xff45: // LYC
 						VC.LYC = value;
 						break;
-					case 0xff46: // FF46 - DMA - DMA Transfer and Start Address (W)
+					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
 							write(0xfe00|i, read(i+(value<<8)));
 						}
-						break;
+						VC.STAT|=2; //MODE2 or 3
+						int cnt=0;
+						while(cnt<160) { //Timing :D
+						  cnt+=nextinstruction();
+						}
+						VC.STAT&=~2;
+						} break;
 					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
 					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
 					case 0xff49: // OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only

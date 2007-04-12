@@ -214,7 +214,7 @@ public class RDParser {
 			System.out.println(ident+"Expr while Next()="+((char)Next())+" isleftass="+isLeftAssociative[op]);
 			Consume();
 			int t2=0;
-			if(isLeftAssociative[op]) //Inverted?!
+			if(isLeftAssociative[op])
 				t2=Expr(presedence[op]+1, ident+"  ");
 			else
 				t2=Expr(presedence[op], ident+"  ");

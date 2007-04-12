@@ -412,7 +412,7 @@ private final static int daa_carry_table[] =
     b=VC.read(index);
    }
    else if(index < 0xff00) {
-    System.out.printf("WARNING: CPU.read(): unusable memory (0xfea-0xfeff) PC=$%04x index=$%04x\n",PC,index);
+    System.out.println("WARNING: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
     b=0;
    }
    else if(index < 0xff80) {
@@ -452,7 +452,7 @@ private final static int daa_carry_table[] =
       b = VC.LCDC;
       break;
      case 0xff41:
-      b = VC.STAT;
+      b = VC.STAT|(((new java.util.Random()).nextInt(2))<<1);
       break;
      case 0xff42:
       b = VC.SCY;
@@ -615,11 +615,17 @@ private final static int daa_carry_table[] =
      case 0xff45:
       VC.LYC = value;
       break;
-     case 0xff46:
+     case 0xff46:{
       for(int i=0; i<0xa0; ++i){
        write(0xfe00|i, read(i+(value<<8)));
       }
-      break;
+      VC.STAT|=2;
+      int cnt=0;
+      while(cnt<160) {
+        cnt+=nextinstruction();
+      }
+      VC.STAT&=~2;
+      } break;
      case 0xff47:
      case 0xff48:
      case 0xff49:
@@ -1928,6 +1934,7 @@ private final static int daa_carry_table[] =
      cp( read( PC++ ) );
      break;
     case 0xff:
+
      push(PC);
      PC = 0x38;
      break;

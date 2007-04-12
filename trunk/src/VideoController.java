@@ -270,7 +270,6 @@ public class VideoController {
 				cpu.triggerInterrupt(1); // request int STAT/VBlank
 			cpu.triggerInterrupt(0);   // always request int VBLANK
 		}
-
 		return (LY == 144);
 	}
 
