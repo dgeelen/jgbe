@@ -9,8 +9,7 @@ all: $(JAVAFILES) swinggui.class $(CLASSFILES)
 	javac -O $<
 
 %.java: %.jpp
-	diff -u $@ .$@.bpp
-	gcc -E -x c $< | grep -v "^#" > $@
+	diff -u $@ .$@.bpp | gcc -E -x c $< | grep -v "^#" > $@
 	cp $@ .$@.bpp
 
 CPU.java: CPU.inc
