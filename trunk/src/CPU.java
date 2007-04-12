@@ -412,7 +412,7 @@ private final static int daa_carry_table[] =
     b=VC.read(index);
    }
    else if(index < 0xff00) {
-    System.out.println("WARNING: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
+    System.out.printf("WARNING: CPU.read(): unusable memory (0xfea-0xfeff) PC=$%04x index=$%04x\n",PC,index);
     b=0;
    }
    else if(index < 0xff80) {
@@ -1928,7 +1928,6 @@ private final static int daa_carry_table[] =
      cp( read( PC++ ) );
      break;
     case 0xff:
-
      push(PC);
      PC = 0x38;
      break;

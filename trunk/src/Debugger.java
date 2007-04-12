@@ -31,13 +31,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		this.gui=gui;
 		deasm= new Disassembler(gui.cpu);
 		oldRegVal=new int[10];
+		parser=new RDParser();
 //		runthread.suspend();
 		createAndShowGUI();
 		runner = new TheRunner(this);
 		runthread = new Thread(runner);
 		runthread.start();
 		while (runner.getStatus() != 1) {};
-		parser=new RDParser();
 	}
 
 	public class TheRunner implements Runnable {
@@ -45,6 +45,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		private Debugger dbg;
 		private int stopaddr = -1;
 		private int watchaddr = -1;
+		private int runFor=-1;
 		synchronized public int getStatus() {
 			return status;
 		}
@@ -52,19 +53,35 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			status = val;
 		}
 
-		public void setBreakPoint(int addr) {
+		synchronized public void setBreakPoint(int addr) {
 			if (getStatus()==1)
 				stopaddr = addr;
 		}
 
-		public void setWatchPoint(int addr) {
+		synchronized public void setWatchPoint(int addr) {
 			if (getStatus()==1)
 				watchaddr = addr;
+		}
+
+		synchronized public void setRunFor(int i) {
+			this.runFor=i;
+		}
+
+		synchronized public int getRunFor() {
+			return this.runFor;
+		}
+
+		synchronized public void decRunFor() {
+			this.runFor--;
 		}
 
 		public TheRunner(Debugger tdbg) { //Pass something
 	 		setStatus(0);
 			dbg = tdbg;
+	 	}
+
+	 	synchronized public void throwMe(Throwable t) throws Throwable {
+	 		throw t;
 	 	}
 
 		public void run() {
@@ -81,9 +98,22 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				int cycling = 69905;
 				long curms = System.currentTimeMillis();
 
-				while (getStatus() == 3) {
+				while ((getStatus() == 3) && (getRunFor()!=0)) {
 					int wval = (watchaddr>=0) ? dbg.gui.cpu.read(watchaddr) : 0;
-					cycling -= dbg.gui.cpu.nextinstruction();
+					int OldPC=gui.cpu.PC;
+					try {
+						cycling -= dbg.gui.cpu.nextinstruction();
+						decRunFor();
+					}
+					catch( Throwable t ) {
+						System.out.println("+=================================================+");
+						System.out.println("UNHANDLED ERROR:");
+						System.out.println(t);
+						System.out.println("+=================================================+");
+						gui.cpu.PC=OldPC;
+						gui.cpu.printCPUstatus();
+						//throwMe(t);
+					}
 					if (dbg.gui.cpu.PC == stopaddr) {
 						setStatus(0);
 					}
@@ -94,6 +124,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 						setStatus(0);
 					}
 				}
+				setRunFor(-1);
 			}
 		}
 	}
@@ -321,9 +352,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			int i=0;
 			String s=cmds.getText().trim();
 			cmds.selectAll();
-			System.out.println("Command='"+s+"'");
+			//System.out.println("Command='"+s+"'");
 			if(s.equals("s")) {
-				System.out.println("SingleStep");
+				//System.out.println("SingleStep");
 				gui.cpu.nextinstruction();
 				update();
 			}
@@ -338,11 +369,20 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					while (runner.getStatus() == 2) {};
 				}
 			}
+
 			if(s.charAt(0)=='w') {
 				String ss = s.substring( s.lastIndexOf(" ") + 1);
 				if( ss.charAt(0)=='$' )
 					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
 			}
+
+			if(s.charAt(0)=='p') {
+				runner.setRunFor(parser.StrToInt(s.substring(1)));
+				runner.setStatus(3);
+				while (runner.getStatus() != 1) {};
+				update();
+			}
+
 			if(s.charAt(0)=='g') {
 				if (runner.getStatus() == 1) {
 					runner.setStatus(2);
