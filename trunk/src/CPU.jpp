@@ -194,6 +194,7 @@ public class CPU
 						b = VC.LCDC;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
+						//BLAAAA
 						b = VC.STAT|(((new java.util.Random()).nextInt(2))<<1); //HAX I wanna play!!!
 						break;
 					case 0xff42: // SCY
@@ -822,9 +823,9 @@ public class CPU
 					//	uh? 16bit memwrite? plz check for errors, I'm totally confused with the Endianness :)
 					int i=read( PC++ );
 					int j=read( PC++ );
-					int l=((j<<8|i)+1)&0xffff;
-					writemem8b(j,i, SP&0xff);
-					writemem8b(l>>8,l&0xff, SP>>8);
+					int l=(j<<8|i);
+					write(l           , SP>>8);
+					write((l+1)&0xffff, SP&0xff);
 					}; break;
 				case 0x07:  // RLCA
 					regs[A] = rolc(regs[A]);
