@@ -3,6 +3,9 @@ import java.awt.*;
 import java.awt.image.*;
 
 public class VideoController {
+	private static final int MIN_WIDTH  = 160;
+	private static final int MIN_HEIGHT = 144;
+
 	private JPanel listener = null;
 	private BufferedImage drawImg[];
 	private int curDrawImg = 0;
@@ -67,8 +70,8 @@ public class VideoController {
 	}
 
 	public void scale(int width, int height) {
-		if (width < 160)  width = 160;
-		if (height < 144) height = 144;
+		if (width < MIN_WIDTH)   width  = MIN_WIDTH;
+		if (height < MIN_HEIGHT) height = MIN_HEIGHT;
 
 		drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -407,7 +410,8 @@ public class VideoController {
 			}
 			tilebufBG[bufMap++] = tile |
 			 ((attr & 0x08) << 6) |              // bank select
-			 ((attr & 0x60) << 5);               // horiz/vert flip
+			 ((attr & (1<<5)) << 5);               // horiz/vert flip
+			 //1<<10;
 			tilebufBG[bufMap++] = (attr&7 | 0x08) << 2; // pal select
 			if ((tileMap&31)==0) { //if ((attrMap&31)==0)
 				tileMap -= 32;

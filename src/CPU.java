@@ -346,9 +346,14 @@ private final static int daa_carry_table[] =
    return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
   }
 
-  final private void refreshMemMap() {
+  boolean BIOS_enabled = false;
 
-   rMemMap[0x0] = cartridge.MM_ROM[0];
+  final private void refreshMemMap() {
+   if (BIOS_enabled)
+    rMemMap[0x0] = null;
+   else
+    rMemMap[0x0] = cartridge.MM_ROM[0];
+
    rMemMap[0x1] = cartridge.MM_ROM[1];
    rMemMap[0x2] = cartridge.MM_ROM[2];
    rMemMap[0x3] = cartridge.MM_ROM[3];
@@ -386,8 +391,20 @@ private final static int daa_carry_table[] =
     b=-1;
    }
    else if(index < 0x4000) {
+    if (index < 0x100) {
+     b = cartridge.BIOS_ROM[index];
 
-    b=cartridge.read(index);
+    }
+    else if (index == 0x100) {
+        System.out.println("reading from 0x100, disabled BIOS rom");
+     BIOS_enabled = false;
+     refreshMemMap();
+     b = read(index);
+    }
+    else {
+     b = cartridge.MM_ROM[0][index];
+        System.out.println("reading from non-BIOS rom");
+    }
    }
    else if(index < 0x8000) {
     b=cartridge.read(index);
@@ -688,7 +705,11 @@ private final static int daa_carry_table[] =
 
   final public void reset() {
 
-   PC = 0x100;
+
+   BIOS_enabled = true;
+   refreshMemMap();
+   PC = 0x000;
+
 
    regs[A]=0x11;
    regs[F]=0xb0;
