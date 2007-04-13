@@ -200,10 +200,10 @@ public class Cartridge {
 
 		// for protection against roms access outside of valid address space
 		int dummy_mm[] = new int[MEMMAP_SIZE];
-		for (int i = rom_mm_size; i < MAX_ROM_MM; ++i)
-			MM_ROM[i] = dummy_mm;
-		for (int i = ram_mm_size; i < MAX_RAM_MM; ++i)
-			MM_RAM[i] = dummy_mm;
+		//for (int i = rom_mm_size; i < MAX_ROM_MM; ++i)
+		//	MM_ROM[i] = dummy_mm;
+		//for (int i = ram_mm_size; i < MAX_RAM_MM; ++i)
+		//	MM_RAM[i] = dummy_mm;
 
 		distream.close(); // lets be nice :-p
 	}
