@@ -132,10 +132,10 @@ public class VideoController {
 
 		if (index==0) index= (0x20>>2);
 		else --index;
-		Colorsint[(index<<2) | 0]=GRAYSHADES[(value>>0)&3];
-		Colorsint[(index<<2) | 1]=GRAYSHADES[(value>>2)&3];
-		Colorsint[(index<<2) | 2]=GRAYSHADES[(value>>4)&3];
-		Colorsint[(index<<2) | 3]=GRAYSHADES[(value>>6)&3];
+		System.arraycopy(GRAYSHADES[(value>>0)&3], 0, Colorsint[(index<<2) | 0], 0, 3);;
+		System.arraycopy(GRAYSHADES[(value>>2)&3], 0, Colorsint[(index<<2) | 1], 0, 3);;
+		System.arraycopy(GRAYSHADES[(value>>4)&3], 0, Colorsint[(index<<2) | 2], 0, 3);;
+		System.arraycopy(GRAYSHADES[(value>>6)&3], 0, Colorsint[(index<<2) | 3], 0, 3);;
 	}
 
 	final public void setBGColData(int value) {

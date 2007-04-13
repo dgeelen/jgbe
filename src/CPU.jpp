@@ -212,8 +212,9 @@ public class CPU
 				    //System.out.println("reading from BIOS rom");
 				}
 				else if (index == 0x100) {
-				    System.out.println("reading from 0x100, disabled BIOS rom");
+					System.out.println("reading from 0x100, disableing BIOS rom");
 					BIOS_enabled = false;
+					VC.isCGB = isCGB(); // hax! see reset()
 					refreshMemMap();
 					b = read(index);
 				}
@@ -538,6 +539,7 @@ public class CPU
 			//TODO: Switch to bank 0
 			//PC = 0x100;
 			BIOS_enabled = true;
+			VC.isCGB = false; // hax! we have mono bios?
 			refreshMemMap();
 			PC = 0x000;
 
