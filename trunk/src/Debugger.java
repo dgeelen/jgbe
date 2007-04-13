@@ -131,8 +131,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 						//throwMe(t);
 					}
 					if (logwriter != null) {
-						String out = String.format("%d: PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
+						String out = String.format("%d(%d): PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
 							gui.cpu.TotalInstrCount,
+							gui.cpu.TotalCycleCount,
 							gui.cpu.PC,
 							gui.cpu.regs[gui.cpu.A],
 							gui.cpu.regs[gui.cpu.F],
