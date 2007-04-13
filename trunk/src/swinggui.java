@@ -213,7 +213,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				System.out.println();
 				System.out.println("ERROR: missing argument");
 				System.out.println();
-				System.out.println("USAGE: java swinggui [ROMFILE]");
+				System.out.println("USAGE: java swinggui ROMFILE [LOGFILE]");
 				System.out.println();
 				return;
 			}
@@ -222,12 +222,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				System.out.println("ERROR: "+gui.cartridge.getError());
 				return;
 			}
-			else {
-				System.out.println("Succesfully loaded ROM :)");
-				gui.cpu = new CPU(gui.cartridge);
-				gui.VC = gui.cpu.VC;
-				TestSuite t = new TestSuite(gui.cpu);
-			}
+
+			System.out.println("Succesfully loaded ROM :)");
+			gui.cpu = new CPU(gui.cartridge);
+			gui.VC = gui.cpu.VC;
+			TestSuite t = new TestSuite(gui.cpu);
 
 			gui.createAndShowGUI();
 			gui.cpu.reset();
@@ -238,7 +237,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			timer.start();
 
 			/*DEBUGGER*/
-			final Debugger dbgr=new Debugger(gui); //The GUI to which this debugger belongs
+			String logfilename = (args.length >= 2) ? args[1] : "";
+			final Debugger dbgr=new Debugger(gui, logfilename); //The GUI to which this debugger belongs
 //			Debugger.createAndShowGUI();
 			/*///END DEBUGGER
 			int x = 1;

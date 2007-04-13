@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.table.*;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
+import java.io.*;
 
 public class Debugger implements ActionListener, ItemListener, KeyListener { //GUI
 	public static boolean RIGHT_TO_LEFT = false;
@@ -27,8 +28,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
 	private RDParser parser;
 	private int[] oldRegVal;
-	public Debugger(swinggui gui) {
+	private Writer logwriter;
+	public Debugger(swinggui gui, String logfilename) {
 		this.gui=gui;
+		try {
+			if (!logfilename.equals(""))
+				logwriter = new BufferedWriter( new FileWriter(logfilename) );
+		}
+		catch (java.io.IOException e) {
+			System.out.println("Error opening logfile:" + e.getMessage());
+			logwriter = null;
+		}
 		deasm= new Disassembler(gui.cpu);
 		oldRegVal=new int[10];
 		parser=new RDParser();
@@ -113,6 +123,26 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 						gui.cpu.PC=OldPC;
 						gui.cpu.printCPUstatus();
 						//throwMe(t);
+					}
+					if (logwriter != null) {
+						String out = String.format("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$04x\n",
+							gui.cpu.PC,
+							gui.cpu.regs[gui.cpu.A],
+							gui.cpu.regs[gui.cpu.F],
+							gui.cpu.regs[gui.cpu.B],
+							gui.cpu.regs[gui.cpu.C],
+							gui.cpu.regs[gui.cpu.D],
+							gui.cpu.regs[gui.cpu.E],
+							gui.cpu.regs[gui.cpu.H],
+							gui.cpu.regs[gui.cpu.L],
+							gui.cpu.SP);
+						try {
+							logwriter.write(out);
+						}
+						catch (java.io.IOException e) {
+							System.out.println("Error writing logfile:" + e.getMessage());
+							logwriter = null;
+						}
 					}
 					if (dbg.gui.cpu.PC == stopaddr) {
 						setStatus(0);
@@ -391,6 +421,15 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			}
 			if(s.charAt(0)=='b') {
 				if (runner.getStatus() == 3) {
+					if (logwriter != null) {
+						try {
+							logwriter.flush();
+						}
+						catch (java.io.IOException e2) {
+							System.out.println("Error flushing logfile:" + e2.getMessage());
+							logwriter = null;
+						}
+					}
 					runner.setStatus(0);
 					while (runner.getStatus() != 1) {};
 					update();
