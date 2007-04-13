@@ -1,3 +1,4 @@
+
 public class CPU
 {
   protected static final int CARRY8b = 512;
@@ -294,7 +295,7 @@ public class CPU
     VC.write(index, value);
    }
    else if(index < 0xff00) {
-    System.out.println("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff)");
+    System.out.printf("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff) index=$%04x, value=$%02x\n",index,value);
    }
    else if(index < 0xff80) {
     switch(index) {
@@ -361,12 +362,12 @@ public class CPU
       for(int i=0; i<0xa0; ++i){
        write(0xfe00|i, read(i+(value<<8)));
       }
-      VC.STAT|=2;
-      int cnt=0;
-      while(cnt<160) {
-        cnt+=nextinstruction();
-      }
-      VC.STAT&=~2;
+
+
+
+
+
+
       } break;
      case 0xff47:
      case 0xff48:
@@ -429,14 +430,13 @@ public class CPU
 
   final public void reset() {
 
-
    BIOS_enabled = true;
 
    refreshMemMap();
-   PC = 0x000;
+   PC = VC.isCGB ? 0x100 : 0x00;
 
 
-   A=0x11;
+   A=VC.isCGB?0x11:0x01;
    F=0xb0;
 
    B=0x00;
@@ -539,7 +539,7 @@ public class CPU
    int t_mm[]; int t_mi; int t_w16; int t_acc; int t_vol; int t_mask;;
    if(checkInterrupts()!=0) {
     halted = false;
-    return 12;
+
    }
    if (halted) return 4;
    int op = (( ((t_mm=rMemMap[(t_mi=PC++)>>12]) == null) ? (read(t_mi)) : t_mm[t_mi&0x0FFF] ));
