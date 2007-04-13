@@ -213,10 +213,8 @@ public class CPU
 				    //System.out.println("reading from BIOS rom");
 				}
 				else if (index == 0x100) {
-					System.out.println("reading from 0x100, disableing BIOS rom");
-					BIOS_enabled = false;
-					VC.isCGB = isCGB(); // hax! see reset()
-					refreshMemMap();
+					System.out.println("reading from 0x100, disableing BIOS rom (PC="+PC+")");
+					reset(false); // reset without forcing mono mode
 					b = read(index);
 				}
 				else {
@@ -536,12 +534,18 @@ public class CPU
 			}
 		}
 
+
 		final public void reset() {
-			//TODO: Switch to bank 0
-			BIOS_enabled = true;
-			//VC.isCGB = false; // hax! we have mono bios?
+			reset(true);
+		}
+
+		final public void reset(boolean bios) {
+			BIOS_enabled = bios;
+			VC.isCGB = bios ? false : isCGB();
 			refreshMemMap();
-			PC = VC.isCGB ? 0x100 : 0x00;
+
+			if (bios)
+				PC=0;
 
 			//AF=$01B0
 			A=VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
