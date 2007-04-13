@@ -603,7 +603,7 @@ public class CPU
     case 0x29: { F &= ZF_Mask; L += L; H += H; if (L > 0xff) { L &= 0xff; ++H; F |= HC_Mask; } if (H > 0xff) { H &= 0xff; F |= CF_Mask; } }; break;
     case 0x39: { F &= ZF_Mask; L += (SP&0xff); H += (SP>>8); if (L > 0xff) { L &= 0xff; ++H; F |= HC_Mask; } if (H > 0xff) { H &= 0xff; F |= CF_Mask; } }; break;
     case 0xe9: PC = ((H<<8)|L); break;
-    case 0x2f: A = ~A; F |= (NF_Mask|HC_Mask); break;
+    case 0x2f: A ^= 0xFF; F |= (NF_Mask|HC_Mask); break;
     case 0x36: { if ((t_mm=wMemMap[(t_mi=((H<<8)|L))>>12]) == null) write(t_mi, ((( ((t_mm=rMemMap[(t_mi=PC++)>>12]) == null) ? (read(t_mi)) : t_mm[t_mi&0x0FFF] )))); else t_mm[t_mi&0x0FFF] = ((( ((t_mm=rMemMap[(t_mi=PC++)>>12]) == null) ? (read(t_mi)) : t_mm[t_mi&0x0FFF] )));}; break;
     case 0x07: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (A) = ShTables. RLC_val[t_acc]; }; F &= CF_Mask; break;
     case 0x17: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (A) = ShTables. RL_val[t_acc]; }; F &= CF_Mask; break;
