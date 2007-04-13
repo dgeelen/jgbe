@@ -56,6 +56,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		private int stopaddr = -1;
 		private int watchaddr = -1;
 		private int runFor=-1;
+		private int instrstop=-1;
 		synchronized public int getStatus() {
 			return status;
 		}
@@ -71,6 +72,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		synchronized public void setWatchPoint(int addr) {
 			if (getStatus()==1)
 				watchaddr = addr;
+		}
+
+		synchronized public void setInstrStop(int instrs) {
+			if (getStatus()==1)
+				instrstop = instrs;
 		}
 
 		synchronized public void setRunFor(int i) {
@@ -125,7 +131,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 						//throwMe(t);
 					}
 					if (logwriter != null) {
-						String out = String.format("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$04x\n",
+						String out = String.format("%d: PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
+							gui.cpu.TotalInstrCount,
 							gui.cpu.PC,
 							gui.cpu.regs[gui.cpu.A],
 							gui.cpu.regs[gui.cpu.F],
@@ -143,6 +150,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 							System.out.println("Error writing logfile:" + e.getMessage());
 							logwriter = null;
 						}
+					}
+					if (dbg.gui.cpu.TotalInstrCount == instrstop) {
+						setStatus(0);
 					}
 					if (dbg.gui.cpu.PC == stopaddr) {
 						setStatus(0);
@@ -444,6 +454,19 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 							runner.setStatus(2);
 							while (runner.getStatus() == 2) {};
 						}
+					}
+				}
+				catch ( NumberFormatException ee ) {
+						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				}
+				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
+				update();
+			}
+			if(s.charAt(0)=='c') {
+				try {
+					if (runner.getStatus() == 1) {
+						String ss = s.substring( s.lastIndexOf(" ") + 1);
+						runner.setInstrStop(Integer.parseInt( ss.substring(0), 10 ));
 					}
 				}
 				catch ( NumberFormatException ee ) {
