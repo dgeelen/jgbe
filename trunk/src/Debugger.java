@@ -164,6 +164,19 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					if ((watchaddr>=0) && (wval != dbg.gui.cpu.read(watchaddr))) {
 						setStatus(0);
 					}
+					if (
+						(dbg.gui.cpu.B<0) || (dbg.gui.cpu.B>0xff) ||
+						(dbg.gui.cpu.C<0) || (dbg.gui.cpu.C>0xff) ||
+						(dbg.gui.cpu.D<0) || (dbg.gui.cpu.D>0xff) ||
+						(dbg.gui.cpu.E<0) || (dbg.gui.cpu.E>0xff) ||
+						(dbg.gui.cpu.F<0) || (dbg.gui.cpu.F>0xff) ||
+						(dbg.gui.cpu.H<0) || (dbg.gui.cpu.H>0xff) ||
+						(dbg.gui.cpu.L<0) || (dbg.gui.cpu.L>0xff) ||
+						(dbg.gui.cpu.SP<0) || (dbg.gui.cpu.SP>0xffff) ||
+						(dbg.gui.cpu.PC<0) || (dbg.gui.cpu.PC>0xffff)
+					) {
+						setStatus(0);
+					}
 					if (dbg.gui.cpu.exception() != 0) {
 						setStatus(0);
 						gui.cpu.printCPUstatus();
