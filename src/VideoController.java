@@ -13,8 +13,8 @@ public class VideoController {
 
 	private int CurrentVRAMBank=0;
 	//private int VRAM[][]=new int[2][0x2000]; //8k per bank;
-	private int VRAM[]=new int[0x4000]; //8k per bank;
-	private int OAM[]=new int[0xa0]; //Sprite Attribute Table;
+	protected int VRAM[]=new int[0x4000]; //8k per bank;
+	protected int OAM[]=new int[0xa0]; //Sprite Attribute Table;
 
 	protected boolean isCGB;
 
@@ -39,23 +39,16 @@ public class VideoController {
 	private int OBPD[]=new int[8*4*2]; //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
 
 	/* caching vars */
-	private Color Colors[] = new Color[8*4*2];
-	private int Colorsint[][] = new int[8*4*2][3];
+	private int colors[][] = new int[8*4*2][3];
 	private int patpix[][][] = new int[4096][8][8]; // see updatepatpix()
 	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
 	private boolean anydirty = true;                // see updatepatpix()
 	private boolean alldirty = true;                // see updatepatpix()
 
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
-	private Color Gray[];
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
-		Gray = new Color[4];
-		Gray[0]=new Color(0,0,0);
-		Gray[1]=new Color(64,64,64);
-		Gray[2]=new Color(128,128,128);
-		Gray[3]=new Color(192,192,192);
 		drawImg=new BufferedImage[2];
 		scale (image_width, image_height);
 		this.isCGB = cpu.isCGB();
@@ -97,9 +90,7 @@ public class VideoController {
 			for (int x = 0; x < 160; ++x) {
 				int col = blitLine[x];
 				if ((col >= 0) && (col < (8*4*2)))
-					//g.setColor(Colors[col]);
-					//g.drawRect(x, y, 0, 0);
-					wr.setPixel(x,y, Colorsint[col]);
+					wr.setPixel(x,y, colors[col]);
 			}
 		}
 		curDrawImg ^= 1;
@@ -132,10 +123,10 @@ public class VideoController {
 
 		if (index==0) index= (0x20>>2);
 		else --index;
-		System.arraycopy(GRAYSHADES[(value>>0)&3], 0, Colorsint[(index<<2) | 0], 0, 3);;
-		System.arraycopy(GRAYSHADES[(value>>2)&3], 0, Colorsint[(index<<2) | 1], 0, 3);;
-		System.arraycopy(GRAYSHADES[(value>>4)&3], 0, Colorsint[(index<<2) | 2], 0, 3);;
-		System.arraycopy(GRAYSHADES[(value>>6)&3], 0, Colorsint[(index<<2) | 3], 0, 3);;
+		System.arraycopy(GRAYSHADES[(value>>0)&3], 0, colors[(index<<2) | 0], 0, 3);;
+		System.arraycopy(GRAYSHADES[(value>>2)&3], 0, colors[(index<<2) | 1], 0, 3);;
+		System.arraycopy(GRAYSHADES[(value>>4)&3], 0, colors[(index<<2) | 2], 0, 3);;
+		System.arraycopy(GRAYSHADES[(value>>6)&3], 0, colors[(index<<2) | 3], 0, 3);;
 	}
 
 	final public void setBGColData(int value) {
@@ -158,10 +149,9 @@ public class VideoController {
 		// to do anything more and there it works
 		// fading issue is somethere else, maybe int timing issue?
 
-		Colors[(palnum << 2) | colnum | 0x20] = new Color(r, g, b);
-		Colorsint[(palnum << 2) | colnum | 0x20][0] = r;
-		Colorsint[(palnum << 2) | colnum | 0x20][1] = g;
-		Colorsint[(palnum << 2) | colnum | 0x20][2] = b;
+		colors[(palnum << 2) | colnum | 0x20][0] = r;
+		colors[(palnum << 2) | colnum | 0x20][1] = g;
+		colors[(palnum << 2) | colnum | 0x20][2] = b;
 
 		if ((BGPI&(1<<7))!=0)
 			++BGPI;
@@ -187,10 +177,9 @@ public class VideoController {
 		g <<= 3; g |= (g >> 5);
 		b <<= 3; b |= (b >> 5);
 
-		Colors[(palnum << 2) | colnum] = new Color(r, g, b);
-		Colorsint[(palnum << 2) | colnum][0] = r;
-		Colorsint[(palnum << 2) | colnum][1] = g;
-		Colorsint[(palnum << 2) | colnum][2] = b;
+		colors[(palnum << 2) | colnum][0] = r;
+		colors[(palnum << 2) | colnum][1] = g;
+		colors[(palnum << 2) | colnum][2] = b;
 
 		if ((OBPI&(1<<7))!=0)
 			++OBPI;
@@ -410,8 +399,7 @@ public class VideoController {
 			}
 			tilebufBG[bufMap++] = tile |
 			 ((attr & 0x08) << 6) |              // bank select
-			 ((attr & (1<<5)) << 5);               // horiz/vert flip
-			 //1<<10;
+			 ((attr & 0x60) << 5);               // horiz/vert flip
 			tilebufBG[bufMap++] = (attr&7 | 0x08) << 2; // pal select
 			if ((tileMap&31)==0) { //if ((attrMap&31)==0)
 				tileMap -= 32;
