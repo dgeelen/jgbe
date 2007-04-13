@@ -300,6 +300,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		int pc=gui.cpu.PC;
 		for(int i=0; i<7; ++i) {
 			pc=seekBackOneInstruction(pc);
+			//instrs.setValueAt(instrs.getValueAt(i+1,0), i,0);
 			}
 		for(int i=0; i<16; ++i) {
 			if (i==7) pc=gui.cpu.PC;

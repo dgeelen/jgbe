@@ -153,7 +153,7 @@ public class CPU
 			if (BIOS_enabled)
 				rMemMap[0x0] = null;
 			else
-				rMemMap[0x0] = cartridge.MM_ROM[0];			
+				rMemMap[0x0] = cartridge.MM_ROM[0];
 			// cartridge ROM bank 0 (read only, write has special functions)
 			rMemMap[0x1] = cartridge.MM_ROM[1];
 			rMemMap[0x2] = cartridge.MM_ROM[2];
@@ -219,7 +219,7 @@ public class CPU
 				}
 				else {
 					b = cartridge.MM_ROM[0][index];
-				    System.out.println("reading from non-BIOS rom");
+				  //System.out.println("reading from non-BIOS rom");
 				}
 			}
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -368,6 +368,7 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
+			//System.out.printf("Writing to IO address $%04x value=$%02x\n",index, value);
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
 				mm[index&0x0FFF] = value;
@@ -539,7 +540,7 @@ public class CPU
 			BIOS_enabled = true;
 			refreshMemMap();
 			PC = 0x000;
-			
+
 			//AF=$01B0
 			A=0x11; // CGB sets this to 0x11 instead of 0x01 for GB
 			F=0xb0;
@@ -592,7 +593,7 @@ public class CPU
 			System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
 			System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
 			System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
-			System.out.println( "  "+deasm.disassemble( PC ) );
+			System.out.println( "  "+deasm.simple_disasm( PC ) );
 		}
 
 		final protected int checkInterrupts() { //handle interrupt priorities
@@ -684,7 +685,7 @@ public class CPU
 						printtables("RRC", rorc);
 			if (op < 0x100) return 0;
 */
-			
+
 			switch ( op ) {
 				case 0x00: break;                                   // NOP
 				case 0xf3: IME=false; break;                        // DI
@@ -788,6 +789,21 @@ public class CPU
 							H &= 0xff;
 							F |= FC;
 						}
+					}
+				};break;
+				case 0x27:{                                         // DAA
+					t_acc = Tables.daa[(((F)&0x70)<<4) | A];
+					A += t_acc;
+					F = (F & (FN)) | ((A==0)?FZ:0) | Tables.daa_carry[t_acc>>2];
+					A &= 0xff;
+				};break;
+				case 0xe8:{
+					t_acc = SP;
+					SP += (((IMM8)^0x80)-0x80);
+					F = ((SP >> 8) != (t_acc >> 8)) ? FH : 0;
+					if ((SP & ~0xffff) != 0) {
+						SP &= 0xffff;
+						F |= CF_Mask;
 					}
 				};break;
 				case 0x10: if (speedswitch) {                       // STOP

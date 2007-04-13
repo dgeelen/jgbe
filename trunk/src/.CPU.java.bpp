@@ -126,7 +126,7 @@ public class CPU
     }
     else {
      b = cartridge.MM_ROM[0][index];
-        System.out.println("reading from non-BIOS rom");
+
     }
    }
    else if(index < 0x8000) {
@@ -485,7 +485,7 @@ public class CPU
    System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
    System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
    System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
-   System.out.println( "  "+deasm.disassemble( PC ) );
+   System.out.println( "  "+deasm.simple_disasm( PC ) );
   }
 
   final protected int checkInterrupts() {
@@ -645,6 +645,21 @@ public class CPU
        H &= 0xff;
        F |= CF_Mask;
       }
+     }
+    };break;
+    case 0x27:{
+     t_acc = Tables.daa[(((F)&0x70)<<4) | A];
+     A += t_acc;
+     F = (F & (NF_Mask)) | ((A==0)?ZF_Mask:0) | Tables.daa_carry[t_acc>>2];
+     A &= 0xff;
+    };break;
+    case 0xe8:{
+     t_acc = SP;
+     SP += (((((( ((t_mm=rMemMap[(t_mi=PC++)>>12]) == null) ? (read(t_mi)) : t_mm[t_mi&0x0FFF] ))))^0x80)-0x80);
+     F = ((SP >> 8) != (t_acc >> 8)) ? HC_Mask : 0;
+     if ((SP & ~0xffff) != 0) {
+      SP &= 0xffff;
+      F |= CF_Mask;
      }
     };break;
     case 0x10: if (speedswitch) {
