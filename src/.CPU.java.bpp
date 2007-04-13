@@ -624,6 +624,29 @@ public class CPU
      { if ((t_mm=wMemMap[t_acc>>12]) == null) write(t_acc, SP>>8); else t_mm[t_acc&0x0FFF] = SP>>8; };
      { if ((t_mm=wMemMap[(t_mi=(t_acc+1)&0xffff)>>12]) == null) write(t_mi, SP&0xff); else t_mm[t_mi&0x0FFF] = SP&0xff;};
     }; break;
+    case 0xf8:{
+     { H = SP >> 8; L = SP & 0xFF; };
+     L += (((((( ((t_mm=rMemMap[(t_mi=PC++)>>12]) == null) ? (read(t_mi)) : t_mm[t_mi&0x0FFF] ))))^0x80)-0x80);
+     F = 0;
+     if (L > 0xff) {
+      L &= 0xff;
+      F |= HC_Mask;
+      ++H;
+      if (H > 0xff) {
+       H &= 0xff;
+       F |= CF_Mask;
+      }
+     }
+     else if (L < 0) {
+      L &= 0xff;
+      F |= HC_Mask;
+      --H;
+      if (H < 0) {
+       H &= 0xff;
+       F |= CF_Mask;
+      }
+     }
+    };break;
     case 0x10: if (speedswitch) {
      System.out.println("Speed switch!");
      doublespeed = !doublespeed;
