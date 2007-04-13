@@ -96,10 +96,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			dbg = tdbg;
 	 	}
 
-	 	synchronized public void throwMe(Throwable t) throws Throwable {
-	 		throw t;
-	 	}
-
 		public void run() {
 			while (true) {
 				setStatus(1);
@@ -124,11 +120,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					catch( Throwable t ) {
 						System.out.println("+=================================================+");
 						System.out.println("UNHANDLED ERROR:");
-						System.out.println(t);
-						System.out.println("+=================================================+");
+						t.printStackTrace();
+						System.out.println("+-------------------------------------------------+");
 						gui.cpu.PC=OldPC;
 						gui.cpu.printCPUstatus();
-						//throwMe(t);
+						System.out.println("+=================================================+");
+						setStatus(0);
 					}
 					if (logwriter != null) {
 						String out = String.format("%d(%d): PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
