@@ -753,14 +753,14 @@ public class CPU
 				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RL
 				case 0x0f: DO_SHOP_R(RRC, A); F &= FC; break;       // RRA
 				case 0x1f: DO_SHOP_R(RR, A); F &= FC; break;        // RR
-				case 0xc7: PUSH(PC); PC = 0x00; break;							// RST  &0
-				case 0xcf: PUSH(PC); PC = 0x08; break;							// RST  &8
-				case 0xd7: PUSH(PC); PC = 0x10; break;							// RST  &10
-				case 0xdf: PUSH(PC); PC = 0x18; break;							// RST  &18
-				case 0xe7: PUSH(PC); PC = 0x20; break;							// RST  &20
-				case 0xef: PUSH(PC); PC = 0x28; break;							// RST  &28
-				case 0xf7: PUSH(PC); PC = 0x30; break;							// RST  &30
-				case 0xff: PUSH(PC); PC = 0x38; break;							// RST  &38
+				case 0xc7: PUSH(PC); PC = 0x00; break;              // RST  &0
+				case 0xcf: PUSH(PC); PC = 0x08; break;              // RST  &8
+				case 0xd7: PUSH(PC); PC = 0x10; break;              // RST  &10
+				case 0xdf: PUSH(PC); PC = 0x18; break;              // RST  &18
+				case 0xe7: PUSH(PC); PC = 0x20; break;              // RST  &20
+				case 0xef: PUSH(PC); PC = 0x28; break;              // RST  &28
+				case 0xf7: PUSH(PC); PC = 0x30; break;              // RST  &30
+				case 0xff: PUSH(PC); PC = 0x38; break;              // RST  &38
 				case 0x37: F &= FZ; F |= FC; break;                 // SCF
 				case 0x3f: F &= (FZ|FC); F ^= FC; break;            // CCF
 				case 0x08: {                                        // LD   (nn), SP
