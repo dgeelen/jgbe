@@ -51,23 +51,19 @@
 	int t_vol; \
 	int t_mask;
 
+// use when you know the memmap will fail
+#define READ_S(index) (read(index))
+#define WRITE_S(index, val) write(index, val)
+
+//#define INLINE_MEMMAP
+
+#ifdef INLINE_MEMMAP
 // dont use with expressions with side effects
 #define READ_F(index)\
 ( ((t_mm=rMemMap[index>>12]) == null) \
 	? READ_S(index) \
 	: t_mm[index&0x0FFF] \
 )
-
-// use when you know the memmap will fail
-#define READ_S(index) (read(index))
-
-// use when the expression has side effects
-#define READ_V(index) \
-( ((t_mm=rMemMap[(t_mi=index)>>12]) == null) \
-	? READ_S(t_mi) \
-	: t_mm[t_mi&0x0FFF] \
-)
-
 #define WRITE_F(index, val) \
 { if ((t_mm=wMemMap[index>>12]) == null) \
 		WRITE_S(index, val); \
@@ -75,16 +71,24 @@
 		t_mm[index&0x0FFF] = val; \
 }
 
-// use when you know the memmap will fail
-#define WRITE_S(index, val) write(index, val)
-
 // use when the expression has side effects
+#define READ_V(index) \
+( ((t_mm=rMemMap[(t_mi=index)>>12]) == null) \
+	? READ_S(t_mi) \
+	: t_mm[t_mi&0x0FFF] \
+)
 #define WRITE_V(index, val) \
 { if ((t_mm=wMemMap[(t_mi=index)>>12]) == null) \
 		WRITE_S(t_mi, val); \
 	else \
 		t_mm[t_mi&0x0FFF]  = val;\
 }
+#else
+#define READ_F READ_S
+#define READ_V READ_S
+#define WRITE_F WRITE_S
+#define WRITE_V WRITE_S
+#endif
 
 #define FETCH (READ_V(PC++))
 #define IMM8 (FETCH)
@@ -93,13 +97,13 @@
 #define POP (READ_V(SP++)|(READ_V(SP++)<<8))
 
 #define PUSH(val) { \
-	--SP; WRITE_F(SP, (val)>>8); \
-	--SP; WRITE_F(SP, (val)&0xff); \
+	SP=(SP-1)&0xffff; WRITE_F(SP, (val)>>8); \
+	SP=(SP-1)&0xffff; WRITE_F(SP, (val)&0xff); \
 }
 
 #define PUSH_V(val) { \
-	--SP; WRITE_F(SP, (t_w16=val)>>8); \
-	--SP; WRITE_F(SP, (t_w16)&0xff); \
+	SP=(SP-1)&0xffff; WRITE_F(SP, (t_w16=val)>>8); \
+	SP=(SP-1)&0xffff; WRITE_F(SP, (t_w16)&0xff); \
 }
 
 #define PUSH_OLD(val) \
