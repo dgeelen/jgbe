@@ -4,7 +4,6 @@ public class CPU
 		protected static final int CARRY8b_SHR = 5;
 
 		//FLAGS
-		protected static final int FLAG_REG = 5;
 		protected static final int ZF_Shift = 7;
 		protected static final int NF_Shift = ZF_Shift - 1;
 		protected static final int HC_Shift = NF_Shift - 1;
@@ -19,17 +18,92 @@ public class CPU
 		protected int TotalInstrCount = 0;
 		protected int TotalCycleCount = 0;
 
-		protected int[] regs = new int[8]; //[A,B,C,D,E,F,H,L]
-		protected static final int B = 1;
-		protected static final int C = 2;
-		protected static final int D = 3;
-		protected static final int E = 4;
-		protected static final int F = FLAG_REG;
-		protected static final int H = 6;
-		protected static final int L = 7;
-		protected static final int A = 0;
+		protected static int B = 1;
+		protected static int C = 2;
+		protected static int D = 3;
+		protected static int E = 4;
+		protected static int F = 5;
+		protected static int H = 6;
+		protected static int L = 7;
+		protected static int A = 0;
 
-		protected int[] IOP = new int[0x80]; //IO Ports
+		//public int[] regs = new int[0x100]; // haha does nothing
+
+/*
+		final protected int shla(int value) {
+			int res = value;
+			res <<= 1;
+			regs[F] = 0;
+			regs[F] |= (res > 0xff) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		final protected int shra(int value) {
+			int res = value;
+			res >>= 1;
+			regs[F] = 0;
+			regs[F] |= ((value&1)!=0) ? CF_Mask : 0;
+			res |= (value&(1<<7));
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		final protected int shrl(int value) {
+			int res = value;
+			res >>= 1;
+			regs[F] = 0;
+			regs[F] |= ((value&1)!=0) ? CF_Mask : 0;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		final protected int rol(int value) {
+			int res = value;
+			res <<= 1;
+			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1 : 0;
+			regs[F] = 0;
+			regs[F] |= (res > 0xff) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		final protected int rolc(int value) {
+			int res = value;
+			res <<= 1;
+			res |= (res > 0xff) ? 1 : 0;
+			regs[F] = 0;
+			regs[F] |= (res > 0xff) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		final protected int ror(int value) {
+			int res = value;
+			res >>= 1;
+			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1<<7 : 0;
+			regs[F] = 0;
+			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+
+		final protected int rorc(int value) {
+			int res = value;
+			res >>= 1;
+			res |= ((value&1)==1) ? 1<<7 : 0;
+			regs[F] = 0;
+			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
+			res &= 0xff;
+			regs[F] |= (res == 0) ? ZF_Mask : 0;
+			return res;
+		}
+*/
+		private int[] IOP = new int[0x80]; //IO Ports
 		private int[] HRAM = new int[0x7F]; //HighRAM
 		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
 		private int CurrentWRAMBank=1;
@@ -467,17 +541,17 @@ public class CPU
 			PC = 0x000;
 			
 			//AF=$01B0
-			regs[A]=0x11; // CGB sets this to 0x11 instead of 0x01 for GB
-			regs[F]=0xb0;
+			A=0x11; // CGB sets this to 0x11 instead of 0x01 for GB
+			F=0xb0;
 			//BC=$0013
-			regs[B]=0x00;
-			regs[C]=0x13;
+			B=0x00;
+			C=0x13;
 			//DE=$00D8
-			regs[D]=0x00;
-			regs[E]=0xd8;
+			D=0x00;
+			E=0xd8;
 			//HL=$014D
-			regs[H]=0x01;
-			regs[L]=0x4d;
+			H=0x01;
+			L=0x4d;
 			TotalInstrCount=0;
 			TotalCycleCount=0;
 
@@ -507,25 +581,18 @@ public class CPU
 
 		final protected void printCPUstatus() {
 			String flags = "";
-			flags += (( regs[FLAG_REG] & ZF_Mask ) == ZF_Mask )?"Z ":"z ";
-			flags += (( regs[FLAG_REG] & NF_Mask ) == NF_Mask )?"N ":"n ";
-			flags += (( regs[FLAG_REG] & HC_Mask ) == HC_Mask )?"H ":"h ";
-			flags += (( regs[FLAG_REG] & CF_Mask ) == CF_Mask )?"C ":"c ";
-			flags += (( regs[FLAG_REG] & ( 1 <<3 ) ) == ( 1 <<3 ) )?"1 ":"0 ";
-			flags += (( regs[FLAG_REG] & ( 1 <<2 ) ) == ( 1 <<2 ) )?"1 ":"0 ";
-			flags += (( regs[FLAG_REG] & ( 1 <<1 ) ) == ( 1 <<1 ) )?"1 ":"0 ";
-			flags += (( regs[FLAG_REG] & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
+			flags += (( F & ZF_Mask ) == ZF_Mask )?"Z ":"z ";
+			flags += (( F & NF_Mask ) == NF_Mask )?"N ":"n ";
+			flags += (( F & HC_Mask ) == HC_Mask )?"H ":"h ";
+			flags += (( F & CF_Mask ) == CF_Mask )?"C ":"c ";
+			flags += (( F & ( 1 <<3 ) ) == ( 1 <<3 ) )?"1 ":"0 ";
+			flags += (( F & ( 1 <<2 ) ) == ( 1 <<2 ) )?"1 ":"0 ";
+			flags += (( F & ( 1 <<1 ) ) == ( 1 <<1 ) )?"1 ":"0 ";
+			flags += (( F & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
 			System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
-			System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", regs[A], regs[B], regs[C], regs[D], regs[E], regs[F], regs[H],regs[L] );
+			System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
 			System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
 			System.out.println( "  "+deasm.disassemble( PC ) );
-		}
-		final protected int readmem8b( int H, int L ) {
-			return read(( regs[H]<<8 )|regs[L] );
-		}
-
-		final protected void writemem8b( int H, int L, int val ) {
-			write(( regs[H]<<8 )|regs[L], val );
 		}
 
 		final protected int checkInterrupts() { //handle interrupt priorities
@@ -563,7 +630,7 @@ public class CPU
 		final protected void interrupt(int i) { //execute interrupt #i
 			//System.out.println("INTERRUPT: " + i);
 			IME = false;
-			push(PC);
+			PUSH_OLD(PC);
 			PC = i;
 		}
 
@@ -571,2057 +638,170 @@ public class CPU
 			IOP[0x0f] |= (1<<i);
 		}
 
-		final protected int shla(int value) {
-			int res = value;
-			res <<= 1;
-			regs[F] = 0;
-			regs[F] |= (res > 0xff) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int shra(int value) {
-			int res = value;
-			res >>= 1;
-			regs[F] = 0;
-			regs[F] |= ((value&1)!=0) ? CF_Mask : 0;
-			res |= (value&(1<<7));
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int shrl(int value) {
-			int res = value;
-			res >>= 1;
-			regs[F] = 0;
-			regs[F] |= ((value&1)!=0) ? CF_Mask : 0;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int rol(int value) {
-			int res = value;
-			res <<= 1;
-			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1 : 0;
-			regs[F] = 0;
-			regs[F] |= (res > 0xff) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int rolc(int value) {
-			int res = value;
-			res <<= 1;
-			res |= (res > 0xff) ? 1 : 0;
-			regs[F] = 0;
-			regs[F] |= (res > 0xff) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int ror(int value) {
-			int res = value;
-			res >>= 1;
-			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1<<7 : 0;
-			regs[F] = 0;
-			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int rorc(int value) {
-			int res = value;
-			res >>= 1;
-			res |= ((value&1)==1) ? 1<<7 : 0;
-			regs[F] = 0;
-			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected void inc8b( int reg_index ) {
-			// Clear & Set HC
-			regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
-			regs[FLAG_REG] = regs[FLAG_REG] | (((( regs[reg_index] & 0xF ) + 1 ) & 0x10 ) << 1 );
-
-			//Update register
-			regs[reg_index] = ( ++regs[reg_index] & 0xFF );
-
-			// clear & set ZF
-			regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
-			regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index]==0 )?1:0 )<<ZF_Shift );
-
-			// clear & set NF
-			regs[FLAG_REG] = regs[FLAG_REG] & ~NF_Mask;
-		}
-
-		final protected void dec8b( int reg_index ) {
-			// Clear & Set HC
-			regs[FLAG_REG] = regs[FLAG_REG] & ~HC_Mask;
-			regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index] & 0xF )==0 )?HC_Mask:0 );
-
-			//Update register
-			regs[reg_index] = ( --regs[reg_index] & 0xFF );
-
-			// clear & set ZF
-			regs[FLAG_REG] = regs[FLAG_REG] & ~ZF_Mask;
-			regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[reg_index]==0 )?1:0 )<<ZF_Shift );
-
-			// clear & set NF
-			regs[FLAG_REG] = regs[FLAG_REG] | NF_Mask;
-		}
-
-		final protected void inc16b(int ri1, int ri2 ) {
-			// 16-bit inc/dec doesnt affect any flags
-			++regs[ri2];
-			if (regs[ri2]>0xFF) {
-				regs[ri2]&=0xFF;
-				++regs[ri1];
-				regs[ri1]&=0xFF;
-			}
-		}
-
-		final protected void dec16b(int ri1, int ri2 ) {
-			// 16-bit inc/dec doesnt affect any flags
-			--regs[ri2];
-			if (regs[ri2]<0) {
-				regs[ri2]&=0xFF;
-				--regs[ri1];
-				regs[ri1]&=0xFF;
-			}
-		}
-
-		final protected void add8b( int dest, int val ) {
-			// Clear all flags (including ZF)
-			regs[FLAG_REG] = ( regs[FLAG_REG] & 0x00 );
-
-			// Set HC
-			regs[FLAG_REG] = regs[FLAG_REG] | ((((( regs[dest]&0x0f )+( val&0x0f ) )&0x10 )!=0?1:0 )<<HC_Shift );
-
-			// Update register (part 1)
-			regs[dest] = ( regs[dest] + val );
-
-			// set CF
-			regs[FLAG_REG] = regs[FLAG_REG] | ( regs[dest]>>8 )<<CF_Shift;
-
-			// Clamp register (part 2)
-			regs[dest]&=0xFF;
-
-			// set ZF
-			regs[FLAG_REG] = regs[FLAG_REG] | ((( regs[dest]==0 )?1:0 )<<ZF_Shift );
-		}
-
-		final protected void sub8b( int dest, int val ) {
-			// clear all flags except NF which is set
-			regs[FLAG_REG] = NF_Mask;
-
-			// Set HC
-			regs[FLAG_REG] |= ((( regs[dest]&0x0F )-( val&0x0F ) )<0 ) ? HC_Mask : 0;
-
-			// Update register (part 1)
-			regs[dest] = ( regs[dest] - val );
-
-			// set CF
-			regs[FLAG_REG] |= ( regs[dest]<0 ) ? CF_Mask : 0;
-
-			// Clamp register (part 2)
-			regs[dest]&=0xFF;
-
-			// set ZF
-			regs[FLAG_REG] |= regs[dest]==0 ? ZF_Mask : 0;
-		}
-
-		final protected void add16bHL(int val1, int val2) {
-			int fmask = regs[F] & ZF_Mask; // zero flag should be unaffected
-			add8b(L, val2);
-			fmask |= ((regs[F]&CF_Mask)==CF_Mask) ? HC_Mask : 0;
-			adc(H, val1);
-			regs[F] &= ~ZF_Mask;
-			regs[F] &= ~HC_Mask;
-			regs[F] |= fmask;
-		}
-
-		final protected void ld8b( int dest, int val ) {
-			regs[dest] = val;
-		}
-
-		final protected void cp( int val ) {
-			int i= regs[A];
-			sub8b( A, val );
-			regs[A] = i;
-		}
-
-		final protected void xor( int val ) {
-			regs[F]=0;
-			regs[A]^=val;
-			regs[F]|=( regs[A]==0?ZF_Mask:0 );
-		}
-
-		final protected void or( int val ) {
-			regs[F]=0;
-			regs[A]|=val;
-			regs[F]|=( regs[A]==0?ZF_Mask:0 );
-		}
-
-		final protected void and( int val ) {
-			regs[F]=HC_Mask;
-			regs[A]&=val;
-			regs[F]|=( regs[A]==0?ZF_Mask:0 );
-		}
-
-		final protected void JPnn() {
-			int i=read( PC++ );
-			int j=read( PC++ );
-			//System.out.println( "i="+i+ " j="+j );
-			PC = j<<8|i; //Should be endian correct
-		}
-
-		final protected void sbc( int dest, int val ) {
-			sub8b( dest, val+(( regs[FLAG_REG]&CF_Mask ) >> CF_Shift ) );
-		}
-
-		final protected void adc( int dest, int val ) {
-			add8b( dest, val+(( regs[FLAG_REG]&CF_Mask ) >> CF_Shift ) );
-		}
-
-		final protected void push( int val ) {
-			//Should be endian correct
-			SP=(SP-1)&0xffff;
-			write( SP, ( val>>8 )&0xff );
-			SP=(SP-1)&0xffff;
-			write( SP, val&0xff );
-		}
-
-		final protected int pop() {
-			//Should be endian correct
-			int l = read( SP++ );
-			int h = read( SP++ );
-			return (l | (h<<8));
-		}
-
 		static int nopCount=0;
 		final private int execute() {
 			int cycles;
-			boolean nop=false;
-			//System.out.printf("Executing instruction $%02x\n", instr);
+			TVARS;
 			if(checkInterrupts()!=0) {
 				halted = false;
 				return 12; // 12 cycles for this?
 			}
 			if (halted) return 4;
-			int op = read(PC++);
-			cycles = cycles_table[op];
+			int op = FETCH;
+			cycles = Tables.cycles[op];
+/*
+						int tval;
+#define printtables(opcode, fname) \
+						System.out.printf("const static byte " + opcode + "_val_table[] =\n{\n" , op ); \
+						for (int i = 0; i < 512; i+= 16) { \
+							System.out.printf("\t"); \
+							for (int j = i; j < (i+16); ++j) { \
+								regs[F] = (j>0xff) ? FC : 0; \
+								tval = fname(j&0xFF); \
+								System.out.printf("0x%02x, ", tval); \
+							} \
+							System.out.printf("\n"); \
+						}	\
+						System.out.printf("};\n"); \
+						System.out.printf("const static byte " + opcode + "_flag_table[] =\n{\n" , op ); \
+						for (int i = 0; i < 512; i+= 16) { \
+							System.out.printf("\t"); \
+							for (int j = i; j < (i+16); ++j) { \
+								regs[F] = (j>0xff) ? FC : 0; \
+								tval = fname(j&0xFF); \
+								System.out.printf("0x%02x, ", regs[F]); \
+							} \
+							System.out.printf("\n"); \
+						}	\
+						System.out.printf("};\n"); \
 
+						printtables("SLA", shla);
+						printtables("SRA", shra);
+						printtables("SRL", shrl);
+						printtables("RL" , rol);
+						printtables("RLC", rolc);
+						printtables("RR" , ror);
+						printtables("RRC", rorc);
+			if (op < 0x100) return 0;
+*/
+			
 			switch ( op ) {
-				case 0x00:  // NOP
-					nop=true;
-					break;
-				case 0x01: // LD BC, nn
-					regs[C] = read( PC++ );
-					regs[B] = read( PC++ );
-					break;
-				case 0x02: // LD (BC), A
-					writemem8b(B,C, regs[A]);
-					break;
-				case 0x03: // INC BC
-					inc16b(B, C);
-					break;
-				case 0x04:  // INC B
-					inc8b( B );
-					break;
-				case 0x05:  // DEC B
-					dec8b( B );
-					break;
-				case 0x06:  // LD  B, n
-					regs[B] = read( PC++ );
-					break;
-				case 0x08:{ // LD (nn),SP
-					//	uh? 16bit memwrite? plz check for errors, I'm totally confused with the Endianness :)
-					int i=read( PC++ );
-					int j=read( PC++ );
-					int l=(j<<8|i);
-					write(l           , SP>>8);
-					write((l+1)&0xffff, SP&0xff);
-					}; break;
-				case 0x07:  // RLCA
-					regs[A] = rolc(regs[A]);
-					regs[F] &= ~ZF_Mask;
-					break;
-				case 0x09:  // ADD HL, BC
-					add16bHL(regs[B], regs[C]);
-					break;
-				case 0x0a:  // LD  A, (BC)
-					regs[A] = readmem8b(B, C);
-					break;
-				case 0x0b:  // DEC BC
-					dec16b(B, C);
-					break;
-				case 0x0c: // INC  C
-					inc8b( C );
-					break;
-				case 0x0d: // DEC  C
-					dec8b( C );
-					break;
-				case 0x0e:  // LD  C, n
-					regs[C] = read( PC++ );
-					break;
-				case 0x0f:  // RRCA
-					regs[A] = rorc(regs[A]);
-					break;
-				case 0x10: // STOP
-					// pretend stop==halt
-					if ((IE==0) || (!IME))
-						System.out.println("PANIC: we will never unhalt!!!\n");
-					//halted = true;
-					if (speedswitch) {
-						System.out.println("Speed switch!");
-						doublespeed = !doublespeed;
-						speedswitch = false;
-					}
-					break;
-				case 0x11: // LD DE, nn
-					regs[E] = read( PC++ );
-					regs[D] = read( PC++ );
-					break;
-				case 0x12: // LD (DE), A
-					writemem8b(D,E, regs[A]);
-					break;
-				case 0x13: // INC DE
-					inc16b(D, E);
-					break;
-				case 0x14: // INC  D
-					inc8b( D );
-					break;
-				case 0x15: // DEC  D
-					dec8b( D );
-					break;
-				case 0x16: // LD   D, n
-					regs[D] = read( PC++ );
-					break;
-				case 0x17: // RLA
-					regs[A] = ror(regs[A]);
-					break;
-				case 0x18:{// JR   &00
-					int x = read( PC++ );
-					PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-				};break;
-				case 0x19: // ADD HL, DE
-					add16bHL(regs[D], regs[E]);
-					break;
-				case 0x1a: // LD A, (DE)
-					regs[A] = readmem8b(D, E);
-					break;
-				case 0x1b: // DEC DE
-					dec16b(D, E);
-					break;
-				case 0x1c: // INC  E
-					inc8b( E );
-					break;
-				case 0x1d: // DEC  E
-					dec8b( E );
-					break;
-				case 0x1e: // LD   E, n
-					regs[E] = read( PC++ );
-					break;
-				case 0x1f: // RRA
-					regs[A] = ror(regs[A]);
-					break;
-				case 0x20: // JR NZ, n
-					if (( regs[F]&ZF_Mask )!=ZF_Mask ) {
-						int x = read( PC++ );
-						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-					}
-					else ++PC;
-					break;
-				case 0x21: // LD HL, nn
-					regs[L] = read( PC++ );
-					regs[H] = read( PC++ );
-					break;
-				case 0x22: // LDI (HL), A
-					writemem8b(H,L, regs[A]);
-					inc16b(H, L);
-					break;
-				case 0x23: // INC HL
-					inc16b(H, L);
-					break;
-				case 0x24: // INC H
-					inc8b(H);
-					break;
-				case 0x25: // DEC H
-					dec8b(H);
-					break;
-				case 0x26: // LD   H, n
-					regs[H] = read( PC++ );
-					break;
-				case 0x27:{// DAA
-					int acc=0;
-					acc = daa_table[((((int)regs[F])&0x70)<<4) | regs[A]];
-					acc &= 0xff;
-					regs[A] += acc;
-					regs[F] = (regs[F] & (NF_Mask)) | ((regs[A]==0)?ZF_Mask:0) | daa_carry_table[acc>>2];
-					regs[A] &= 0xff;
-				};break;
-				case 0x28: // JR   Z, n
-					if (( regs[F]&ZF_Mask )==ZF_Mask ) {
-						int x = read( PC++ );
-						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-					}
-					else ++PC;
-					break;
-				case 0x29: // ADD HL, HL
-					add16bHL(regs[H], regs[L]);
-					break;
-				case 0x2a: // LDI A, (HL)
-					regs[A] = readmem8b(H, L);
-					inc16b(H, L);
-					break;
-				case 0x2b:  // DEC HL
-					dec16b(H, L);
-					break;
-				case 0x2c:  // INC L
-					inc8b( L );
-					break;
-				case 0x2d:  // DEC  L
-					dec8b( L );
-					break;
-				case 0x2e:  // LD   L, n
-					regs[L] = read( PC++ );
-					break;
-				case 0x2f:  // CPL
-					xor( 0xFF );
-					break;
-				case 0x30: // JR NC, n
-					if (( regs[F]&CF_Mask )!=CF_Mask ) {
-						int x = read( PC++ );
-						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-					}
-					else ++PC;
-					break;
-				case 0x31:{// LD SP, nn
-					int l = read( PC++ );
-					int h = read( PC++ );
-					SP = l | (h<<8);
-				};break;
-				case 0x32: // LDD	(HL), A
-					writemem8b(H,L, regs[A]);
-					dec16b(H, L);
-					break;
-				case 0x33: // INC SP
-					++SP; //16-bit inc/dec doesnt affect any flags
-					SP&=0xffff;
-					break;
-				case 0x34:{// INC (HL)
-					// this is a tad hacky? TODO?
-					int x = regs[A];
-					regs[A] = readmem8b(H, L);
-					inc8b(A);
-					writemem8b(H,L, regs[A]);
-					regs[A] = x;
-				};break;
-				case 0x35:{// DEC (HL)
-					// this is a tad hacky? TODO?
-					int x = regs[A];
-					regs[A] = readmem8b(H, L);
-					dec8b(A);
-					writemem8b(H,L, regs[A]);
-					regs[A] = x;
-				};break;
-				case 0x36: // LD (HL), n
-					writemem8b(H,L, read(PC++));
-					break;
-				case 0x37: // SCF
-					regs[F] &= ZF_Mask;
-					regs[F] |= CF_Mask;
-					break;
-				case 0x38: // JR C, n
-					if (( regs[F]&CF_Mask )==CF_Mask ) {
-						int x = read( PC++ );
-						PC += (( x>=128 ) ? -(x^0xFF)-1 : x );
-					}
-					else ++PC;
-					break;
-				case 0x39: // ADD HL, SP
-					add16bHL(SP >> 8, SP & 0xff);
-					break;
-				case 0x3a: // LDD A, (HL)
-					regs[A] = readmem8b(H, L);
-					dec16b(H, L);
-					break;
-				case 0x3b: // DEC SP
-					--SP; //16-bit inc/dec doesnt affect any flags
-					SP&=0xffff;
-					break;
-				case 0x3c: // INC A
-					inc8b(A);
-					break;
-				case 0x3d: // DEC A
-					dec8b(A);
-					break;
-				case 0x3e: // LD A, n
-					regs[A]=read( PC++ );
-					break;
-				case 0x3f: // CCF
-					regs[F] ^= CF_Mask;
-					break;
-				case 0x40: // LD B, B
-					ld8b( B, regs[B] );
-					break;
-				case 0x41: // LD B, C
-					ld8b( B, regs[C] );
-					break;
-				case 0x42: // LD   B,D
-					ld8b( B, regs[D] );
-					break;
-				case 0x43: // LD   B,E
-					ld8b( B, regs[E] );
-					break;
-				case 0x44: // LD   B,H
-					ld8b( B, regs[H] );
-					break;
-				case 0x45: // LD   B,L
-					ld8b( B, regs[L] );
-					break;
-				case 0x46: // LD   B,(HL)
-					ld8b( B, readmem8b( H,L ) );
-					break;
-				case 0x47: // LD   B,A
-					ld8b( B, regs[A] );
-					break;
-				case 0x48: // LD   C,B
-					ld8b( C, regs[B] );
-					break;
-				case 0x49: // LD   C,C
-					ld8b( C, regs[C] );
-					break;
-				case 0x4a: // LD   C,D
-					ld8b( C, regs[D] );
-					break;
-				case 0x4b: // LD   C,E
-					ld8b( C, regs[E] );
-					break;
-				case 0x4c: // LD   C,H
-					ld8b( C, regs[H] );
-					break;
-				case 0x4d: // LD   C,L
-					ld8b( C, regs[L] );
-					break;
-				case 0x4e: // LD   C,(HL)
-					ld8b( C, readmem8b( H,L ) );
-					break;
-				case 0x4f: // LD   C,A
-					ld8b( C, regs[A] );
-					break;
-				case 0x50: // LD   D,B
-					ld8b( D, regs[B] );
-					break;
-				case 0x51: // LD   D,C
-					ld8b( D, regs[C] );
-					break;
-				case 0x52: // LD   D,D
-					ld8b( D, regs[D] );
-					break;
-				case 0x53: // LD   D,E
-					ld8b( D, regs[E] );
-					break;
-				case 0x54: // LD   D,H
-					ld8b( D, regs[H] );
-					break;
-				case 0x55: // LD   D,L
-					ld8b( D, regs[L] );
-					break;
-				case 0x56: // LD   D,(HL)
-					ld8b( D, readmem8b( H,L ) );
-					break;
-				case 0x57: // LD   D,A
-					ld8b( D, regs[A] );
-					break;
-				case 0x58: // LD   E,B
-					ld8b( E, regs[B] );
-					break;
-				case 0x59: // LD   E,C
-					ld8b( E, regs[C] );
-					break;
-				case 0x5a: // LD   E,D
-					ld8b( E, regs[D] );
-					break;
-				case 0x5b: // LD   E,E
-					ld8b( E, regs[E] );
-					break;
-				case 0x5c: // LD   E,H
-					ld8b( E, regs[H] );
-					break;
-				case 0x5d: // LD   E,L
-					ld8b( E, regs[L] );
-					break;
-				case 0x5e: // LD   E,(HL)
-					ld8b( E, readmem8b( H,L ) );
-					break;
-				case 0x5f: // LD   E,A
-					ld8b( E, regs[A] );
-					break;
-				case 0x60: // LD   H,B
-					ld8b( H, regs[B] );
-					break;
-				case 0x61: // LD   H,C
-					ld8b( H, regs[C] );
-					break;
-				case 0x62: // LD   H,D
-					ld8b( H, regs[D] );
-					break;
-				case 0x63: // LD   H,E
-					ld8b( H, regs[E] );
-					break;
-				case 0x64: // LD   H,H
-					ld8b( H, regs[H] );
-					break;
-				case 0x65: // LD   H,L
-					ld8b( H, regs[L] );
-					break;
-				case 0x66: // LD   H,(HL)
-					ld8b( H, readmem8b( H,L ) );
-					break;
-				case 0x67: // LD   H,A
-					ld8b( H, regs[A] );
-					break;
-				case 0x68: // LD   L,B
-					ld8b( L, regs[B] );
-					break;
-				case 0x69: // LD   L,C
-					ld8b( L, regs[C] );
-					break;
-				case 0x6a: // LD   L,D
-					ld8b( L, regs[D] );
-					break;
-				case 0x6b: // LD   L,E
-					ld8b( L, regs[E] );
-					break;
-				case 0x6c: // LD   L,H
-					ld8b( L, regs[H] );
-					break;
-				case 0x6d: // LD   L,L
-					ld8b( L, regs[L] );
-					break;
-				case 0x6e: // LD   L,(HL)
-					ld8b( L, readmem8b( H,L ) );
-					break;
-				case 0x6f: // LD   L,A
-					ld8b( L, regs[A] );
-					break;
-				case 0x70: // LD   (HL),B
-					writemem8b(H,L, regs[B]);
-					break;
-				case 0x71: // LD   (HL),C
-					writemem8b(H,L, regs[C]);
-					break;
-				case 0x72: // LD   (HL),D
-					writemem8b(H,L, regs[D]);
-					break;
-				case 0x73: // LD   (HL),E
-					writemem8b(H,L, regs[E]);
-					break;
-				case 0x74: // LD   (HL),H
-					writemem8b(H,L, regs[H]);
-					break;
-				case 0x75: // LD   (HL),L
-					writemem8b(H,L, regs[L]);
-					break;
-				case 0x76: // HALT
-					if ((IE==0) || (!IME))
-						System.out.println("PANIC: we will never unhalt!!!\n");
-					halted = true;
-					break;
-				case 0x77: // LD   (HL),A
-					writemem8b(H,L, regs[A]);
-					break;
-				case 0x78: // LD   A,B
-					ld8b( A, regs[B] );
-					break;
-				case 0x79: // LD   A,C
-					ld8b( A, regs[C] );
-					break;
-				case 0x7a: // LD   A,D
-					ld8b( A, regs[D] );
-					break;
-				case 0x7b: // LD   A,E
-					ld8b( A, regs[E] );
-					break;
-				case 0x7c: // LD   A,H
-					ld8b( A, regs[H] );
-					break;
-				case 0x7d: // LD   A,L
-					ld8b( A, regs[L] );
-					break;
-				case 0x7e: // LD   A,(HL)
-					ld8b( A, readmem8b( H,L ) );
-					break;
-				case 0x7f: // LD   A,A
-					ld8b( A, regs[A] );
-					break;
-				case 0x80: // ADD  A,B
-					add8b( A, regs[B] );
-					break;
-				case 0x81: // ADD  A,C
-					add8b( A, regs[C] );
-					break;
-				case 0x82: // ADD  A,D
-					add8b( A, regs[D] );
-					break;
-				case 0x83: // ADD  A,E
-					add8b( A, regs[E] );
-					break;
-				case 0x84: // ADD  A,H
-					add8b( A, regs[H] );
-					break;
-				case 0x85: // ADD  A,L
-					add8b( A, regs[L] );
-					break;
-				case 0x86: // ADD  A,(HL)
-					add8b( A, readmem8b( H,L ) );
-					break;
-				case 0x87: // ADD  A,A
-					add8b( A, regs[A] );
-					break;
-				case 0x88: // ADC  A,B
-					adc( A, regs[B] );
-					break;
-				case 0x89: // ADC  A,C
-					adc( A, regs[C] );
-					break;
-				case 0x8a: // ADC  A,D
-					adc( A, regs[D] );
-					break;
-				case 0x8b: // ADC  A,E
-					adc( A, regs[E] );
-					break;
-				case 0x8c: // ADC  A,H
-					adc( A, regs[H] );
-					break;
-				case 0x8d: // ADC  A,L
-					adc( A, regs[L] );
-					break;
-				case 0x8e: // ADC  A,(HL)
-					adc( A, readmem8b( H,L ) );
-					break;
-				case 0x8f: // ADC  A,A
-					adc( A, regs[A] );
-					break;
-				case 0x90: // SUB  A,B
-					sub8b(A, regs[B]);
-					break;
-				case 0x91: // SUB  A,C
-					sub8b(A, regs[C]);
-					break;
-				case 0x92: // SUB  A,D
-					sub8b(A, regs[D]);
-					break;
-				case 0x93: // SUB  A,E
-					sub8b(A, regs[E]);
-					break;
-				case 0x94: // SUB  A,H
-					sub8b(A, regs[H]);
-					break;
-				case 0x95: // SUB  A,L
-					sub8b(A, regs[L]);
-					break;
-				case 0x96: // SUB  A,(HL)
-					sub8b(A, readmem8b(H, L));
-					break;
-				case 0x97: // SUB  A,A
-					sub8b(A, regs[A]);
-					break;
-				case 0x98: // SBC  A,B
-					sbc( A, regs[B] );
-					break;
-				case 0x99: // SBC  A,C
-					sbc( A, regs[C] );
-					break;
-				case 0x9a: // SBC  A,D
-					sbc( A, regs[D] );
-					break;
-				case 0x9b: // SBC  A,E
-					sbc( A, regs[E] );
-					break;
-				case 0x9c: // SBC  A,H
-					sbc( A, regs[H] );
-					break;
-				case 0x9d: // SBC  A,L
-					sbc( A, regs[L] );
-					break;
-				case 0x9e: // SBC  A,(HL)
-					sbc( A, readmem8b( H,L ) );
-					break;
-				case 0x9f: // SBC  A,A
-					sbc( A, regs[A] );
-					break;
-				case 0xa0: // AND B
-					and( regs[B] );
-					break;
-				case 0xa1: // AND C
-					and( regs[C] );
-					break;
-				case 0xa2: // AND D
-					and( regs[D] );
-					break;
-				case 0xa3: // AND E
-					and( regs[E] );
-					break;
-				case 0xa4: // AND H
-					and( regs[H] );
-					break;
-				case 0xa5: // AND L
-					and( regs[L] );
-					break;
-				case 0xa6: // AND (HL)
-					and( readmem8b( H,L ) );
-					break;
-				case 0xa7: // AND A
-					and( regs[A] );
-					break;
-				case 0xa8: // XOR B
-					xor( regs[B] );
-					break;
-				case 0xa9: // XOR C
-					xor( regs[C] );
-					break;
-				case 0xaa: // XOR D
-					xor( regs[D] );
-					break;
-				case 0xab: // XOR E
-					xor( regs[E] );
-					break;
-				case 0xac: // XOR H
-					xor( regs[H] );
-					break;
-				case 0xad: // XOR L
-					xor( regs[L] );
-					break;
-				case 0xae: // XOR (HL)
-					xor( readmem8b( H,L ) );
-					break;
-				case 0xaf: // XOR A
-					xor( regs[A] );
-					break;
-				case 0xb0: // OR  B
-					or( regs[B] );
-					break;
-				case 0xb1: // OR  C
-					or( regs[C] );
-					break;
-				case 0xb2: // OR  D
-					or( regs[D] );
-					break;
-				case 0xb3: // OR  E
-					or( regs[E] );
-					break;
-				case 0xb4: // OR  H
-					or( regs[H] );
-					break;
-				case 0xb5: // OR  L
-					or( regs[L] );
-					break;
-				case 0xb6: // OR  (HL)
-					or( readmem8b( H,L ) );
-					break;
-				case 0xb7: // OR  A
-					or( regs[A] );
-					break;
-				case 0xb8: // CP   B
-					cp( regs[B] );
-					break;
-				case 0xb9: // CP   C
-					cp( regs[C] );
-					break;
-				case 0xba: // CP   D
-					cp( regs[D] );
-					break;
-				case 0xbb: // CP   E
-					cp( regs[E] );
-					break;
-				case 0xbc: // CP   H
-					cp( regs[H] );
-					break;
-				case 0xbd: // CP   L
-					cp( regs[L] );
-					break;
-				case 0xbe: // CP   (HL)
-					cp( readmem8b( H,L ) );
-					break;
-				case 0xbf: // CP   A
-					cp( regs[A] );
-					break;
-				case 0xc0: // RET  NZ
-					if ((regs[F]&ZF_Mask) != ZF_Mask)
-						PC = pop();
-					break;
-				case 0xc1:{// POP BC
-					int x = pop();
-					regs[B] = x >> 8;
-					regs[C] = x&0xff;
-				};break;
-				case 0xc2: // JMP NZ, nn
-					if (( regs[FLAG_REG]&ZF_Mask )!=ZF_Mask )
-						JPnn();
-					else
-						PC+=2;
-					break;
-				case 0xc3: // JPNNNN
-					JPnn();
-					break;
-				case 0xc4: // CALL NZ, &0000
-					if (( regs[FLAG_REG]&ZF_Mask )!=ZF_Mask ) {
-						push( PC+2 );
-						JPnn();
-					} else
-						PC += 2;
-					break;
-				case 0xc5: // PUSH BC
-					push( regs[B]<<8 | regs[C]);
-					break;
-				case 0xc6: // ADD  A, n
-					add8b(A, read(PC++));
-					break;
-				case 0xc7: // RST &00
-					push(PC);
-					PC = 0x00;
-					break;
-				case 0xc8: // RET  Z
-					if ((regs[F]&ZF_Mask) == ZF_Mask)
-						PC = pop();
-					break;
-				case 0xc9: // RET
-					PC = pop();
-					break;
-				case 0xca: // JMP Z, nn
-					if (( regs[FLAG_REG]&ZF_Mask )==ZF_Mask )
-						JPnn();
-					else
-						PC+=2;
-					break;
-				//case 0xcb: prefix
-				//	prefix instrs are at the end
-				case 0xcc: // CALL Z, &0000
-					if (( regs[FLAG_REG]&ZF_Mask )==ZF_Mask ) {
-						push( PC+2 );
-						JPnn();
-					} else
-						PC += 2;
-					break;
-				case 0xcd: // CALL &0000
-					push( PC+2 );
-					JPnn();
-					break;
-				case 0xce: // ADC  A, n
-					adc(A, read(PC++));
-					break;
-				case 0xcf: // RST &08
-					push(PC);
-					PC = 0x08;
-					break;
-				case 0xd0: // RET  NC
-					if ((regs[F]&CF_Mask) != CF_Mask)
-						PC = pop();
-					break;
-				case 0xd1:{// POP DE
-					int x = pop();
-					regs[D] = x >> 8;
-					regs[E] = x&0xff;
-				};break;
-				case 0xd2: // JMP NC, nn
-					if (( regs[FLAG_REG]&CF_Mask )!=CF_Mask )
-						JPnn();
-					else
-						PC+=2;
-					break;
-				//case 0xd3
-				//	missing instruction
-				case 0xd4: // CALL NC, &0000
-					if (( regs[FLAG_REG]&CF_Mask )==0 ) {
-						push( PC+2 );
-						JPnn();
-					} else
-						PC += 2;
-					break;
-				case 0xd5: // PUSH DE
-					push( regs[D]<<8 | regs[E]);
-					break;
-				case 0xd6: // SUB A, n
-					sub8b(A, read(PC++));
-					break;
-				case 0xd7: // RST &10
-					push(PC);
-					PC = 0x10;
-					break;
-				case 0xd8: // RET  C
-					if ((regs[F]&CF_Mask) == CF_Mask)
-						PC = pop();
-					break;
-				case 0xd9: // RETI
-					IME = true;
-					PC = pop();
-					break;
-				case 0xda: // JMP C,&0000
-					if (( regs[FLAG_REG]&CF_Mask )!= 0 )
-						JPnn();
-					else
-						PC+=2;
-					break;
-				//case 0xdb:
-				//	missing instruction
-				case 0xdc: // CALL C, &0000
-					if (( regs[FLAG_REG]&CF_Mask )!=0 ) {
-						push( PC+2 );
-						JPnn();
-					} else
-						PC += 2;
-					break;
-				//case 0xdd:
-				//	missing instruction
-				case 0xde: // SBC A, n
-					sbc(A, read(PC++));
-					break;
-				case 0xdf: // RST &18
-					push(PC);
-					PC = 0x18;
-					break;
-				case 0xe0: // LDH  (n), A
-					write( 0xff00 | read( PC++ ), regs[A] );
-					break;
-				case 0xe1:{// POP HL
-					int x = pop();
-					regs[H] = x >> 8;
-					regs[L] = x&0xff;
-				};break;
-				case 0xe2: // LD (C), A
-					write( 0xff00 | regs[C], regs[A] );
-					break;
-				//case 0xe3:
-				//	missing instruction
-				//case 0xe4:
-				//	missing instruction
-				case 0xe5: // PUSH HL
-					push( regs[H]<<8 | regs[L]);
-					break;
-				case 0xe6: // AND nn
-					and(read(PC++));
-					break;
-				case 0xe7: // RST &20
-					push(PC);
-					PC = 0x20;
-					break;
-				case 0xe8:{// ADD SP,dd
-					int o = SP;
-					int x = read(PC++);
-					x ^= 0x80;
-					x -= 0x80;
-					SP += x;
-					regs[F] = 0;
-					if ((SP & ~0xffff) != 0) {
-						SP &= 0xffff;
-						regs[F] |= CF_Mask;
-					}
-					if ((SP >> 8) != (o >> 8))
-						regs[F] |= HC_Mask;
-				};break;
-				case 0xe9: // JP  HL
-					PC = (regs[H]<<8) | regs[L];
-					break;
-				case 0xea:{// LD (nnnn), A
-					int a = read( PC++ );
-					int b = read( PC++ );
-					write((b<<8) | a, regs[A] );
-				};break;
-				//case 0xeb:
-				//	missing instruction
-				//case 0xec:
-				//	missing instruction
-				//case 0xed:
-				//	missing instruction
-				case 0xee: // XOR   &00
-					xor( read( PC++ ) );
-					break;
-				case 0xef: // RST &28
-					push(PC);
-					PC = 0x28;
-					break;
-				case 0xf0: // LDH A, (n)
-					regs[A] = read( 0xff00 | read( PC++ ) );
-					break;
-				case 0xf1:{// POP AF
-					int x = pop();
-					regs[A] = x >> 8;
-					regs[F] = x&0xff;
-				};break;
-				case 0xf2: // LD  A, (C)
-					// is really LDH?
-					regs[A] = read( 0xff00 | regs[C] );
-					break;
-				case 0xf3: // DI
-					IME = false;
-					break;
-				//case 0xf4:
-				//	missing instruction
-				case 0xf5: // PUSH AF
-					push( regs[A]<<8 | regs[F]);
-					break;
-				case 0xf6: // OR  n
-					or(read(PC++));
-					break;
-				case 0xf7: // RST &30
-					push(PC);
-					PC = 0x30;
-					break;
-				case 0xf8:{// LD  HL, SP+dd
-					regs[H] = SP >> 8;
-					regs[L] = SP & 0xff;
-					int x = read(PC++);
-					x ^= 0x80;
-					x -= 0x80;
-					if (x>=0)
-						add8b(L, x);
-					else
-						sub8b(L, -x);
-					int fmask = ((regs[F]&CF_Mask)==CF_Mask) ? HC_Mask : 0;
-					if (x>=0)
-						adc(H, 0);
-					else
-						sbc(H, 0);
-					regs[F] &= CF_Mask;
-					regs[F] |= fmask;
-				};break;
-				case 0xf9: // LD SP, HL
-					SP = regs[H]<<8 | regs[L];
-					break;
-				case 0xfa:{// LD A, (nn)
-					int a = read( PC++ );
-					int b = read( PC++ );
-					regs[A] = read((b<<8) | a);
-				};break;
-				case 0xfb: // EI
-					IME = true;
-					break;
-				//case 0xfc:
-				//	missing instruction
-				//case 0xfd:
-				//	missing instruction
-				case 0xfe: // CP n
-					cp( read( PC++ ) );
-					break;
-				case 0xff: // RST &38
-					//System.out.println("PUSH: PC="+PC+" SP="+SP);
-					push(PC);
-					PC = 0x38;
-					break;
+				case 0x00: break;                                   // NOP
+				case 0xf3: IME=false; break;                        // DI
+				case 0xfb: IME=true; break;                         // IE
+				case 0xea: WRITE_V(IMM16, A); break;                // LD   (nn), A
+				case 0xfa: A = READ_V(IMM16); break;                // LD   A   , (nn)
+				case 0xe0: WRITE_S(IMM8 | 0xff00, A); break;        // LDH  (n) , A
+				case 0xf0: A = READ_S(IMM8 | 0xff00); break;        // LDH  A   , (n)
+				case 0xe2: WRITE_S(C | 0xff00, A); break;           // LDH  (C) , A
+				case 0xf2: A = READ_S(C | 0xff00); break;           // LDH  A   , (C)
+				case 0xf9: SP = R16RHL; break;                      // LD   SP  , HL
+				case 0x22: WRITE_V(R16RHL, A); DO_INC16(HL); break; // LDI  (HL), A
+				case 0x2a: A = READ_V(R16RHL); DO_INC16(HL); break; // LDI  A   , (HL)
+				case 0x32: WRITE_V(R16RHL, A); DO_DEC16(HL); break; // LDD  (HL), A
+				case 0x3a: A = READ_V(R16RHL); DO_DEC16(HL); break; // LDD  A   , (HL)
+				case 0xc3: DO_JP_NN; break;                         // JP   (nn)
+				case 0xc2: DO_JP_COND((F&FZ)==0); break;            // JP   NZ  , (nn)
+				case 0xca: DO_JP_COND((F&FZ)!=0); break;            // JP   Z   , (nn)
+				case 0xd2: DO_JP_COND((F&FC)==0); break;            // JP   NC  , (nn)
+				case 0xda: DO_JP_COND((F&FC)!=0); break;            // JP   C   , (nn)
+				case 0xcd: DO_CALL_NN; break;                       // CALL (nn)
+				case 0xc4: DO_CALL_COND((F&FZ)==0); break;          // CALL NZ  , (d)
+				case 0xcc: DO_CALL_COND((F&FZ)!=0); break;          // CALL Z   , (d)
+				case 0xd4: DO_CALL_COND((F&FC)==0); break;          // CALL NC  , (d)
+				case 0xdc: DO_CALL_COND((F&FC)!=0); break;          // CALL C   , (d)
+				case 0x18: DO_JR_D; break;                          // JR   (d)
+				case 0x20: DO_JR_COND((F&FZ)==0); break;            // JR   NZ  , (d)
+				case 0x28: DO_JR_COND((F&FZ)!=0); break;            // JR   Z   , (d)
+				case 0x30: DO_JR_COND((F&FC)==0); break;            // JR   NC  , (d)
+				case 0x38: DO_JR_COND((F&FC)!=0); break;            // JR   C   , (d)
+				case 0xc9: DO_RET; break;                           // RET
+				case 0xc0: DO_RET_COND((F&FZ)==0); break;           // RET  NZ
+				case 0xc8: DO_RET_COND((F&FZ)!=0); break;           // RET  Z
+				case 0xd0: DO_RET_COND((F&FC)==0); break;           // RET  NC
+				case 0xd8: DO_RET_COND((F&FC)!=0); break;           // RET  C
+				case 0x02: WRITE_V(R16RBC, A); break;               // LD   (BC), A
+				case 0x0A: A = READ_V(R16RBC); break;               // LD   A   , (BC)
+				case 0x12: WRITE_V(R16RDE, A); break;               // LD   (DE), A
+				case 0x1A: A = READ_V(R16RDE); break;               // LD   A   , (DE)
+				case 0x70: WRITE_V(R16RHL, B); break;               // LD   (HL), B
+				case 0x71: WRITE_V(R16RHL, C); break;               // LD   (HL), C
+				case 0x72: WRITE_V(R16RHL, D); break;               // LD   (HL), D
+				case 0x73: WRITE_V(R16RHL, E); break;               // LD   (HL), E
+				case 0x74: WRITE_V(R16RHL, H); break;               // LD   (HL), H
+				case 0x75: WRITE_V(R16RHL, L); break;               // LD   (HL), L
+				case 0x77: WRITE_V(R16RHL, A); break;               // LD   (HL), A
+				case 0x76: halted = true;	break;                    // HALT
+				case 0xd9: IME = true; DO_RET; break;               // RETI
+				case 0xc1: R16WBC_V(POP); break;                    // PUSH BC
+				case 0xd1: R16WDE_V(POP); break;                    // PUSH DE
+				case 0xe1: R16WHL_V(POP); break;                    // PUSH HL
+				case 0xf1: R16WAF_V(POP); break;                    // PUSH AF
+				case 0xc5: PUSH_V(R16RBC); break;                   // PUSH BC
+				case 0xd5: PUSH_V(R16RDE); break;                   // PUSH DE
+				case 0xe5: PUSH_V(R16RHL); break;                   // PUSH HL
+				case 0xf5: PUSH_V(R16RAF); break;                   // PUSH AF
+				case 0x09: DO_ADD_HL(B, C); break;                  // ADD  HL  , BC
+				case 0x19: DO_ADD_HL(D, E); break;                  // ADD  HL  , DE
+				case 0x29: DO_ADD_HL(H, L); break;                  // ADD  HL  , HL
+				case 0x39: DO_ADD_HL((SP>>8), (SP&0xff)); break;    // ADD  HL  , SP
+				case 0xe9: PC = R16RHL; break;                      // JP   HL
+				case 0x2f: A = ~A; F |= (FN|FH); break;             // CPL
+				case 0x36: WRITE_V(R16RHL, IMM8); break;            // LD   (HL), n
+				case 0x07: DO_SHOP_R(RLC, A); F &= FC; break;       // RLA
+				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RL
+				case 0x0f: DO_SHOP_R(RRC, A); F &= FC; break;       // RRA
+				case 0x1f: DO_SHOP_R(RR, A); F &= FC; break;        // RR
+				case 0xc7: PUSH(PC); PC = 0x00; break;							// RST  &0
+				case 0xcf: PUSH(PC); PC = 0x08; break;							// RST  &8
+				case 0xd7: PUSH(PC); PC = 0x10; break;							// RST  &10
+				case 0xdf: PUSH(PC); PC = 0x18; break;							// RST  &18
+				case 0xe7: PUSH(PC); PC = 0x20; break;							// RST  &20
+				case 0xef: PUSH(PC); PC = 0x28; break;							// RST  &28
+				case 0xf7: PUSH(PC); PC = 0x30; break;							// RST  &30
+				case 0xff: PUSH(PC); PC = 0x38; break;							// RST  &38
+				case 0x37: F &= FZ; F |= FC; break;                 // SCF
+				case 0x3f: F &= (FZ|FC); F ^= FC; break;            // CCF
+				case 0x08: {                                        // LD   (nn), SP
+					t_acc = IMM16;
+					WRITE_F(t_acc , SP>>8);
+					WRITE_V((t_acc+1)&0xffff, SP&0xff);
+				}; break;
+				case 0x10: if (speedswitch) {                       // STOP
+					System.out.println("Speed switch!");
+					doublespeed = !doublespeed;
+					speedswitch = false;
+				}; break;
+				CASES_ALU_OP(0xb8, 0xfe, CP)                        // CP   x            x = r, imm8, (HL)
+				CASES_ALU_OP(0xa0, 0xe6, AND)                       // AND  x            x = r, imm8, (HL)
+				CASES_ALU_OP(0xa8, 0xee, XOR)                       // XOR  x            x = r, imm8, (HL)
+				CASES_ALU_OP(0xb0, 0xf6, OR)                        // OR   x            x = r, imm8, (HL)
+				CASES_ALU_OP(0x80, 0xC6, ADD)
+				CASES_ALU_OP(0x88, 0xCE, ADC)
+				CASES_ALU_OP(0x90, 0xD6, SUB)
+				CASES_ALU_OP(0x98, 0xDE, SBC)
+				CASES_INCDEC8
+				CASES_INCDEC16
+				CASES_LD_XX
 				case 0xcb: // prefix instruction
-					op = read( PC++ );
-					cycles = cb_cycles_table[op];
+					op = FETCH;
+					cycles = Tables.cb_cycles[op];
 					switch ( op ) {
-						case 0x00: // RLC  B
-							regs[B] = rolc(regs[B]);
-							break;
-						case 0x01: // RLC  C
-							regs[C] = rolc(regs[C]);
-							break;
-						case 0x02: // RLC  D
-							regs[D] = rolc(regs[D]);
-							break;
-						case 0x03: // RLC  E
-							regs[E] = rolc(regs[E]);
-							break;
-						case 0x04: // RLC  H
-							regs[H] = rolc(regs[H]);
-							break;
-						case 0x05: // RLC  L
-							regs[L] = rolc(regs[L]);
-							break;
-						case 0x06: // RLC  (HL)
-							writemem8b(H, L, rolc(readmem8b(H, L)));
-							break;
-						case 0x07: // RLC  A
-							regs[A] = rolc(regs[A]);
-							break;
-						case 0x08: // RRC  B
-							regs[B] = rorc(regs[B]);
-							break;
-						case 0x09: // RRC  C
-							regs[C] = rorc(regs[C]);
-							break;
-						case 0x0a: // RRC  D
-							regs[D] = rorc(regs[D]);
-							break;
-						case 0x0b: // RRC  E
-							regs[E] = rorc(regs[E]);
-							break;
-						case 0x0c: // RRC  H
-							regs[H] = rorc(regs[H]);
-							break;
-						case 0x0d: // RRC  L
-							regs[L] = rorc(regs[L]);
-							break;
-						case 0x0e: // RRC  (HL)
-							writemem8b(H, L, rorc(readmem8b(H, L)));
-							break;
-						case 0x0f: // RRC  A
-							regs[A] = rorc(regs[A]);
-							break;
-						case 0x10: // RL  B
-							regs[B] = rol(regs[B]);
-							break;
-						case 0x11: // RL  C
-							regs[C] = rol(regs[C]);
-							break;
-						case 0x12: // RL  D
-							regs[D] = rol(regs[D]);
-							break;
-						case 0x13: // RL  E
-							regs[E] = rol(regs[E]);
-							break;
-						case 0x14: // RL  H
-							regs[H] = rol(regs[H]);
-							break;
-						case 0x15: // RL  L
-							regs[L] = rol(regs[L]);
-							break;
-						case 0x16: // RL  (HL)
-							writemem8b(H, L, rol(readmem8b(H, L)));
-							break;
-						case 0x17: // RL  A
-							regs[A] = rol(regs[A]);
-							break;
-						case 0x18: // RR  B
-							regs[B] = ror(regs[B]);
-							break;
-						case 0x19: // RR  C
-							regs[C] = ror(regs[C]);
-							break;
-						case 0x1a: // RR  D
-							regs[D] = ror(regs[D]);
-							break;
-						case 0x1b: // RR  E
-							regs[E] = ror(regs[E]);
-							break;
-						case 0x1c: // RR  H
-							regs[H] = ror(regs[H]);
-							break;
-						case 0x1d: // RR  L
-							regs[L] = ror(regs[L]);
-							break;
-						case 0x1e: // RR  (HL)
-							writemem8b(H, L, ror(readmem8b(H, L)));
-							break;
-						case 0x1f: // RR  A
-							regs[A] = ror(regs[A]);
-							break;
-						case 0x20: // SLA  B
-							regs[B] = shla(regs[B]);
-							break;
-						case 0x21: // SLA  C
-							regs[C] = shla(regs[C]);
-							break;
-						case 0x22: // SLA  D
-							regs[D] = shla(regs[D]);
-							break;
-						case 0x23: // SLA  E
-							regs[E] = shla(regs[E]);
-							break;
-						case 0x24: // SLA  H
-							regs[H] = shla(regs[H]);
-							break;
-						case 0x25: // SLA  L
-							regs[L] = shla(regs[L]);
-							break;
-						case 0x26: // SLA  (HL)
-							writemem8b(H, L, shla(readmem8b(H, L)));
-							break;
-						case 0x27: // SLA  A
-							regs[A] = shla(regs[A]);
-							break;
-						case 0x28: // SRA  B
-							regs[B] = shra(regs[B]);
-							break;
-						case 0x29: // SRA  C
-							regs[C] = shra(regs[C]);
-							break;
-						case 0x2a: // SRA  D
-							regs[D] = shra(regs[D]);
-							break;
-						case 0x2b: // SRA  E
-							regs[E] = shra(regs[E]);
-							break;
-						case 0x2c: // SRA  H
-							regs[H] = shra(regs[H]);
-							break;
-						case 0x2d: // SRA  L
-							regs[L] = shra(regs[L]);
-							break;
-						case 0x2e: // SRA  (HL)
-							writemem8b(H, L, shra(readmem8b(H, L)));
-							break;
-						case 0x2f: // SRA  A
-							regs[A] = shra(regs[A]);
-							break;
-						case 0x30: // SWAP B
-							regs[B] = ((regs[B]&0x0f)<< 4) | ((regs[B]&0xf0) >> 4);
-							break;
-						case 0x31: // SWAP C
-							regs[C] = ((regs[C]&0x0f)<< 4) | ((regs[C]&0xf0) >> 4);
-							break;
-						case 0x32: // SWAP D
-							regs[D] = ((regs[D]&0x0f)<< 4) | ((regs[D]&0xf0) >> 4);
-							break;
-						case 0x33: // SWAP E
-							regs[E] = ((regs[E]&0x0f)<< 4) | ((regs[E]&0xf0) >> 4);
-							break;
-						case 0x34: // SWAP H
-							regs[H] = ((regs[H]&0x0f)<< 4) | ((regs[H]&0xf0) >> 4);
-							break;
-						case 0x35: // SWAP L
-							regs[L] = ((regs[L]&0x0f)<< 4) | ((regs[L]&0xf0) >> 4);
-							break;
-						case 0x36:{// SWAP (HL)
-							int x = readmem8b(H, L);
-							x = ((x&0x0f)<< 4) | ((x&0xf0) >> 4);
-							writemem8b(H,L, x);
-						};break;
-						case 0x37: // SWAP A
-							regs[A] = ((regs[A]&0x0f)<< 4) | ((regs[A]&0xf0) >> 4);
-							break;
-						case 0x38: // SRL  B
-							regs[B] = shrl(regs[B]);
-							break;
-						case 0x39: // SRL  C
-							regs[C] = shrl(regs[C]);
-							break;
-						case 0x3a: // SRL  D
-							regs[D] = shrl(regs[D]);
-							break;
-						case 0x3b: // SRL  E
-							regs[E] = shrl(regs[E]);
-							break;
-						case 0x3c: // SRL  H
-							regs[H] = shrl(regs[H]);
-							break;
-						case 0x3d: // SRL  L
-							regs[L] = shrl(regs[L]);
-							break;
-						case 0x3e: // SRL  (HL)
-							writemem8b(H, L, shrl(readmem8b(H, L)));
-							break;
-						case 0x3f: // SRL  A
-							regs[A] = shrl(regs[A]);
-							break;
-						case 0x40: // BIT 0,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x41: // BIT 0,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x42: // BIT 0,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x43: // BIT 0,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x44: // BIT 0,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x45: // BIT 0,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x46: // BIT 0,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x47: // BIT 0,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<0))==0 ? ZF_Mask : 0;
-							break;
-						case 0x48: // BIT 1,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x49: // BIT 1,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x4a: // BIT 1,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x4b: // BIT 1,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x4c: // BIT 1,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x4d: // BIT 1,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x4e: // BIT 1,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x4f: // BIT 1,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<1))==0 ? ZF_Mask : 0;
-							break;
-						case 0x50: // BIT 2,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x51: // BIT 2,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x52: // BIT 2,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x53: // BIT 2,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x54: // BIT 2,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x55: // BIT 2,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x56: // BIT 2,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x57: // BIT 2,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<2))==0 ? ZF_Mask : 0;
-							break;
-						case 0x58: // BIT 3,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x59: // BIT 3,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x5a: // BIT 3,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x5b: // BIT 3,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x5c: // BIT 3,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x5d: // BIT 3,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x5e: // BIT 3,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x5f: // BIT 3,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<3))==0 ? ZF_Mask : 0;
-							break;
-						case 0x60: // BIT 4,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x61: // BIT 4,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x62: // BIT 4,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x63: // BIT 4,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x64: // BIT 4,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x65: // BIT 4,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x66: // BIT 4,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x67: // BIT 4,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<4))==0 ? ZF_Mask : 0;
-							break;
-						case 0x68: // BIT 5,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x69: // BIT 5,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x6a: // BIT 5,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x6b: // BIT 5,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x6c: // BIT 5,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x6d: // BIT 5,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x6e: // BIT 5,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x6f: // BIT 5,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<5))==0 ? ZF_Mask : 0;
-							break;
-						case 0x70: // BIT 6,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x71: // BIT 6,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x72: // BIT 6,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x73: // BIT 6,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x74: // BIT 6,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x75: // BIT 6,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x76: // BIT 6,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x77: // BIT 6,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<6))==0 ? ZF_Mask : 0;
-							break;
-						case 0x78: // BIT 7,B
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[B]&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x79: // BIT 7,C
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[C]&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x7a: // BIT 7,D
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[D]&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x7b: // BIT 7,E
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[E]&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x7c: // BIT 7,H
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[H]&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x7d: // BIT 7,L
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[L]&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x7e: // BIT 7,(HL)
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (readmem8b(H, L)&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x7f: // BIT 7,A
-							regs[F] &= CF_Mask;
-							regs[F] |= HC_Mask;
-							regs[F] |= (regs[A]&(1<<7))==0 ? ZF_Mask : 0;
-							break;
-						case 0x80: // RES 0,B
-							regs[B] &= ~( 1 << 0 );
-							break;
-						case 0x81: // RES 0,C
-							regs[C] &= ~( 1 << 0 );
-							break;
-						case 0x82: // RES 0,D
-							regs[D] &= ~( 1 << 0 );
-							break;
-						case 0x83: // RES 0,E
-							regs[E] &= ~( 1 << 0 );
-							break;
-						case 0x84: // RES 0,H
-							regs[H] &= ~( 1 << 0 );
-							break;
-						case 0x85: // RES 0,L
-							regs[L] &= ~( 1 << 0 );
-							break;
-						case 0x86: // RES 0,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 0 ) );
-							break;
-						case 0x87: // RES 0,A
-							regs[A] &= ~( 1 << 0 );
-							break;
-						case 0x88: // RES 1,B
-							regs[B] &= ~( 1 << 1 );
-							break;
-						case 0x89: // RES 1,C
-							regs[C] &= ~( 1 << 1 );
-							break;
-						case 0x8a: // RES 1,D
-							regs[D] &= ~( 1 << 1 );
-							break;
-						case 0x8b: // RES 1,E
-							regs[E] &= ~( 1 << 1 );
-							break;
-						case 0x8c: // RES 1,H
-							regs[H] &= ~( 1 << 1 );
-							break;
-						case 0x8d: // RES 1,L
-							regs[L] &= ~( 1 << 1 );
-							break;
-						case 0x8e: // RES 1,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 1 ) );
-							break;
-						case 0x8f: // RES 1,A
-							regs[A] &= ~( 1 << 1 );
-							break;
-						case 0x90: // RES 2,B
-							regs[B] &= ~( 1 << 2 );
-							break;
-						case 0x91: // RES 2,C
-							regs[C] &= ~( 1 << 2 );
-							break;
-						case 0x92: // RES 2,D
-							regs[D] &= ~( 1 << 2 );
-							break;
-						case 0x93: // RES 2,E
-							regs[E] &= ~( 1 << 2 );
-							break;
-						case 0x94: // RES 2,H
-							regs[H] &= ~( 1 << 2 );
-							break;
-						case 0x95: // RES 2,L
-							regs[L] &= ~( 1 << 2 );
-							break;
-						case 0x96: // RES 2,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 2 ) );
-							break;
-						case 0x97: // RES 2,A
-							regs[A] &= ~( 1 << 2 );
-							break;
-						case 0x98: // RES 3,B
-							regs[B] &= ~( 1 << 3 );
-							break;
-						case 0x99: // RES 3,C
-							regs[C] &= ~( 1 << 3 );
-							break;
-						case 0x9a: // RES 3,D
-							regs[D] &= ~( 1 << 3 );
-							break;
-						case 0x9b: // RES 3,E
-							regs[E] &= ~( 1 << 3 );
-							break;
-						case 0x9c: // RES 3,H
-							regs[H] &= ~( 1 << 3 );
-							break;
-						case 0x9d: // RES 3,L
-							regs[L] &= ~( 1 << 3 );
-							break;
-						case 0x9e: // RES 3,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 3 ) );
-							break;
-						case 0x9f: // RES 3,A
-							regs[A] &= ~( 1 << 3 );
-							break;
-						case 0xa0: // RES 4,B
-							regs[B] &= ~( 1 << 4 );
-							break;
-						case 0xa1: // RES 4,C
-							regs[C] &= ~( 1 << 4 );
-							break;
-						case 0xa2: // RES 4,D
-							regs[D] &= ~( 1 << 4 );
-							break;
-						case 0xa3: // RES 4,E
-							regs[E] &= ~( 1 << 4 );
-							break;
-						case 0xa4: // RES 4,H
-							regs[H] &= ~( 1 << 4 );
-							break;
-						case 0xa5: // RES 4,L
-							regs[L] &= ~( 1 << 4 );
-							break;
-						case 0xa6: // RES 4,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 4 ) );
-							break;
-						case 0xa7: // RES 4,A
-							regs[A] &= ~( 1 << 4 );
-							break;
-						case 0xa8: // RES 5,B
-							regs[B] &= ~( 1 << 5 );
-							break;
-						case 0xa9: // RES 5,C
-							regs[C] &= ~( 1 << 5 );
-							break;
-						case 0xaa: // RES 5,D
-							regs[D] &= ~( 1 << 5 );
-							break;
-						case 0xab: // RES 5,E
-							regs[E] &= ~( 1 << 5 );
-							break;
-						case 0xac: // RES 5,H
-							regs[H] &= ~( 1 << 5 );
-							break;
-						case 0xad: // RES 5,L
-							regs[L] &= ~( 1 << 5 );
-							break;
-						case 0xae: // RES 5,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 5 ) );
-							break;
-						case 0xaf: // RES 5,A
-							regs[A] &= ~( 1 << 5 );
-							break;
-						case 0xb0: // RES 6,B
-							regs[B] &= ~( 1 << 6 );
-							break;
-						case 0xb1: // RES 6,C
-							regs[C] &= ~( 1 << 6 );
-							break;
-						case 0xb2: // RES 6,D
-							regs[D] &= ~( 1 << 6 );
-							break;
-						case 0xb3: // RES 6,E
-							regs[E] &= ~( 1 << 6 );
-							break;
-						case 0xb4: // RES 6,H
-							regs[H] &= ~( 1 << 6 );
-							break;
-						case 0xb5: // RES 6,L
-							regs[L] &= ~( 1 << 6 );
-							break;
-						case 0xb6: // RES 6,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 6 ) );
-							break;
-						case 0xb7: // RES 6,A
-							regs[A] &= ~( 1 << 6 );
-							break;
-						case 0xb8: // RES 7,B
-							regs[B] &= ~( 1 << 7 );
-							break;
-						case 0xb9: // RES 7,C
-							regs[C] &= ~( 1 << 7 );
-							break;
-						case 0xba: // RES 7,D
-							regs[D] &= ~( 1 << 7 );
-							break;
-						case 0xbb: // RES 7,E
-							regs[E] &= ~( 1 << 7 );
-							break;
-						case 0xbc: // RES 7,H
-							regs[H] &= ~( 1 << 7 );
-							break;
-						case 0xbd: // RES 7,L
-							regs[L] &= ~( 1 << 7 );
-							break;
-						case 0xbe: // RES 7,(HL)
-							writemem8b( H,L, readmem8b( H,L ) & ~( 1 << 7 ) );
-							break;
-						case 0xbf: // RES 7,A
-							regs[A] &= ~( 1 << 7 );
-							break;
-						case 0xc0: // SET 0,B
-							regs[B] |= ( 1 << 0 );
-							break;
-						case 0xc1: // SET 0,C
-							regs[C] |= ( 1 << 0 );
-							break;
-						case 0xc2: // SET 0,D
-							regs[D] |= ( 1 << 0 );
-							break;
-						case 0xc3: // SET 0,E
-							regs[E] |= ( 1 << 0 );
-							break;
-						case 0xc4: // SET 0,H
-							regs[H] |= ( 1 << 0 );
-							break;
-						case 0xc5: // SET 0,L
-							regs[L] |= ( 1 << 0 );
-							break;
-						case 0xc6: // SET 0,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 0 ) );
-							break;
-						case 0xc7: // SET 0,A
-							regs[A] |= ( 1 << 0 );
-							break;
-						case 0xc8: // SET 1,B
-							regs[B] |= ( 1 << 1 );
-							break;
-						case 0xc9: // SET 1,C
-							regs[C] |= ( 1 << 1 );
-							break;
-						case 0xca: // SET 1,D
-							regs[D] |= ( 1 << 1 );
-							break;
-						case 0xcb: // SET 1,E
-							regs[E] |= ( 1 << 1 );
-							break;
-						case 0xcc: // SET 1,H
-							regs[H] |= ( 1 << 1 );
-							break;
-						case 0xcd: // SET 1,L
-							regs[L] |= ( 1 << 1 );
-							break;
-						case 0xce: // SET 1,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 1 ) );
-							break;
-						case 0xcf: // SET 1,A
-							regs[A] |= ( 1 << 1 );
-							break;
-						case 0xd0: // SET 2,B
-							regs[B] |= ( 1 << 2 );
-							break;
-						case 0xd1: // SET 2,C
-							regs[C] |= ( 1 << 2 );
-							break;
-						case 0xd2: // SET 2,D
-							regs[D] |= ( 1 << 2 );
-							break;
-						case 0xd3: // SET 2,E
-							regs[E] |= ( 1 << 2 );
-							break;
-						case 0xd4: // SET 2,H
-							regs[H] |= ( 1 << 2 );
-							break;
-						case 0xd5: // SET 2,L
-							regs[L] |= ( 1 << 2 );
-							break;
-						case 0xd6: // SET 2,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 2 ) );
-							break;
-						case 0xd7: // SET 2,A
-							regs[A] |= ( 1 << 2 );
-							break;
-						case 0xd8: // SET 3,B
-							regs[B] |= ( 1 << 3 );
-							break;
-						case 0xd9: // SET 3,C
-							regs[C] |= ( 1 << 3 );
-							break;
-						case 0xda: // SET 3,D
-							regs[D] |= ( 1 << 3 );
-							break;
-						case 0xdb: // SET 3,E
-							regs[E] |= ( 1 << 3 );
-							break;
-						case 0xdc: // SET 3,H
-							regs[H] |= ( 1 << 3 );
-							break;
-						case 0xdd: // SET 3,L
-							regs[L] |= ( 1 << 3 );
-							break;
-						case 0xde: // SET 3,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 3 ) );
-							break;
-						case 0xdf: // SET 3,A
-							regs[A] |= ( 1 << 3 );
-							break;
-						case 0xe0: // SET 4,B
-							regs[B] |= ( 1 << 4 );
-							break;
-						case 0xe1: // SET 4,C
-							regs[C] |= ( 1 << 4 );
-							break;
-						case 0xe2: // SET 4,D
-							regs[D] |= ( 1 << 4 );
-							break;
-						case 0xe3: // SET 4,E
-							regs[E] |= ( 1 << 4 );
-							break;
-						case 0xe4: // SET 4,H
-							regs[H] |= ( 1 << 4 );
-							break;
-						case 0xe5: // SET 4,L
-							regs[L] |= ( 1 << 4 );
-							break;
-						case 0xe6: // SET 4,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 4 ) );
-							break;
-						case 0xe7: // SET 4,A
-							regs[A] |= ( 1 << 4 );
-							break;
-						case 0xe8: // SET 5,B
-							regs[B] |= ( 1 << 5 );
-							break;
-						case 0xe9: // SET 5,C
-							regs[C] |= ( 1 << 5 );
-							break;
-						case 0xea: // SET 5,D
-							regs[D] |= ( 1 << 5 );
-							break;
-						case 0xeb: // SET 5,E
-							regs[E] |= ( 1 << 5 );
-							break;
-						case 0xec: // SET 5,H
-							regs[H] |= ( 1 << 5 );
-							break;
-						case 0xed: // SET 5,L
-							regs[L] |= ( 1 << 5 );
-							break;
-						case 0xee: // SET 5,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 5 ) );
-							break;
-						case 0xef: // SET 5,A
-							regs[A] |= ( 1 << 5 );
-							break;
-						case 0xf0: // SET 6,B
-							regs[B] |= ( 1 << 6 );
-							break;
-						case 0xf1: // SET 6,C
-							regs[C] |= ( 1 << 6 );
-							break;
-						case 0xf2: // SET 6,D
-							regs[D] |= ( 1 << 6 );
-							break;
-						case 0xf3: // SET 6,E
-							regs[E] |= ( 1 << 6 );
-							break;
-						case 0xf4: // SET 6,H
-							regs[H] |= ( 1 << 6 );
-							break;
-						case 0xf5: // SET 6,L
-							regs[L] |= ( 1 << 6 );
-							break;
-						case 0xf6: // SET 6,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 6 ) );
-							break;
-						case 0xf7: // SET 6,A
-							regs[A] |= ( 1 << 6 );
-							break;
-						case 0xf8: // SET 7,B
-							regs[B] |= ( 1 << 7 );
-							break;
-						case 0xf9: // SET 7,C
-							regs[C] |= ( 1 << 7 );
-							break;
-						case 0xfa: // SET 7,D
-							regs[D] |= ( 1 << 7 );
-							break;
-						case 0xfb: // SET 7,E
-							regs[E] |= ( 1 << 7 );
-							break;
-						case 0xfc: // SET 7,H
-							regs[H] |= ( 1 << 7 );
-							break;
-						case 0xfd: // SET 7,L
-							regs[L] |= ( 1 << 7 );
-							break;
-						case 0xfe: // SET 7,(HL)
-							writemem8b(H,L, readmem8b(H, L) | ( 1 << 7 ) );
-							break;
-						case 0xff: // SET 7,A
-							regs[A] |= ( 1 << 7 );
-							break;
-						default:
-							System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
-							PC -= 2; // we failed to execute the instruction, so restore PC
-							return 0;
+						CASES_CB_BITNUM(0x40, BIT)
+						CASES_CB_BITNUM(0x80, RES)
+						CASES_CB_BITNUM(0xc0, SET)
+						CASES_CB_SHOP(0x00, RLC)
+						CASES_CB_SHOP(0x08, RRC)
+						CASES_CB_SHOP(0x10, RL)
+						CASES_CB_SHOP(0x18, RR)
+						CASES_CB_SHOP(0x20, SLA)
+						CASES_CB_SHOP(0x28, SRA)
+						CASES_CB_SHOP(0x38, SRL)
+						CASES_CB_SWAP
+ 						default:
+						System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
+						PC -= 2;
+						return 0;
 					}
 					break;
 				default:
@@ -2635,12 +815,6 @@ public class CPU
 			cycles *= 4;
 			TotalCycleCount += cycles;
 			++nopCount;
-			if (!nop)
-				nopCount=0;
-			/*if ( nopCount>5 ) {
-				System.out.println( "Executing a lot of NOPs, aborting!" );
-				return 0;
-			}*/
 			return cycles;
 		}
 
