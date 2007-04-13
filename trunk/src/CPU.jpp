@@ -767,6 +767,29 @@ public class CPU
 					WRITE_F(t_acc , SP>>8);
 					WRITE_V((t_acc+1)&0xffff, SP&0xff);
 				}; break;
+				case 0xf8:{                                         // LD  HL, SP+dd
+					R16WHL(SP);
+					L += (((IMM8)^0x80)-0x80);
+					F = 0;
+					if (L > 0xff) {
+						L &= 0xff;
+						F |= FH;
+						++H;
+						if (H > 0xff) {
+							H &= 0xff;
+							F |= FC;
+						}
+					}
+					else if (L < 0) {
+						L &= 0xff;
+						F |= FH;
+						--H;
+						if (H < 0) {
+							H &= 0xff;
+							F |= FC;
+						}
+					}
+				};break;
 				case 0x10: if (speedswitch) {                       // STOP
 					System.out.println("Speed switch!");
 					doublespeed = !doublespeed;
