@@ -24,7 +24,7 @@ public class Cartridge {
 	private boolean RTCRegisterEnabled=false;
 	private int RomRamModeSelect=0; // 0 = rom, 1=ram
 	protected int     CurrentROMBank = 1;    // The ROM bank to read/write
-	protected int     CurrentRAMBank = 0;    // The RAM bank to read/write
+	protected int     CurrentRAMBank = 1;    // The RAM bank to read/write
 	private int     CurrentRTCRegister=0;
 
 	public Cartridge(String file_name) {
@@ -238,11 +238,16 @@ public class Cartridge {
 				}
 				else if(index<0x6000) { // 4000-5FFF - RAM Bank Number - or - Upper Bits of ROM Bank Number (Write Only)
 					if(RomRamModeSelect==0) { //Select ROM
-						CurrentROMBank=(CurrentROMBank&0x1f)|((value&0x03)<<5); //or shl 4? (Error in docs??)
+						int i,j,k;
+ 						i=(CurrentROMBank&0x1f)|((value&0x03)<<5);
+						/*j=(CurrentROMBank&0x1f)|((value&0x03)<<4);
+						k=(CurrentROMBank&0x0f)|((value&0x03)<<4);
+						System.out.println("Attempting to select rombank "+i+" or "+j+ " or "+k);*/
+						CurrentROMBank=i;
 						//System.out.println("Selecting ROM bank"+CurrentROMBank);
 					}
 					else { // Select RAM
-						CurrentRAMBank=value&0x03;
+						CurrentRAMBank=Math.max(1,value&0x03);
 					}
 				}
 				else if(index<0x8000) { //6000-7FFF - ROM/RAM Mode Select (Write Only)

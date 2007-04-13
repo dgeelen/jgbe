@@ -57,6 +57,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		private int watchaddr = -1;
 		private int runFor=-1;
 		private int instrstop=-1;
+		private int breakinstr=-1;
 		synchronized public int getStatus() {
 			return status;
 		}
@@ -67,6 +68,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		synchronized public void setBreakPoint(int addr) {
 			if (getStatus()==1)
 				stopaddr = addr;
+		}
+
+		synchronized public void setBreakInstr(int instr) {
+			if (getStatus()==1)
+				breakinstr = instr;
 		}
 
 		synchronized public void setWatchPoint(int addr) {
@@ -128,9 +134,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 						setStatus(0);
 					}
 					if (logwriter != null) {
-						String out = String.format("%d(%d): PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
-							gui.cpu.TotalInstrCount,
-							gui.cpu.TotalCycleCount,
+						String out = String.format("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
+//							gui.cpu.TotalInstrCount,
+//							gui.cpu.TotalCycleCount,
 							gui.cpu.PC,
 							gui.cpu.A,
 							gui.cpu.F,
@@ -161,6 +167,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					if (dbg.gui.cpu.exception() != 0) {
 						setStatus(0);
 						gui.cpu.printCPUstatus();
+					}
+					if (dbg.gui.cpu.read(dbg.gui.cpu.PC) == breakinstr) {
+						setStatus(0);
 					}
 				}
 				setRunFor(-1);
@@ -414,6 +423,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				String ss = s.substring( s.lastIndexOf(" ") + 1);
 				if( ss.charAt(0)=='$' )
 					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
+			}
+
+			if(s.charAt(0)=='i') {
+				String ss = s.substring( s.lastIndexOf(" ") + 1);
+				if( ss.charAt(0)=='$' )
+					runner.setBreakInstr(Integer.parseInt( ss.substring(1), 16 ));
 			}
 
 			if(s.charAt(0)=='p') {

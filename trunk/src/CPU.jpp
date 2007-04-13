@@ -1,3 +1,4 @@
+//Yoshi no tamago: $293 call crashes
 public class CPU
 {
 		protected static final int CARRY8b    = 512;
@@ -402,7 +403,7 @@ public class CPU
 				VC.write(index, value);
 			}
 			else if(index < 0xff00) { //Not Usable
-				System.out.println("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff)");
+				System.out.printf("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff) index=$%04x, value=$%02x\n",index,value);
 			}
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
@@ -469,12 +470,12 @@ public class CPU
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
 							write(0xfe00|i, read(i+(value<<8)));
 						}
-						VC.STAT|=2; //MODE2 or 3
+/*						VC.STAT|=2; //MODE2 or 3
 						int cnt=0;
 						while(cnt<160) { //Timing :D
 						  cnt+=nextinstruction();
 						}
-						VC.STAT&=~2;
+						VC.STAT&=~2;*/
 						} break;
 					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
 					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
@@ -537,14 +538,13 @@ public class CPU
 
 		final public void reset() {
 			//TODO: Switch to bank 0
-			//PC = 0x100;
 			BIOS_enabled = true;
-			VC.isCGB = false; // hax! we have mono bios?
+			//VC.isCGB = false; // hax! we have mono bios?
 			refreshMemMap();
-			PC = 0x000;
+			PC = VC.isCGB ? 0x100 : 0x00;
 
 			//AF=$01B0
-			A=0x11; // CGB sets this to 0x11 instead of 0x01 for GB
+			A=VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
 			F=0xb0;
 			//BC=$0013
 			B=0x00;
@@ -647,7 +647,7 @@ public class CPU
 			TVARS;
 			if(checkInterrupts()!=0) {
 				halted = false;
-				return 12; // 12 cycles for this?
+				//return 12; // 12 cycles for this?
 			}
 			if (halted) return 4;
 			int op = FETCH;
