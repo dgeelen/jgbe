@@ -32,17 +32,17 @@ public class Disassembler
     // Opcode: opcode to disassemble
     // BC:     whether opcode was after BC
     private static int regval(String reg) {
-      if(reg.equalsIgnoreCase("A")) return cpu.regs[cpu.A];
-      if(reg.equalsIgnoreCase("B")) return cpu.regs[cpu.B];
-      if(reg.equalsIgnoreCase("C")) return cpu.regs[cpu.C];
-      if(reg.equalsIgnoreCase("D")) return cpu.regs[cpu.D];
-      if(reg.equalsIgnoreCase("E")) return cpu.regs[cpu.E];
-      if(reg.equalsIgnoreCase("H")) return cpu.regs[cpu.H];
-      if(reg.equalsIgnoreCase("L")) return cpu.regs[cpu.L];
-      if(reg.equalsIgnoreCase("AF")) return 0x10000|((cpu.regs[cpu.A]<<8)|cpu.regs[cpu.F]);
-      if(reg.equalsIgnoreCase("BC")) return 0x10000|((cpu.regs[cpu.B]<<8)|cpu.regs[cpu.C]);
-      if(reg.equalsIgnoreCase("DE")) return 0x10000|((cpu.regs[cpu.D]<<8)|cpu.regs[cpu.E]);
-      if(reg.equalsIgnoreCase("HL")) return 0x10000|((cpu.regs[cpu.H]<<8)|cpu.regs[cpu.L]);
+      if(reg.equalsIgnoreCase("A")) return cpu.A;
+      if(reg.equalsIgnoreCase("B")) return cpu.B;
+      if(reg.equalsIgnoreCase("C")) return cpu.C;
+      if(reg.equalsIgnoreCase("D")) return cpu.D;
+      if(reg.equalsIgnoreCase("E")) return cpu.E;
+      if(reg.equalsIgnoreCase("H")) return cpu.H;
+      if(reg.equalsIgnoreCase("L")) return cpu.L;
+      if(reg.equalsIgnoreCase("AF")) return 0x10000|((cpu.A<<8)|cpu.F);
+      if(reg.equalsIgnoreCase("BC")) return 0x10000|((cpu.B<<8)|cpu.C);
+      if(reg.equalsIgnoreCase("DE")) return 0x10000|((cpu.D<<8)|cpu.E);
+      if(reg.equalsIgnoreCase("HL")) return 0x10000|((cpu.H<<8)|cpu.L);
       if(reg.equalsIgnoreCase("SP")) return 0x10000|(cpu.SP);
       if(reg.equalsIgnoreCase("PC")) return 0x10000|(cpu.PC);
       return -1;
