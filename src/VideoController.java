@@ -47,11 +47,21 @@ public class VideoController {
 
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
 
+	private sun.misc.Perf perf;
+	private long pfreq;
+	private long ptick;
+	private long ftick;
+
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
 		drawImg=new BufferedImage[2];
 		scale (image_width, image_height);
 		this.isCGB = cpu.isCGB();
+		perf = sun.misc.Perf.getPerf();
+		pfreq = perf.highResFrequency();
+		lastms = perf.highResCounter();
+		
+		long x = System.nanoTime();
 	}
 
 	final public void addListener(JPanel panel)
@@ -79,8 +89,8 @@ public class VideoController {
 		blitImg[y][x] = (pal << 2) | col;
 	}
 
-	static long lastms = System.currentTimeMillis();
-
+	//static long lastms = System.nanoTime();
+	static long lastms;
 	static int fps23fix=0;
 	final private void blitImage() {
 		//Graphics g = drawImg[curDrawImg^1].getGraphics();
@@ -95,23 +105,13 @@ public class VideoController {
 		}
 		curDrawImg ^= 1;
 
-		long ct = System.currentTimeMillis();
-		int sleeptime=0;
-		try {
-			if(fps23fix<2) {
-				sleeptime=17;
-			}
-			else {
-				sleeptime=16;
-				fps23fix=0;
-			}
-			++fps23fix;
-			sleeptime-=(int)(ct-lastms);
-			sleeptime+=4;
-			lastms = ct;
-			Thread.sleep(Math.max(0,sleeptime));
-		} catch (java.lang.InterruptedException e) {
-		}
+		long ct;
+		do {
+			ct = perf.highResCounter();
+		} while ((ct-lastms) < 1000000/60);
+		//long lost = ((ct-lastms) - (1000000/60));
+		lastms = ct;
+		//lastms += (1000000/60);
 	}
 
 	final public void setMonoColData(int index, int value) {
@@ -193,7 +193,7 @@ public class VideoController {
 	 *
 	 *  when anydirty is false nothing will be done
 	 *  when alldirty is true all patterns will be updated
-	 *  when patdirty[i] is true pattern i will be updates
+	 *  when patdirty[i] is true pattern i will be updated
 	 *
 	 *  patpix[i] is an 8x8 (y,x) matrix with colors of the tile
 	 *  i needs to 0..384-1 or 512..896
@@ -216,9 +216,6 @@ public class VideoController {
 
 			for (int y = 0; y < 8; ++y) {
 				int lineofs = (i*16) + (y*2);
-				//if ((i&0xC0)!=0) {
-				//	lineofs = (i*16) + (y*2) + 0x800;
-				//}
 				for (int x = 0; x < 8; ++x) { // not really x, but 7-x
 					// this info is always in bank 0, so read directly from VRAM[0]
 					int col = (VRAM[lineofs]>>x)&1;
@@ -499,6 +496,7 @@ public class VideoController {
 				if ((sprAttr&(1<<3))!=0) sprNum |= (1<<9);  // bank select
 				if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
 				//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
+				boolean prio = ((sprAttr&(1<<7))==0);
 
 				int palnr;
 				if (isCGB)
@@ -512,7 +510,8 @@ public class VideoController {
 					int rx = sprX - 8 + ofsX;
 					// 0 is transparent color
 					int col = PatLine[ofsX];
-					if((col != 0) && (rx >= 0) && (rx < 160)) {
+					if((col != 0) && (rx >= 0) && (rx < 160)
+					&& (prio || ((blitLine[rx]&0x3c)== 0x20))) {
 						drawPixel(rx, LY, palnr, col);
 					}
 				}
