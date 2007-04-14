@@ -586,6 +586,7 @@ public class AudioController {
 		0x5a,0x22,0x23,0x33,0x35,0x55,0x40,0x00,
 	};
 
+	protected boolean isMuted=false;
 	private boolean isEnabled=true;
 	private AudioFormat myAudioFormat;
 	private DataLine.Info myLineInfo;
@@ -618,22 +619,19 @@ public class AudioController {
 
 	public AudioController(CPU cpu) {
 		this.cpu=cpu;
+		audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
 		try {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			myLineInfo = new DataLine.Info(SourceDataLine.class,myAudioFormat);
 			audioSource = (SourceDataLine)AudioSystem.getLine(myLineInfo);
 			audioSource.open(myAudioFormat);
 			audioSource.start();
-			audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
-			int audioBufferIndex=0;
-			IO = new int[0x20]; //WAVERAM in WAVE
-/*			source.drain();
-			source.stop();
-			source.close(); */
 		}
 		catch (Exception e) {
 				System.out.println("Error while opening sound output, sound will be unavailable ("+e+")");
+				isMuted = true;
 		}
+		IO = new int[0x20]; //WAVERAM in WAVE
 		cyclesLeftToRender=0;
   	S1=new SoundRegister();
 		S2=new SoundRegister();
@@ -944,6 +942,8 @@ public class AudioController {
 
 	static byte bla=0;
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
+		if (isMuted)
+			return;
 		cyclesLeftToRender+=nrCycles;
 		int i=cyclesLeftToRender;
 		cyclesLeftToRender>>=1;

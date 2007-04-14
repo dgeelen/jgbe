@@ -10,7 +10,7 @@ all: $(JAVAFILES) swinggui.class $(CLASSFILES)
 
 %.java: %.jpp
 	diff -u $@ .$@.bpp
-	gcc -E -x c $< | grep -v "^#" | sed "s:break\;[ 	]*case:break\;\\n	case:g" > $@
+	gcc -E -x c $< | grep -v "^#" | sed "s:cycles\;[ 	]*case:cycles\;\\n	case:g" > $@
 	cp $@ .$@.bpp
 
 CPU.java: CPU.inc

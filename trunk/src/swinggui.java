@@ -209,15 +209,28 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
 
-			if (args.length == 0) {
+			boolean sound=true, debug=true;
+			String romfile="", logfile="";
+			for (int i = 0; i < args.length; ++i) {
+				if (args[i].charAt(0)!='-')
+					romfile = args[i];
+				if (args[i].equals("-log"))
+					logfile = args[++i];
+				if (args[i].equals("-nosound"))
+					sound = false;
+				if (args[i].equals("-nodebug"))
+					debug = false;
+			}
+			if (romfile.equals("")) {
 				System.out.println();
 				System.out.println("ERROR: missing argument");
 				System.out.println();
-				System.out.println("USAGE: java swinggui ROMFILE [LOGFILE]");
+				System.out.println("USAGE: java swinggui ROMFILE [-log LOGFILE] [-nosound] [-nodebug]");
 				System.out.println();
 				return;
 			}
-			gui.cartridge = new Cartridge(args[0]);
+			
+			gui.cartridge = new Cartridge(romfile);
 			if(gui.cartridge.getError()!=null) {
 				System.out.println("ERROR: "+gui.cartridge.getError());
 				return;
@@ -226,42 +239,24 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			System.out.println("Succesfully loaded ROM :)");
 			gui.cpu = new CPU(gui.cartridge);
 			gui.VC = gui.cpu.VC;
-			TestSuite t = new TestSuite(gui.cpu);
 
 			gui.createAndShowGUI();
 			gui.cpu.reset();
 			gui.cpu.VC.addListener(gui.grfx);
+			if (!sound)
+				gui.cpu.AC.isMuted = true;
 
 			Timer timer = new Timer(1000, gui);
 			timer.setInitialDelay(1000);
 			timer.start();
 
+
 			/*DEBUGGER*/
-			String logfilename = (args.length >= 2) ? args[1] : "";
-			final Debugger dbgr=new Debugger(gui, logfilename); //The GUI to which this debugger belongs
-//			Debugger.createAndShowGUI();
-			/*///END DEBUGGER
-			int x = 1;
-			boolean fulldebug=false;
-			while(x > 0) {
-				if (fulldebug) gui.cpu.printCPUstatus();
-				gui.cpu.nextinstruction();
-				if ((gui.cpu.TotalInstrCount % 1000) == 0) {
-					if (gui.VC.renderNextScanline(gui.img[gui.which_img_to_draw_for_double_buffering^1].getGraphics())) {
-						gui.which_img_to_draw_for_double_buffering^=1;
-						gui.grfx.updateUI();
-					}
-				}
-				if (gui.cpu.exception()!=0) {
-					Disassembler deasm = new Disassembler( gui.cartridge, gui.cpu);
-					if (!fulldebug) gui.cpu.printCPUstatus();
-					String s = deasm.disassemble(gui.cpu.PC);
-					if (s.charAt( 6)=='$') ++(gui.cpu.PC);
-					if (s.charAt(10)=='$') ++(gui.cpu.PC);
-					if (s.charAt(14)=='$') ++(gui.cpu.PC);
-					--x;
-					fulldebug = true;
-				}
-			} /* */
+			if (debug) {
+				final Debugger dbgr=new Debugger(gui, logfile); //The GUI to which this debugger belongs
+			}
+			else {
+				while (gui.cpu.nextinstruction()!=0) {};
+			}
 		}
 	}
