@@ -1,0 +1,10 @@
+MIDlet-1: Java Mobile GameBoy Emulator, icon.png, jmgbe
+MMIDlet-Description: Nintendo GameBoy/GameBoy Color emulator for MIDP
+MIDlet-Jar-URL: jmgbe.jar
+MIDlet-Name: Java Mobile GameBoy Emulator
+MIDlet-Permissions:
+MIDlet-Vendor: Da Fox && HackyKid && Satan
+MIDlet-Version: 2.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.0
+MIDlet-Jar-Size: 3201
