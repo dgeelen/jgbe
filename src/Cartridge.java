@@ -24,7 +24,7 @@ public class Cartridge {
 	private boolean RTCRegisterEnabled=false;
 	private int RomRamModeSelect=0; // 0 = rom, 1=ram
 	protected int     CurrentROMBank = 1;    // The ROM bank to read/write
-	protected int     CurrentRAMBank = 1;    // The RAM bank to read/write
+	protected int     CurrentRAMBank = 0;    // The RAM bank to read/write
 	private int     CurrentRTCRegister=0;
 
 	public Cartridge(String file_name) {

@@ -55,39 +55,40 @@
 #define READ_S(index) (read(index))
 #define WRITE_S(index, val) write(index, val)
 
+//define this to inline the memmap test for reads/writes
 //#define INLINE_MEMMAP
 
 #ifdef INLINE_MEMMAP
-// dont use with expressions with side effects
-#define READ_F(index)\
-( ((t_mm=rMemMap[index>>12]) == null) \
-	? READ_S(index) \
-	: t_mm[index&0x0FFF] \
-)
-#define WRITE_F(index, val) \
-{ if ((t_mm=wMemMap[index>>12]) == null) \
-		WRITE_S(index, val); \
-	else \
-		t_mm[index&0x0FFF] = val; \
-}
+	// dont use with expressions with side effects
+	#define READ_F(index)\
+	( ((t_mm=rMemMap[index>>12]) == null) \
+		? READ_S(index) \
+		: t_mm[index&0x0FFF] \
+	)
+	#define WRITE_F(index, val) \
+	{ if ((t_mm=wMemMap[index>>12]) == null) \
+			WRITE_S(index, val); \
+		else \
+			t_mm[index&0x0FFF] = val; \
+	}
 
-// use when the expression has side effects
-#define READ_V(index) \
-( ((t_mm=rMemMap[(t_mi=index)>>12]) == null) \
-	? READ_S(t_mi) \
-	: t_mm[t_mi&0x0FFF] \
-)
-#define WRITE_V(index, val) \
-{ if ((t_mm=wMemMap[(t_mi=index)>>12]) == null) \
-		WRITE_S(t_mi, val); \
-	else \
-		t_mm[t_mi&0x0FFF]  = val;\
-}
+	// use when the expression has side effects
+	#define READ_V(index) \
+	( ((t_mm=rMemMap[(t_mi=index)>>12]) == null) \
+		? READ_S(t_mi) \
+		: t_mm[t_mi&0x0FFF] \
+	)
+	#define WRITE_V(index, val) \
+	{ if ((t_mm=wMemMap[(t_mi=index)>>12]) == null) \
+			WRITE_S(t_mi, val); \
+		else \
+			t_mm[t_mi&0x0FFF]  = val;\
+	}
 #else
-#define READ_F READ_S
-#define READ_V READ_S
-#define WRITE_F WRITE_S
-#define WRITE_V WRITE_S
+	#define READ_F READ_S
+	#define READ_V READ_S
+	#define WRITE_F WRITE_S
+	#define WRITE_V WRITE_S
 #endif
 
 #define FETCH (READ_V(PC++))
@@ -127,9 +128,10 @@
 #define SKIP_CALL { cycles-=3; PC+=2; }
 #define SKIP_RET  { cycles-=3; }
 
+
+
 #define DO_INC8(r) { \
-	++(r); \
-	(r) &= 0xff; \
+	(r) = (((r)+1)&0xff); \
 	F &= FC; \
 	F |= Tables.incflag[(r)]; \
 }
@@ -231,8 +233,13 @@ F = FN \
 #define CASE_LD_RI(r) \
 	case (0x06+(RNUM(r)<<3)): DO_LD_RX(r, IMM8); break;
 
+#define CASE_LD_16_RI_BC { C = IMM8; B = IMM8; }
+#define CASE_LD_16_RI_DE { E = IMM8; D = IMM8; }
+#define CASE_LD_16_RI_HL { L = IMM8; H = IMM8; }
+#define CASE_LD_16_RI_SP { SP = IMM16; }
+
 #define CASE_LD_16_RI(r) \
-	case (0x01+(RNUM(r)<<4)): R16W_V(r, IMM16); break;
+	case (0x01+(RNUM(r)<<4)): CASE_LD_16_RI_ ## r ; break;
 
 #define CASES_LD_16(r) \
 	CASE_LD_16_RI(r) \
@@ -466,6 +473,9 @@ case 0xE0|(n): SET(4, r); break; \
 case 0xE8|(n): SET(5, r); break; \
 case 0xF0|(n): SET(6, r); break; \
 case 0xF8|(n): SET(7, r); break;
+
+#define CHECK_INTS \
+	(IME && ((IOP[0x0f]&IE)!=0))
 
 #define PRE_INT ( DI, PUSH(PC) )
 #define THROW_INT(n) ( (IF &= ~(1<<(n))), (PC = 0x40+((n)<<3)) )
