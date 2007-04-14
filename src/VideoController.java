@@ -53,6 +53,8 @@ public class VideoController {
 	private long ftick;
 
 	private int scale = 2;
+	private int cfskip = 0;
+	private int fskip = 1; // 1 is off
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
@@ -279,15 +281,20 @@ public class VideoController {
 		}
 
 		if (LY < 144) {              // HBLANK
-			renderScanLine(); // renders LY
+			if (cfskip == 0)
+				renderScanLine(); // renders LY
 			STAT &= ~(3);              // mode=0
 			if ((STAT&(1<<3))!=0)      // if HBlank is enabled in STAT reg
 				cpu.triggerInterrupt(1); // request int STAT/HBlank
 		}
 
 		if (LY == 144) {             // VBLANK
-			blitImage();
-			if (listener != null) listener.updateUI();
+			if (cfskip == 0) {
+				blitImage();
+				if (listener != null) listener.updateUI();
+			}
+			cfskip--;
+			if (cfskip < 0) cfskip += fskip;
 			STAT &= ~(3);
 			STAT |= 1;                 // mode=1
 			if ((STAT&(1<<4))!=0)      // if VBlank is enabled in STAT reg
