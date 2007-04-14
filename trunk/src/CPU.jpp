@@ -1,6 +1,7 @@
 //Yoshi no tamago: $293 call crashes
 public class CPU
 {
+		static private CPU singleton = null;
 		protected static final int CARRY8b    = 512;
 		protected static final int CARRY8b_SHR = 5;
 
@@ -16,8 +17,8 @@ public class CPU
 
 		#include "CPU.inc"
 
-		protected int TotalInstrCount = 0;
-		protected int TotalCycleCount = 0;
+		static protected int TotalInstrCount = 0;
+		static protected int TotalCycleCount = 0;
 
 		protected static int B = 1;
 		protected static int C = 2;
@@ -104,34 +105,40 @@ public class CPU
 			return res;
 		}
 */
-		private int[] IOP = new int[0x80]; //IO Ports
-		private int[] HRAM = new int[0x7F]; //HighRAM
-		private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
-		private int CurrentWRAMBank=1;
+		static private int[] IOP = new int[0x80]; //IO Ports
+		static private int[] HRAM = new int[0x7F]; //HighRAM
+		static private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
+		static private int CurrentWRAMBank=1;
 
-		boolean doublespeed = false;
-		boolean speedswitch = false;
+		static private boolean doublespeed = false;
+		static private boolean speedswitch = false;
 
-		private int DIVcntdwn = 0;
-		private int TIMAcntdwn = 0;
-		private int VBLANKcntdwn = 0;
+		static private int DIVcntdwn = 0;
+		static private int TIMAcntdwn = 0;
+		static private int VBLANKcntdwn = 0;
 
-		protected int PC=0;         ///< Program counter
-		protected int SP=0;         ///< Stack Pointer
-		protected int IE=0;         ///< Interrupt Enable (allowed interrupts)
-		protected boolean IME=true; ///< Interrupt Master Enable
-		protected boolean halted=false;
+		protected static int PC=0;         ///< Program counter
+		protected static int SP=0;         ///< Stack Pointer
+		protected static int IE=0;         ///< Interrupt Enable (allowed interrupts)
+		protected static boolean IME=true; ///< Interrupt Master Enable
+		protected static boolean halted=false;
 		//IO
-		public int DirectionKeyStatus=0x0f; //bitmask
-		public int ButtonKeyStatus=0x3f; //bitmask
+		static public int DirectionKeyStatus=0x0f; //bitmask
+		static public int ButtonKeyStatus=0x3f; //bitmask
 		//CPU Class variables
-		private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
-		private int lastException=0;
-		private Disassembler deasm;
-		protected VideoController VC;
-		protected AudioController AC;
+		static private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
+		static private int lastException=0;
+		static private Disassembler deasm;
+		static protected VideoController VC;
+		static protected AudioController AC;
 
 		public CPU( Cartridge cartridge ) {
+			if (singleton != null) {
+				System.out.println("FATAL: trying to instantiate second instance of CPU singleton class");
+				int x[]=null;
+				x[0] = 0;
+			}
+			singleton = this;
 			this.cartridge = cartridge;
 			refreshMemMap();
 			deasm = new Disassembler(this);
@@ -140,17 +147,17 @@ public class CPU
 			reset();
 		}
 
-		final private int[][] rMemMap = new int[0x10][];
-		final private int[][] wMemMap = new int[0x10][];
+		static private int[][] rMemMap = new int[0x10][];
+		static private int[][] wMemMap = new int[0x10][];
 
-		public boolean isCGB() {
+		static public boolean isCGB() {
 			//System.out.println("** <INSERT DESCRIPTIVE TEXT HERE> ** [0x0143] = " + read(0x0143));
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
 
-		boolean BIOS_enabled = false;
+		static boolean BIOS_enabled = false;
 
-		final private void refreshMemMap() {
+		static final private void refreshMemMap() {
 			if (BIOS_enabled)
 				rMemMap[0x0] = null;
 			else
@@ -183,7 +190,14 @@ public class CPU
 			// 0xF // lots of special stuff here...
 		}
 
-		final protected int read(int index) {
+		static final protected int read(int index) {
+			int mm[]=rMemMap[index>>12];
+			if (mm!=null)
+				return mm[index&0x0FFF];
+			return read_slow(index);
+		}
+
+		static final private int read_slow(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -198,11 +212,8 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-
-			int mm[]=rMemMap[index>>12];
-			if (mm!=null)
-				return mm[index&0x0FFF];
-			int b=0; // b==byte read
+			int b;
+			//System.out.println("ERROR: not using memmap "+ index);
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
 				b=-1;
@@ -353,7 +364,7 @@ public class CPU
 			return b;
 		}
 
-		final private void write(int index, int value) {
+		static final private void write(int index, int value) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -535,11 +546,11 @@ public class CPU
 		}
 
 
-		final public void reset() {
+		static final public void reset() {
 			reset(true);
 		}
 
-		final public void reset(boolean bios) {
+		static final public void reset(boolean bios) {
 			BIOS_enabled = bios;
 			VC.isCGB = bios ? false : isCGB();
 			refreshMemMap();
@@ -582,11 +593,11 @@ public class CPU
 			write(0xffff, 0x00); // [$FFFF] = $00   ; IE
 		}
 
-		final protected int cycles() {
+		static final protected int cycles() {
 			return TotalInstrCount;
 		}
 
-		final protected void printCPUstatus() {
+		static final protected void printCPUstatus() {
 			String flags = "";
 			flags += (( F & ZF_Mask ) == ZF_Mask )?"Z ":"z ";
 			flags += (( F & NF_Mask ) == NF_Mask )?"N ":"n ";
@@ -602,7 +613,7 @@ public class CPU
 			System.out.println( "  "+deasm.simple_disasm( PC ) );
 		}
 
-		final protected int checkInterrupts() { //handle interrupt priorities
+		static final protected int checkInterrupts() { //handle interrupt priorities
 			if(IME) { // If interrupts enabled
 				int ir = IOP[0x0f]&IE; //First Requested interrupts
 				if((ir&(1<<0))!=0) { //VBlANK
@@ -634,64 +645,30 @@ public class CPU
 			return 0; // No interrupts to service
 		}
 
-		final protected void interrupt(int i) { //execute interrupt #i
+		static final protected void interrupt(int i) { //execute interrupt #i
 			//System.out.println("INTERRUPT: " + i);
 			IME = false;
 			PUSH_OLD(PC);
 			PC = i;
 		}
 
-		final protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
+		static final protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
 			IOP[0x0f] |= (1<<i);
 		}
 
-		static int nopCount=0;
-		final private int execute() {
+		static final protected int execute() {
 			int cycles;
 			TVARS;
-			if(checkInterrupts()!=0) {
+			if (CHECK_INTS) {
+				checkInterrupts();
 				halted = false;
 				//return 12; // 12 cycles for this?
 			}
 			if (halted) return 4;
 			int op = FETCH;
 			cycles = Tables.cycles[op];
-/*
-						int tval;
-#define printtables(opcode, fname) \
-						System.out.printf("const static byte " + opcode + "_val_table[] =\n{\n" , op ); \
-						for (int i = 0; i < 512; i+= 16) { \
-							System.out.printf("\t"); \
-							for (int j = i; j < (i+16); ++j) { \
-								regs[F] = (j>0xff) ? FC : 0; \
-								tval = fname(j&0xFF); \
-								System.out.printf("0x%02x, ", tval); \
-							} \
-							System.out.printf("\n"); \
-						}	\
-						System.out.printf("};\n"); \
-						System.out.printf("const static byte " + opcode + "_flag_table[] =\n{\n" , op ); \
-						for (int i = 0; i < 512; i+= 16) { \
-							System.out.printf("\t"); \
-							for (int j = i; j < (i+16); ++j) { \
-								regs[F] = (j>0xff) ? FC : 0; \
-								tval = fname(j&0xFF); \
-								System.out.printf("0x%02x, ", regs[F]); \
-							} \
-							System.out.printf("\n"); \
-						}	\
-						System.out.printf("};\n"); \
 
-						printtables("SLA", shla);
-						printtables("SRA", shra);
-						printtables("SRL", shrl);
-						printtables("RL" , rol);
-						printtables("RLC", rolc);
-						printtables("RR" , ror);
-						printtables("RRC", rorc);
-			if (op < 0x100) return 0;
-*/
-
+#define break return cycles
 			switch ( op ) {
 				case 0x00: break;                                   // NOP
 				case 0xf3: IME=false; break;                        // DI
@@ -848,23 +825,19 @@ public class CPU
 						PC -= 2;
 						return 0;
 					}
-					break;
 				default:
 					System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , op );
 					PC -= 1; // we failed to execute the instruction, so restore PC
 					return 0;
 			}
-			PC &= 0xffff;
-			SP &= 0xffff;
-			++TotalInstrCount;
-			cycles *= 4;
-			TotalCycleCount += cycles;
-			++nopCount;
-			return cycles;
+#undef break
+//			return cycles;
 		}
 
 		final public int nextinstruction() {
-			int res = execute();
+			int res = 4*execute();
+			++TotalInstrCount;
+			TotalCycleCount += res;
 			lastException = (res!=0) ? 0 : 1;
 			if (res > 0)  {
 				//clockfreq = 4194304hz
