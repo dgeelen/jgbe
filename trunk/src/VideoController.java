@@ -39,7 +39,7 @@ public class VideoController {
 	private int OBPD[]=new int[8*4*2]; //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
 
 	/* caching vars */
-	private int colors[][] = new int[8*4*2][3];
+	private int colors[][] = new int[8*4*2][3*4];
 	private int patpix[][][] = new int[4096][8][8]; // see updatepatpix()
 	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
 	private boolean anydirty = true;                // see updatepatpix()
@@ -51,6 +51,8 @@ public class VideoController {
 	private long pfreq;
 	private long ptick;
 	private long ftick;
+
+	private int scale = 2;
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
@@ -73,8 +75,8 @@ public class VideoController {
 	}
 
 	public void scale(int width, int height) {
-		if (width < MIN_WIDTH)   width  = MIN_WIDTH;
-		if (height < MIN_HEIGHT) height = MIN_HEIGHT;
+		if (width <  scale*MIN_WIDTH)  width  = scale*MIN_WIDTH;
+		if (height < scale*MIN_HEIGHT) height = scale*MIN_HEIGHT;
 
 		drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -89,18 +91,56 @@ public class VideoController {
 		blitImg[y][x] = (pal << 2) | col;
 	}
 
+	final private void palQuadify(int[] col) {
+		for (int i=0; i<3; ++i) {
+			col[3+i] = col[i];
+			col[6+i] = col[i];
+			col[9+i] = col[i];
+		}
+	}
+
+	final private void palChange(int palcol, int r, int g, int b) {
+		colors[palcol][0] = r;
+		colors[palcol][1] = g;
+		colors[palcol][2] = b;
+
+		palQuadify(colors[palcol]);
+		//colors[palcol] = new Color(r,g,b);
+	}
+
 	//static long lastms = System.nanoTime();
 	static long lastms;
 	static int fps23fix=0;
 	final private void blitImage() {
 		//Graphics g = drawImg[curDrawImg^1].getGraphics();
 		WritableRaster wr = drawImg[curDrawImg^1].getRaster();
-		for (int y = 0; y < 144; ++y) {
-			int blitLine[] = blitImg[y];
-			for (int x = 0; x < 160; ++x) {
-				int col = blitLine[x];
-				if ((col >= 0) && (col < (8*4*2)))
-					wr.setPixel(x,y, colors[col]);
+		if (scale == 1) {
+			for (int y = 0; y < 144; ++y) {
+				int blitLine[] = blitImg[y];
+				for (int x = 0; x < 160; ++x) {
+					int col = blitLine[x];
+					if ((col >= 0) && (col < (8*4*2)))
+						wr.setPixel(x,y, colors[col]);
+				}
+			}
+		}
+		else if (scale == 2) {
+			for (int y = 1; y < 143; ++y) {
+				int blitLine2[] = blitImg[y];
+				int blitLine1[] = blitImg[y-1];
+				int blitLine3[] = blitImg[y+1];
+				for (int x = 1; x < 159; ++x) {
+					if ((blitLine2[x-1] != blitLine2[x+1])
+					&& (blitLine1[x]   != blitLine3[x])) {
+						wr.setPixel(x*2  ,y*2  , colors[(blitLine1[x] == blitLine2[x-1]) ? blitLine2[x-1] : blitLine2[x]]);
+						wr.setPixel(x*2+1,y*2  , colors[(blitLine1[x] == blitLine2[x+1]) ? blitLine2[x+1] : blitLine2[x]]);
+						wr.setPixel(x*2  ,y*2+1, colors[(blitLine3[x] == blitLine2[x-1]) ? blitLine2[x-1] : blitLine2[x]]);
+						wr.setPixel(x*2+1,y*2+1, colors[(blitLine3[x] == blitLine2[x+1]) ? blitLine2[x+1] : blitLine2[x]]);
+					}
+					else {
+						wr.setPixels(x*2,y*2, 2,2,colors[blitLine2[x]]);
+					}
+				}
 			}
 		}
 		curDrawImg ^= 1;
@@ -109,9 +149,7 @@ public class VideoController {
 		do {
 			ct = perf.highResCounter();
 		} while ((ct-lastms) < 1000000/60);
-		//long lost = ((ct-lastms) - (1000000/60));
 		lastms = ct;
-		//lastms += (1000000/60);
 	}
 
 	final public void setMonoColData(int index, int value) {
@@ -123,10 +161,11 @@ public class VideoController {
 
 		if (index==0) index= (0x20>>2);
 		else --index;
-		System.arraycopy(GRAYSHADES[(value>>0)&3], 0, colors[(index<<2) | 0], 0, 3);;
-		System.arraycopy(GRAYSHADES[(value>>2)&3], 0, colors[(index<<2) | 1], 0, 3);;
-		System.arraycopy(GRAYSHADES[(value>>4)&3], 0, colors[(index<<2) | 2], 0, 3);;
-		System.arraycopy(GRAYSHADES[(value>>6)&3], 0, colors[(index<<2) | 3], 0, 3);;
+		int temp[] = new int[3];
+		temp = GRAYSHADES[(value>>0)&3]; palChange((index<<2) | 0, temp[0], temp[1], temp[2]);
+		temp = GRAYSHADES[(value>>2)&3]; palChange((index<<2) | 1, temp[0], temp[1], temp[2]);
+		temp = GRAYSHADES[(value>>3)&3]; palChange((index<<2) | 2, temp[0], temp[1], temp[2]);
+		temp = GRAYSHADES[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
 	}
 
 	final public void setBGColData(int value) {
@@ -149,9 +188,7 @@ public class VideoController {
 		// to do anything more and there it works
 		// fading issue is somethere else, maybe int timing issue?
 
-		colors[(palnum << 2) | colnum | 0x20][0] = r;
-		colors[(palnum << 2) | colnum | 0x20][1] = g;
-		colors[(palnum << 2) | colnum | 0x20][2] = b;
+		palChange((palnum << 2) | colnum | 0x20, r, g, b);
 
 		if ((BGPI&(1<<7))!=0)
 			++BGPI;
@@ -177,9 +214,7 @@ public class VideoController {
 		g <<= 3; g |= (g >> 5);
 		b <<= 3; b |= (b >> 5);
 
-		colors[(palnum << 2) | colnum][0] = r;
-		colors[(palnum << 2) | colnum][1] = g;
-		colors[(palnum << 2) | colnum][2] = b;
+		palChange((palnum << 2) | colnum, r, g, b);
 
 		if ((OBPI&(1<<7))!=0)
 			++OBPI;
