@@ -328,6 +328,13 @@ public class CPU
 					case 0xff4f: // VRAM bank nr
 						b = VC.getcurVRAMBank();
 						break;
+					case 0xff51: // FF51 - HDMA1 - CGB Mode Only - New DMA Source, High
+					case 0xff52: // FF52 - HDMA2 - CGB Mode Only - New DMA Source, Low
+					case 0xff53: // FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
+					case 0xff54: // FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
+					case 0xff55: // FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
+						b = IOP[index-0xff00];
+						break;
 					case 0xff68: // BGPI
 						b = VC.BGPI;
 						break;
@@ -508,8 +515,22 @@ public class CPU
 					case 0xff52: // FF52 - HDMA2 - CGB Mode Only - New DMA Source, Low
 					case 0xff53: // FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
 					case 0xff54: // FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
+						IOP[index-0xff00] = value;
+						break;
 					case 0xff55: // FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
-						System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");
+						int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
+						int dst = (((IOP[0x53]<<8)|IOP[0x54]) & 0x1ff0) | 0x8000;
+						int len = ((value & 0x7f)+1)<<4;
+						int mode = value >> 7;
+						if (mode == 0) {
+							// TODO: this should take more than 4-12 cycles :O
+							//System.out.printf("DONE: General HDMA transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
+							for (int i = 0; i < len; ++i)
+								VC.write(dst++, read(src++));
+							IOP[0x55] = 0xff; // indicate we have finished
+						} else {
+							System.out.printf("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
+						}
 						break;
 					case 0xff68: // BGPI
 						VC.BGPI = value;;
