@@ -4,6 +4,7 @@
 #define FZ ZF_Mask
 
 #define ZFLAG(n) ( (n) != 0 ? 0 : FZ )
+//#define ZFLAG(n) ( Tables.zflag[(n)] )
 
 #define RNRB 0
 #define RNRC 1
@@ -52,7 +53,7 @@
 	int t_mask;
 
 // use when you know the memmap will fail
-#define READ_S(index) (read(index))
+#define READ_S(index) (read_slow(index))
 #define WRITE_S(index, val) write(index, val)
 
 //define this to inline the memmap test for reads/writes
@@ -85,8 +86,8 @@
 			t_mm[t_mi&0x0FFF]  = val;\
 	}
 #else
-	#define READ_F READ_S
-	#define READ_V READ_S
+	#define READ_F(index) read(index)
+	#define READ_V(index) read(index)
 	#define WRITE_F WRITE_S
 	#define WRITE_V WRITE_S
 #endif
@@ -137,8 +138,7 @@
 }
 
 #define DO_DEC8(r) { \
-	--(r); \
-	(r) &= 0xff; \
+	(r) = (((r)-1)&0xff); \
 	F &= FC; \
 	F |= Tables.decflag[(r)]; \
 }
@@ -163,8 +163,10 @@
 #define DO_ADD_T(r, n) { \
 	F = (((( A &0x0f )+((n)&0x0f ) )>0xf ) ? HC_Mask : 0); \
 	(r) = A + (n); \
-	F |= ( (r)>0xff ) ? CF_Mask : 0; \
-	(r) &= 0xff; \
+	if ( (r)>0xff ) { \
+		F |= FC; \
+		(r) &= 0xff; \
+	}	\
 	F |= ZFLAG(r); \
 }
 
@@ -172,8 +174,10 @@
 	F = FN | \
 		(((( A &0x0f )-((n)&0x0f ) )<0 ) ? HC_Mask : 0); \
 	(r) = A - (n); \
-	F |= ( (r)<0 ) ? CF_Mask : 0; \
-	(r) &= 0xff; \
+	if ( (r)<0 ) { \
+		F |= FC; \
+		(r) &= 0xff; \
+	}	\
 	F |= ZFLAG(r); \
 }
 
@@ -371,108 +375,6 @@ F = FN \
 	case 0x30+7: A = Tables.swap[A]; F &= FZ; break; \
 	case 0x30+6: WRITE_V(R16RHL, Tables.swap[READ_V(R16RHL)]); F &= FZ; break; \
 	
-
-#define ADDSP(n) { \
-DW(acc) = (un32)SP + (un32)(n8)(n); \
-F = (FH & (((SP>>8) ^ ((n)>>8) ^ HB(acc)) << 1)) \
-| (acc.b[HI][LO] << 4); \
-SP = W(acc); }
-
-#define LDHLSP(n) { \
-DW(acc) = (un32)SP + (un32)(n8)(n); \
-F = (FH & (((SP>>8) ^ ((n)>>8) ^ HB(acc)) << 1)) \
-| (acc.b[HI][LO] << 4); \
-HL = W(acc); }
-
-#define RLCA(r) { (r) = ((r)>>7) | ((r)<<1); \
-F = (((r)&0x01)<<4); }
-
-#define RRCA(r) { (r) = ((r)<<7) | ((r)>>1); \
-F = (((r)&0x80)>>3); }
-
-#define RLA(r) { \
-LB(acc) = (((r)&0x80)>>3); \
-(r) = ((r)<<1) | ((F&FC)>>4); \
-F = LB(acc); }
-
-#define RRA(r) { \
-LB(acc) = (((r)&0x01)<<4); \
-(r) = ((r)>>1) | ((F&FC)<<3); \
-F = LB(acc); }
-
-#define RLC(r) { RLCA(r); F |= ZFLAG(r); }
-#define RRC(r) { RRCA(r); F |= ZFLAG(r); }
-#define RL(r) { RLA(r); F |= ZFLAG(r); }
-#define RR(r) { RRA(r); F |= ZFLAG(r); }
-
-#define SLA(r) { \
-LB(acc) = (((r)&0x80)>>3); \
-(r) <<= 1; \
-F = ZFLAG((r)) | LB(acc); }
-
-#define SRA(r) { \
-LB(acc) = (((r)&0x01)<<4); \
-(r) = (un8)(((n8)(r))>>1); \
-F = ZFLAG((r)) | LB(acc); }
-
-#define SRL(r) { \
-LB(acc) = (((r)&0x01)<<4); \
-(r) >>= 1; \
-F = ZFLAG((r)) | LB(acc); }
-
-#define CPL(r) { \
-(r) = ~(r); \
-F |= (FH|FN); }
-
-#define SCF { F = (F & (FZ)) | FC; }
-
-#define CCF { F = (F & (FZ|FC)) ^ FC; }
-
-#define DAA { \
-A += (LB(acc) = Tables.daa[((((int)F)&0x70)<<4) | A]); \
-F = (F & (FN)) | ZFLAG(A) | Tables.daa_carry[LB(acc)>>2]; }
-
-#define SWAP(r) { \
-(r) = Tables.swap[(r)]; \
-F = ZFLAG((r)); }
-
-#define BIT(n,r) { F = (F & FC) | ZFLAG(((r) & (1 << (n)))) | FH; }
-#define RES(n,r) { (r) &= ~(1 << (n)); }
-#define SET(n,r) { (r) |= (1 << (n)); }
-
-#define CB_REG_CASES(r, n) \
-case 0x00|(n): RLC(r); break; \
-case 0x08|(n): RRC(r); break; \
-case 0x10|(n): RL(r); break; \
-case 0x18|(n): RR(r); break; \
-case 0x20|(n): SLA(r); break; \
-case 0x28|(n): SRA(r); break; \
-case 0x30|(n): SWAP(r); break; \
-case 0x38|(n): SRL(r); break; \
-case 0x40|(n): BIT(0, r); break; \
-case 0x48|(n): BIT(1, r); break; \
-case 0x50|(n): BIT(2, r); break; \
-case 0x58|(n): BIT(3, r); break; \
-case 0x60|(n): BIT(4, r); break; \
-case 0x68|(n): BIT(5, r); break; \
-case 0x70|(n): BIT(6, r); break; \
-case 0x78|(n): BIT(7, r); break; \
-case 0x80|(n): RES(0, r); break; \
-case 0x88|(n): RES(1, r); break; \
-case 0x90|(n): RES(2, r); break; \
-case 0x98|(n): RES(3, r); break; \
-case 0xA0|(n): RES(4, r); break; \
-case 0xA8|(n): RES(5, r); break; \
-case 0xB0|(n): RES(6, r); break; \
-case 0xB8|(n): RES(7, r); break; \
-case 0xC0|(n): SET(0, r); break; \
-case 0xC8|(n): SET(1, r); break; \
-case 0xD0|(n): SET(2, r); break; \
-case 0xD8|(n): SET(3, r); break; \
-case 0xE0|(n): SET(4, r); break; \
-case 0xE8|(n): SET(5, r); break; \
-case 0xF0|(n): SET(6, r); break; \
-case 0xF8|(n): SET(7, r); break;
 
 #define CHECK_INTS \
 	(IME && ((IOP[0x0f]&IE)!=0))

@@ -236,6 +236,13 @@ public class CPU
      case 0xff4f:
       b = VC.getcurVRAMBank();
       break;
+     case 0xff51:
+     case 0xff52:
+     case 0xff53:
+     case 0xff54:
+     case 0xff55:
+      b = IOP[index-0xff00];
+      break;
      case 0xff68:
       b = VC.BGPI;
       break;
@@ -401,8 +408,22 @@ public class CPU
      case 0xff52:
      case 0xff53:
      case 0xff54:
+      IOP[index-0xff00] = value;
+      break;
      case 0xff55:
-      System.out.println("TODO: CPU.write(): HDMA request for CGB mode (VRAM)");
+      int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
+      int dst = (((IOP[0x53]<<8)|IOP[0x54]) & 0x1ff0) | 0x8000;
+      int len = ((value & 0x7f)+1)<<4;
+      int mode = value >> 7;
+      if (mode == 0) {
+
+
+       for (int i = 0; i < len; ++i)
+        VC.write(dst++, read(src++));
+       IOP[0x55] = 0xff;
+      } else {
+       System.out.printf("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
+      }
       break;
      case 0xff68:
       VC.BGPI = value;;
@@ -558,7 +579,7 @@ public class CPU
 
    }
    if (halted) return 4;
-   int op = ((read(PC++)));
+   int op = (read(PC++));
    cycles = Tables.cycles[op];
 
 
@@ -566,41 +587,41 @@ public class CPU
     case 0x00: return cycles;
     case 0xf3: IME=false; return cycles;
     case 0xfb: IME=true; return cycles;
-    case 0xea: write((((read(PC++)))|(((read(PC++)))<<8)), A); return cycles;
-    case 0xfa: A = (read((((read(PC++)))|(((read(PC++)))<<8)))); return cycles;
-    case 0xe0: write((((read(PC++)))) | 0xff00, A); return cycles;
-    case 0xf0: A = (read((((read(PC++)))) | 0xff00)); return cycles;
+    case 0xea: write(((read(PC++))|((read(PC++))<<8)), A); return cycles;
+    case 0xfa: A = read(((read(PC++))|((read(PC++))<<8))); return cycles;
+    case 0xe0: write(((read(PC++))) | 0xff00, A); return cycles;
+    case 0xf0: A = (read_slow(((read(PC++))) | 0xff00)); return cycles;
     case 0xe2: write(C | 0xff00, A); return cycles;
-    case 0xf2: A = (read(C | 0xff00)); return cycles;
+    case 0xf2: A = (read_slow(C | 0xff00)); return cycles;
     case 0xf9: SP = ((H<<8)|L); return cycles;
     case 0x22: write(((H<<8)|L), A); { { H = (t_w16=(((H<<8)|L) + 1) & 0xffff) >> 8; L = t_w16 & 0xFF; }; }; return cycles;
-    case 0x2a: A = (read(((H<<8)|L))); { { H = (t_w16=(((H<<8)|L) + 1) & 0xffff) >> 8; L = t_w16 & 0xFF; }; }; return cycles;
+    case 0x2a: A = read(((H<<8)|L)); { { H = (t_w16=(((H<<8)|L) + 1) & 0xffff) >> 8; L = t_w16 & 0xFF; }; }; return cycles;
     case 0x32: write(((H<<8)|L), A); { { H = (t_w16=(((H<<8)|L) - 1) & 0xffff) >> 8; L = t_w16 & 0xFF; }; }; return cycles;
-    case 0x3a: A = (read(((H<<8)|L))); { { H = (t_w16=(((H<<8)|L) - 1) & 0xffff) >> 8; L = t_w16 & 0xFF; }; }; return cycles;
-    case 0xc3: { PC = (((read(PC++)))|(((read(PC++)))<<8)); }; return cycles;
-    case 0xc2: { if ((F&ZF_Mask)==0) { PC = (((read(PC++)))|(((read(PC++)))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
-    case 0xca: { if ((F&ZF_Mask)!=0) { PC = (((read(PC++)))|(((read(PC++)))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
-    case 0xd2: { if ((F&CF_Mask)==0) { PC = (((read(PC++)))|(((read(PC++)))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
-    case 0xda: { if ((F&CF_Mask)!=0) { PC = (((read(PC++)))|(((read(PC++)))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
-    case 0xcd: { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = (((read(PC++)))|(((read(PC++)))<<8)); }; }; return cycles;
-    case 0xc4: { if ((F&ZF_Mask)==0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = (((read(PC++)))|(((read(PC++)))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
-    case 0xcc: { if ((F&ZF_Mask)!=0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = (((read(PC++)))|(((read(PC++)))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
-    case 0xd4: { if ((F&CF_Mask)==0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = (((read(PC++)))|(((read(PC++)))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
-    case 0xdc: { if ((F&CF_Mask)!=0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = (((read(PC++)))|(((read(PC++)))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
-    case 0x18: { PC += 1+(((read(PC)))^0x80)-0x80; }; return cycles;
-    case 0x20: { if ((F&ZF_Mask)==0) { PC += 1+(((read(PC)))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
-    case 0x28: { if ((F&ZF_Mask)!=0) { PC += 1+(((read(PC)))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
-    case 0x30: { if ((F&CF_Mask)==0) { PC += 1+(((read(PC)))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
-    case 0x38: { if ((F&CF_Mask)!=0) { PC += 1+(((read(PC)))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
-    case 0xc9: { PC = ((read(SP++))|((read(SP++))<<8)); }; return cycles;
-    case 0xc0: { if ((F&ZF_Mask)==0) { PC = ((read(SP++))|((read(SP++))<<8)); } else { cycles-=3; }; };; return cycles;
-    case 0xc8: { if ((F&ZF_Mask)!=0) { PC = ((read(SP++))|((read(SP++))<<8)); } else { cycles-=3; }; };; return cycles;
-    case 0xd0: { if ((F&CF_Mask)==0) { PC = ((read(SP++))|((read(SP++))<<8)); } else { cycles-=3; }; };; return cycles;
-    case 0xd8: { if ((F&CF_Mask)!=0) { PC = ((read(SP++))|((read(SP++))<<8)); } else { cycles-=3; }; };; return cycles;
+    case 0x3a: A = read(((H<<8)|L)); { { H = (t_w16=(((H<<8)|L) - 1) & 0xffff) >> 8; L = t_w16 & 0xFF; }; }; return cycles;
+    case 0xc3: { PC = ((read(PC++))|((read(PC++))<<8)); }; return cycles;
+    case 0xc2: { if ((F&ZF_Mask)==0) { PC = ((read(PC++))|((read(PC++))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
+    case 0xca: { if ((F&ZF_Mask)!=0) { PC = ((read(PC++))|((read(PC++))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
+    case 0xd2: { if ((F&CF_Mask)==0) { PC = ((read(PC++))|((read(PC++))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
+    case 0xda: { if ((F&CF_Mask)!=0) { PC = ((read(PC++))|((read(PC++))<<8)); } else { --cycles; PC+=2; }; };; return cycles;
+    case 0xcd: { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = ((read(PC++))|((read(PC++))<<8)); }; }; return cycles;
+    case 0xc4: { if ((F&ZF_Mask)==0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = ((read(PC++))|((read(PC++))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
+    case 0xcc: { if ((F&ZF_Mask)!=0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = ((read(PC++))|((read(PC++))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
+    case 0xd4: { if ((F&CF_Mask)==0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = ((read(PC++))|((read(PC++))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
+    case 0xdc: { if ((F&CF_Mask)!=0) { { SP=(SP-1)&0xffff; write(SP, (PC+2)>>8); SP=(SP-1)&0xffff; write(SP, (PC+2)&0xff); }; { PC = ((read(PC++))|((read(PC++))<<8)); }; } else { cycles-=3; PC+=2; }; };; return cycles;
+    case 0x18: { PC += 1+((read(PC))^0x80)-0x80; }; return cycles;
+    case 0x20: { if ((F&ZF_Mask)==0) { PC += 1+((read(PC))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
+    case 0x28: { if ((F&ZF_Mask)!=0) { PC += 1+((read(PC))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
+    case 0x30: { if ((F&CF_Mask)==0) { PC += 1+((read(PC))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
+    case 0x38: { if ((F&CF_Mask)!=0) { PC += 1+((read(PC))^0x80)-0x80; } else { --cycles; ++PC; }; };; return cycles;
+    case 0xc9: { PC = (read(SP++)|(read(SP++)<<8)); }; return cycles;
+    case 0xc0: { if ((F&ZF_Mask)==0) { PC = (read(SP++)|(read(SP++)<<8)); } else { cycles-=3; }; };; return cycles;
+    case 0xc8: { if ((F&ZF_Mask)!=0) { PC = (read(SP++)|(read(SP++)<<8)); } else { cycles-=3; }; };; return cycles;
+    case 0xd0: { if ((F&CF_Mask)==0) { PC = (read(SP++)|(read(SP++)<<8)); } else { cycles-=3; }; };; return cycles;
+    case 0xd8: { if ((F&CF_Mask)!=0) { PC = (read(SP++)|(read(SP++)<<8)); } else { cycles-=3; }; };; return cycles;
     case 0x02: write(((B<<8)|C), A); return cycles;
-    case 0x0A: A = (read(((B<<8)|C))); return cycles;
+    case 0x0A: A = read(((B<<8)|C)); return cycles;
     case 0x12: write(((D<<8)|E), A); return cycles;
-    case 0x1A: A = (read(((D<<8)|E))); return cycles;
+    case 0x1A: A = read(((D<<8)|E)); return cycles;
     case 0x70: write(((H<<8)|L), B); return cycles;
     case 0x71: write(((H<<8)|L), C); return cycles;
     case 0x72: write(((H<<8)|L), D); return cycles;
@@ -609,11 +630,11 @@ public class CPU
     case 0x75: write(((H<<8)|L), L); return cycles;
     case 0x77: write(((H<<8)|L), A); return cycles;
     case 0x76: halted = true; return cycles;
-    case 0xd9: IME = true; { PC = ((read(SP++))|((read(SP++))<<8)); }; return cycles;
-    case 0xc1: { B = (t_w16=((read(SP++))|((read(SP++))<<8))) >> 8; C = t_w16 & 0xFF; }; return cycles;
-    case 0xd1: { D = (t_w16=((read(SP++))|((read(SP++))<<8))) >> 8; E = t_w16 & 0xFF; }; return cycles;
-    case 0xe1: { H = (t_w16=((read(SP++))|((read(SP++))<<8))) >> 8; L = t_w16 & 0xFF; }; return cycles;
-    case 0xf1: { A = (t_w16=((read(SP++))|((read(SP++))<<8))) >> 8; F = t_w16 & 0xFF; }; return cycles;
+    case 0xd9: IME = true; { PC = (read(SP++)|(read(SP++)<<8)); }; return cycles;
+    case 0xc1: { B = (t_w16=(read(SP++)|(read(SP++)<<8))) >> 8; C = t_w16 & 0xFF; }; return cycles;
+    case 0xd1: { D = (t_w16=(read(SP++)|(read(SP++)<<8))) >> 8; E = t_w16 & 0xFF; }; return cycles;
+    case 0xe1: { H = (t_w16=(read(SP++)|(read(SP++)<<8))) >> 8; L = t_w16 & 0xFF; }; return cycles;
+    case 0xf1: { A = (t_w16=(read(SP++)|(read(SP++)<<8))) >> 8; F = t_w16 & 0xFF; }; return cycles;
     case 0xc5: { SP=(SP-1)&0xffff; write(SP, (t_w16=((B<<8)|C))>>8); SP=(SP-1)&0xffff; write(SP, (t_w16)&0xff); }; return cycles;
     case 0xd5: { SP=(SP-1)&0xffff; write(SP, (t_w16=((D<<8)|E))>>8); SP=(SP-1)&0xffff; write(SP, (t_w16)&0xff); }; return cycles;
     case 0xe5: { SP=(SP-1)&0xffff; write(SP, (t_w16=((H<<8)|L))>>8); SP=(SP-1)&0xffff; write(SP, (t_w16)&0xff); }; return cycles;
@@ -624,7 +645,7 @@ public class CPU
     case 0x39: { F &= ZF_Mask; L += (SP&0xff); H += (SP>>8); if (L > 0xff) { L &= 0xff; ++H; F |= HC_Mask; } if (H > 0xff) { H &= 0xff; F |= CF_Mask; } }; return cycles;
     case 0xe9: PC = ((H<<8)|L); return cycles;
     case 0x2f: A ^= 0xFF; F |= (NF_Mask|HC_Mask); return cycles;
-    case 0x36: write(((H<<8)|L), (((read(PC++))))); return cycles;
+    case 0x36: write(((H<<8)|L), ((read(PC++)))); return cycles;
     case 0x07: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (A) = ShTables. RLC_val[t_acc]; }; F &= CF_Mask; return cycles;
     case 0x17: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (A) = ShTables. RL_val[t_acc]; }; F &= CF_Mask; return cycles;
     case 0x0f: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; (A) = ShTables. RRC_val[t_acc]; }; F &= CF_Mask; return cycles;
@@ -640,13 +661,13 @@ public class CPU
     case 0x37: F &= ZF_Mask; F |= CF_Mask; return cycles;
     case 0x3f: F &= (ZF_Mask|CF_Mask); F ^= CF_Mask; return cycles;
     case 0x08: {
-     t_acc = (((read(PC++)))|(((read(PC++)))<<8));
+     t_acc = ((read(PC++))|((read(PC++))<<8));
      write(t_acc, SP>>8);
      write((t_acc+1)&0xffff, SP&0xff);
     }; return cycles;
     case 0xf8:{
      { H = SP >> 8; L = SP & 0xFF; };
-     L += ((((((read(PC++)))))^0x80)-0x80);
+     L += (((((read(PC++))))^0x80)-0x80);
      F = 0;
      if (L > 0xff) {
       L &= 0xff;
@@ -675,7 +696,7 @@ public class CPU
     };return cycles;
     case 0xe8:{
      t_acc = SP;
-     SP += ((((((read(PC++)))))^0x80)-0x80);
+     SP += (((((read(PC++))))^0x80)-0x80);
      F = ((SP >> 8) != (t_acc >> 8)) ? HC_Mask : 0;
      if ((SP & ~0xffff) != 0) {
       SP &= 0xffff;
@@ -687,94 +708,94 @@ public class CPU
      doublespeed = !doublespeed;
      speedswitch = false;
     }; return cycles;
-    case (0xfe) : { t_vol = (((read(PC++)))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (t_vol); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
-	case (0xb8) : { F = NF_Mask | (((( A &0x0f )-((B)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (B); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xb8)+1: { F = NF_Mask | (((( A &0x0f )-((C)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (C); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xb8)+2: { F = NF_Mask | (((( A &0x0f )-((D)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (D); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xb8)+3: { F = NF_Mask | (((( A &0x0f )-((E)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (E); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xb8)+4: { F = NF_Mask | (((( A &0x0f )-((H)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (H); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xb8)+5: { F = NF_Mask | (((( A &0x0f )-((L)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (L); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xb8)+6: { t_vol = ((read(((H<<8)|L)))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (t_vol); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
-	case (0xb8)+7: { F = NF_Mask | (((( A &0x0f )-((A)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (A); F |= ( (t_acc)<0 ) ? CF_Mask : 0; (t_acc) &= 0xff; F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
-    case (0xe6) : { A &= (((read(PC++)))); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
+    case (0xfe) : { t_vol = ((read(PC++))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (t_vol); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0xb8) : { F = NF_Mask | (((( A &0x0f )-((B)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (B); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xb8)+1: { F = NF_Mask | (((( A &0x0f )-((C)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (C); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xb8)+2: { F = NF_Mask | (((( A &0x0f )-((D)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (D); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xb8)+3: { F = NF_Mask | (((( A &0x0f )-((E)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (E); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xb8)+4: { F = NF_Mask | (((( A &0x0f )-((H)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (H); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xb8)+5: { F = NF_Mask | (((( A &0x0f )-((L)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (L); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xb8)+6: { t_vol = (read(((H<<8)|L))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (t_vol); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0xb8)+7: { F = NF_Mask | (((( A &0x0f )-((A)&0x0f ) )<0 ) ? HC_Mask : 0); (t_acc) = A - (A); if ( (t_acc)<0 ) { F |= CF_Mask; (t_acc) &= 0xff; } F |= ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
+    case (0xe6) : { A &= ((read(PC++))); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa0) : { A &= (B); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa0)+1: { A &= (C); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa0)+2: { A &= (D); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa0)+3: { A &= (E); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa0)+4: { A &= (H); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa0)+5: { A &= (L); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xa0)+6: { A &= ((read(((H<<8)|L)))); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xa0)+6: { A &= (read(((H<<8)|L))); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa0)+7: { A &= (A); F = HC_Mask | ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
-    case (0xee) : { A ^= (((read(PC++)))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
+    case (0xee) : { A ^= ((read(PC++))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa8) : { A ^= (B); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa8)+1: { A ^= (C); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa8)+2: { A ^= (D); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa8)+3: { A ^= (E); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa8)+4: { A ^= (H); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa8)+5: { A ^= (L); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xa8)+6: { A ^= ((read(((H<<8)|L)))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xa8)+6: { A ^= (read(((H<<8)|L))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xa8)+7: { A ^= (A); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
-    case (0xf6) : { A |= (((read(PC++)))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
+    case (0xf6) : { A |= ((read(PC++))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xb0) : { A |= (B); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xb0)+1: { A |= (C); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xb0)+2: { A |= (D); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xb0)+3: { A |= (E); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xb0)+4: { A |= (H); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xb0)+5: { A |= (L); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0xb0)+6: { A |= ((read(((H<<8)|L)))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
+	case (0xb0)+6: { A |= (read(((H<<8)|L))); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0xb0)+7: { A |= (A); F = ( (A) != 0 ? 0 : ZF_Mask ); }; return cycles;
-    case (0xC6) : { t_vol = (((read(PC++)))); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x80) : { F = (((( A &0x0f )+((B)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (B); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x80)+1: { F = (((( A &0x0f )+((C)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (C); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x80)+2: { F = (((( A &0x0f )+((D)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (D); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x80)+3: { F = (((( A &0x0f )+((E)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (E); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x80)+4: { F = (((( A &0x0f )+((H)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (H); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x80)+5: { F = (((( A &0x0f )+((L)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (L); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x80)+6: { t_vol = ((read(((H<<8)|L)))); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x80)+7: { F = (((( A &0x0f )+((A)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (A); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-    case (0xCE) : { t_vol = (((read(PC++))))+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88) : { t_vol = (B)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88)+1: { t_vol = (C)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88)+2: { t_vol = (D)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88)+3: { t_vol = (E)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88)+4: { t_vol = (H)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88)+5: { t_vol = (L)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88)+6: { t_vol = ((read(((H<<8)|L))))+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x88)+7: { t_vol = (A)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); F |= ( (A)>0xff ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-    case (0xD6) : { t_vol = (((read(PC++)))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x90) : { F = NF_Mask | (((( A &0x0f )-((B)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (B); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x90)+1: { F = NF_Mask | (((( A &0x0f )-((C)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (C); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x90)+2: { F = NF_Mask | (((( A &0x0f )-((D)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (D); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x90)+3: { F = NF_Mask | (((( A &0x0f )-((E)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (E); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x90)+4: { F = NF_Mask | (((( A &0x0f )-((H)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (H); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x90)+5: { F = NF_Mask | (((( A &0x0f )-((L)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (L); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-	case (0x90)+6: { t_vol = ((read(((H<<8)|L)))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x90)+7: { F = NF_Mask | (((( A &0x0f )-((A)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (A); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
-    case (0xDE) : { t_vol = (((read(PC++))))+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98) : { t_vol = (B)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98)+1: { t_vol = (C)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98)+2: { t_vol = (D)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98)+3: { t_vol = (E)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98)+4: { t_vol = (H)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98)+5: { t_vol = (L)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98)+6: { t_vol = ((read(((H<<8)|L))))+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
-	case (0x98)+7: { t_vol = (A)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); F |= ( (A)<0 ) ? CF_Mask : 0; (A) &= 0xff; F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+    case (0xC6) : { t_vol = ((read(PC++))); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x80) : { F = (((( A &0x0f )+((B)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (B); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x80)+1: { F = (((( A &0x0f )+((C)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (C); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x80)+2: { F = (((( A &0x0f )+((D)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (D); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x80)+3: { F = (((( A &0x0f )+((E)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (E); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x80)+4: { F = (((( A &0x0f )+((H)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (H); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x80)+5: { F = (((( A &0x0f )+((L)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (L); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x80)+6: { t_vol = (read(((H<<8)|L))); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x80)+7: { F = (((( A &0x0f )+((A)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (A); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+    case (0xCE) : { t_vol = ((read(PC++)))+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88) : { t_vol = (B)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88)+1: { t_vol = (C)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88)+2: { t_vol = (D)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88)+3: { t_vol = (E)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88)+4: { t_vol = (H)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88)+5: { t_vol = (L)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88)+6: { t_vol = (read(((H<<8)|L)))+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x88)+7: { t_vol = (A)+((F>>CF_Shift)&1); { F = (((( A &0x0f )+((t_vol)&0x0f ) )>0xf ) ? HC_Mask : 0); (A) = A + (t_vol); if ( (A)>0xff ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+    case (0xD6) : { t_vol = ((read(PC++))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x90) : { F = NF_Mask | (((( A &0x0f )-((B)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (B); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x90)+1: { F = NF_Mask | (((( A &0x0f )-((C)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (C); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x90)+2: { F = NF_Mask | (((( A &0x0f )-((D)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (D); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x90)+3: { F = NF_Mask | (((( A &0x0f )-((E)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (E); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x90)+4: { F = NF_Mask | (((( A &0x0f )-((H)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (H); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x90)+5: { F = NF_Mask | (((( A &0x0f )-((L)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (L); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+	case (0x90)+6: { t_vol = (read(((H<<8)|L))); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x90)+7: { F = NF_Mask | (((( A &0x0f )-((A)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (A); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; return cycles;
+    case (0xDE) : { t_vol = ((read(PC++)))+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98) : { t_vol = (B)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98)+1: { t_vol = (C)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98)+2: { t_vol = (D)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98)+3: { t_vol = (E)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98)+4: { t_vol = (H)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98)+5: { t_vol = (L)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98)+6: { t_vol = (read(((H<<8)|L)))+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
+	case (0x98)+7: { t_vol = (A)+((F>>CF_Shift)&1); { F = NF_Mask | (((( A &0x0f )-((t_vol)&0x0f ) )<0 ) ? HC_Mask : 0); (A) = A - (t_vol); if ( (A)<0 ) { F |= CF_Mask; (A) &= 0xff; } F |= ( (A) != 0 ? 0 : ZF_Mask ); };; }; return cycles;
     case (0x04+(0<<3)): { (B) = (((B)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(B)]; }; return cycles;
-	case (0x05+(0<<3)): { --(B); (B) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(B)]; }; return cycles;
+	case (0x05+(0<<3)): { (B) = (((B)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(B)]; }; return cycles;
 	case (0x04+(1<<3)): { (C) = (((C)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(C)]; }; return cycles;
-	case (0x05+(1<<3)): { --(C); (C) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(C)]; }; return cycles;
+	case (0x05+(1<<3)): { (C) = (((C)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(C)]; }; return cycles;
 	case (0x04+(2<<3)): { (D) = (((D)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(D)]; }; return cycles;
-	case (0x05+(2<<3)): { --(D); (D) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(D)]; }; return cycles;
+	case (0x05+(2<<3)): { (D) = (((D)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(D)]; }; return cycles;
 	case (0x04+(3<<3)): { (E) = (((E)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(E)]; }; return cycles;
-	case (0x05+(3<<3)): { --(E); (E) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(E)]; }; return cycles;
+	case (0x05+(3<<3)): { (E) = (((E)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(E)]; }; return cycles;
 	case (0x04+(4<<3)): { (H) = (((H)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(H)]; }; return cycles;
-	case (0x05+(4<<3)): { --(H); (H) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(H)]; }; return cycles;
+	case (0x05+(4<<3)): { (H) = (((H)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(H)]; }; return cycles;
 	case (0x04+(5<<3)): { (L) = (((L)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(L)]; }; return cycles;
-	case (0x05+(5<<3)): { --(L); (L) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(L)]; }; return cycles;
+	case (0x05+(5<<3)): { (L) = (((L)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(L)]; }; return cycles;
 	case (0x04+(7<<3)): { (A) = (((A)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(A)]; }; return cycles;
-	case (0x05+(7<<3)): { --(A); (A) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(A)]; }; return cycles;
-	case 0x34: { t_acc = (read(((H<<8)|L))); { (t_acc) = (((t_acc)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(t_acc)]; }; write(((H<<8)|L), t_acc); }; return cycles;
-	case 0x35: { t_acc = (read(((H<<8)|L))); { --(t_acc); (t_acc) &= 0xff; F &= CF_Mask; F |= Tables.decflag[(t_acc)]; }; write(((H<<8)|L), t_acc); }; return cycles;
+	case (0x05+(7<<3)): { (A) = (((A)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(A)]; }; return cycles;
+	case 0x34: { t_acc = read(((H<<8)|L)); { (t_acc) = (((t_acc)+1)&0xff); F &= CF_Mask; F |= Tables.incflag[(t_acc)]; }; write(((H<<8)|L), t_acc); }; return cycles;
+	case 0x35: { t_acc = read(((H<<8)|L)); { (t_acc) = (((t_acc)-1)&0xff); F &= CF_Mask; F |= Tables.decflag[(t_acc)]; }; write(((H<<8)|L), t_acc); }; return cycles;
     case (0x03+(0<<4)): { { B = (t_w16=(((B<<8)|C) + 1) & 0xffff) >> 8; C = t_w16 & 0xFF; }; }; return cycles;
 	case (0x0b+(0<<4)): { { B = (t_w16=(((B<<8)|C) - 1) & 0xffff) >> 8; C = t_w16 & 0xFF; }; }; return cycles;
 	case (0x03+(1<<4)): { { D = (t_w16=(((D<<8)|E) + 1) & 0xffff) >> 8; E = t_w16 & 0xFF; }; }; return cycles;
@@ -790,8 +811,8 @@ public class CPU
 	case (0x40+(0<<3)+(4)): { B = H; }; return cycles;
 	case (0x40+(0<<3)+(5)): { B = L; }; return cycles;
 	case (0x40+(0<<3)+(7)): { B = A; }; return cycles;
-	case (0x06+(0<<3)): { B = (((read(PC++)))); }; return cycles;
-	case (0x46+(0<<3)): (B) = (read(((H<<8)|L))); return cycles;
+	case (0x06+(0<<3)): { B = ((read(PC++))); }; return cycles;
+	case (0x46+(0<<3)): (B) = read(((H<<8)|L)); return cycles;
 	case (0x40+(1<<3)+(0)): { C = B; }; return cycles;
 	case (0x40+(1<<3)+(1)): { C = C; }; return cycles;
 	case (0x40+(1<<3)+(2)): { C = D; }; return cycles;
@@ -799,8 +820,8 @@ public class CPU
 	case (0x40+(1<<3)+(4)): { C = H; }; return cycles;
 	case (0x40+(1<<3)+(5)): { C = L; }; return cycles;
 	case (0x40+(1<<3)+(7)): { C = A; }; return cycles;
-	case (0x06+(1<<3)): { C = (((read(PC++)))); }; return cycles;
-	case (0x46+(1<<3)): (C) = (read(((H<<8)|L))); return cycles;
+	case (0x06+(1<<3)): { C = ((read(PC++))); }; return cycles;
+	case (0x46+(1<<3)): (C) = read(((H<<8)|L)); return cycles;
 	case (0x40+(2<<3)+(0)): { D = B; }; return cycles;
 	case (0x40+(2<<3)+(1)): { D = C; }; return cycles;
 	case (0x40+(2<<3)+(2)): { D = D; }; return cycles;
@@ -808,8 +829,8 @@ public class CPU
 	case (0x40+(2<<3)+(4)): { D = H; }; return cycles;
 	case (0x40+(2<<3)+(5)): { D = L; }; return cycles;
 	case (0x40+(2<<3)+(7)): { D = A; }; return cycles;
-	case (0x06+(2<<3)): { D = (((read(PC++)))); }; return cycles;
-	case (0x46+(2<<3)): (D) = (read(((H<<8)|L))); return cycles;
+	case (0x06+(2<<3)): { D = ((read(PC++))); }; return cycles;
+	case (0x46+(2<<3)): (D) = read(((H<<8)|L)); return cycles;
 	case (0x40+(3<<3)+(0)): { E = B; }; return cycles;
 	case (0x40+(3<<3)+(1)): { E = C; }; return cycles;
 	case (0x40+(3<<3)+(2)): { E = D; }; return cycles;
@@ -817,8 +838,8 @@ public class CPU
 	case (0x40+(3<<3)+(4)): { E = H; }; return cycles;
 	case (0x40+(3<<3)+(5)): { E = L; }; return cycles;
 	case (0x40+(3<<3)+(7)): { E = A; }; return cycles;
-	case (0x06+(3<<3)): { E = (((read(PC++)))); }; return cycles;
-	case (0x46+(3<<3)): (E) = (read(((H<<8)|L))); return cycles;
+	case (0x06+(3<<3)): { E = ((read(PC++))); }; return cycles;
+	case (0x46+(3<<3)): (E) = read(((H<<8)|L)); return cycles;
 	case (0x40+(4<<3)+(0)): { H = B; }; return cycles;
 	case (0x40+(4<<3)+(1)): { H = C; }; return cycles;
 	case (0x40+(4<<3)+(2)): { H = D; }; return cycles;
@@ -826,8 +847,8 @@ public class CPU
 	case (0x40+(4<<3)+(4)): { H = H; }; return cycles;
 	case (0x40+(4<<3)+(5)): { H = L; }; return cycles;
 	case (0x40+(4<<3)+(7)): { H = A; }; return cycles;
-	case (0x06+(4<<3)): { H = (((read(PC++)))); }; return cycles;
-	case (0x46+(4<<3)): (H) = (read(((H<<8)|L))); return cycles;
+	case (0x06+(4<<3)): { H = ((read(PC++))); }; return cycles;
+	case (0x46+(4<<3)): (H) = read(((H<<8)|L)); return cycles;
 	case (0x40+(5<<3)+(0)): { L = B; }; return cycles;
 	case (0x40+(5<<3)+(1)): { L = C; }; return cycles;
 	case (0x40+(5<<3)+(2)): { L = D; }; return cycles;
@@ -835,8 +856,8 @@ public class CPU
 	case (0x40+(5<<3)+(4)): { L = H; }; return cycles;
 	case (0x40+(5<<3)+(5)): { L = L; }; return cycles;
 	case (0x40+(5<<3)+(7)): { L = A; }; return cycles;
-	case (0x06+(5<<3)): { L = (((read(PC++)))); }; return cycles;
-	case (0x46+(5<<3)): (L) = (read(((H<<8)|L))); return cycles;
+	case (0x06+(5<<3)): { L = ((read(PC++))); }; return cycles;
+	case (0x46+(5<<3)): (L) = read(((H<<8)|L)); return cycles;
 	case (0x40+(7<<3)+(0)): { A = B; }; return cycles;
 	case (0x40+(7<<3)+(1)): { A = C; }; return cycles;
 	case (0x40+(7<<3)+(2)): { A = D; }; return cycles;
@@ -844,14 +865,14 @@ public class CPU
 	case (0x40+(7<<3)+(4)): { A = H; }; return cycles;
 	case (0x40+(7<<3)+(5)): { A = L; }; return cycles;
 	case (0x40+(7<<3)+(7)): { A = A; }; return cycles;
-	case (0x06+(7<<3)): { A = (((read(PC++)))); }; return cycles;
-	case (0x46+(7<<3)): (A) = (read(((H<<8)|L))); return cycles;
-	case (0x01+(0<<4)): { C = (((read(PC++)))); B = (((read(PC++)))); } ; return cycles;
-	case (0x01+(1<<4)): { E = (((read(PC++)))); D = (((read(PC++)))); } ; return cycles;
-	case (0x01+(2<<4)): { L = (((read(PC++)))); H = (((read(PC++)))); } ; return cycles;
-	case (0x01+(3<<4)): { SP = (((read(PC++)))|(((read(PC++)))<<8)); } ; return cycles;
+	case (0x06+(7<<3)): { A = ((read(PC++))); }; return cycles;
+	case (0x46+(7<<3)): (A) = read(((H<<8)|L)); return cycles;
+	case (0x01+(0<<4)): { C = ((read(PC++))); B = ((read(PC++))); } ; return cycles;
+	case (0x01+(1<<4)): { E = ((read(PC++))); D = ((read(PC++))); } ; return cycles;
+	case (0x01+(2<<4)): { L = ((read(PC++))); H = ((read(PC++))); } ; return cycles;
+	case (0x01+(3<<4)): { SP = ((read(PC++))|((read(PC++))<<8)); } ; return cycles;
     case 0xcb:
-     op = ((read(PC++)));
+     op = (read(PC++));
      cycles = Tables.cb_cycles[op];
      switch ( op ) {
       case (0x40)+(0<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 0)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -861,7 +882,7 @@ public class CPU
 	case (0x40)+(0<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 0)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(0<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 0)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(0<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 0)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(0<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 0)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(0<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 0)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
 	case (0x40)+(1<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(1<<3)+1: { F = (F & CF_Mask) | HC_Mask | ( ((C) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(1<<3)+2: { F = (F & CF_Mask) | HC_Mask | ( ((D) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -869,7 +890,7 @@ public class CPU
 	case (0x40)+(1<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(1<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(1<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(1<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(1<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 1)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
 	case (0x40)+(2<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(2<<3)+1: { F = (F & CF_Mask) | HC_Mask | ( ((C) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(2<<3)+2: { F = (F & CF_Mask) | HC_Mask | ( ((D) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -877,7 +898,7 @@ public class CPU
 	case (0x40)+(2<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(2<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(2<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(2<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(2<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 2)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
 	case (0x40)+(3<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(3<<3)+1: { F = (F & CF_Mask) | HC_Mask | ( ((C) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(3<<3)+2: { F = (F & CF_Mask) | HC_Mask | ( ((D) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -885,7 +906,7 @@ public class CPU
 	case (0x40)+(3<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(3<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(3<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(3<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(3<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 3)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
 	case (0x40)+(4<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(4<<3)+1: { F = (F & CF_Mask) | HC_Mask | ( ((C) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(4<<3)+2: { F = (F & CF_Mask) | HC_Mask | ( ((D) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -893,7 +914,7 @@ public class CPU
 	case (0x40)+(4<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(4<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(4<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(4<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(4<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 4)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
 	case (0x40)+(5<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(5<<3)+1: { F = (F & CF_Mask) | HC_Mask | ( ((C) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(5<<3)+2: { F = (F & CF_Mask) | HC_Mask | ( ((D) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -901,7 +922,7 @@ public class CPU
 	case (0x40)+(5<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(5<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(5<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(5<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(5<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 5)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
 	case (0x40)+(6<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(6<<3)+1: { F = (F & CF_Mask) | HC_Mask | ( ((C) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(6<<3)+2: { F = (F & CF_Mask) | HC_Mask | ( ((D) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -909,7 +930,7 @@ public class CPU
 	case (0x40)+(6<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(6<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(6<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(6<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(6<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 6)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
 	case (0x40)+(7<<3)+0: { F = (F & CF_Mask) | HC_Mask | ( ((B) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(7<<3)+1: { F = (F & CF_Mask) | HC_Mask | ( ((C) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(7<<3)+2: { F = (F & CF_Mask) | HC_Mask | ( ((D) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; return cycles;
@@ -917,7 +938,7 @@ public class CPU
 	case (0x40)+(7<<3)+4: { F = (F & CF_Mask) | HC_Mask | ( ((H) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(7<<3)+5: { F = (F & CF_Mask) | HC_Mask | ( ((L) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; return cycles;
 	case (0x40)+(7<<3)+7: { F = (F & CF_Mask) | HC_Mask | ( ((A) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; return cycles;
-	case (0x40)+(7<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( (((read(((H<<8)|L)))) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
+	case (0x40)+(7<<3)+6: { { F = (F & CF_Mask) | HC_Mask | ( ((read(((H<<8)|L))) & (1 << 7)) != 0 ? 0 : ZF_Mask ); }; }; return cycles;
       case (0x80)+(0<<3)+0: { (B) &= ~(1 << 0); }; return cycles;
 	case (0x80)+(0<<3)+1: { (C) &= ~(1 << 0); }; return cycles;
 	case (0x80)+(0<<3)+2: { (D) &= ~(1 << 0); }; return cycles;
@@ -925,7 +946,7 @@ public class CPU
 	case (0x80)+(0<<3)+4: { (H) &= ~(1 << 0); }; return cycles;
 	case (0x80)+(0<<3)+5: { (L) &= ~(1 << 0); }; return cycles;
 	case (0x80)+(0<<3)+7: { (A) &= ~(1 << 0); }; return cycles;
-	case (0x80)+(0<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 0)); }; return cycles;
+	case (0x80)+(0<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 0)); }; return cycles;
 	case (0x80)+(1<<3)+0: { (B) &= ~(1 << 1); }; return cycles;
 	case (0x80)+(1<<3)+1: { (C) &= ~(1 << 1); }; return cycles;
 	case (0x80)+(1<<3)+2: { (D) &= ~(1 << 1); }; return cycles;
@@ -933,7 +954,7 @@ public class CPU
 	case (0x80)+(1<<3)+4: { (H) &= ~(1 << 1); }; return cycles;
 	case (0x80)+(1<<3)+5: { (L) &= ~(1 << 1); }; return cycles;
 	case (0x80)+(1<<3)+7: { (A) &= ~(1 << 1); }; return cycles;
-	case (0x80)+(1<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 1)); }; return cycles;
+	case (0x80)+(1<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 1)); }; return cycles;
 	case (0x80)+(2<<3)+0: { (B) &= ~(1 << 2); }; return cycles;
 	case (0x80)+(2<<3)+1: { (C) &= ~(1 << 2); }; return cycles;
 	case (0x80)+(2<<3)+2: { (D) &= ~(1 << 2); }; return cycles;
@@ -941,7 +962,7 @@ public class CPU
 	case (0x80)+(2<<3)+4: { (H) &= ~(1 << 2); }; return cycles;
 	case (0x80)+(2<<3)+5: { (L) &= ~(1 << 2); }; return cycles;
 	case (0x80)+(2<<3)+7: { (A) &= ~(1 << 2); }; return cycles;
-	case (0x80)+(2<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 2)); }; return cycles;
+	case (0x80)+(2<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 2)); }; return cycles;
 	case (0x80)+(3<<3)+0: { (B) &= ~(1 << 3); }; return cycles;
 	case (0x80)+(3<<3)+1: { (C) &= ~(1 << 3); }; return cycles;
 	case (0x80)+(3<<3)+2: { (D) &= ~(1 << 3); }; return cycles;
@@ -949,7 +970,7 @@ public class CPU
 	case (0x80)+(3<<3)+4: { (H) &= ~(1 << 3); }; return cycles;
 	case (0x80)+(3<<3)+5: { (L) &= ~(1 << 3); }; return cycles;
 	case (0x80)+(3<<3)+7: { (A) &= ~(1 << 3); }; return cycles;
-	case (0x80)+(3<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 3)); }; return cycles;
+	case (0x80)+(3<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 3)); }; return cycles;
 	case (0x80)+(4<<3)+0: { (B) &= ~(1 << 4); }; return cycles;
 	case (0x80)+(4<<3)+1: { (C) &= ~(1 << 4); }; return cycles;
 	case (0x80)+(4<<3)+2: { (D) &= ~(1 << 4); }; return cycles;
@@ -957,7 +978,7 @@ public class CPU
 	case (0x80)+(4<<3)+4: { (H) &= ~(1 << 4); }; return cycles;
 	case (0x80)+(4<<3)+5: { (L) &= ~(1 << 4); }; return cycles;
 	case (0x80)+(4<<3)+7: { (A) &= ~(1 << 4); }; return cycles;
-	case (0x80)+(4<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 4)); }; return cycles;
+	case (0x80)+(4<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 4)); }; return cycles;
 	case (0x80)+(5<<3)+0: { (B) &= ~(1 << 5); }; return cycles;
 	case (0x80)+(5<<3)+1: { (C) &= ~(1 << 5); }; return cycles;
 	case (0x80)+(5<<3)+2: { (D) &= ~(1 << 5); }; return cycles;
@@ -965,7 +986,7 @@ public class CPU
 	case (0x80)+(5<<3)+4: { (H) &= ~(1 << 5); }; return cycles;
 	case (0x80)+(5<<3)+5: { (L) &= ~(1 << 5); }; return cycles;
 	case (0x80)+(5<<3)+7: { (A) &= ~(1 << 5); }; return cycles;
-	case (0x80)+(5<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 5)); }; return cycles;
+	case (0x80)+(5<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 5)); }; return cycles;
 	case (0x80)+(6<<3)+0: { (B) &= ~(1 << 6); }; return cycles;
 	case (0x80)+(6<<3)+1: { (C) &= ~(1 << 6); }; return cycles;
 	case (0x80)+(6<<3)+2: { (D) &= ~(1 << 6); }; return cycles;
@@ -973,7 +994,7 @@ public class CPU
 	case (0x80)+(6<<3)+4: { (H) &= ~(1 << 6); }; return cycles;
 	case (0x80)+(6<<3)+5: { (L) &= ~(1 << 6); }; return cycles;
 	case (0x80)+(6<<3)+7: { (A) &= ~(1 << 6); }; return cycles;
-	case (0x80)+(6<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 6)); }; return cycles;
+	case (0x80)+(6<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 6)); }; return cycles;
 	case (0x80)+(7<<3)+0: { (B) &= ~(1 << 7); }; return cycles;
 	case (0x80)+(7<<3)+1: { (C) &= ~(1 << 7); }; return cycles;
 	case (0x80)+(7<<3)+2: { (D) &= ~(1 << 7); }; return cycles;
@@ -981,7 +1002,7 @@ public class CPU
 	case (0x80)+(7<<3)+4: { (H) &= ~(1 << 7); }; return cycles;
 	case (0x80)+(7<<3)+5: { (L) &= ~(1 << 7); }; return cycles;
 	case (0x80)+(7<<3)+7: { (A) &= ~(1 << 7); }; return cycles;
-	case (0x80)+(7<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) & ~(1 << 7)); }; return cycles;
+	case (0x80)+(7<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) & ~(1 << 7)); }; return cycles;
       case (0xc0)+(0<<3)+0: { (B) |= (1 << 0); }; return cycles;
 	case (0xc0)+(0<<3)+1: { (C) |= (1 << 0); }; return cycles;
 	case (0xc0)+(0<<3)+2: { (D) |= (1 << 0); }; return cycles;
@@ -989,7 +1010,7 @@ public class CPU
 	case (0xc0)+(0<<3)+4: { (H) |= (1 << 0); }; return cycles;
 	case (0xc0)+(0<<3)+5: { (L) |= (1 << 0); }; return cycles;
 	case (0xc0)+(0<<3)+7: { (A) |= (1 << 0); }; return cycles;
-	case (0xc0)+(0<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 0)); }; return cycles;
+	case (0xc0)+(0<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 0)); }; return cycles;
 	case (0xc0)+(1<<3)+0: { (B) |= (1 << 1); }; return cycles;
 	case (0xc0)+(1<<3)+1: { (C) |= (1 << 1); }; return cycles;
 	case (0xc0)+(1<<3)+2: { (D) |= (1 << 1); }; return cycles;
@@ -997,7 +1018,7 @@ public class CPU
 	case (0xc0)+(1<<3)+4: { (H) |= (1 << 1); }; return cycles;
 	case (0xc0)+(1<<3)+5: { (L) |= (1 << 1); }; return cycles;
 	case (0xc0)+(1<<3)+7: { (A) |= (1 << 1); }; return cycles;
-	case (0xc0)+(1<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 1)); }; return cycles;
+	case (0xc0)+(1<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 1)); }; return cycles;
 	case (0xc0)+(2<<3)+0: { (B) |= (1 << 2); }; return cycles;
 	case (0xc0)+(2<<3)+1: { (C) |= (1 << 2); }; return cycles;
 	case (0xc0)+(2<<3)+2: { (D) |= (1 << 2); }; return cycles;
@@ -1005,7 +1026,7 @@ public class CPU
 	case (0xc0)+(2<<3)+4: { (H) |= (1 << 2); }; return cycles;
 	case (0xc0)+(2<<3)+5: { (L) |= (1 << 2); }; return cycles;
 	case (0xc0)+(2<<3)+7: { (A) |= (1 << 2); }; return cycles;
-	case (0xc0)+(2<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 2)); }; return cycles;
+	case (0xc0)+(2<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 2)); }; return cycles;
 	case (0xc0)+(3<<3)+0: { (B) |= (1 << 3); }; return cycles;
 	case (0xc0)+(3<<3)+1: { (C) |= (1 << 3); }; return cycles;
 	case (0xc0)+(3<<3)+2: { (D) |= (1 << 3); }; return cycles;
@@ -1013,7 +1034,7 @@ public class CPU
 	case (0xc0)+(3<<3)+4: { (H) |= (1 << 3); }; return cycles;
 	case (0xc0)+(3<<3)+5: { (L) |= (1 << 3); }; return cycles;
 	case (0xc0)+(3<<3)+7: { (A) |= (1 << 3); }; return cycles;
-	case (0xc0)+(3<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 3)); }; return cycles;
+	case (0xc0)+(3<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 3)); }; return cycles;
 	case (0xc0)+(4<<3)+0: { (B) |= (1 << 4); }; return cycles;
 	case (0xc0)+(4<<3)+1: { (C) |= (1 << 4); }; return cycles;
 	case (0xc0)+(4<<3)+2: { (D) |= (1 << 4); }; return cycles;
@@ -1021,7 +1042,7 @@ public class CPU
 	case (0xc0)+(4<<3)+4: { (H) |= (1 << 4); }; return cycles;
 	case (0xc0)+(4<<3)+5: { (L) |= (1 << 4); }; return cycles;
 	case (0xc0)+(4<<3)+7: { (A) |= (1 << 4); }; return cycles;
-	case (0xc0)+(4<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 4)); }; return cycles;
+	case (0xc0)+(4<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 4)); }; return cycles;
 	case (0xc0)+(5<<3)+0: { (B) |= (1 << 5); }; return cycles;
 	case (0xc0)+(5<<3)+1: { (C) |= (1 << 5); }; return cycles;
 	case (0xc0)+(5<<3)+2: { (D) |= (1 << 5); }; return cycles;
@@ -1029,7 +1050,7 @@ public class CPU
 	case (0xc0)+(5<<3)+4: { (H) |= (1 << 5); }; return cycles;
 	case (0xc0)+(5<<3)+5: { (L) |= (1 << 5); }; return cycles;
 	case (0xc0)+(5<<3)+7: { (A) |= (1 << 5); }; return cycles;
-	case (0xc0)+(5<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 5)); }; return cycles;
+	case (0xc0)+(5<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 5)); }; return cycles;
 	case (0xc0)+(6<<3)+0: { (B) |= (1 << 6); }; return cycles;
 	case (0xc0)+(6<<3)+1: { (C) |= (1 << 6); }; return cycles;
 	case (0xc0)+(6<<3)+2: { (D) |= (1 << 6); }; return cycles;
@@ -1037,7 +1058,7 @@ public class CPU
 	case (0xc0)+(6<<3)+4: { (H) |= (1 << 6); }; return cycles;
 	case (0xc0)+(6<<3)+5: { (L) |= (1 << 6); }; return cycles;
 	case (0xc0)+(6<<3)+7: { (A) |= (1 << 6); }; return cycles;
-	case (0xc0)+(6<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 6)); }; return cycles;
+	case (0xc0)+(6<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 6)); }; return cycles;
 	case (0xc0)+(7<<3)+0: { (B) |= (1 << 7); }; return cycles;
 	case (0xc0)+(7<<3)+1: { (C) |= (1 << 7); }; return cycles;
 	case (0xc0)+(7<<3)+2: { (D) |= (1 << 7); }; return cycles;
@@ -1045,7 +1066,7 @@ public class CPU
 	case (0xc0)+(7<<3)+4: { (H) |= (1 << 7); }; return cycles;
 	case (0xc0)+(7<<3)+5: { (L) |= (1 << 7); }; return cycles;
 	case (0xc0)+(7<<3)+7: { (A) |= (1 << 7); }; return cycles;
-	case (0xc0)+(7<<3)+6: { write(((H<<8)|L), (read(((H<<8)|L))) | (1 << 7)); }; return cycles;
+	case (0xc0)+(7<<3)+6: { write(((H<<8)|L), read(((H<<8)|L)) | (1 << 7)); }; return cycles;
       case (0x00)+0: { t_acc = (B) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (B) = ShTables. RLC_val[t_acc]; }; return cycles;
 	case (0x00)+1: { t_acc = (C) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (C) = ShTables. RLC_val[t_acc]; }; return cycles;
 	case (0x00)+2: { t_acc = (D) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (D) = ShTables. RLC_val[t_acc]; }; return cycles;
@@ -1053,7 +1074,7 @@ public class CPU
 	case (0x00)+4: { t_acc = (H) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (H) = ShTables. RLC_val[t_acc]; }; return cycles;
 	case (0x00)+5: { t_acc = (L) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (L) = ShTables. RLC_val[t_acc]; }; return cycles;
 	case (0x00)+7: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; (A) = ShTables. RLC_val[t_acc]; }; return cycles;
-	case (0x00)+6: { t_acc = (read(((H<<8)|L))) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; write(((H<<8)|L), ShTables. RLC_val[t_acc]); }; return cycles;
+	case (0x00)+6: { t_acc = read(((H<<8)|L)) | ((F&CF_Mask)<<4); F = ShTables. RLC_flag[t_acc]; write(((H<<8)|L), ShTables. RLC_val[t_acc]); }; return cycles;
       case (0x08)+0: { t_acc = (B) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; (B) = ShTables. RRC_val[t_acc]; }; return cycles;
 	case (0x08)+1: { t_acc = (C) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; (C) = ShTables. RRC_val[t_acc]; }; return cycles;
 	case (0x08)+2: { t_acc = (D) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; (D) = ShTables. RRC_val[t_acc]; }; return cycles;
@@ -1061,7 +1082,7 @@ public class CPU
 	case (0x08)+4: { t_acc = (H) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; (H) = ShTables. RRC_val[t_acc]; }; return cycles;
 	case (0x08)+5: { t_acc = (L) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; (L) = ShTables. RRC_val[t_acc]; }; return cycles;
 	case (0x08)+7: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; (A) = ShTables. RRC_val[t_acc]; }; return cycles;
-	case (0x08)+6: { t_acc = (read(((H<<8)|L))) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; write(((H<<8)|L), ShTables. RRC_val[t_acc]); }; return cycles;
+	case (0x08)+6: { t_acc = read(((H<<8)|L)) | ((F&CF_Mask)<<4); F = ShTables. RRC_flag[t_acc]; write(((H<<8)|L), ShTables. RRC_val[t_acc]); }; return cycles;
       case (0x10)+0: { t_acc = (B) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (B) = ShTables. RL_val[t_acc]; }; return cycles;
 	case (0x10)+1: { t_acc = (C) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (C) = ShTables. RL_val[t_acc]; }; return cycles;
 	case (0x10)+2: { t_acc = (D) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (D) = ShTables. RL_val[t_acc]; }; return cycles;
@@ -1069,7 +1090,7 @@ public class CPU
 	case (0x10)+4: { t_acc = (H) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (H) = ShTables. RL_val[t_acc]; }; return cycles;
 	case (0x10)+5: { t_acc = (L) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (L) = ShTables. RL_val[t_acc]; }; return cycles;
 	case (0x10)+7: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; (A) = ShTables. RL_val[t_acc]; }; return cycles;
-	case (0x10)+6: { t_acc = (read(((H<<8)|L))) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; write(((H<<8)|L), ShTables. RL_val[t_acc]); }; return cycles;
+	case (0x10)+6: { t_acc = read(((H<<8)|L)) | ((F&CF_Mask)<<4); F = ShTables. RL_flag[t_acc]; write(((H<<8)|L), ShTables. RL_val[t_acc]); }; return cycles;
       case (0x18)+0: { t_acc = (B) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; (B) = ShTables. RR_val[t_acc]; }; return cycles;
 	case (0x18)+1: { t_acc = (C) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; (C) = ShTables. RR_val[t_acc]; }; return cycles;
 	case (0x18)+2: { t_acc = (D) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; (D) = ShTables. RR_val[t_acc]; }; return cycles;
@@ -1077,7 +1098,7 @@ public class CPU
 	case (0x18)+4: { t_acc = (H) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; (H) = ShTables. RR_val[t_acc]; }; return cycles;
 	case (0x18)+5: { t_acc = (L) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; (L) = ShTables. RR_val[t_acc]; }; return cycles;
 	case (0x18)+7: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; (A) = ShTables. RR_val[t_acc]; }; return cycles;
-	case (0x18)+6: { t_acc = (read(((H<<8)|L))) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; write(((H<<8)|L), ShTables. RR_val[t_acc]); }; return cycles;
+	case (0x18)+6: { t_acc = read(((H<<8)|L)) | ((F&CF_Mask)<<4); F = ShTables. RR_flag[t_acc]; write(((H<<8)|L), ShTables. RR_val[t_acc]); }; return cycles;
       case (0x20)+0: { t_acc = (B) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; (B) = ShTables. SLA_val[t_acc]; }; return cycles;
 	case (0x20)+1: { t_acc = (C) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; (C) = ShTables. SLA_val[t_acc]; }; return cycles;
 	case (0x20)+2: { t_acc = (D) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; (D) = ShTables. SLA_val[t_acc]; }; return cycles;
@@ -1085,7 +1106,7 @@ public class CPU
 	case (0x20)+4: { t_acc = (H) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; (H) = ShTables. SLA_val[t_acc]; }; return cycles;
 	case (0x20)+5: { t_acc = (L) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; (L) = ShTables. SLA_val[t_acc]; }; return cycles;
 	case (0x20)+7: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; (A) = ShTables. SLA_val[t_acc]; }; return cycles;
-	case (0x20)+6: { t_acc = (read(((H<<8)|L))) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; write(((H<<8)|L), ShTables. SLA_val[t_acc]); }; return cycles;
+	case (0x20)+6: { t_acc = read(((H<<8)|L)) | ((F&CF_Mask)<<4); F = ShTables. SLA_flag[t_acc]; write(((H<<8)|L), ShTables. SLA_val[t_acc]); }; return cycles;
       case (0x28)+0: { t_acc = (B) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; (B) = ShTables. SRA_val[t_acc]; }; return cycles;
 	case (0x28)+1: { t_acc = (C) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; (C) = ShTables. SRA_val[t_acc]; }; return cycles;
 	case (0x28)+2: { t_acc = (D) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; (D) = ShTables. SRA_val[t_acc]; }; return cycles;
@@ -1093,7 +1114,7 @@ public class CPU
 	case (0x28)+4: { t_acc = (H) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; (H) = ShTables. SRA_val[t_acc]; }; return cycles;
 	case (0x28)+5: { t_acc = (L) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; (L) = ShTables. SRA_val[t_acc]; }; return cycles;
 	case (0x28)+7: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; (A) = ShTables. SRA_val[t_acc]; }; return cycles;
-	case (0x28)+6: { t_acc = (read(((H<<8)|L))) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; write(((H<<8)|L), ShTables. SRA_val[t_acc]); }; return cycles;
+	case (0x28)+6: { t_acc = read(((H<<8)|L)) | ((F&CF_Mask)<<4); F = ShTables. SRA_flag[t_acc]; write(((H<<8)|L), ShTables. SRA_val[t_acc]); }; return cycles;
       case (0x38)+0: { t_acc = (B) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; (B) = ShTables. SRL_val[t_acc]; }; return cycles;
 	case (0x38)+1: { t_acc = (C) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; (C) = ShTables. SRL_val[t_acc]; }; return cycles;
 	case (0x38)+2: { t_acc = (D) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; (D) = ShTables. SRL_val[t_acc]; }; return cycles;
@@ -1101,7 +1122,7 @@ public class CPU
 	case (0x38)+4: { t_acc = (H) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; (H) = ShTables. SRL_val[t_acc]; }; return cycles;
 	case (0x38)+5: { t_acc = (L) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; (L) = ShTables. SRL_val[t_acc]; }; return cycles;
 	case (0x38)+7: { t_acc = (A) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; (A) = ShTables. SRL_val[t_acc]; }; return cycles;
-	case (0x38)+6: { t_acc = (read(((H<<8)|L))) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; write(((H<<8)|L), ShTables. SRL_val[t_acc]); }; return cycles;
+	case (0x38)+6: { t_acc = read(((H<<8)|L)) | ((F&CF_Mask)<<4); F = ShTables. SRL_flag[t_acc]; write(((H<<8)|L), ShTables. SRL_val[t_acc]); }; return cycles;
       case 0x30+0: B = Tables.swap[B]; F &= ZF_Mask; return cycles;
 	case 0x30+1: C = Tables.swap[C]; F &= ZF_Mask; return cycles;
 	case 0x30+2: D = Tables.swap[D]; F &= ZF_Mask; return cycles;
@@ -1109,7 +1130,7 @@ public class CPU
 	case 0x30+4: H = Tables.swap[H]; F &= ZF_Mask; return cycles;
 	case 0x30+5: L = Tables.swap[L]; F &= ZF_Mask; return cycles;
 	case 0x30+7: A = Tables.swap[A]; F &= ZF_Mask; return cycles;
-	case 0x30+6: write(((H<<8)|L), Tables.swap[(read(((H<<8)|L)))]); F &= ZF_Mask; return cycles;
+	case 0x30+6: write(((H<<8)|L), Tables.swap[read(((H<<8)|L))]); F &= ZF_Mask; return cycles;
        default:
       System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
       PC -= 2;
