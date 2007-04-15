@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
 
+#include "Global.inc"
+
 public class VideoController {
 	private static final int MIN_WIDTH  = 160;
 	private static final int MIN_HEIGHT = 144;
@@ -27,7 +29,8 @@ public class VideoController {
 	protected int LCDC=0;
 	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
 
-	protected int GRAYSHADES[][] = { {0xFF, 0xFF, 0xFF},   // WHITE
+	protected int GRAYSHADES[][] = {
+	                                 {0xFF, 0xFF, 0xFF},   // WHITE
 	                                 {0xD3, 0xD3, 0xD3},   // LIGHTGRAY
 	                                 {0xBE, 0xBE, 0xBE},   // DARKGRAY
 	                                 {0x00, 0x00, 0x00} }; // BLACK
@@ -56,7 +59,7 @@ public class VideoController {
 
 	public int scale = 2;
 	private int cfskip = 0;
-	private int fskip = 2; // 1 is off
+	private int fskip = 1; // 1 is off
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
@@ -68,6 +71,12 @@ public class VideoController {
 		lastms = perf.highResCounter();
 		
 		long x = System.nanoTime();
+		for (int i = 0; i < objColors.length; ++i)
+			objColors[i] =
+				((BufferedImage)drawImg[curDrawImg^1]).
+				getColorModel().
+				getDataElements(0, null);
+	
 	}
 
 	final public void addListener(JPanel panel)
@@ -90,14 +99,14 @@ public class VideoController {
 			// we dont reall create volatile images cause they are slow...
 			// maybe they work faster on windows... needs testing
 			/*
-			//drawImg[0]=listener.createVolatileImage(width, height);
-			//drawImg[1]=listener.createVolatileImage(width, height);
 			GraphicsEnvironment ge =GraphicsEnvironment.getLocalGraphicsEnvironment();
 			GraphicsDevice gs = ge.getDefaultScreenDevice();
 			GraphicsConfiguration gc = gs.getDefaultConfiguration();
 			drawImg[0]=gc.createCompatibleImage(width, height);
 			drawImg[1]=gc.createCompatibleImage(width, height);
 			*/
+			//drawImg[0]=listener.createVolatileImage(width, height);
+			//drawImg[1]=listener.createVolatileImage(width, height);
 			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		}
@@ -106,10 +115,6 @@ public class VideoController {
 	final public Image getImage() {
 		// return ((VolatileImage)drawImg[curDrawImg]).getScaledInstance(image_width, image_height,Image.SCALE_FAST); // display image not being drawn to
 		return drawImg[curDrawImg]; // display image not being drawn to
-	}
-
-	final private void drawPixel(int x, int y, int pal, int col) {
-		blitImg[y][x] = (pal << 2) | col;
 	}
 
 	final private void palQuadify(int[] col) {
@@ -133,17 +138,21 @@ public class VideoController {
 			getDataElements((r<<16)|(g<<8)|(b<<0), null);
 	}
 
+#define DRAWPIX(x, pal, col) { \
+		blitLine[x] = pal | col; \
+} \
+
 // blitting using WritableRaster
 #define BLIT_PIX_WR(x,y, col) \
-	wr.setPixel(x,y, intColors[col]);
+	wr.setPixel(x,y, intColors[col])
 
 #define BLIT_PIX_W2(x,y, col) \
-	wr.setDataElements(x,y, objColors[col]);
+	wr.setDataElements(x,y, objColors[col])
 
-#define BLIT_PIX_GR(x,y, col) \
+#define BLIT_PIX_GR(x,y, col) { \
 	g.setColor(colColors[col]); \
-	g.drawRect(x,y, 0, 0);
-			
+	g.drawRect(x,y, 0, 0); \
+}
 
 #define BLIT_PIX BLIT_PIX_W2
 
@@ -164,14 +173,14 @@ public class VideoController {
 		else if (scale == 2) {
 			// scale2x algo // http://scale2x.sourceforge.net/algorithm.html
 			for (int y = 0; y < 144; ++y) {
-				int yn = Math.max(0,y-1);
-				int yp = Math.min(143,y+1);
+				int yn = (y==0  )?0  :y-1;
+				int yp = (y==143)?143:y+1;
 				int blitLine2[] = blitImg[y];
 				int blitLine1[] = blitImg[yn];
 				int blitLine3[] = blitImg[yp];
 				for (int x = 0; x < 160; ++x) {
-					int xn = Math.max(0,x-1);
-					int xp = Math.min(159,x+1);
+					int xn = (x==0  )?0  :x-1;
+					int xp = (x==159)?159:x+1;
 					if ((blitLine2[xn] != blitLine2[xp])
 					&& (blitLine1[x]   != blitLine3[x])) {
 						BLIT_PIX(x*2  ,y*2  , (blitLine1[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]);
@@ -408,6 +417,8 @@ public class VideoController {
 	private static int tilebufBG[] = new int[0x200]; // ? max here could be lower?
 	private static int blitLine[];
 
+#define DRAWPIX_S(x, pal, col) DRAWPIX(x, (pal << 2), col)
+
 	final private void renderScanLine() {
 		/* FF40 - LCDC - LCD Control (R/W)
 		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
@@ -487,6 +498,9 @@ public class VideoController {
 
 	final private void renderScanlineBG() {
 		int bufMap = 0;
+		int cnt = windX;
+		if (cnt == 0) return;
+
 		bgY     = (SCY+LY)&0xFF;
 		bgTileY = bgY >> 3;
 		bgOffsY = bgY & 7;
@@ -496,15 +510,12 @@ public class VideoController {
 
 		calcBGTileBuf();
 
-		int cnt = windX;
-
 		int PatLine[] = patpix[tilebufBG[bufMap++]][bgOffsY];
 		int TilePal = tilebufBG[bufMap++];
 		int curX = 0;
 
 		for (int t = bgOffsX; t < 8; ++t, --cnt)
-			//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
-			blitLine[curX++] = TilePal | PatLine[t];
+			DRAWPIX(curX++, TilePal, PatLine[t]);
 
 		if (cnt == 0) return;
 
@@ -512,22 +523,77 @@ public class VideoController {
 			PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
 			TilePal = tilebufBG[bufMap++];
 			for (int t = 0; t < 8; ++t)
-				//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
-				blitLine[curX++] = TilePal | PatLine[t];
+				DRAWPIX(curX++, TilePal, PatLine[t]);
 			cnt -= 8;
 		}
 		PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
 		TilePal = tilebufBG[bufMap++];
 		for (int t = 0; cnt > 0; --cnt, ++t)
-			//drawPixel(curX++, LY, TilePal | 0x08, patpix[TileNum][bgOffsY][t]);
-			blitLine[curX++] = TilePal | PatLine[t];
+			DRAWPIX(curX++, TilePal, PatLine[t]);
 	}
 
+	final private void calcWindTileBuf() {
+		int tileMap = WindowTileMap + (bgTileY*32);
+		int attrMap = tileMap + 0x2000;
+		int bufMap = 0;
+		int cnt = ((160-(windX+7)) >> 3) + 1;
+
+		for (int i = 0; i < cnt; ++i) {
+			int tile = VRAM[tileMap++];
+			int attr = VRAM[attrMap++];
+			if (TileData == 0x0800) {
+				tile ^= 0x80;
+				tile += 0x80;
+			}
+			tilebufBG[bufMap++] = tile |
+			 ((attr & 0x08) << 6) |              // bank select
+			 ((attr & 0x60) << 5);               // horiz/vert flip
+			tilebufBG[bufMap++] = (0x08) << 2; // pal select
+			if ((tileMap&31)==0) { //if ((attrMap&31)==0)
+				tileMap -= 32;
+				attrMap -= 32;
+			}
+		}
+	}
+
+	final private void renderScanlineWindow() {
+		int bufMap = 0;
+		int curX = MAX(windX,0);
+		int cnt = 160-curX;
+		if (cnt == 0)
+			return;
+		bgY     = LY - WY;
+		bgTileY = bgY >> 3;
+		bgOffsY = bgY & 7;
+
+		bgOffsX = curX - windX;
+
+		calcWindTileBuf();
+
+		int PatLine[] = patpix[tilebufBG[bufMap++]][bgOffsY];
+		int TilePal = tilebufBG[bufMap++];
+
+		for (int t = bgOffsX; t < 8; ++t, --cnt)
+			DRAWPIX(curX++, TilePal, PatLine[t]);
+
+		while (cnt>=8) {
+			PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
+			TilePal = tilebufBG[bufMap++];
+			for (int t = 0; t < 8; ++t)
+				DRAWPIX(curX++, TilePal, PatLine[t]);
+			cnt -= 8;
+		}
+		PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
+		TilePal = tilebufBG[bufMap++];
+		for (int t = 0; cnt > 0; --cnt, ++t)
+			DRAWPIX(curX++, TilePal, PatLine[t]);
+	}
+/*
 	final private void renderScanlineWindow() {
 		int ry  = LY - WY;
 		int rty = ry >> 3; // tile y
 		int rsy = ry & 7;  // y offs
-		for (int x = Math.max(windX, 0); x < 160; ++x) { // [wndX <= x < 160]
+		for (int x = MAX(windX, 0); x < 160; ++x) { // [wndX <= x < 160]
 			int rx = x - windX; // [-8 < wndX < 160] && [wndX <= x < 160] => [0 <= rx < 167]
 			int rtx = rx >> 3; // tile xx
 			int rsx = rx & 7;  // x offs
@@ -551,7 +617,7 @@ public class VideoController {
 			drawPixel(x, LY, palnr | 0x08, col);
 		}
 	}
-
+*/
 	final private void renderScanlineSprites() {
 		boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
@@ -592,7 +658,7 @@ public class VideoController {
 					int col = PatLine[ofsX];
 					if((col != 0) && (rx >= 0) && (rx < 160)
 					&& (prio || ((blitLine[rx]&0x3c)== 0x20))) {
-						drawPixel(rx, LY, palnr, col);
+						DRAWPIX_S(rx, palnr, col);
 					}
 				}
 			}

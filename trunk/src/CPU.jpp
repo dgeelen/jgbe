@@ -1,4 +1,5 @@
 //Yoshi no tamago: $293 call crashes
+#include "Global.inc"
 public class CPU
 {
 		static private CPU singleton = null;
@@ -481,6 +482,7 @@ public class CPU
 						break;
 					case 0xff45: // LYC
 						VC.LYC = value;
+						//System.out.printf("Setting LYC=%d ($%02x)\n",value,value);
 						break;
 					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
@@ -545,7 +547,7 @@ public class CPU
 						VC.setOBColData(value);
 						break;
 					case 0xff70: //FF70 - SVBK - CGB Mode Only - WRAM Bank
-						CurrentWRAMBank=Math.max(value&0x07, 1);
+						CurrentWRAMBank=MAX(value&0x07, 1);
 						refreshMemMap();
 						break;
 					default:

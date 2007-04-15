@@ -19,7 +19,9 @@ all: $(JAVAFILES) swinggui.class $(CLASSFILES)
 	gcc -E -x c $< | grep -v "^#" | sed "s:cycles\;[ 	]*case:cycles\;\\n	case:g" > $@
 	cp $@ .$@.bpp
 
-CPU.java: CPU.inc
+CPU.java: CPU.inc Global.inc
+
+VideoController.java: Global.inc
 
 jmgberun: jmgbe
 	$(J2MEPATH)/bin/emulator -Xdescriptor:jmgbe.jad
