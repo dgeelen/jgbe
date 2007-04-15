@@ -152,12 +152,12 @@ public class VideoController {
     for (int x = 0; x < 160; ++x) {
      int xn = (x==0 )?0 :x-1;
      int xp = (x==159)?159:x+1;
-     if ((blitLine2[xn] != blitLine2[xp])
-     && (blitLine1[x] != blitLine3[x])) {
-      wr.setDataElements(x*2,y*2, (blitLine1[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]);
-      wr.setDataElements(x*2+1,y*2, (blitLine1[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]);
-      wr.setDataElements(x*2,y*2+1, (blitLine3[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]);
-      wr.setDataElements(x*2+1,y*2+1, (blitLine3[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]);
+     if (!((blitLine2[xn]).equals(blitLine2[xp]))
+     && !((blitLine1[x]).equals(blitLine3[x]))) {
+      wr.setDataElements(x*2,y*2, ((blitLine1[x]).equals(blitLine2[xn])) ? blitLine2[xn] : blitLine2[x]);
+      wr.setDataElements(x*2+1,y*2, ((blitLine1[x]).equals(blitLine2[xp])) ? blitLine2[xp] : blitLine2[x]);
+      wr.setDataElements(x*2,y*2+1, ((blitLine3[x]).equals(blitLine2[xn])) ? blitLine2[xn] : blitLine2[x]);
+      wr.setDataElements(x*2+1,y*2+1, ((blitLine3[x]).equals(blitLine2[xp])) ? blitLine2[xp] : blitLine2[x]);
      }
      else {
       Object col = blitLine2[x];
@@ -519,7 +519,7 @@ public class VideoController {
   int PatLine[] = patpix[tilebufBG[bufMap++]][bgOffsY];
   int TilePal = tilebufBG[bufMap++];
 
-  for (int t = bgOffsX; t < 8; ++t, --cnt)
+  for (int t = bgOffsX; (t < 8) && (cnt > 0); ++t, --cnt)
    { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
 
   while (cnt>=8) {
@@ -534,6 +534,7 @@ public class VideoController {
   for (int t = 0; cnt > 0; --cnt, ++t)
    { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
  }
+
  final private void renderScanlineSprites() {
   boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
