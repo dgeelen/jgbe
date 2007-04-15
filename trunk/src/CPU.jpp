@@ -855,6 +855,10 @@ public class CPU
 //			return cycles;
 		}
 
+		static long lastns = 0;
+		static long lastuf = 0;
+		static int samplesLeft = 0;
+
 		final public int nextinstruction() {
 			int res = 4*execute();
 			++TotalInstrCount;
@@ -895,10 +899,6 @@ public class CPU
 				if (VBLANKcntdwn < 0) {
 					VBLANKcntdwn += 456;   // 4194304/9198
 					VC.renderNextScanline();
-					if ((IOP[0x0f]&3)!=0) {
-						//System.out.printf("triggered STAT  PC=$%04x  IF=$%02x  IE=$%02x  IME=%b\n", PC, IOP[0x0f], IE, IME);
-						//System.out.println("res="+res+"  cnt="+ VBLANKcntdwn);
-					}
 				}
 				// [0 <= VBLANKcntdwn < 456]
 				// [0..80)   [80..252)   [252..456)
@@ -906,9 +906,76 @@ public class CPU
 				// when LY>144 then mode 1
 
 			}
-			if (res > 30)
-				System.out.printf("res=%i  PC=$%04x",res, PC);
 
+/*
+		long ct;
+		do {
+			ct = perf.highResCounter();
+		} while ((ct-lastms) < 1000000/60);
+		lastms = ct;
+*/
+/*
+			int samplesBuffered = AC.samplesBuffered();
+			if (samplesBuffered > 100) {
+				//System.out.println("flushing buffer="+samplesBuffered+" left="+samplesLeft);
+				AC.doFlush(samplesBuffered);
+				
+				samplesLeft += samplesBuffered;
+				samplesBuffered = AC.samplesBuffered();
+				//System.out.println("flushing 1000 buffer="+AC.samplesBuffered()+" left="+AC.samplesLeft());
+			}
+*/
+
+			long ct = 0;
+			//do {
+			/*
+			if (samplesLeft > 100) {
+				int wSamples = samplesLeft - 100;
+				do {
+					if (lastns == 0)
+						lastns = System.nanoTime();
+					ct = System.nanoTime();
+				} while ((ct-lastns) < (wSamples*1000000000/22050));
+				lastns += (wSamples*1000000000/22050);
+				samplesLeft -= wSamples;
+			}
+			*/
+#define sreso 1
+			//	while ((ct-lastns) > (sreso*1000000000/22050)) {
+			//		samplesLeft -= sreso;
+			//		lastns += (sreso*1000000000/22050);
+			//..	}
+			/*	if (samplesLeft > 1000) {
+					try {
+						Thread.sleep(1);
+					}
+					catch (java.lang.InterruptedException e) {};
+				}*/
+			//} while (samplesLeft > 500);
+
+/*
+			if (samplesLeft < 0) {
+				if ((ct-lastuf) > 1000000000) {
+					System.out.println("audio buffer underflow! buffered="+samplesBuffered+" time="+(lastns-ct));
+					lastuf = ct;
+				}
+				samplesLeft = 0;
+			}
+			*/
+/*
+			samplesLeft = AC.samplesLeft();
+			samplesBuffered = AC.samplesBuffered();
+
+
+			if (samplesLeft > 1000)
+			while (samplesLeft > 0) {
+				samplesLeft = AC.samplesLeft();
+				//try {
+					System.out.println("left="+samplesLeft);
+				//}
+				//catch (java.lang.InterruptedException e) {};
+			}
+*/			
 			return res;
 		}
 

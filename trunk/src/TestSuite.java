@@ -31,11 +31,12 @@ public class TestSuite
 		if (s.indexOf("**MISSING    INSTRUCTION**") > -1)
 			return 0;
 		System.out.printf("%-40s",s);
-		int ticks = 4194304;
+		int cycles = 4194304;
 		long ct1 = System.currentTimeMillis();
-		for (; ticks > 0;) {
+		for (; cycles > 0;) {
 			cpu.PC=0x100;
-			ticks -= cpu.nextinstruction();
+			cycles -= cpu.nextinstruction();
+			//ticks -= (cpu.execute()<<2);
 			//cpu.cycles();
 		}
 		long ct2 = System.currentTimeMillis();
@@ -67,10 +68,12 @@ public class TestSuite
 			runinstr((0x06+(5<<3)), 0xa0);
 			System.out.println("Starting Tests...");
 			long time;
+			time = runinstr(0);            //NOP
+			time = runinstr(0);            //NOP
 			for (int i = 0; i < 0x100; ++i) {
-				time = runinstr(0xcb, i, 0x80);            //NOP
+				time = runinstr(i, 0xff, 0x80);            //NOP
 			}
-			//time = runinstr(0xf3);            //NOP
+			time = runinstr(0);            //NOP
 			//System.out.printf("DI        : %6d\n", time);
 			//time = runinstr(0x00);            //NOP
 			//System.out.printf("NOP       : %6d\n", time);

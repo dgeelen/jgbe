@@ -68,7 +68,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			grfx=new DrawingArea( cpu.VC ); //doublebuffering
 			grfx.setFocusable(true);
 			grfx.addKeyListener(this);
-			grfx.setPreferredSize( new Dimension( 160, 144 ) ); //quadruple each pixel
+			grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) ); //quadruple each pixel
 			contentPane.add( grfx, BorderLayout.CENTER );
 		}
 
@@ -109,6 +109,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			//           + " (an instance of " + getClassName( source ) + ")";
 			//System.out.println("timer!");
 			frame.setTitle("" + fps + " - JGameBoy Emulator V0.01");
+			//cpu.AC.srendered = 0;
 			fps = 0;
 		}
 
