@@ -63,9 +63,9 @@ public class VideoController {
 	private long ptick;
 	private long ftick;
 
-	public int scale = 2;
+	public int scale = 3;
 	private int cfskip = 0;
-	private int fskip = 1; // 1 is off
+	private int fskip = 3; // 1 is off
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
@@ -188,7 +188,16 @@ public class VideoController {
 			}
 		}
 		else if (scale == 2) {
-			// scale2x algo // http://scale2x.sourceforge.net/algorithm.html
+			// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
+			#define A blitLine1[xn]
+			#define B blitLine1[x]
+			#define C blitLine1[xp]
+			#define D blitLine2[xn]
+			#define E blitLine2[x]
+			#define F blitLine2[xp]
+			#define G blitLine3[xn]
+			#define H blitLine3[x]
+			#define I blitLine3[xp]
 			for (int y = 0; y < 144; ++y) {
 				int yn = (y==0  )?0  :y-1;
 				int yp = (y==143)?143:y+1;
@@ -200,13 +209,13 @@ public class VideoController {
 					int xp = (x==159)?159:x+1;
 					if (!EQ(blitLine2[xn], blitLine2[xp])
 					&&  !EQ(blitLine1[x] , blitLine3[x])) {
-						BLIT_PIX(x*2  ,y*2  , EQ(blitLine1[x], blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]);
-						BLIT_PIX(x*2+1,y*2  , EQ(blitLine1[x], blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]);
-						BLIT_PIX(x*2  ,y*2+1, EQ(blitLine3[x], blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]);
-						BLIT_PIX(x*2+1,y*2+1, EQ(blitLine3[x], blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]);
+						BLIT_PIX(x*2  ,y*2  , EQ(B, D) ? D : E);
+						BLIT_PIX(x*2+1,y*2  , EQ(B, F) ? F : E);
+						BLIT_PIX(x*2  ,y*2+1, EQ(H, D) ? D : E);
+						BLIT_PIX(x*2+1,y*2+1, EQ(H, F) ? F : E);
 					}
 					else {
-						Object col = blitLine2[x];
+						Object col = E;
 						BLIT_PIX(x*2  ,y*2  , col);
 						BLIT_PIX(x*2+1,y*2  , col);
 						BLIT_PIX(x*2  ,y*2+1, col);
@@ -214,6 +223,42 @@ public class VideoController {
 					}
 				}
 			}
+		} else if (scale == 3) {
+			// 'scale3x' algo // http://scale2x.sourceforge.net/algorithm.html
+			for (int y = 0; y < 144; ++y) {
+				int yn = (y==0  )?0  :y-1;
+				int yp = (y==143)?143:y+1;
+				Object blitLine2[] = blitImg[y];
+				Object blitLine1[] = blitImg[yn];
+				Object blitLine3[] = blitImg[yp];
+				for (int x = 0; x < 160; ++x) {
+					int xn = (x==0  )?0  :x-1;
+					int xp = (x==159)?159:x+1;
+					if (!EQ(B, H) && !EQ(D, F)) {
+						BLIT_PIX(x*3  ,y*3  , EQ(D, B) ? D : E);
+						BLIT_PIX(x*3+1,y*3  , (EQ(D, B) && !EQ(E, C)) || (EQ(D, F) && !EQ(E, A))? B : E);
+						BLIT_PIX(x*3+2,y*3  , EQ(B, F) ? F : E);
+						BLIT_PIX(x*3  ,y*3+1, (EQ(D, B) && !EQ(E, G)) || (EQ(D, H) && !EQ(E, A))? D : E);
+						BLIT_PIX(x*3+1,y*3+1, E);
+						BLIT_PIX(x*3+2,y*3+1, (EQ(B, F) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, C))? F : E);
+						BLIT_PIX(x*3  ,y*3+2, EQ(D, H) ? D : E);
+						BLIT_PIX(x*3+1,y*3+2, (EQ(B, H) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, G))? H : E);
+						BLIT_PIX(x*3+2,y*3+2, EQ(H, F) ? F : E);
+					} else {
+						Object col = E;
+						BLIT_PIX(x*3  ,y*3  , col);
+						BLIT_PIX(x*3+1,y*3  , col);
+						BLIT_PIX(x*3+2,y*3  , col);
+						BLIT_PIX(x*3  ,y*3+1, col);
+						BLIT_PIX(x*3+1,y*3+1, col);
+						BLIT_PIX(x*3+2,y*3+1, col);
+						BLIT_PIX(x*3  ,y*3+2, col);
+						BLIT_PIX(x*3+1,y*3+2, col);
+						BLIT_PIX(x*3+2,y*3+2, col);
+					}
+				}
+			}
+#undef A B C D E F G H I
 		}
 		curDrawImg ^= 1;
 	}
@@ -553,7 +598,7 @@ public class VideoController {
 		int tileMap = WindowTileMap + (bgTileY*32);
 		int attrMap = tileMap + 0x2000;
 		int bufMap = 0;
-		int cnt = ((160-(windX+7)) >> 3) + 1;
+		int cnt = ((160-(windX+7)) >> 3) + 2;
 
 		for (int i = 0; i < cnt; ++i) {
 			int tile = VRAM[tileMap++];

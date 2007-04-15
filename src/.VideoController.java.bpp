@@ -54,9 +54,9 @@ public class VideoController {
  private long ptick;
  private long ftick;
 
- public int scale = 2;
+ public int scale = 3;
  private int cfskip = 0;
- private int fskip = 1;
+ private int fskip = 3;
 
  public VideoController(CPU cpu, int image_width, int image_height) {
   this.cpu = cpu;
@@ -142,7 +142,6 @@ public class VideoController {
    }
   }
   else if (scale == 2) {
-
    for (int y = 0; y < 144; ++y) {
     int yn = (y==0 )?0 :y-1;
     int yp = (y==143)?143:y+1;
@@ -168,6 +167,42 @@ public class VideoController {
      }
     }
    }
+  } else if (scale == 3) {
+
+   for (int y = 0; y < 144; ++y) {
+    int yn = (y==0 )?0 :y-1;
+    int yp = (y==143)?143:y+1;
+    Object blitLine2[] = blitImg[y];
+    Object blitLine1[] = blitImg[yn];
+    Object blitLine3[] = blitImg[yp];
+    for (int x = 0; x < 160; ++x) {
+     int xn = (x==0 )?0 :x-1;
+     int xp = (x==159)?159:x+1;
+     if (!((blitLine1[x]).equals(blitLine3[x])) && !((blitLine2[xn]).equals(blitLine2[xp]))) {
+      wr.setDataElements(x*3,y*3, ((blitLine2[xn]).equals(blitLine1[x])) ? blitLine2[xn] : blitLine2[x]);
+      wr.setDataElements(x*3+1,y*3, (((blitLine2[xn]).equals(blitLine1[x])) && !((blitLine2[x]).equals(blitLine1[xp]))) || (((blitLine2[xn]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine1[xn])))? blitLine1[x] : blitLine2[x]);
+      wr.setDataElements(x*3+2,y*3, ((blitLine1[x]).equals(blitLine2[xp])) ? blitLine2[xp] : blitLine2[x]);
+      wr.setDataElements(x*3,y*3+1, (((blitLine2[xn]).equals(blitLine1[x])) && !((blitLine2[x]).equals(blitLine3[xn]))) || (((blitLine2[xn]).equals(blitLine3[x])) && !((blitLine2[x]).equals(blitLine1[xn])))? blitLine2[xn] : blitLine2[x]);
+      wr.setDataElements(x*3+1,y*3+1, blitLine2[x]);
+      wr.setDataElements(x*3+2,y*3+1, (((blitLine1[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine3[xp]))) || (((blitLine3[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine1[xp])))? blitLine2[xp] : blitLine2[x]);
+      wr.setDataElements(x*3,y*3+2, ((blitLine2[xn]).equals(blitLine3[x])) ? blitLine2[xn] : blitLine2[x]);
+      wr.setDataElements(x*3+1,y*3+2, (((blitLine1[x]).equals(blitLine3[x])) && !((blitLine2[x]).equals(blitLine3[xp]))) || (((blitLine3[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine3[xn])))? blitLine3[x] : blitLine2[x]);
+      wr.setDataElements(x*3+2,y*3+2, ((blitLine3[x]).equals(blitLine2[xp])) ? blitLine2[xp] : blitLine2[x]);
+     } else {
+      Object col = blitLine2[x];
+      wr.setDataElements(x*3,y*3, col);
+      wr.setDataElements(x*3+1,y*3, col);
+      wr.setDataElements(x*3+2,y*3, col);
+      wr.setDataElements(x*3,y*3+1, col);
+      wr.setDataElements(x*3+1,y*3+1, col);
+      wr.setDataElements(x*3+2,y*3+1, col);
+      wr.setDataElements(x*3,y*3+2, col);
+      wr.setDataElements(x*3+1,y*3+2, col);
+      wr.setDataElements(x*3+2,y*3+2, col);
+     }
+    }
+   }
+
   }
   curDrawImg ^= 1;
  }
@@ -482,7 +517,7 @@ public class VideoController {
   int tileMap = WindowTileMap + (bgTileY*32);
   int attrMap = tileMap + 0x2000;
   int bufMap = 0;
-  int cnt = ((160-(windX+7)) >> 3) + 1;
+  int cnt = ((160-(windX+7)) >> 3) + 2;
 
   for (int i = 0; i < cnt; ++i) {
    int tile = VRAM[tileMap++];
