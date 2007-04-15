@@ -27,12 +27,10 @@ public class VideoController {
  protected int WY=0;
  protected int LCDC=0;
  protected int STAT=0;
-
- protected int GRAYSHADES[][] = {
-                                  {0xFF, 0xFF, 0xFF},
-                                  {0xD3, 0xD3, 0xD3},
-                                  {0xBE, 0xBE, 0xBE},
-                                  {0x00, 0x00, 0x00} };
+  protected int GRAYSHADES[][] = { {0xc0, 0xd0, 0x40},
+                                   {0x90, 0xa0, 0x40},
+                                   {0x40, 0x60, 0x32},
+                                   {0x10, 0x40, 0x26} };
 
  protected int BGPI=0;
  private int BGPD[]=new int[8*4*2];
@@ -56,7 +54,7 @@ public class VideoController {
  private long ptick;
  private long ftick;
 
- public int scale = 1;
+ public int scale = 2;
  private int cfskip = 0;
  private int fskip = 1;
 
@@ -102,7 +100,6 @@ public class VideoController {
    System.out.println("creating VolatileImage's");
    drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
    drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-   drawImg[1]=drawImg[0];
   }
  }
 

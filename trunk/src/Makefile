@@ -34,7 +34,7 @@ manifest.mf: MANIFEST.MF.in
 jmgbejad: jmgbe.jad.in
 	sed "s/.*MIDlet-Jar-Size:.*/MIDlet-Jar-Size: `ls -l jmgbe.jar | gawk '{print $$5}'`/" < jmgbe.jad.in > jmgbe.jad
 
-jmgbejar: output/jmgbe.class manifest.mf
+jmgbejar: output/jmgbesv.class manifest.mf
 	jar -cfm jmgbe.jar MANIFEST.MF output/jmgbe.class
 
 jmgbepreverified: jmgbe.class
