@@ -29,11 +29,17 @@ public class VideoController {
 	protected int LCDC=0;
 	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
 
-	protected int GRAYSHADES[][] = {
-	                                 {0xFF, 0xFF, 0xFF},   // WHITE
-	                                 {0xD3, 0xD3, 0xD3},   // LIGHTGRAY
-	                                 {0xBE, 0xBE, 0xBE},   // DARKGRAY
-	                                 {0x00, 0x00, 0x00} }; // BLACK
+// 	protected int GRAYSHADES[][] = {
+// 	                                 {0xFF, 0xFF, 0xFF},   // WHITE
+// 	                                 {0xD3, 0xD3, 0xD3},   // LIGHTGRAY
+// 	                                 {0xBE, 0xBE, 0xBE},   // DARKGRAY
+// 	                                 {0x00, 0x00, 0x00} }; // BLACK
+
+ 	// Looks a lot like Origional Gameboy
+ 	protected int GRAYSHADES[][] = { {0xc0, 0xd0, 0x40},   // WHITE
+ 	                                 {0x90, 0xa0, 0x40},   // LIGHTGRAY
+ 	                                 {0x40, 0x60, 0x32},   // DARKGRAY
+ 	                                 {0x10, 0x40, 0x26} }; // BLACK
 
 	protected int BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
 	private int BGPD[]=new int[8*4*2]; //BCPD/BGPD - CGB Mode Only - Background Palette Data
@@ -57,7 +63,7 @@ public class VideoController {
 	private long ptick;
 	private long ftick;
 
-	public int scale = 1;
+	public int scale = 2;
 	private int cfskip = 0;
 	private int fskip = 1; // 1 is off
 
@@ -69,7 +75,7 @@ public class VideoController {
 		perf = sun.misc.Perf.getPerf();
 		pfreq = perf.highResFrequency();
 		lastms = perf.highResCounter();
-		
+
 		long x = System.nanoTime();
 		for (int i = 0; i < objColors.length; ++i)
 			objColors[i] =
