@@ -374,6 +374,7 @@ public class CPU
       break;
      case 0xff45:
       VC.LYC = value;
+
       break;
      case 0xff46:{
       for(int i=0; i<0xa0; ++i){
@@ -438,7 +439,7 @@ public class CPU
       VC.setOBColData(value);
       break;
      case 0xff70:
-      CurrentWRAMBank=Math.max(value&0x07, 1);
+      CurrentWRAMBank=((value&0x07)<(1)?(1):(value&0x07));
       refreshMemMap();
       break;
      default:

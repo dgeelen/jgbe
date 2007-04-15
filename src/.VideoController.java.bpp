@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
 
+
 public class VideoController {
  private static final int MIN_WIDTH = 160;
  private static final int MIN_HEIGHT = 144;
@@ -27,7 +28,8 @@ public class VideoController {
  protected int LCDC=0;
  protected int STAT=0;
 
- protected int GRAYSHADES[][] = { {0xFF, 0xFF, 0xFF},
+ protected int GRAYSHADES[][] = {
+                                  {0xFF, 0xFF, 0xFF},
                                   {0xD3, 0xD3, 0xD3},
                                   {0xBE, 0xBE, 0xBE},
                                   {0x00, 0x00, 0x00} };
@@ -56,7 +58,7 @@ public class VideoController {
 
  public int scale = 2;
  private int cfskip = 0;
- private int fskip = 2;
+ private int fskip = 1;
 
  public VideoController(CPU cpu, int image_width, int image_height) {
   this.cpu = cpu;
@@ -68,6 +70,12 @@ public class VideoController {
   lastms = perf.highResCounter();
 
   long x = System.nanoTime();
+  for (int i = 0; i < objColors.length; ++i)
+   objColors[i] =
+    ((BufferedImage)drawImg[curDrawImg^1]).
+    getColorModel().
+    getDataElements(0, null);
+
  }
 
  final public void addListener(JPanel panel)
@@ -95,10 +103,6 @@ public class VideoController {
  final public Image getImage() {
 
   return drawImg[curDrawImg];
- }
-
- final private void drawPixel(int x, int y, int pal, int col) {
-  blitImg[y][x] = (pal << 2) | col;
  }
 
  final private void palQuadify(int[] col) {
@@ -130,34 +134,34 @@ public class VideoController {
    for (int y = 0; y < 144; ++y) {
     int blitLine[] = blitImg[y];
     for (int x = 0; x < 160; ++x) {
-     wr.setDataElements(x,y, objColors[blitLine[x]]);;
+     wr.setDataElements(x,y, objColors[blitLine[x]]);
     }
    }
   }
   else if (scale == 2) {
 
    for (int y = 0; y < 144; ++y) {
-    int yn = Math.max(0,y-1);
-    int yp = Math.min(143,y+1);
+    int yn = (y==0 )?0 :y-1;
+    int yp = (y==143)?143:y+1;
     int blitLine2[] = blitImg[y];
     int blitLine1[] = blitImg[yn];
     int blitLine3[] = blitImg[yp];
     for (int x = 0; x < 160; ++x) {
-     int xn = Math.max(0,x-1);
-     int xp = Math.min(159,x+1);
+     int xn = (x==0 )?0 :x-1;
+     int xp = (x==159)?159:x+1;
      if ((blitLine2[xn] != blitLine2[xp])
      && (blitLine1[x] != blitLine3[x])) {
-      wr.setDataElements(x*2,y*2, objColors[(blitLine1[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);;
-      wr.setDataElements(x*2+1,y*2, objColors[(blitLine1[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);;
-      wr.setDataElements(x*2,y*2+1, objColors[(blitLine3[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);;
-      wr.setDataElements(x*2+1,y*2+1, objColors[(blitLine3[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);;
+      wr.setDataElements(x*2,y*2, objColors[(blitLine1[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);
+      wr.setDataElements(x*2+1,y*2, objColors[(blitLine1[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);
+      wr.setDataElements(x*2,y*2+1, objColors[(blitLine3[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);
+      wr.setDataElements(x*2+1,y*2+1, objColors[(blitLine3[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);
      }
      else {
       int col = blitLine2[x];
-      wr.setDataElements(x*2,y*2, objColors[col]);;
-      wr.setDataElements(x*2+1,y*2, objColors[col]);;
-      wr.setDataElements(x*2,y*2+1, objColors[col]);;
-      wr.setDataElements(x*2+1,y*2+1, objColors[col]);;
+      wr.setDataElements(x*2,y*2, objColors[col]);
+      wr.setDataElements(x*2+1,y*2, objColors[col]);
+      wr.setDataElements(x*2,y*2+1, objColors[col]);
+      wr.setDataElements(x*2+1,y*2+1, objColors[col]);
      }
     }
    }
@@ -366,6 +370,8 @@ public class VideoController {
  private static int tilebufBG[] = new int[0x200];
  private static int blitLine[];
 
+
+
  final private void renderScanLine() {
   if((LCDC&(1<<7))!=0) {
 
@@ -435,6 +441,9 @@ public class VideoController {
 
  final private void renderScanlineBG() {
   int bufMap = 0;
+  int cnt = windX;
+  if (cnt == 0) return;
+
   bgY = (SCY+LY)&0xFF;
   bgTileY = bgY >> 3;
   bgOffsY = bgY & 7;
@@ -444,15 +453,12 @@ public class VideoController {
 
   calcBGTileBuf();
 
-  int cnt = windX;
-
   int PatLine[] = patpix[tilebufBG[bufMap++]][bgOffsY];
   int TilePal = tilebufBG[bufMap++];
   int curX = 0;
 
   for (int t = bgOffsX; t < 8; ++t, --cnt)
-
-   blitLine[curX++] = TilePal | PatLine[t];
+   { blitLine[curX++] = TilePal | PatLine[t]; };
 
   if (cnt == 0) return;
 
@@ -460,46 +466,71 @@ public class VideoController {
    PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
    TilePal = tilebufBG[bufMap++];
    for (int t = 0; t < 8; ++t)
-
-    blitLine[curX++] = TilePal | PatLine[t];
+    { blitLine[curX++] = TilePal | PatLine[t]; };
    cnt -= 8;
   }
   PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
   TilePal = tilebufBG[bufMap++];
   for (int t = 0; cnt > 0; --cnt, ++t)
-
-   blitLine[curX++] = TilePal | PatLine[t];
+   { blitLine[curX++] = TilePal | PatLine[t]; };
  }
 
- final private void renderScanlineWindow() {
-  int ry = LY - WY;
-  int rty = ry >> 3;
-  int rsy = ry & 7;
-  for (int x = Math.max(windX, 0); x < 160; ++x) {
-   int rx = x - windX;
-   int rtx = rx >> 3;
-   int rsx = rx & 7;
+ final private void calcWindTileBuf() {
+  int tileMap = WindowTileMap + (bgTileY*32);
+  int attrMap = tileMap + 0x2000;
+  int bufMap = 0;
+  int cnt = ((160-(windX+7)) >> 3) + 1;
 
-   int TileNum = VRAM[WindowTileMap + rtx + (rty*32)];
+  for (int i = 0; i < cnt; ++i) {
+   int tile = VRAM[tileMap++];
+   int attr = VRAM[attrMap++];
    if (TileData == 0x0800) {
-    TileNum ^= 0x80;
-    TileNum += 0x80;
+    tile ^= 0x80;
+    tile += 0x80;
    }
-
-   int TileAttr = VRAM[0x2000 + WindowTileMap + rtx + (rty*32)];
-
-   if ((TileAttr&(1<<3))!=0) TileNum |= (1<<9);
-   if ((TileAttr&(1<<5))!=0) TileNum |= (1<<10);
-   if ((TileAttr&(1<<6))!=0) TileNum |= (1<<11);
-
-   int palnr = TileAttr & 7;
-
-   int col = patpix[TileNum][rsy][rsx];
-
-   drawPixel(x, LY, palnr | 0x08, col);
+   tilebufBG[bufMap++] = tile |
+    ((attr & 0x08) << 6) |
+    ((attr & 0x60) << 5);
+   tilebufBG[bufMap++] = (0x08) << 2;
+   if ((tileMap&31)==0) {
+    tileMap -= 32;
+    attrMap -= 32;
+   }
   }
  }
 
+ final private void renderScanlineWindow() {
+  int bufMap = 0;
+  int curX = ((windX)<(0)?(0):(windX));
+  int cnt = 160-curX;
+  if (cnt == 0)
+   return;
+  bgY = LY - WY;
+  bgTileY = bgY >> 3;
+  bgOffsY = bgY & 7;
+
+  bgOffsX = curX - windX;
+
+  calcWindTileBuf();
+
+  int PatLine[] = patpix[tilebufBG[bufMap++]][bgOffsY];
+  int TilePal = tilebufBG[bufMap++];
+
+  for (int t = bgOffsX; t < 8; ++t, --cnt)
+   { blitLine[curX++] = TilePal | PatLine[t]; };
+
+  while (cnt>=8) {
+   PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
+   TilePal = tilebufBG[bufMap++];
+   for (int t = 0; t < 8; ++t)
+    { blitLine[curX++] = TilePal | PatLine[t]; };
+   cnt -= 8;
+  }
+  PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
+  TilePal = tilebufBG[bufMap++];
+  for (int t = 0; cnt > 0; --cnt, ++t)
+   { blitLine[curX++] = TilePal | PatLine[t]; };
+ }
  final private void renderScanlineSprites() {
   boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
@@ -540,7 +571,7 @@ public class VideoController {
      int col = PatLine[ofsX];
      if((col != 0) && (rx >= 0) && (rx < 160)
      && (prio || ((blitLine[rx]&0x3c)== 0x20))) {
-      drawPixel(rx, LY, palnr, col);
+      { blitLine[rx] = (palnr << 2) | col; };
      }
     }
    }

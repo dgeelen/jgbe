@@ -288,7 +288,7 @@ public class Cartridge {
 				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
 					if(value==0x0a) ram_enabled = true;
 					else if(value==0x00) ram_enabled = false;
-					else System.out.println("WARNING: Ram enabled state UNDEFINED");
+					else System.out.printf("WARNING: Ram enabled state UNDEFINED ($%02x)\n", value);
 				}
 				if((index>=0x2000)&&(index<0x4000)) {//2000-3FFF - ROM Bank Number (Write Only)
 					CurrentROMBank=Math.max(value&0x7f,1);
@@ -324,7 +324,7 @@ public class Cartridge {
 				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
 					if(value==0x0a) ram_enabled = true;
 					else if(value==0x00) ram_enabled = false;
-					else System.out.println("WARNING: Ram enabled state UNDEFINED");
+					else System.out.printf("WARNING: Ram enabled state UNDEFINED ($%02x)\n", value);
 				}
 				if((index>=0x2000)&&(index<0x3000)) {//2000-3FFF - ROM Bank Number (Write Only)
 					CurrentROMBank &= 0x100;
