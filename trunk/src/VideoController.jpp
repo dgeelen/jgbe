@@ -11,7 +11,7 @@ public class VideoController {
 	private JPanel listener = null;
 	private Image drawImg[];
 	private int curDrawImg = 0;
-	private int blitImg[][]=new int[144][160]; // [y][x]
+	private Object blitImg[][]=new Object[144][160]; // [y][x]
 
 	private int CurrentVRAMBank=0;
 	//private int VRAM[][]=new int[2][0x2000]; //8k per bank;
@@ -57,7 +57,7 @@ public class VideoController {
 	private long ptick;
 	private long ftick;
 
-	public int scale = 2;
+	public int scale = 1;
 	private int cfskip = 0;
 	private int fskip = 1; // 1 is off
 
@@ -76,7 +76,12 @@ public class VideoController {
 				((BufferedImage)drawImg[curDrawImg^1]).
 				getColorModel().
 				getDataElements(0, null);
-	
+		for (int ty = 0; ty < 144; ++ty)
+			for (int tx = 0; tx < 160; ++tx)
+				blitImg[ty][tx] =
+					((BufferedImage)drawImg[curDrawImg^1]).
+					getColorModel().
+					getDataElements(0, null);
 	}
 
 	final public void addListener(JPanel panel)
@@ -139,7 +144,7 @@ public class VideoController {
 	}
 
 #define DRAWPIX(x, pal, col) { \
-		blitLine[x] = pal | col; \
+		blitLine[x] = objColors[pal | col]; \
 } \
 
 // blitting using WritableRaster
@@ -149,12 +154,15 @@ public class VideoController {
 #define BLIT_PIX_W2(x,y, col) \
 	wr.setDataElements(x,y, objColors[col])
 
+#define BLIT_PIX_W3(x,y, col) \
+	wr.setDataElements(x,y, col)
+
 #define BLIT_PIX_GR(x,y, col) { \
 	g.setColor(colColors[col]); \
 	g.drawRect(x,y, 0, 0); \
 }
 
-#define BLIT_PIX BLIT_PIX_W2
+#define BLIT_PIX BLIT_PIX_W3
 
 	//static long lastms = System.nanoTime();
 	static long lastms;
@@ -164,7 +172,7 @@ public class VideoController {
 		WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
 		if (scale == 1) {
 			for (int y = 0; y < 144; ++y) {
-				int blitLine[] = blitImg[y];
+				Object blitLine[] = blitImg[y];
 				for (int x = 0; x < 160; ++x) {
 					BLIT_PIX(x, y, blitLine[x]);
 				}
@@ -175,9 +183,9 @@ public class VideoController {
 			for (int y = 0; y < 144; ++y) {
 				int yn = (y==0  )?0  :y-1;
 				int yp = (y==143)?143:y+1;
-				int blitLine2[] = blitImg[y];
-				int blitLine1[] = blitImg[yn];
-				int blitLine3[] = blitImg[yp];
+				Object blitLine2[] = blitImg[y];
+				Object blitLine1[] = blitImg[yn];
+				Object blitLine3[] = blitImg[yp];
 				for (int x = 0; x < 160; ++x) {
 					int xn = (x==0  )?0  :x-1;
 					int xp = (x==159)?159:x+1;
@@ -189,7 +197,7 @@ public class VideoController {
 						BLIT_PIX(x*2+1,y*2+1, (blitLine3[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]);
 					}
 					else {
-						int col = blitLine2[x];
+						Object col = blitLine2[x];
 						BLIT_PIX(x*2  ,y*2  , col);
 						BLIT_PIX(x*2+1,y*2  , col);
 						BLIT_PIX(x*2  ,y*2+1, col);
@@ -415,7 +423,7 @@ public class VideoController {
 	private static int bgOffsX;
 	private static int windX;
 	private static int tilebufBG[] = new int[0x200]; // ? max here could be lower?
-	private static int blitLine[];
+	private static Object blitLine[];
 
 #define DRAWPIX_S(x, pal, col) DRAWPIX(x, (pal << 2), col)
 
@@ -488,7 +496,7 @@ public class VideoController {
 			tilebufBG[bufMap++] = tile |
 			 ((attr & 0x08) << 6) |              // bank select
 			 ((attr & 0x60) << 5);               // horiz/vert flip
-			tilebufBG[bufMap++] = (attr&7 | 0x08) << 2; // pal select
+			tilebufBG[bufMap++] = ((attr&7) | 0x08) << 2; // pal select
 			if ((tileMap&31)==0) { //if ((attrMap&31)==0)
 				tileMap -= 32;
 				attrMap -= 32;
@@ -548,7 +556,7 @@ public class VideoController {
 			tilebufBG[bufMap++] = tile |
 			 ((attr & 0x08) << 6) |              // bank select
 			 ((attr & 0x60) << 5);               // horiz/vert flip
-			tilebufBG[bufMap++] = (0x08) << 2; // pal select
+			tilebufBG[bufMap++] = ((attr&7) | 0x8) << 2; // pal select
 			if ((tileMap&31)==0) { //if ((attrMap&31)==0)
 				tileMap -= 32;
 				attrMap -= 32;
@@ -657,7 +665,7 @@ public class VideoController {
 					// 0 is transparent color
 					int col = PatLine[ofsX];
 					if((col != 0) && (rx >= 0) && (rx < 160)
-					&& (prio || ((blitLine[rx]&0x3c)== 0x20))) {
+					/*&& (prio || ((blitLine[rx]&0x3c)== 0x20))*/) {
 						DRAWPIX_S(rx, palnr, col);
 					}
 				}

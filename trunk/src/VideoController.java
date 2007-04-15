@@ -10,7 +10,7 @@ public class VideoController {
  private JPanel listener = null;
  private Image drawImg[];
  private int curDrawImg = 0;
- private int blitImg[][]=new int[144][160];
+ private Object blitImg[][]=new Object[144][160];
 
  private int CurrentVRAMBank=0;
 
@@ -56,7 +56,7 @@ public class VideoController {
  private long ptick;
  private long ftick;
 
- public int scale = 2;
+ public int scale = 1;
  private int cfskip = 0;
  private int fskip = 1;
 
@@ -75,7 +75,12 @@ public class VideoController {
     ((BufferedImage)drawImg[curDrawImg^1]).
     getColorModel().
     getDataElements(0, null);
-
+  for (int ty = 0; ty < 144; ++ty)
+   for (int tx = 0; tx < 160; ++tx)
+    blitImg[ty][tx] =
+     ((BufferedImage)drawImg[curDrawImg^1]).
+     getColorModel().
+     getDataElements(0, null);
  }
 
  final public void addListener(JPanel panel)
@@ -97,6 +102,7 @@ public class VideoController {
    System.out.println("creating VolatileImage's");
    drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
    drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+   drawImg[1]=drawImg[0];
   }
  }
 
@@ -132,9 +138,9 @@ public class VideoController {
   WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
   if (scale == 1) {
    for (int y = 0; y < 144; ++y) {
-    int blitLine[] = blitImg[y];
+    Object blitLine[] = blitImg[y];
     for (int x = 0; x < 160; ++x) {
-     wr.setDataElements(x,y, objColors[blitLine[x]]);
+     wr.setDataElements(x,y, blitLine[x]);
     }
    }
   }
@@ -143,25 +149,25 @@ public class VideoController {
    for (int y = 0; y < 144; ++y) {
     int yn = (y==0 )?0 :y-1;
     int yp = (y==143)?143:y+1;
-    int blitLine2[] = blitImg[y];
-    int blitLine1[] = blitImg[yn];
-    int blitLine3[] = blitImg[yp];
+    Object blitLine2[] = blitImg[y];
+    Object blitLine1[] = blitImg[yn];
+    Object blitLine3[] = blitImg[yp];
     for (int x = 0; x < 160; ++x) {
      int xn = (x==0 )?0 :x-1;
      int xp = (x==159)?159:x+1;
      if ((blitLine2[xn] != blitLine2[xp])
      && (blitLine1[x] != blitLine3[x])) {
-      wr.setDataElements(x*2,y*2, objColors[(blitLine1[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);
-      wr.setDataElements(x*2+1,y*2, objColors[(blitLine1[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);
-      wr.setDataElements(x*2,y*2+1, objColors[(blitLine3[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);
-      wr.setDataElements(x*2+1,y*2+1, objColors[(blitLine3[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);
+      wr.setDataElements(x*2,y*2, (blitLine1[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]);
+      wr.setDataElements(x*2+1,y*2, (blitLine1[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]);
+      wr.setDataElements(x*2,y*2+1, (blitLine3[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]);
+      wr.setDataElements(x*2+1,y*2+1, (blitLine3[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]);
      }
      else {
-      int col = blitLine2[x];
-      wr.setDataElements(x*2,y*2, objColors[col]);
-      wr.setDataElements(x*2+1,y*2, objColors[col]);
-      wr.setDataElements(x*2,y*2+1, objColors[col]);
-      wr.setDataElements(x*2+1,y*2+1, objColors[col]);
+      Object col = blitLine2[x];
+      wr.setDataElements(x*2,y*2, col);
+      wr.setDataElements(x*2+1,y*2, col);
+      wr.setDataElements(x*2,y*2+1, col);
+      wr.setDataElements(x*2+1,y*2+1, col);
      }
     }
    }
@@ -368,7 +374,7 @@ public class VideoController {
  private static int bgOffsX;
  private static int windX;
  private static int tilebufBG[] = new int[0x200];
- private static int blitLine[];
+ private static Object blitLine[];
 
 
 
@@ -431,7 +437,7 @@ public class VideoController {
    tilebufBG[bufMap++] = tile |
     ((attr & 0x08) << 6) |
     ((attr & 0x60) << 5);
-   tilebufBG[bufMap++] = (attr&7 | 0x08) << 2;
+   tilebufBG[bufMap++] = ((attr&7) | 0x08) << 2;
    if ((tileMap&31)==0) {
     tileMap -= 32;
     attrMap -= 32;
@@ -458,7 +464,7 @@ public class VideoController {
   int curX = 0;
 
   for (int t = bgOffsX; t < 8; ++t, --cnt)
-   { blitLine[curX++] = TilePal | PatLine[t]; };
+   { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
 
   if (cnt == 0) return;
 
@@ -466,13 +472,13 @@ public class VideoController {
    PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
    TilePal = tilebufBG[bufMap++];
    for (int t = 0; t < 8; ++t)
-    { blitLine[curX++] = TilePal | PatLine[t]; };
+    { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
    cnt -= 8;
   }
   PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
   TilePal = tilebufBG[bufMap++];
   for (int t = 0; cnt > 0; --cnt, ++t)
-   { blitLine[curX++] = TilePal | PatLine[t]; };
+   { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
  }
 
  final private void calcWindTileBuf() {
@@ -491,7 +497,7 @@ public class VideoController {
    tilebufBG[bufMap++] = tile |
     ((attr & 0x08) << 6) |
     ((attr & 0x60) << 5);
-   tilebufBG[bufMap++] = (0x08) << 2;
+   tilebufBG[bufMap++] = ((attr&7) | 0x8) << 2;
    if ((tileMap&31)==0) {
     tileMap -= 32;
     attrMap -= 32;
@@ -517,19 +523,19 @@ public class VideoController {
   int TilePal = tilebufBG[bufMap++];
 
   for (int t = bgOffsX; t < 8; ++t, --cnt)
-   { blitLine[curX++] = TilePal | PatLine[t]; };
+   { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
 
   while (cnt>=8) {
    PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
    TilePal = tilebufBG[bufMap++];
    for (int t = 0; t < 8; ++t)
-    { blitLine[curX++] = TilePal | PatLine[t]; };
+    { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
    cnt -= 8;
   }
   PatLine = patpix[tilebufBG[bufMap++]][bgOffsY];
   TilePal = tilebufBG[bufMap++];
   for (int t = 0; cnt > 0; --cnt, ++t)
-   { blitLine[curX++] = TilePal | PatLine[t]; };
+   { blitLine[curX++] = objColors[TilePal | PatLine[t]]; };
  }
  final private void renderScanlineSprites() {
   boolean spr8x16 = ((LCDC&(1<<2))!=0);
@@ -570,8 +576,8 @@ public class VideoController {
 
      int col = PatLine[ofsX];
      if((col != 0) && (rx >= 0) && (rx < 160)
-     && (prio || ((blitLine[rx]&0x3c)== 0x20))) {
-      { blitLine[rx] = (palnr << 2) | col; };
+                                                  ) {
+      { blitLine[rx] = objColors[(palnr << 2) | col]; };
      }
     }
    }
