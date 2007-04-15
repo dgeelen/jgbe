@@ -1196,7 +1196,7 @@ public class CPU
 
 
    }
-   long ct = 0;
+
    return res;
   }
 

@@ -42,6 +42,6 @@ jmgbe.class: jmgbe.java
 	javac $(JMGBE_JAVAC_OPTS) jmgbe.java
 
 clean:
-	rm -f $(CLASSFILES)
-	touch - $(JPPFILES)
+	rm -f *.class
+	touch $(JPPFILES)
 
