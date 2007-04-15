@@ -586,20 +586,23 @@ public class AudioController {
 		0x5a,0x22,0x23,0x33,0x35,0x55,0x40,0x00,
 	};
 
+	public int samplesQueued = 0;
 	protected boolean isMuted=false;
 	private boolean isEnabled=true;
 	private AudioFormat myAudioFormat;
 	private DataLine.Info myLineInfo;
 	private SourceDataLine audioSource;
 	private byte audioBuffer[];
-	private int audioBufferIndex;
+	public int audioBufferIndex;
 	private int IO[];
 	private int WAVE[] = cgbwave;
 	private final int sampleRate=22050;//44100;//22050;
-	private int cyclesLeftToRender;
+	public int cyclesLeftToRender;
 	private int TimerCountDown;     // 256hz
 	private boolean SweepTimerTick; // 128hz
 	private int RATE;
+	public int CRATE;
+	private int draincnt=1;
 	public class SoundRegister {
 		int on;
 		int pos; // TODO: unsigned?
@@ -624,7 +627,7 @@ public class AudioController {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			myLineInfo = new DataLine.Info(SourceDataLine.class,myAudioFormat);
 			audioSource = (SourceDataLine)AudioSystem.getLine(myLineInfo);
-			audioSource.open(myAudioFormat);
+			audioSource.open(myAudioFormat, 1<<12);
 			audioSource.start();
 		}
 		catch (Exception e) {
@@ -640,6 +643,8 @@ public class AudioController {
 		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
 		SweepTimerTick=false;
 		RATE = (1<<21) / sampleRate;
+		CRATE = (4194304 / sampleRate);
+		//4194304 == (1<<23)
 	}
 
 	void s1_init() {
@@ -774,9 +779,14 @@ public class AudioController {
 	void sound_mix() {
 		int s, l, r, f, n;
 		//System.out.println("RATE="+RATE);
-		if ((RATE==0) || cyclesLeftToRender < RATE) return;
+		if (RATE==0) return;
 
-		for (; cyclesLeftToRender >= RATE; cyclesLeftToRender -= RATE)
+		// CRATE = cycles/sample
+		for (; cyclesLeftToRender >= 0; cyclesLeftToRender -= CRATE)
+
+//while ((audioSource.getBufferSize()-audioSource.available()) > 100) {};
+		//for (int slr=(audioSource.getBufferSize()-audioSource.available()); slr < 1000; ++slr)
+//		for (int tti = samplesleft; tti < 600; ++tti)
 		{
 			l = r = 0;
 
@@ -898,47 +908,44 @@ public class AudioController {
 
 			//TODO: Assume Stereo
 			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
-
-// 			audioBuffer[audioBufferIndex++]=(byte)(l+r);//MONO;
 			if (audioBufferIndex == 22050) audioBufferIndex-=2;
 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
-			//System.out.println(audioBuffer[audioBufferIndex-1]);
- 			//System.out.println("L="+l+" R="+r);
-			//System.out.println("SOUND_MIX");
-// 			if(audioBufferIndex>((audioBuffer.length)>>5)) { //every 1/32 sec
 
-
-			long ct = System.currentTimeMillis();
-			int dif=(int)(ct-lastms);
-			if(  dif > 16 ) {
-				int towrite=Math.min(audioBufferIndex, ((sampleRate/1000)*dif)<<1);
- 				audioSource.write(audioBuffer, 0, towrite);
- 				audioBufferIndex=0;
-				lastms+=dif;
+			if (audioBufferIndex >= 512) {
+				if (++draincnt == 22050/512*5) {
+					draincnt = 0;
+					audioSource.drain();
+				}
+				audioSource.write(audioBuffer, 0, audioBufferIndex);
+				audioBufferIndex = 0;
 			}
-
-// 			if(audioBufferIndex>((audioBuffer.length)>>6)) { //every 1/64 sec
-// 				int towrite = (audioBuffer.length)>>6;
-// 				towrite -= (audioSource.getBufferSize()-audioSource.available());
-// 				towrite &= ~1;
-// 				towrite<<=1;
-// 				towrite = Math.min(towrite, audioBufferIndex);
-// 				audioSource.write(audioBuffer, 0, towrite);
-//
-// 				System.arraycopy(audioBuffer, towrite, audioBuffer, 0, audioBufferIndex-towrite);
-//
-//
-// 				Math.min(audioBufferIndex,(int)(System.currentTimeMillis()-lastms)*(sampleRate/1000)));
-// 				audioBufferIndex -= towrite;
-// 				//System.out.println("AUDIO_WRITE");
-// 				lastms += 16;
-// 			}
 		}
+
+
+
 		IO[0x16] = (IO[0x16]&0xf0) | S1.on | (S2.on<<1) | (S3.on<<2) | (S4.on<<3);
 	}
 
 	static long lastms = System.currentTimeMillis();
+
+	final public int samplesLeft() {
+		return samplesQueued-audioSource.getFramePosition();
+	}
+
+	final public int samplesBuffered() {
+		return (audioBufferIndex>>1);
+	}
+
+	final public void doFlush(int numsamples)	{
+		int stereoSamples = numsamples<<1;
+		//audioSource.drain();
+		audioSource.write(audioBuffer, 0, stereoSamples);
+		samplesQueued += numsamples;
+		audioBufferIndex -= stereoSamples;
+		if (audioBufferIndex != 0)
+			System.arraycopy(audioBuffer, stereoSamples, audioBuffer, 0, audioBufferIndex);
+	}
 
 	static byte bla=0;
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
@@ -946,9 +953,9 @@ public class AudioController {
 			return;
 		cyclesLeftToRender+=nrCycles;
 		int i=cyclesLeftToRender;
-		cyclesLeftToRender>>=1;
+		//cyclesLeftToRender>>=1;
 		sound_mix();
-		cyclesLeftToRender<<=1;
+		//cyclesLeftToRender<<=1;
 		//sound_mix(); //FIXME: HAX
 /*		TimerCountDown-=nrCycles;
 		if(TimerCountDown<=0) {

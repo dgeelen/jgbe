@@ -52,9 +52,9 @@ public class VideoController {
 	private long ptick;
 	private long ftick;
 
-	private int scale = 2;
+	public int scale = 2;
 	private int cfskip = 0;
-	private int fskip = 1; // 1 is off
+	private int fskip = 3; // 1 is off
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
@@ -127,17 +127,21 @@ public class VideoController {
 			}
 		}
 		else if (scale == 2) {
-			for (int y = 1; y < 143; ++y) {
+			for (int y = 0; y < 144; ++y) {
+				int yn = Math.max(0,y-1);
+				int yp = Math.min(143,y+1);
 				int blitLine2[] = blitImg[y];
-				int blitLine1[] = blitImg[y-1];
-				int blitLine3[] = blitImg[y+1];
-				for (int x = 1; x < 159; ++x) {
-					if ((blitLine2[x-1] != blitLine2[x+1])
+				int blitLine1[] = blitImg[yn];
+				int blitLine3[] = blitImg[yp];
+				for (int x = 0; x < 160; ++x) {
+					int xn = Math.max(0,x-1);
+					int xp = Math.min(159,x+1);
+					if ((blitLine2[xn] != blitLine2[xp])
 					&& (blitLine1[x]   != blitLine3[x])) {
-						wr.setPixel(x*2  ,y*2  , colors[(blitLine1[x] == blitLine2[x-1]) ? blitLine2[x-1] : blitLine2[x]]);
-						wr.setPixel(x*2+1,y*2  , colors[(blitLine1[x] == blitLine2[x+1]) ? blitLine2[x+1] : blitLine2[x]]);
-						wr.setPixel(x*2  ,y*2+1, colors[(blitLine3[x] == blitLine2[x-1]) ? blitLine2[x-1] : blitLine2[x]]);
-						wr.setPixel(x*2+1,y*2+1, colors[(blitLine3[x] == blitLine2[x+1]) ? blitLine2[x+1] : blitLine2[x]]);
+						wr.setPixel(x*2  ,y*2  , colors[(blitLine1[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);
+						wr.setPixel(x*2+1,y*2  , colors[(blitLine1[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);
+						wr.setPixel(x*2  ,y*2+1, colors[(blitLine3[x] == blitLine2[xn]) ? blitLine2[xn] : blitLine2[x]]);
+						wr.setPixel(x*2+1,y*2+1, colors[(blitLine3[x] == blitLine2[xp]) ? blitLine2[xp] : blitLine2[x]]);
 					}
 					else {
 						wr.setPixels(x*2,y*2, 2,2,colors[blitLine2[x]]);
@@ -146,12 +150,6 @@ public class VideoController {
 			}
 		}
 		curDrawImg ^= 1;
-
-		long ct;
-		do {
-			ct = perf.highResCounter();
-		} while ((ct-lastms) < 1000000/60);
-		lastms = ct;
 	}
 
 	final public void setMonoColData(int index, int value) {
@@ -166,7 +164,7 @@ public class VideoController {
 		int temp[] = new int[3];
 		temp = GRAYSHADES[(value>>0)&3]; palChange((index<<2) | 0, temp[0], temp[1], temp[2]);
 		temp = GRAYSHADES[(value>>2)&3]; palChange((index<<2) | 1, temp[0], temp[1], temp[2]);
-		temp = GRAYSHADES[(value>>3)&3]; palChange((index<<2) | 2, temp[0], temp[1], temp[2]);
+		temp = GRAYSHADES[(value>>4)&3]; palChange((index<<2) | 2, temp[0], temp[1], temp[2]);
 		temp = GRAYSHADES[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
 	}
 

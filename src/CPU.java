@@ -1145,6 +1145,10 @@ public class CPU
 
   }
 
+  static long lastns = 0;
+  static long lastuf = 0;
+  static int samplesLeft = 0;
+
   final public int nextinstruction() {
    int res = 4*execute();
    ++TotalInstrCount;
@@ -1185,10 +1189,6 @@ public class CPU
     if (VBLANKcntdwn < 0) {
      VBLANKcntdwn += 456;
      VC.renderNextScanline();
-     if ((IOP[0x0f]&3)!=0) {
-
-
-     }
     }
 
 
@@ -1196,9 +1196,7 @@ public class CPU
 
 
    }
-   if (res > 30)
-    System.out.printf("res=%i  PC=$%04x",res, PC);
-
+   long ct = 0;
    return res;
   }
 
