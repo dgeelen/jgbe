@@ -640,10 +640,10 @@ public class CPU
     case 0xd5: { SP=(SP-1)&0xffff; write(SP, (t_w16=((D<<8)|E))>>8); SP=(SP-1)&0xffff; write(SP, (t_w16)&0xff); }; return cycles;
     case 0xe5: { SP=(SP-1)&0xffff; write(SP, (t_w16=((H<<8)|L))>>8); SP=(SP-1)&0xffff; write(SP, (t_w16)&0xff); }; return cycles;
     case 0xf5: { SP=(SP-1)&0xffff; write(SP, (t_w16=((A<<8)|F))>>8); SP=(SP-1)&0xffff; write(SP, (t_w16)&0xff); }; return cycles;
-    case 0x09: { F &= ZF_Mask; L += C; H += B; if (L > 0xff) { L &= 0xff; ++H; F |= HC_Mask; } if (H > 0xff) { H &= 0xff; F |= CF_Mask; } }; return cycles;
-    case 0x19: { F &= ZF_Mask; L += E; H += D; if (L > 0xff) { L &= 0xff; ++H; F |= HC_Mask; } if (H > 0xff) { H &= 0xff; F |= CF_Mask; } }; return cycles;
-    case 0x29: { F &= ZF_Mask; L += L; H += H; if (L > 0xff) { L &= 0xff; ++H; F |= HC_Mask; } if (H > 0xff) { H &= 0xff; F |= CF_Mask; } }; return cycles;
-    case 0x39: { F &= ZF_Mask; L += (SP&0xff); H += (SP>>8); if (L > 0xff) { L &= 0xff; ++H; F |= HC_Mask; } if (H > 0xff) { H &= 0xff; F |= CF_Mask; } }; return cycles;
+    case 0x09: { t_vol=(B<<8)|C; t_acc = ((H<<8)|L) + t_vol; F = (F & (ZF_Mask)) | (HC_Mask & ((H ^ (B) ^ (((t_acc)>>8))) << 1)) | ((t_acc>>12)&CF_Mask); H = (t_acc&0xff00)>>8; L = (t_acc&0xff); }; return cycles;
+    case 0x19: { t_vol=(D<<8)|E; t_acc = ((H<<8)|L) + t_vol; F = (F & (ZF_Mask)) | (HC_Mask & ((H ^ (D) ^ (((t_acc)>>8))) << 1)) | ((t_acc>>12)&CF_Mask); H = (t_acc&0xff00)>>8; L = (t_acc&0xff); }; return cycles;
+    case 0x29: { t_vol=(H<<8)|L; t_acc = ((H<<8)|L) + t_vol; F = (F & (ZF_Mask)) | (HC_Mask & ((H ^ (H) ^ (((t_acc)>>8))) << 1)) | ((t_acc>>12)&CF_Mask); H = (t_acc&0xff00)>>8; L = (t_acc&0xff); }; return cycles;
+    case 0x39: { t_vol=((SP>>8)<<8)|(SP&0xff); t_acc = ((H<<8)|L) + t_vol; F = (F & (ZF_Mask)) | (HC_Mask & ((H ^ ((SP>>8)) ^ (((t_acc)>>8))) << 1)) | ((t_acc>>12)&CF_Mask); H = (t_acc&0xff00)>>8; L = (t_acc&0xff); }; return cycles;
     case 0xe9: PC = ((H<<8)|L); return cycles;
     case 0x2f: A ^= 0xFF; F |= (NF_Mask|HC_Mask); return cycles;
     case 0x36: write(((H<<8)|L), ((read(PC++)))); return cycles;
