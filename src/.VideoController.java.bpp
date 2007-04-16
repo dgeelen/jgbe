@@ -56,7 +56,7 @@ public class VideoController {
 
  public int scale = 3;
  private int cfskip = 0;
- private int fskip = 3;
+ private int fskip = 2;
 
  public VideoController(CPU cpu, int image_width, int image_height) {
   this.cpu = cpu;
@@ -180,13 +180,13 @@ public class VideoController {
      int xp = (x==159)?159:x+1;
      if (!((blitLine1[x]).equals(blitLine3[x])) && !((blitLine2[xn]).equals(blitLine2[xp]))) {
       wr.setDataElements(x*3,y*3, ((blitLine2[xn]).equals(blitLine1[x])) ? blitLine2[xn] : blitLine2[x]);
-      wr.setDataElements(x*3+1,y*3, (((blitLine2[xn]).equals(blitLine1[x])) && !((blitLine2[x]).equals(blitLine1[xp]))) || (((blitLine2[xn]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine1[xn])))? blitLine1[x] : blitLine2[x]);
+      wr.setDataElements(x*3+1,y*3, (((blitLine2[xn]).equals(blitLine1[x])) && !((blitLine2[x]).equals(blitLine1[xp]))) || (((blitLine1[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine1[xn])))? blitLine1[x] : blitLine2[x]);
       wr.setDataElements(x*3+2,y*3, ((blitLine1[x]).equals(blitLine2[xp])) ? blitLine2[xp] : blitLine2[x]);
       wr.setDataElements(x*3,y*3+1, (((blitLine2[xn]).equals(blitLine1[x])) && !((blitLine2[x]).equals(blitLine3[xn]))) || (((blitLine2[xn]).equals(blitLine3[x])) && !((blitLine2[x]).equals(blitLine1[xn])))? blitLine2[xn] : blitLine2[x]);
       wr.setDataElements(x*3+1,y*3+1, blitLine2[x]);
       wr.setDataElements(x*3+2,y*3+1, (((blitLine1[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine3[xp]))) || (((blitLine3[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine1[xp])))? blitLine2[xp] : blitLine2[x]);
       wr.setDataElements(x*3,y*3+2, ((blitLine2[xn]).equals(blitLine3[x])) ? blitLine2[xn] : blitLine2[x]);
-      wr.setDataElements(x*3+1,y*3+2, (((blitLine1[x]).equals(blitLine3[x])) && !((blitLine2[x]).equals(blitLine3[xp]))) || (((blitLine3[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine3[xn])))? blitLine3[x] : blitLine2[x]);
+      wr.setDataElements(x*3+1,y*3+2, (((blitLine2[xn]).equals(blitLine3[x])) && !((blitLine2[x]).equals(blitLine3[xp]))) || (((blitLine3[x]).equals(blitLine2[xp])) && !((blitLine2[x]).equals(blitLine3[xn])))? blitLine3[x] : blitLine2[x]);
       wr.setDataElements(x*3+2,y*3+2, ((blitLine3[x]).equals(blitLine2[xp])) ? blitLine2[xp] : blitLine2[x]);
      } else {
       Object col = blitLine2[x];

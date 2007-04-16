@@ -6,7 +6,7 @@ J2MEPATH=/opt/sun-j2me-bin-2.2
 JMGBECLASSPATH=$(J2MEPATH)/lib/cldcapi11.jar:$(J2MEPATH)/lib/midpapi20.jar
 JMGBEBOOTCLASSPATH=API=$(J2MEPATH)/lib/midpapi20.jar
 JMGBE_PREVERIFY_OPTS=-classpath $(JMGBECLASSPATH)
-JMGBE_JAVAC_OPTS=$(JMGBE_PREVERIFY_OPTS) -bootclasspath $(JMGBEBOOTCLASSPATH)
+JMGBE_JAVAC_OPTS=$(JMGBE_PREVERIFY_OPTS) -bootclasspath $(JMGBEBOOTCLASSPATH) -target 1.4 -source 1.4
 
 
 all: $(JAVAFILES) swinggui.class $(CLASSFILES)
@@ -34,8 +34,8 @@ manifest.mf: MANIFEST.MF.in
 jmgbejad: jmgbe.jad.in
 	sed "s/.*MIDlet-Jar-Size:.*/MIDlet-Jar-Size: `ls -l jmgbe.jar | gawk '{print $$5}'`/" < jmgbe.jad.in > jmgbe.jad
 
-jmgbejar: output/jmgbesv.class manifest.mf
-	jar -cfm jmgbe.jar MANIFEST.MF output/jmgbe.class
+jmgbejar: jmgbepreverified manifest.mf
+	mv output/jmgbe.class . && jar -cfm jmgbe.jar MANIFEST.MF jmgbe.class
 
 jmgbepreverified: jmgbe.class
 	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) jmgbe

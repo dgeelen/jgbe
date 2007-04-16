@@ -230,7 +230,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				System.out.println();
 				return;
 			}
-			
+
 			gui.cartridge = new Cartridge(romfile);
 			if(gui.cartridge.getError()!=null) {
 				System.out.println("ERROR: "+gui.cartridge.getError());
