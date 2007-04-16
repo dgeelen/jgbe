@@ -327,24 +327,24 @@ F = FN \
 #define DO_SUB_N(n) DO_SUB(n)
 #define DO_SUB_V(n) { t_vol = (n); DO_SUB(t_vol); }
 
-#define DO_SBC_V(n) { \
-	t_vol = A - (n) - ((F&FC)>>CF_Shift); \
+#define DO_SBC_N(n) { \
+	t_acc = A - (n) - ((F&FC)>>CF_Shift); \
 	F = FN \
-	| (ZFLAG(LB(t_vol))) \
-	| (FH & ((A ^ (n) ^ LB(t_vol)) << 1)) \
-	| (FC&(t_vol>>8)); \
-	A = LB(t_vol); \
+	| (ZFLAG(LB(t_acc))) \
+	| (FH & ((A ^ (n) ^ LB(t_acc)) << 1)) \
+	| (FC&(t_acc>>8)); \
+	A = LB(t_acc); \
 }
-#define DO_SBC_N(n) DO_SBC_V(n)
+#define DO_SBC_V(n) { t_vol = (n); DO_SBC_N(t_vol); }
 
-#define DO_ADC_V(n) { \
-	t_vol = A + (n) + ((F&FC)>>CF_Shift); \
-	F = (ZFLAG(LB(t_vol))) \
-	| (FH & ((A ^ (n) ^ LB(t_vol)) << 1)) \
-	| (HB(t_vol) << CF_Shift); \
-	A = LB(t_vol); }
+#define DO_ADC_N(n) { \
+	t_acc = A + (n) + ((F&FC)>>CF_Shift); \
+	F = (ZFLAG(LB(t_acc))) \
+	| (FH & ((A ^ (n) ^ LB(t_acc)) << 1)) \
+	| (HB(t_acc) << CF_Shift); \
+	A = LB(t_acc); }
 
-#define DO_ADC_N(n) DO_ADC_V(n)
+#define DO_ADC_V(n) { t_vol = (n); DO_ADC_N(t_vol); }
 
 #define CASES_ALU_OP(base, imm, op) \
 	case (imm)   : DO_ ## op ## _V(FETCH); break; \
@@ -411,14 +411,18 @@ F = FN \
 
 
 #define CASES_CB_SWAP \
-	case 0x30+0: B = Tables.swap[B]; F &= FZ; break; \
-	case 0x30+1: C = Tables.swap[C]; F &= FZ; break; \
-	case 0x30+2: D = Tables.swap[D]; F &= FZ; break; \
-	case 0x30+3: E = Tables.swap[E]; F &= FZ; break; \
-	case 0x30+4: H = Tables.swap[H]; F &= FZ; break; \
-	case 0x30+5: L = Tables.swap[L]; F &= FZ; break; \
-	case 0x30+7: A = Tables.swap[A]; F &= FZ; break; \
-	case 0x30+6: WRITE_V(R16RHL, Tables.swap[READ_V(R16RHL)]); F &= FZ; break; \
+	case 0x30+0: B = Tables.swap[B]; F = ZFLAG(B); break; \
+	case 0x30+1: C = Tables.swap[C]; F = ZFLAG(C); break; \
+	case 0x30+2: D = Tables.swap[D]; F = ZFLAG(D); break; \
+	case 0x30+3: E = Tables.swap[E]; F = ZFLAG(E); break; \
+	case 0x30+4: H = Tables.swap[H]; F = ZFLAG(H); break; \
+	case 0x30+5: L = Tables.swap[L]; F = ZFLAG(L); break; \
+	case 0x30+7: A = Tables.swap[A]; F = ZFLAG(A); break; \
+	case 0x30+6: { \
+		t_acc = Tables.swap[READ_V(R16RHL)]; \
+		WRITE_V(R16RHL, t_acc); \
+		F = ZFLAG(t_acc); \
+	}; break;
 
 
 #define CHECK_INTS \
