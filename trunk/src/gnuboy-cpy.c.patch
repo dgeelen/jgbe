@@ -1,0 +1,185 @@
+--- /tmp/gb/gnuboy-1.0.3/cpu.c	2001-12-06 06:51:38.000000000 +0100
++++ cpu.c	2007-04-16 16:38:34.000000000 +0200
+@@ -10,7 +10,7 @@
+ #include "fastmem.h"
+ #include "cpuregs.h"
+ #include "cpucore.h"
+-
++#include <stdio.h>
+ #ifdef USE_ASM
+ #include "asm.h"
+ #endif
+@@ -249,14 +249,14 @@
+ 
+ 	IME = 0;
+ 	IMA = 0;
+-	
++
+ 	PC = 0x0100;
+ 	SP = 0xFFFE;
+ 	AF = 0x01B0;
+ 	BC = 0x0013;
+ 	DE = 0x00D8;
+ 	HL = 0x014D;
+-	
++
+ 	if (hw.cgb) A = 0x11;
+ 	if (hw.gba) B = 0x01;
+ }
+@@ -275,7 +275,7 @@
+ void timer_advance(int cnt)
+ {
+ 	int unit, tima;
+-	
++
+ 	if (!(R_TAC & 0x04)) return;
+ 
+ 	unit = ((-R_TAC) & 3) << 1;
+@@ -329,7 +329,7 @@
+ 	/* Make sure we don't miss lcdc status events! */
+ 	if ((R_IE & (IF_VBLANK | IF_STAT)) && (max > cpu.lcdc))
+ 		max = cpu.lcdc;
+-	
++
+ 	/* If timer interrupt cannot happen, this is very simple! */
+ 	if (!((R_IE & IF_TIMER) && (R_TAC & 0x04)))
+ 	{
+@@ -344,7 +344,7 @@
+ 
+ 	if (max < cnt)
+ 		cnt = max;
+-	
++
+ 	cpu_timers(cnt);
+ 	return cnt;
+ }
+@@ -361,9 +361,27 @@
+ 	static union reg acc;
+ 	static byte b;
+ 	static word w;
+-
++	static int instrlimit = 100;
+ 	i = cycles;
+ next:
++	fprintf(stderr, "PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
++							PC,
++							A,
++							F,
++							B,
++							C,
++							D,
++							E,
++							H,
++							L,
++							SP);
++
++	if (--instrlimit==0) {
++		op = FETCH;
++		goto unknown;
++	}
++
++
+ 	if ((clen = cpu_idle(i)))
+ 	{
+ 		i -= clen;
+@@ -393,7 +411,7 @@
+ 		}
+ 	}
+ 	IME = IMA;
+-	
++
+ 	if (debug_trace) debug_disassemble(PC, 1);
+ 	op = FETCH;
+ 	clen = cycles_table[op];
+@@ -409,7 +427,7 @@
+ 	case 0x6D: /* LD L,L */
+ 	case 0x7F: /* LD A,A */
+ 		break;
+-			
++
+ 	case 0x41: /* LD B,C */
+ 		B = C; break;
+ 	case 0x42: /* LD B,D */
+@@ -484,7 +502,7 @@
+ 		H = readb(xHL); break;
+ 	case 0x67: /* LD H,A */
+ 		H = A; break;
+-			
++
+ 	case 0x68: /* LD L,B */
+ 		L = B; break;
+ 	case 0x69: /* LD L,C */
+@@ -499,7 +517,7 @@
+ 		L = readb(xHL); break;
+ 	case 0x6F: /* LD L,A */
+ 		L = A; break;
+-			
++
+ 	case 0x70: /* LD (HL),B */
+ 		b = B; goto __LD_HL;
+ 	case 0x71: /* LD (HL),C */
+@@ -517,7 +535,7 @@
+ 	__LD_HL:
+ 		writeb(xHL,b);
+ 		break;
+-			
++
+ 	case 0x78: /* LD A,B */
+ 		A = B; break;
+ 	case 0x79: /* LD A,C */
+@@ -590,7 +608,7 @@
+ 		A = readhi(FETCH); break;
+ 	case 0xF2: /* LDH A,(C) (undocumented) */
+ 		A = readhi(C); break;
+-			
++
+ 
+ 	case 0xF8: /* LD HL,SP+imm */
+ 		b = FETCH; LDHLSP(b); break;
+@@ -639,7 +657,7 @@
+ 		break;
+ 	case 0x3C: /* INC A */
+ 		INC(A); break;
+-			
++
+ 	case 0x03: /* INC BC */
+ 		INCW(BC); break;
+ 	case 0x13: /* INC DE */
+@@ -648,7 +666,7 @@
+ 		INCW(HL); break;
+ 	case 0x33: /* INC SP */
+ 		INCW(SP); break;
+-			
++
+ 	case 0x05: /* DEC B */
+ 		DEC(B); break;
+ 	case 0x0D: /* DEC C */
+@@ -762,7 +780,7 @@
+ 		b = 0x38;
+ 	__RST:
+ 		RST(b); break;
+-			
++
+ 	case 0xC1: /* POP BC */
+ 		POP(BC); break;
+ 	case 0xC5: /* PUSH BC */
+@@ -803,7 +821,7 @@
+ 		}
+ 		/* NOTE - we do not implement dmg STOP whatsoever */
+ 		break;
+-			
++
+ 	case 0x76: /* HALT */
+ 		cpu.halt = 1;
+ 		break;
+@@ -831,8 +849,9 @@
+ 			break;
+ 		}
+ 		break;
+-			
++
+ 	default:
++	unknown:
+ 		die(
+ 			"invalid opcode 0x%02X at address 0x%04X, rombank = %d\n",
+ 			op, (PC-1) & 0xffff, mbc.rombank);

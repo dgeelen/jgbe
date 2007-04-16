@@ -217,10 +217,10 @@ public class Cartridge {
 			case 5:
 				// MBC5
 				System.out.println("Error: not using memmap, or reading from cartridge with a non cartridge address!");
-				return -1;
+				return 0xff;
 			default:
 				System.out.println("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
-				return -1;
+				return 0xff;
 		}
 	}
 

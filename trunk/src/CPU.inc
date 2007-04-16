@@ -146,7 +146,7 @@
 #define CASES_INCDEC8_R(r) \
 	case (0x04+(RNUM(r)<<3)): DO_INC8(r); break; \
 	case (0x05+(RNUM(r)<<3)): DO_DEC8(r); break; \
-	
+
 
 #define CASES_INCDEC8 \
 	CASES_INCDEC8_R(B) \
@@ -158,21 +158,33 @@
 	CASES_INCDEC8_R(A) \
 	case 0x34: { t_acc = READ_V(R16RHL); DO_INC8(t_acc); WRITE_V(R16RHL, t_acc); }; break; \
 	case 0x35: { t_acc = READ_V(R16RHL); DO_DEC8(t_acc); WRITE_V(R16RHL, t_acc); }; break; \
-	
 
-#define DO_ADD_T(r, n) { \
-	F = (((( A &0x0f )+((n)&0x0f ) )>0xf ) ? HC_Mask : 0); \
-	(r) = A + (n); \
-	if ( (r)>0xff ) { \
+
+/* #define DO_ADD_T(r, n) { \
+	t_acc = A + (n); \
+	F=(FH&((A ^ ((n)-((F&FC)>>CF_Shift)) ^ LB(t_acc)) << 1));\
+	if ( t_acc>0xff ) { \
 		F |= FC; \
-		(r) &= 0xff; \
 	}	\
 	F |= ZFLAG(r); \
+	(r) = t_acc&0xff;\
 }
+
+#define LB(x) ((x)&0xff)
+// FIXME: *NOT* sure about the HC :)
+#define DO_CP(n) { \
+t_acc = A - (n); \
+F = FN \
+| (ZFLAG(LB(t_acc))) \
+| (FH&((A ^ ((n)-((F&FC)>>CF_Shift)) ^ LB(t_acc)) << 1)) \
+| (FC&(t_acc>>8)); \
+} */
+
+#define DO_SUB(n) { DO_CP((n)); A = LB(t_acc); }
 
 #define DO_SUB_T(r, n) { \
 	F = FN | \
-		(((( A &0x0f )-((n)&0x0f ) )<0 ) ? HC_Mask : 0); \
+	(FH & ((A ^ (n) ^ LB(acc)) << 1)); \
 	(r) = A - (n); \
 	if ( (r)<0 ) { \
 		F |= FC; \
@@ -181,8 +193,8 @@
 	F |= ZFLAG(r); \
 }
 
-#define DO_CP(n) DO_SUB_T(t_acc, n)
-#define DO_SUB(n) DO_SUB_T(A, n);
+//#define DO_CP(n) DO_SUB_T(t_acc, n)
+//#define DO_SUB(n) DO_SUB_T(A, n);
 #define DO_ADD(n) DO_ADD_T(A, n);
 
 #define DO_ADD_HL(v1, v2) { \
@@ -221,14 +233,14 @@ F = FN \
 #define CASES_INCDEC16_R(r) \
 	case (0x03+(RNUM(r)<<4)): DO_INC16(r); break; \
 	case (0x0b+(RNUM(r)<<4)): DO_DEC16(r); break; \
-	
+
 
 #define CASES_INCDEC16 \
 	CASES_INCDEC16_R(BC) \
 	CASES_INCDEC16_R(DE) \
 	CASES_INCDEC16_R(HL) \
 	CASES_INCDEC16_R(SP) \
-	
+
 
 
 #define CASE_LD_RR(r1, r2) \
@@ -261,7 +273,7 @@ F = FN \
 	CASE_LD_RR(r, A) \
 	CASE_LD_RI(r) \
 	CASE_LD_RHL(r) \
-	
+
 
 #define CASES_LD_XX \
 	CASES_LD_RX(B) \
@@ -275,7 +287,7 @@ F = FN \
 	CASES_LD_16(DE) \
 	CASES_LD_16(HL) \
 	CASES_LD_16(SP) \
-	
+
 
 #define DO_XOR_N(n) { A ^= (n); F = ZFLAG(A); }
 #define DO_XOR_V(n) DO_XOR_N(n)
@@ -311,7 +323,7 @@ F = FN \
 	case (base)+5: DO_ ## op ## _N(L); break; \
 	case (base)+6: DO_ ## op ## _V(READ_V(R16RHL)); break; \
 	case (base)+7: DO_ ## op ## _N(A); break; \
-	
+
 
 #define DO_SET_R(bitnum, r) { (r) |= (1 << bitnum); }
 #define DO_SET_HL(bitnum) { WRITE_V(R16RHL, READ_V(R16RHL) | (1 << bitnum)); }
@@ -341,7 +353,7 @@ F = FN \
 	CASES_CB_BITNUM_N(base, op, 5) \
 	CASES_CB_BITNUM_N(base, op, 6) \
 	CASES_CB_BITNUM_N(base, op, 7) \
-	
+
 
 #define DO_SHOP_R(op, r) { \
 	t_acc = (r) | ((F&FC)<<4); \
@@ -363,7 +375,7 @@ F = FN \
 	case (base)+5: DO_SHOP_R(op, L); break; \
 	case (base)+7: DO_SHOP_R(op, A); break; \
 	case (base)+6: DO_SHOP_HL(op); break; \
-	
+
 
 #define CASES_CB_SWAP \
 	case 0x30+0: B = Tables.swap[B]; F &= FZ; break; \
@@ -374,7 +386,7 @@ F = FN \
 	case 0x30+5: L = Tables.swap[L]; F &= FZ; break; \
 	case 0x30+7: A = Tables.swap[A]; F &= FZ; break; \
 	case 0x30+6: WRITE_V(R16RHL, Tables.swap[READ_V(R16RHL)]); F &= FZ; break; \
-	
+
 
 #define CHECK_INTS \
 	(IME && ((IOP[0x0f]&IE)!=0))

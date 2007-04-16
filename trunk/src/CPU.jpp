@@ -579,7 +579,7 @@ public class CPU
 			refreshMemMap();
 
 			if (bios)
-				PC=0;
+				PC=0x100;
 
 			//AF=$01B0
 			A=VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
@@ -815,6 +815,7 @@ public class CPU
 				case 0x10: if (speedswitch) {                       // STOP
 					System.out.println("Speed switch!");
 					doublespeed = !doublespeed;
+					++PC; // debuggin hax! gnuboy does this too! (fix?)
 					speedswitch = false;
 				}; break;
 				CASES_ALU_OP(0xb8, 0xfe, CP)                        // CP   x            x = r, imm8, (HL)
@@ -863,6 +864,8 @@ public class CPU
 
 		final public int nextinstruction() {
 			int res = 4*execute();
+			SP &= 0xffff;
+			PC &= 0xffff;
 			++TotalInstrCount;
 			TotalCycleCount += res;
 			lastException = (res!=0) ? 0 : 1;

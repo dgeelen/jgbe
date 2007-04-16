@@ -31,15 +31,15 @@ public class VideoController {
 
 // 	protected int GRAYSHADES[][] = {
 // 	                                 {0xFF, 0xFF, 0xFF},   // WHITE
-// 	                                 {0xD3, 0xD3, 0xD3},   // LIGHTGRAY
+// 	                                 {0xD3, 0xD3, 0xE3},   // LIGHTGRAY
 // 	                                 {0xBE, 0xBE, 0xBE},   // DARKGRAY
 // 	                                 {0x00, 0x00, 0x00} }; // BLACK
 
  	// Looks a lot like Origional Gameboy
- 	protected int GRAYSHADES[][] = { {0xc0, 0xd0, 0x40},   // WHITE
- 	                                 {0x90, 0xa0, 0x40},   // LIGHTGRAY
- 	                                 {0x40, 0x60, 0x32},   // DARKGRAY
- 	                                 {0x10, 0x40, 0x26} }; // BLACK
+ 	protected int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
+ 	                                 {0x70, 0xb0, 0x40},   // LIGHTGRAY
+ 	                                 {0x40, 0x70, 0x32},   // DARKGRAY
+ 	                                 {0x10, 0x50, 0x26} }; // BLACK
 
 	protected int BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
 	private int BGPD[]=new int[8*4*2]; //BCPD/BGPD - CGB Mode Only - Background Palette Data
@@ -65,7 +65,7 @@ public class VideoController {
 
 	public int scale = 3;
 	private int cfskip = 0;
-	private int fskip = 2; // 1 is off
+	private int fskip = 1; // 1 is off
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
