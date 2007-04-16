@@ -1,3 +1,7 @@
+#define LB(x) ((x)&0xff)
+//assuming no numbers larger then 2^16:
+#define HB(x) (((x)>>8))
+
 #define FN NF_Mask
 #define FH HC_Mask
 #define FC CF_Mask
@@ -160,6 +164,14 @@
 	case 0x35: { t_acc = READ_V(R16RHL); DO_DEC8(t_acc); WRITE_V(R16RHL, t_acc); }; break; \
 
 
+#define DO_ADD_T(r, n) { \
+	t_acc = (r) + (n); \
+	F = (ZFLAG(LB(t_acc))) \
+	| (FH & (((r) ^ (n) ^ LB(t_acc)) << 1)) \
+	| (HB(t_acc) << 4); \
+	(r) = LB(t_acc); }
+
+
 /* #define DO_ADD_T(r, n) { \
 	t_acc = A + (n); \
 	F=(FH&((A ^ ((n)-((F&FC)>>CF_Shift)) ^ LB(t_acc)) << 1));\
@@ -220,6 +232,14 @@ F = FN \
 | (FH & ((A ^ (n) ^ LB(acc)) << 1)) \
 | ((un8)(-(n8)HB(acc)) << 4); }
 */
+
+#define DO_CP(n) { \
+	t_acc = A - (n); \
+	F = FN \
+	| (ZFLAG(LB(t_acc))) \
+	| (FH & ((A ^ (n) ^ LB(t_acc)) << 1)) \
+	| (FC&(t_acc>>8)); \
+}
 
 #define DO_JR_COND(c) { if (c) DO_JR_D else SKIP_JR; };
 #define DO_JP_COND(c) { if (c) DO_JP_NN else SKIP_JP; };
@@ -307,10 +327,23 @@ F = FN \
 #define DO_SUB_N(n) DO_SUB(n)
 #define DO_SUB_V(n) { t_vol = (n); DO_SUB(t_vol); }
 
-#define DO_SBC_V(n) { t_vol = (n)+((F>>CF_Shift)&1); DO_SUB(t_vol); }
+#define DO_SBC_V(n) { \
+	t_vol = A - (n) - ((F&FC)>>CF_Shift); \
+	F = FN \
+	| (ZFLAG(LB(t_vol))) \
+	| (FH & ((A ^ (n) ^ LB(t_vol)) << 1)) \
+	| (FC&(t_vol>>8)); \
+	A = LB(t_vol); \
+}
 #define DO_SBC_N(n) DO_SBC_V(n)
 
-#define DO_ADC_V(n) { t_vol = (n)+((F>>CF_Shift)&1); DO_ADD(t_vol); }
+#define DO_ADC_V(n) { \
+	t_vol = A + (n) + ((F&FC)>>CF_Shift); \
+	F = (ZFLAG(LB(t_vol))) \
+	| (FH & ((A ^ (n) ^ LB(t_vol)) << 1)) \
+	| (HB(t_vol) << CF_Shift); \
+	A = LB(t_vol); }
+
 #define DO_ADC_N(n) DO_ADC_V(n)
 
 #define CASES_ALU_OP(base, imm, op) \
