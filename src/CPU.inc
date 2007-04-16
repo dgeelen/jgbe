@@ -213,12 +213,10 @@ F = FN \
 	t_vol=(v1<<8)|v2; \
 	t_acc = R16RHL + t_vol; \
 	F = (F & (FZ)) \
-		| (FH & ((H ^ (t_vol>>8) ^ HB(t_acc)) << 1)) \
+		| (FH & ((H ^ (v1) ^ HB(t_acc)) << 1)) \
 		| ((t_acc>>12)&FC); \
 	H = (t_acc&0xff00)>>8; \
 	L = (t_acc&0xff); }
-
-
 
 /*
 	#define CP(n) { \
