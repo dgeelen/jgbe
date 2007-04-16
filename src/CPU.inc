@@ -210,19 +210,15 @@ F = FN \
 #define DO_ADD(n) DO_ADD_T(A, n);
 
 #define DO_ADD_HL(v1, v2) { \
-	F &= FZ; \
-	L += v2; \
-	H += v1; \
-	if (L > 0xff) { \
-		L &= 0xff; \
-		++H; \
-		F |= FH; \
-	} \
-	if (H > 0xff) { \
-		H &= 0xff; \
-		F |= FC; \
-	} \
-}
+	t_vol=(v1<<8)|v2; \
+	t_acc = R16RHL + t_vol; \
+	F = (F & (FZ)) \
+		| (FH & ((H ^ (t_vol>>8) ^ HB(t_acc)) << 1)) \
+		| ((t_acc>>12)&FC); \
+	H = (t_acc&0xff00)>>8; \
+	L = (t_acc&0xff); }
+
+
 
 /*
 	#define CP(n) { \
