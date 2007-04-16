@@ -7,8 +7,8 @@ public class jmgbe extends MIDlet implements CommandListener {
 		private Form mMainForm;
 
 		public jmgbe() {
-			mMainForm = new Form( "HelloMIDlet" );
-			mMainForm.append( new StringItem( null, "Hello, MIDP!" ) );
+			mMainForm = new Form( "JMGBE" );
+			mMainForm.append( new StringItem( null, "JUUJ IT VERKS!!!!" ) );
 			mMainForm.addCommand( new Command( "Exit", Command.EXIT, 0 ) );
 			mMainForm.setCommandListener( this );
 		}
