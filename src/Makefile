@@ -8,8 +8,13 @@ JMGBEBOOTCLASSPATH=API=$(J2MEPATH)/lib/midpapi20.jar
 JMGBE_PREVERIFY_OPTS=-classpath $(JMGBECLASSPATH)
 JMGBE_JAVAC_OPTS=$(JMGBE_PREVERIFY_OPTS) -bootclasspath $(JMGBEBOOTCLASSPATH) -target 1.4 -source 1.4
 
-
 all: $(JAVAFILES) swinggui.class $(CLASSFILES)
+
+rndCartridge: rndCartridge.cpp
+	g++ -O3 rndCartridge.cpp -o rndCartridge
+
+run: all
+	aoss java swinggui ../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
 
 %.class: %.java
 	javac -O $<

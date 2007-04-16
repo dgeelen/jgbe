@@ -27,10 +27,10 @@ public class VideoController {
  protected int WY=0;
  protected int LCDC=0;
  protected int STAT=0;
-  protected int GRAYSHADES[][] = { {0xc0, 0xd0, 0x40},
-                                   {0x90, 0xa0, 0x40},
-                                   {0x40, 0x60, 0x32},
-                                   {0x10, 0x40, 0x26} };
+  protected int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},
+                                   {0x70, 0xb0, 0x40},
+                                   {0x40, 0x70, 0x32},
+                                   {0x10, 0x50, 0x26} };
 
  protected int BGPI=0;
  private int BGPD[]=new int[8*4*2];
@@ -56,7 +56,7 @@ public class VideoController {
 
  public int scale = 3;
  private int cfskip = 0;
- private int fskip = 2;
+ private int fskip = 1;
 
  public VideoController(CPU cpu, int image_width, int image_height) {
   this.cpu = cpu;
