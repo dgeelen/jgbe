@@ -3,19 +3,24 @@
 import javax.microedition.lcdui.*;
 import javax.microedition.midlet.*;
 
-
 public class jmgbe extends MIDlet implements CommandListener {
 		private Form mMainForm;
-
+		private CPU cpu;
+		private Cartridge cartridge;
 		public jmgbe() {
 			mMainForm = new Form( "JMGBE" );
-			mMainForm.append( new StringItem( null, "JUUJ IT VERKS!!!!" ) );
+/*			mMainForm.append( new StringItem( null, "JUUJ IT VERKS!!!!" ) );*/
 			mMainForm.addCommand( new Command( "Exit", Command.EXIT, 0 ) );
 			mMainForm.setCommandListener( this );
 		}
 
 		public void startApp() {
 			Display.getDisplay( this ).setCurrent( mMainForm );
+			cartridge = new Cartridge("/roms/turtles.gb");
+			cpu = new CPU(cartridge);
+			while(true) {
+				cpu.nextinstruction();
+			}
 		}
 
 		public void pauseApp() {}

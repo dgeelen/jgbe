@@ -1,4 +1,4 @@
-//#define JMGBE
+#define JMGBE
 
 #ifdef DEBUG
 	#define PRINTF(x...) System.out.printf(x)
