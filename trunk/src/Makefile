@@ -6,7 +6,12 @@ J2MEPATH=/opt/sun-j2me-bin-2.2
 JMGBECLASSPATH=$(J2MEPATH)/lib/cldcapi11.jar:$(J2MEPATH)/lib/midpapi20.jar
 JMGBEBOOTCLASSPATH=API=$(J2MEPATH)/lib/midpapi20.jar
 JMGBE_PREVERIFY_OPTS=-classpath $(JMGBECLASSPATH)
-JMGBE_JAVAC_OPTS=$(JMGBE_PREVERIFY_OPTS) -bootclasspath $(JMGBEBOOTCLASSPATH) -target 1.4 -source 1.4
+
+#HAX!
+#VM_DEST=-target 1.4.2
+#VM_SOURCE=-source 1.4
+JMGBE_JAVAC_OPTS=$(JMGBE_PREVERIFY_OPTS) -bootclasspath $(JMGBEBOOTCLASSPATH) $(VM_DEST) $(VM_SOURCE)
+
 
 all: $(JAVAFILES) swinggui.class $(CLASSFILES)
 
@@ -17,7 +22,7 @@ run: all
 	aoss java swinggui ../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
 
 %.class: %.java
-	javac -O $<
+	javac $(VM_DEST) $(VM_SOURCE) -O $<
 
 %.java: %.jpp
 	diff -u $@ .$@.bpp
@@ -27,6 +32,14 @@ run: all
 CPU.java: CPU.inc Global.inc
 
 VideoController.java: Global.inc
+
+AudioController.java: Global.inc
+
+Cartridge.java: Global.inc
+
+Bios.java: Global.inc
+
+FHandler.java: Global.inc
 
 jmgberun: jmgbe
 	$(J2MEPATH)/bin/emulator -Xdescriptor:jmgbe.jad
@@ -40,10 +53,19 @@ jmgbejad: jmgbe.jad.in
 	sed "s/.*MIDlet-Jar-Size:.*/MIDlet-Jar-Size: `ls -l jmgbe.jar | gawk '{print $$5}'`/" < jmgbe.jad.in > jmgbe.jad
 
 jmgbejar: jmgbepreverified manifest.mf
-	mv output/jmgbe.class . && jar -cfm jmgbe.jar MANIFEST.MF jmgbe.class
+	mv output/jmgbe.class . && jar -cfm jmgbe.jar MANIFEST.MF jmgbe.class AudioController.class Bios.class Cartridge.class CPU.class ShTables.class Tables.class VideoController.class FHandler.class boot.rom
 
-jmgbepreverified: jmgbe.class
+jmgbepreverified: jmgbe.class AudioController.class Bios.class Cartridge.class CPU.class Tables.class VideoController.class FHandler.class ShTables.class
 	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) jmgbe
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) AudioController
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) Bios
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) Cartridge
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) CPU
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) ShTables
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) Tables
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) VideoController
+	$(J2MEPATH)/bin/preverify $(JMGBE_PREVERIFY_OPTS) FHandler
+
 
 jmgbe.class: jmgbe.java
 	javac $(JMGBE_JAVAC_OPTS) jmgbe.java

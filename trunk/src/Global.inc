@@ -1,3 +1,15 @@
+//#define JMGBE
+
+#ifdef DEBUG
+	#define PRINTF(x...) System.out.printf(x)
+#else
+	#ifdef JMGBE
+		#define PRINTF(x...) /*System.out.printf(x)*/
+	#else
+		//FIXME
+		#define PRINTF(x...) System.out.printf(x)
+	#endif
+#endif
 
 /* first one nearly 10% faster! (sometimes :-p)*/
 #define MAX(a,b) ((a)<(b)?(b):(a))

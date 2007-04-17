@@ -50,7 +50,9 @@ public class CPU
 
   static private Cartridge cartridge;
   static private int lastException=0;
-  static private Disassembler deasm;
+
+   static private Disassembler deasm;
+
   static protected VideoController VC;
   static protected AudioController AC;
 
@@ -63,7 +65,9 @@ public class CPU
    singleton = this;
    this.cartridge = cartridge;
    refreshMemMap();
-   deasm = new Disassembler(this);
+
+    deasm = new Disassembler(this);
+
    VC = new VideoController(this, 160, 144);
    AC = new AudioController(this);
    reset();
@@ -523,9 +527,11 @@ public class CPU
    flags += (( F & ( 1 <<1 ) ) == ( 1 <<1 ) )?"1 ":"0 ";
    flags += (( F & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
    System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
-   System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
-   System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
-   System.out.println( "  "+deasm.simple_disasm( PC ) );
+   System.out.printf("   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L);
+   System.out.printf("  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP);
+
+    System.out.println( "  "+deasm.simple_disasm( PC ) );
+
   }
 
   static final protected int checkInterrupts() {
@@ -1134,12 +1140,12 @@ public class CPU
 	case 0x30+7: A = Tables.swap[A]; F = ( (A) != 0 ? 0 : ZF_Mask ); return cycles;
 	case 0x30+6: { t_acc = Tables.swap[read(((H<<8)|L))]; write(((H<<8)|L), t_acc); F = ( (t_acc) != 0 ? 0 : ZF_Mask ); }; return cycles;
        default:
-      System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
+      System.out.printf("UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op);
       PC -= 2;
       return 0;
      }
     default:
-     System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , op );
+     System.out.printf("UNKNOWN INSTRUCTION: $%02x\n" , op);
      PC -= 1;
      return 0;
    }

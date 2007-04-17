@@ -58,7 +58,6 @@ public class VideoController {
 
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
 
-	private sun.misc.Perf perf;
 	private long pfreq;
 	private long ptick;
 	private long ftick;
@@ -72,9 +71,6 @@ public class VideoController {
 		drawImg=new Image[2];
 		scale (image_width, image_height);
 		this.isCGB = cpu.isCGB();
-		perf = sun.misc.Perf.getPerf();
-		pfreq = perf.highResFrequency();
-		lastms = perf.highResCounter();
 
 		long x = System.nanoTime();
 		for (int i = 0; i < objColors.length; ++i)
@@ -258,7 +254,15 @@ public class VideoController {
 					}
 				}
 			}
-#undef A B C D E F G H I
+#undef A
+#undef B
+#undef C
+#undef D
+#undef E
+#undef F
+#undef G
+#undef H
+#undef I
 		}
 		curDrawImg ^= 1;
 	}
@@ -456,7 +460,7 @@ public class VideoController {
 	final public void selectVRAMBank(int i) {
 		CurrentVRAMBank=i*0x2000;
 		if ((i <0) || (i > 1))
-			System.out.printf("current offset=%x\n",CurrentVRAMBank);
+			PRINTF("current offset=%x\n",CurrentVRAMBank);
 	}
 
 	final public int getcurVRAMBank() {
