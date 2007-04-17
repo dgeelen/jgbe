@@ -49,7 +49,6 @@ public class VideoController {
 
  private CPU cpu;
 
- private sun.misc.Perf perf;
  private long pfreq;
  private long ptick;
  private long ftick;
@@ -63,9 +62,6 @@ public class VideoController {
   drawImg=new Image[2];
   scale (image_width, image_height);
   this.isCGB = cpu.isCGB();
-  perf = sun.misc.Perf.getPerf();
-  pfreq = perf.highResFrequency();
-  lastms = perf.highResCounter();
 
   long x = System.nanoTime();
   for (int i = 0; i < objColors.length; ++i)
@@ -202,7 +198,6 @@ public class VideoController {
      }
     }
    }
-
   }
   curDrawImg ^= 1;
  }

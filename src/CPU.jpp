@@ -129,7 +129,9 @@ public class CPU
 		//CPU Class variables
 		static private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
 		static private int lastException=0;
-		static private Disassembler deasm;
+		#ifndef JMGBE
+			static private Disassembler deasm;
+		#endif
 		static protected VideoController VC;
 		static protected AudioController AC;
 
@@ -142,7 +144,9 @@ public class CPU
 			singleton = this;
 			this.cartridge = cartridge;
 			refreshMemMap();
-			deasm = new Disassembler(this);
+			#ifndef JMGBE
+				deasm = new Disassembler(this);
+			#endif
 			VC = new VideoController(this, 160, 144);
 			AC = new AudioController(this);
 			reset();
@@ -352,11 +356,11 @@ public class CPU
 						b = CurrentWRAMBank;
 						break;
 					default:
-						System.out.printf("TODO: CPU.read(): Read from IO port $%04x\n",index);
+						PRINTF("TODO: CPU.read(): Read from IO port $%04x\n",index);
 						b=0xff; // GnuBoy compat
 						break;
 				}
-				//System.out.printf("TODO: CPU.read(): IOP[$%04x] = $%04x\n",index, b);
+				//PRINTF("TODO: CPU.read(): IOP[$%04x] = $%04x\n",index, b);
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
 				b = HRAM[index-0xff80];
@@ -387,7 +391,7 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-			//System.out.printf("Writing to IO address $%04x value=$%02x\n",index, value);
+			//PRINTF("Writing to IO address $%04x value=$%02x\n",index, value);
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
 				mm[index&0x0FFF] = value;
@@ -420,7 +424,7 @@ public class CPU
 				VC.write(index, value);
 			}
 			else if(index < 0xff00) { //Not Usable
-				System.out.printf("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff) index=$%04x, value=$%02x\n",index,value);
+				PRINTF("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff) index=$%04x, value=$%02x\n",index,value);
 			}
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
@@ -482,7 +486,7 @@ public class CPU
 						break;
 					case 0xff45: // LYC
 						VC.LYC = value;
-						//System.out.printf("Setting LYC=%d ($%02x)\n",value,value);
+						//PRINTF("Setting LYC=%d ($%02x)\n",value,value);
 						break;
 					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
@@ -526,12 +530,12 @@ public class CPU
 						int mode = value >> 7;
 						if (mode == 0) {
 							// TODO: this should take more than 4-12 cycles :O
-							//System.out.printf("DONE: General HDMA transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
+							//PRINTF("DONE: General HDMA transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
 							for (int i = 0; i < len; ++i)
 								VC.write(dst++, read(src++));
 							IOP[0x55] = 0xff; // indicate we have finished
 						} else {
-							System.out.printf("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
+							PRINTF("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
 						}
 						break;
 					case 0xff68: // BGPI
@@ -551,7 +555,7 @@ public class CPU
 						refreshMemMap();
 						break;
 					default:
-						System.out.printf("TODO: CPU.write(): Write to IO port $%04x\n",index);
+						PRINTF("TODO: CPU.write(): Write to IO port $%04x\n",index);
 						break;
 				}
 			}
@@ -631,9 +635,11 @@ public class CPU
 			flags += (( F & ( 1 <<1 ) ) == ( 1 <<1 ) )?"1 ":"0 ";
 			flags += (( F & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
 			System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
-			System.out.printf( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
-			System.out.printf( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
-			System.out.println( "  "+deasm.simple_disasm( PC ) );
+			PRINTF( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
+			PRINTF( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
+			#ifndef JMGBE
+				System.out.println( "  "+deasm.simple_disasm( PC ) );
+			#endif
 		}
 
 		static final protected int checkInterrupts() { //handle interrupt priorities
@@ -845,12 +851,12 @@ public class CPU
 						CASES_CB_SHOP(0x38, SRL)
 						CASES_CB_SWAP
  						default:
-						System.out.printf( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
+						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
 						PC -= 2;
 						return 0;
 					}
 				default:
-					System.out.printf( "UNKNOWN INSTRUCTION: $%02x\n" , op );
+					PRINTF( "UNKNOWN INSTRUCTION: $%02x\n" , op );
 					PC -= 1; // we failed to execute the instruction, so restore PC
 					return 0;
 			}
