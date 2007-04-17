@@ -13,7 +13,7 @@ JMGBE_PREVERIFY_OPTS=-classpath $(JMGBECLASSPATH)
 JMGBE_JAVAC_OPTS=$(JMGBE_PREVERIFY_OPTS) -bootclasspath $(JMGBEBOOTCLASSPATH) $(VM_DEST) $(VM_SOURCE)
 
 
-all: $(JAVAFILES) swinggui.class $(CLASSFILES)
+all: .Global.dummy $(JAVAFILES) swinggui.class $(CLASSFILES)
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge
@@ -25,21 +25,12 @@ run: all
 	javac $(VM_DEST) $(VM_SOURCE) -O $<
 
 %.java: %.jpp
-	diff -u $@ .$@.bpp
-	gcc -E -x c $< | grep -v "^#" | sed "s:cycles\;[ 	]*case:cycles\;\\n	case:g" > $@
-	cp $@ .$@.bpp
+	cat Autogen.txt > $@
+	gcc -E -x c $< | grep -v "^#" | sed "s:cycles\;[ 	]*case:cycles\;\\n	case:g" >> $@
 
-CPU.java: CPU.inc Global.inc
-
-VideoController.java: Global.inc
-
-AudioController.java: Global.inc
-
-Cartridge.java: Global.inc
-
-Bios.java: Global.inc
-
-FHandler.java: Global.inc
+.Global.dummy: Global.inc
+	touch .Global.dummy
+	touch *.jpp
 
 jmgberun: jmgbe
 	$(J2MEPATH)/bin/emulator -Xdescriptor:jmgbe.jad
