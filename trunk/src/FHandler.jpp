@@ -2,25 +2,31 @@
 import java.io.*;
 import java.util.zip.*;
 public final class FHandler {
-	public class NonStatic {
-
-	}
 	public static DataInputStream getDataStream(String fname) throws IOException {
-    	int dotPos = fname.lastIndexOf(".");
+ 			int dotPos=0;
+    	int dp = fname.indexOf(".");
+    	while(dp>0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
+    		dotPos=dp;
+    		dp=fname.indexOf(".",dp+1);
+    	}
     	String fext = fname.substring(dotPos);
 			if ( !fext.equals(".zip") ) {
 			// plain files
-#ifndef JMGBE
+#ifndef USE_JAVA_142
 			FileInputStream fistream = new FileInputStream(fname);
 			BufferedInputStream bistream = new BufferedInputStream(fistream);
 #else
-			InputStream bistream = NonStatic.class.getResourceAsStream(fname);
+			System.out.println("NonStatic.class.getResourceAsStream("+fname+");");
+			Class clazz = Runtime.getRuntime().getClass();
+			InputStream bistream = clazz.getResourceAsStream(fname);
+			System.out.println("bistream="+bistream);
 #endif
 			DataInputStream distream = new DataInputStream(bistream);
+			System.out.println("distream="+distream);
 			return distream;
 		}
 		else {
-#ifndef JMGBE
+#ifndef USE_JAVA_142
 			// Open the ZIP file
 			FileInputStream fistream = new FileInputStream(fname);
 			ZipInputStream zistream = new ZipInputStream(fistream);
@@ -33,6 +39,7 @@ public final class FHandler {
 
 			return distream;
 #else
+			System.out.println("FHandler opening zipfile not supported!");
 			return null;
 #endif
 		}

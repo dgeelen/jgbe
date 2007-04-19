@@ -45,8 +45,12 @@ public class Cartridge {
 			System.out.println("error loading cartridge from file!: " + e.getMessage());
 			err_msg = e.getMessage();
 		}
-
+#ifdef USE_JAVA_142
+		new Bios("/boot.rom", BIOS_ROM);
+#else
 		new Bios("boot.rom", BIOS_ROM);
+#endif
+	PRINTFREEMEM("cartridge.create done");
 	}
 
 	public String getError() {
@@ -72,10 +76,10 @@ public class Cartridge {
 		 * used to initialize RAM and ROM banks
 		 */
 		MM_ROM[0] = new int[MEMMAP_SIZE]; // init first memmap chunk
-
 		DataInputStream distream = FHandler.getDataStream(file_name);
-
+		System.out.println("cartridge got distream="+distream);
 		// load first memmap chunk into memory
+		PRINTFREEMEM("cartridge");
 		for(int i = 0; i < MEMMAP_SIZE; ++i)
 			MM_ROM[0][i] = distream.readUnsignedByte();
 
@@ -159,6 +163,7 @@ public class Cartridge {
 		System.out.println("Trying to load "+(rom_mm_size>>2)+" banks of ROM");
 		PRINTF("loading");
 		for (int i = 1; i < rom_mm_size; ++i) {
+			PRINTFREEMEM("cartidge");
 			MM_ROM[i] = new int[MEMMAP_SIZE];
 			for(int j = 0; j < MEMMAP_SIZE; ++j) {
 				MM_ROM[i][j] = distream.readUnsignedByte();

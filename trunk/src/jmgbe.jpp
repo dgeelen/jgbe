@@ -1,33 +1,71 @@
+#include "Global.inc"
+#ifdef USE_JAVA_142
 //TODO: Fix package name
 //package gpl.emulation.jgbe;
 import javax.microedition.lcdui.*;
 import javax.microedition.midlet.*;
+import javax.microedition.lcdui.game.GameCanvas;
+import java.util.*;
 
-public class jmgbe extends MIDlet implements CommandListener {
-		private Form mMainForm;
-		private CPU cpu;
-		private Cartridge cartridge;
-		public jmgbe() {
-			mMainForm = new Form( "JMGBE" );
-/*			mMainForm.append( new StringItem( null, "JUUJ IT VERKS!!!!" ) );*/
-			mMainForm.addCommand( new Command( "Exit", Command.EXIT, 0 ) );
-			mMainForm.setCommandListener( this );
+public class jmgbe extends GameCanvas implements Runnable {
+	private static final int SLEEP_INCREMENT = 10;
+	private static final int SLEEP_INITIAL = 150;
+	private static final int SLEEP_MAX = 300;
+
+	private Graphics        graphics;
+	private Random          random;
+	private int             sleepTime = SLEEP_INITIAL;
+	private volatile Thread thread;
+	private CPU cpu;
+	private Cartridge cartridge;
+
+	public jmgbe(){
+		super( true );
+		graphics = getGraphics();
+		graphics.setColor( 0,  0, 0 );
+		graphics.fillRect( 0, 0, getWidth(), getHeight() );
+		PRINTFREEMEM("pre cartridge");
+		cartridge = new Cartridge("/roms/turtles.gb");
+		PRINTFREEMEM("pre CPU");
+		cpu = new CPU(cartridge);
+		PRINTFREEMEM("pre CPU");
+		cpu.VC.addListener(graphics);
+	}
+
+	// When the game canvas is hidden, stop the thread.
+
+	protected void hideNotify(){
+		thread = null;
+	}
+
+	// The game loop.
+
+	public void run(){
+		int w = getWidth();
+		int h = getHeight() - 1;
+
+		while( thread == Thread.currentThread() ){
+// 			int state = getKeyStates();
+// 			if( ( state & DOWN_PRESSED ) != 0 ){}
+
+			// Repaint the screen by first scrolling the
+			// existing starfield down one and painting in
+			// new stars...
+
+			flushGraphics();
 		}
+	}
 
-		public void startApp() {
-			Display.getDisplay( this ).setCurrent( mMainForm );
-			cartridge = new Cartridge("/roms/turtles.gb");
-			cpu = new CPU(cartridge);
-			while(true) {
-				cpu.nextinstruction();
-			}
-		}
+	// When the canvas is shown, start a thread to
+	// run the game loop.
 
-		public void pauseApp() {}
+	protected void showNotify(){
+		random = new Random();
 
-		public void destroyApp( boolean unconditional ) {}
-
-		public void commandAction( Command c, Displayable s ) {
-			notifyDestroyed();
-		}
+		thread = new Thread( this );
+		thread.start();
+	}
 }
+#else
+	public class jmgbe {} //DUMMY FOR JAVA 1.5
+#endif
