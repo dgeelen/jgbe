@@ -129,7 +129,7 @@ public class CPU
 		//CPU Class variables
 		static private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
 		static private int lastException=0;
-		#ifndef JMGBE
+		#ifndef USE_JAVA_142
 			static private Disassembler deasm;
 		#endif
 		static protected VideoController VC;
@@ -143,13 +143,18 @@ public class CPU
 			}
 			singleton = this;
 			this.cartridge = cartridge;
+			PRINTFREEMEM("CPU refreshMemMap");
 			refreshMemMap();
-			#ifndef JMGBE
+			#ifndef USE_JAVA_142
 				deasm = new Disassembler(this);
 			#endif
+			PRINTFREEMEM("CPU new VC");
 			VC = new VideoController(this, 160, 144);
+			PRINTFREEMEM("CPU new AC");
 			AC = new AudioController(this);
+			PRINTFREEMEM("CPU RESET");
 			reset();
+			PRINTFREEMEM("CPU created");
 		}
 
 		static private int[][] rMemMap = new int[0x10][];
@@ -303,6 +308,7 @@ public class CPU
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
 						//BLAAAA
 						b = VC.STAT|(((new java.util.Random()).nextInt(2))<<1); //HAX I wanna play!!!
+						b = (VC.STAT^=2); //HAX: Toggle MODE2 I wanna play!!!
 						break;
 					case 0xff42: // SCY
 						b = VC.SCY;
@@ -637,7 +643,7 @@ public class CPU
 			System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
 			PRINTF( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
 			PRINTF( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
-			#ifndef JMGBE
+			#ifndef USE_JAVA_142
 				System.out.println( "  "+deasm.simple_disasm( PC ) );
 			#endif
 		}

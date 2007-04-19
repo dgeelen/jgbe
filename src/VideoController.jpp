@@ -1,17 +1,24 @@
+#include "Global.inc"
+#ifdef USE_JAVA_142
+import javax.microedition.lcdui.*;
+import javax.microedition.lcdui.game.GameCanvas;
+#else
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
-
-#include "Global.inc"
+#endif
 
 public class VideoController {
 	private static final int MIN_WIDTH  = 160;
 	private static final int MIN_HEIGHT = 144;
 
+#ifdef USE_JAVA_142
+	private Graphics listener = null;
+#else
 	private JPanel listener = null;
 	private Image drawImg[];
+#endif
 	private int curDrawImg = 0;
-	private Object blitImg[][]=new Object[144][160]; // [y][x]
 
 	private int CurrentVRAMBank=0;
 	//private int VRAM[][]=new int[2][0x2000]; //8k per bank;
@@ -48,10 +55,17 @@ public class VideoController {
 	private int OBPD[]=new int[8*4*2]; //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
 
 	/* caching vars */
-	private int intColors[][] = new int[8*4*2][3];
-	private Color colColors[] = new Color[8*4*2];
-	private Object objColors[] = new Object[8*4*2];
-	private int patpix[][][] = new int[4096][8][8]; // see updatepatpix()
+#ifdef USE_JAVA_142
+#define BLITPIXTYPE int[]
+	private int blitImg[][][]=new int[144][160][3]; // [y][x]
+	private int palColors[][] = new int[8*4*2][3];
+// 	private Color colColors[] = new Color[8*4*2];
+#else
+#define BLITPIXTYPE Object
+	private Object blitImg[][] =new Object[144][160]; // [y][x]
+	private Object palColors[] = new Object[8*4*2];
+#endif
+	private int patpix[][][] = new int[4096][][]; // see updatepatpix()
 	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
 	private boolean anydirty = true;                // see updatepatpix()
 	private boolean alldirty = true;                // see updatepatpix()
@@ -64,17 +78,20 @@ public class VideoController {
 
 	public int scale = 3;
 	private int cfskip = 0;
-	private int fskip = 1; // 1 is off
+	private int fskip = 2; // 1 is off
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
+#ifndef USE_JAVA_142
 		drawImg=new Image[2];
+#endif
 		scale (image_width, image_height);
 		this.isCGB = cpu.isCGB();
 
 		long x = System.nanoTime();
-		for (int i = 0; i < objColors.length; ++i)
-			objColors[i] =
+#ifndef USE_JAVA_142
+		for (int i = 0; i < palColors.length; ++i)
+			palColors[i] =
 				((BufferedImage)drawImg[curDrawImg^1]).
 				getColorModel().
 				getDataElements(0, null);
@@ -84,19 +101,31 @@ public class VideoController {
 					((BufferedImage)drawImg[curDrawImg^1]).
 					getColorModel().
 					getDataElements(0, null);
+#endif
+	for(int i=0; i<1024; ++i) {
+		patdirty[i]=true;
+	}
+	updatepatpix();
 	}
 
-	final public void addListener(JPanel panel)
-	{
+#ifndef USE_JAVA_142
+	final public void addListener(JPanel panel) {
+
 		listener = panel; // only 1 listener at a time currently :-p
 		//drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 		this.scale(drawImg[0].getWidth(null), drawImg[0].getHeight(null));
 	}
+#else
+	final public void addListener(Graphics grfx) {
+		listener = grfx;
+		//this.scale(drawImg[0].getWidth(null), drawImg[0].getHeight(null));
+	}
+#endif
 
 	public void scale(int width, int height) {
 		if (width <  scale*MIN_WIDTH)  width  = scale*MIN_WIDTH;
 		if (height < scale*MIN_HEIGHT) height = scale*MIN_HEIGHT;
-
+#ifndef USE_JAVA_142
 		if (listener == null) {
 			System.out.println("creating BufferedImage's");
 			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -117,12 +146,15 @@ public class VideoController {
 			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		}
+#endif
 	}
 
+#ifndef USE_JAVA_142
 	final public Image getImage() {
 		// return ((VolatileImage)drawImg[curDrawImg]).getScaledInstance(image_width, image_height,Image.SCALE_FAST); // display image not being drawn to
 		return drawImg[curDrawImg]; // display image not being drawn to
 	}
+#endif
 
 	final private void palQuadify(int[] col) {
 		for (int i=0; i<3; ++i) {
@@ -133,20 +165,22 @@ public class VideoController {
 	}
 
 	final private void palChange(int palcol, int r, int g, int b) {
-		intColors[palcol][0] = r;
-		intColors[palcol][1] = g;
-		intColors[palcol][2] = b;
-
-		colColors[palcol] = new Color(r,g,b);
-
-		objColors[palcol] =
+#ifdef USE_JAVA_142
+		palColors[palcol][0] = r;
+		palColors[palcol][1] = g;
+		palColors[palcol][2] = b;
+//
+// 		colColors[palcol] = new Color(r,g,b);
+#else
+		palColors[palcol] =
 			((BufferedImage)drawImg[curDrawImg^1]).
 			getColorModel().
 			getDataElements((r<<16)|(g<<8)|(b<<0), null);
+#endif
 	}
 
 #define DRAWPIX(x, pal, col) { \
-		blitLine[x] = objColors[pal | col]; \
+		blitLine[x] = palColors[pal | col]; \
 } \
 
 // blitting using WritableRaster
@@ -154,7 +188,7 @@ public class VideoController {
 	wr.setPixel(x,y, intColors[col])
 
 #define BLIT_PIX_W2(x,y, col) \
-	wr.setDataElements(x,y, objColors[col])
+	wr.setDataElements(x,y, palColors[col])
 
 #define BLIT_PIX_W3(x,y, col) \
 	wr.setDataElements(x,y, col)
@@ -164,20 +198,32 @@ public class VideoController {
 	g.drawRect(x,y, 0, 0); \
 }
 
+#define BLIT_PIX_USE_JAVA_142(x,y, col) { \
+	int[] tcol = col; \
+	listener.setColor(tcol[0], tcol[1], tcol[2]); \
+	listener.drawRect(x,y, 0, 0); \
+}
+
 //#define EQ(a,b) ((a) == (b))
 #define EQ(a,b) ((a).equals(b))
 
+#ifndef USE_JAVA_142
 #define BLIT_PIX BLIT_PIX_W3
+#else
+#define BLIT_PIX BLIT_PIX_USE_JAVA_142
+#endif
 
 	//static long lastms = System.nanoTime();
 	static long lastms;
 	static int fps23fix=0;
 	final private void blitImage() {
 		//Graphics g = drawImg[curDrawImg^1].getGraphics();
+#ifndef USE_JAVA_142
 		WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
+#endif
 		if (scale == 1) {
 			for (int y = 0; y < 144; ++y) {
-				Object blitLine[] = blitImg[y];
+				BLITPIXTYPE[] blitLine = blitImg[y];
 				for (int x = 0; x < 160; ++x) {
 					BLIT_PIX(x, y, blitLine[x]);
 				}
@@ -197,9 +243,9 @@ public class VideoController {
 			for (int y = 0; y < 144; ++y) {
 				int yn = (y==0  )?0  :y-1;
 				int yp = (y==143)?143:y+1;
-				Object blitLine2[] = blitImg[y];
-				Object blitLine1[] = blitImg[yn];
-				Object blitLine3[] = blitImg[yp];
+				BLITPIXTYPE[] blitLine2 = blitImg[y];
+				BLITPIXTYPE[] blitLine1 = blitImg[yn];
+				BLITPIXTYPE[] blitLine3 = blitImg[yp];
 				for (int x = 0; x < 160; ++x) {
 					int xn = (x==0  )?0  :x-1;
 					int xp = (x==159)?159:x+1;
@@ -211,7 +257,7 @@ public class VideoController {
 						BLIT_PIX(x*2+1,y*2+1, EQ(H, F) ? F : E);
 					}
 					else {
-						Object col = E;
+						BLITPIXTYPE col = E;
 						BLIT_PIX(x*2  ,y*2  , col);
 						BLIT_PIX(x*2+1,y*2  , col);
 						BLIT_PIX(x*2  ,y*2+1, col);
@@ -224,9 +270,9 @@ public class VideoController {
 			for (int y = 0; y < 144; ++y) {
 				int yn = (y==0  )?0  :y-1;
 				int yp = (y==143)?143:y+1;
-				Object blitLine2[] = blitImg[y];
-				Object blitLine1[] = blitImg[yn];
-				Object blitLine3[] = blitImg[yp];
+				BLITPIXTYPE[] blitLine2 = blitImg[y];
+				BLITPIXTYPE[] blitLine1 = blitImg[yn];
+				BLITPIXTYPE[] blitLine3 = blitImg[yp];
 				for (int x = 0; x < 160; ++x) {
 					int xn = (x==0  )?0  :x-1;
 					int xp = (x==159)?159:x+1;
@@ -241,7 +287,7 @@ public class VideoController {
 						BLIT_PIX(x*3+1,y*3+2, (EQ(D, H) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, G))? H : E);
 						BLIT_PIX(x*3+2,y*3+2, EQ(H, F) ? F : E);
 					} else {
-						Object col = E;
+						BLITPIXTYPE col = E;
 						BLIT_PIX(x*3  ,y*3  , col);
 						BLIT_PIX(x*3+1,y*3  , col);
 						BLIT_PIX(x*3+2,y*3  , col);
@@ -362,6 +408,12 @@ public class VideoController {
 			if (i == 384) i = 512;
 			if (i == 896) break;
 			if (!patdirty[i]/* && !alldirty*/) continue;
+			if (patpix[i]==null) {
+				patpix[i] = new int[8][8];
+				patpix[i+1024] = new int[8][8];
+				patpix[i+2048] = new int[8][8];
+				patpix[i+3072] = new int[8][8];
+				}
 			patdirty[i] = false;
 
 			for (int y = 0; y < 8; ++y) {
@@ -404,7 +456,9 @@ public class VideoController {
 		if (LY == 144) {             // VBLANK
 			if (cfskip == 0) {
 				blitImage();
+#ifndef USE_JAVA_142
 				if (listener != null) listener.updateUI();
+#endif
 			}
 			cfskip--;
 			if (cfskip < 0) cfskip += fskip;
@@ -481,7 +535,7 @@ public class VideoController {
 	private static int bgOffsX;
 	private static int windX;
 	private static int tilebufBG[] = new int[0x200]; // ? max here could be lower?
-	private static Object blitLine[];
+	private static BLITPIXTYPE[] blitLine;
 
 #define DRAWPIX_S(x, pal, col) DRAWPIX(x, (pal << 2), col)
 
