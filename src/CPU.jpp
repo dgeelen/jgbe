@@ -30,82 +30,6 @@ public class CPU
 		protected static int L = 7;
 		protected static int A = 0;
 
-		//public int[] regs = new int[0x100]; // haha does nothing
-
-/*
-		final protected int shla(int value) {
-			int res = value;
-			res <<= 1;
-			regs[F] = 0;
-			regs[F] |= (res > 0xff) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int shra(int value) {
-			int res = value;
-			res >>= 1;
-			regs[F] = 0;
-			regs[F] |= ((value&1)!=0) ? CF_Mask : 0;
-			res |= (value&(1<<7));
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int shrl(int value) {
-			int res = value;
-			res >>= 1;
-			regs[F] = 0;
-			regs[F] |= ((value&1)!=0) ? CF_Mask : 0;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int rol(int value) {
-			int res = value;
-			res <<= 1;
-			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1 : 0;
-			regs[F] = 0;
-			regs[F] |= (res > 0xff) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int rolc(int value) {
-			int res = value;
-			res <<= 1;
-			res |= (res > 0xff) ? 1 : 0;
-			regs[F] = 0;
-			regs[F] |= (res > 0xff) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int ror(int value) {
-			int res = value;
-			res >>= 1;
-			res |= ((regs[F]&CF_Mask)==CF_Mask) ? 1<<7 : 0;
-			regs[F] = 0;
-			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-
-		final protected int rorc(int value) {
-			int res = value;
-			res >>= 1;
-			res |= ((value&1)==1) ? 1<<7 : 0;
-			regs[F] = 0;
-			regs[F] |= ((value&1)==1) ? CF_Mask : 0;
-			res &= 0xff;
-			regs[F] |= (res == 0) ? ZF_Mask : 0;
-			return res;
-		}
-*/
 		static private int[] IOP = new int[0x80]; //IO Ports
 		static private int[] HRAM = new int[0x7F]; //HighRAM
 		static private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
@@ -628,6 +552,19 @@ public class CPU
 			write(0xff4a, 0x00); // [$FF4A] = $00   ; WY
 			write(0xff4b, 0x00); // [$FF4B] = $00   ; WX
 			write(0xffff, 0x00); // [$FFFF] = $00   ; IE
+
+			CurrentWRAMBank=1;
+			doublespeed = false;
+			speedswitch = false;
+			DIVcntdwn = 0;
+			TIMAcntdwn = 0;
+			VBLANKcntdwn = 0;
+			IE=0;         ///< Interrupt Enable (allowed interrupts)
+			IME=true; ///< Interrupt Master Enable
+			halted=false;
+			DirectionKeyStatus=0x0f; //bitmask
+			ButtonKeyStatus=0x3f; //bitmask
+			lastException=0;
 		}
 
 		static final protected int cycles() {
