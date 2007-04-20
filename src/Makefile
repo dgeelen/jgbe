@@ -22,13 +22,17 @@ CLASSFILES:=$(shell echo $(CLASSFILES) | sort | uniq)
 all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 
 fun: all
-	cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb -nodebug
+	#cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb -nodebug
+	cd $(CLASSDIR) && aoss java swinggui ../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc -nodebug
+
 
 silence: all
 	cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb -nodebug -nosound
 
 run: all
-	cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
+	#cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
+	#cd $(CLASSDIR) && aoss java swinggui ../../roms/Super\ Mario\ Land\ 2\ -\ 6\ Golden\ Coins\ \(UE\)\ \(V1.0\)\ \[\!\].gb
+	cd $(CLASSDIR) && aoss java swinggui ../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge

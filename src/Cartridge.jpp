@@ -188,6 +188,7 @@ public class Cartridge {
 
 	public int read(int index) {
 		switch(MBC) {
+			case 1:
 			case 3:
 				//MBC3 TODO: RTC CRAP
 				System.out.println("Error: not using memmap, or reading from cartridge with a non cartridge address!");
@@ -264,9 +265,8 @@ public class Cartridge {
 			case 3:
 				// MBC3
 				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
-					if(value==0x0a) ram_enabled = true;
-					else if(value==0x00) ram_enabled = false;
-					else PRINTF("WARNING: Ram enabled state UNDEFINED ($%02x)\n", value);
+					if ((value&0x0f) == 0x0A) ram_enabled = true; // 0x0Ah enable
+					else ram_enabled = false;
 				}
 				if((index>=0x2000)&&(index<0x4000)) {//2000-3FFF - ROM Bank Number (Write Only)
 					CurrentROMBank=Math.max(value&0x7f,1);

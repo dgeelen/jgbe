@@ -76,7 +76,8 @@ public class VideoController {
 	private long ptick;
 	private long ftick;
 
-	public int scale = 1;
+	private int scale = 1;
+	public int nscale = 1;
 	private int cfskip = 0;
 	private int fskip = 1; // 1 is off
 
@@ -85,7 +86,7 @@ public class VideoController {
 #ifndef USE_JAVA_142
 		drawImg=new Image[2];
 #endif
-		scale (image_width, image_height);
+		scale();
 		this.isCGB = cpu.isCGB();
 
 		long x = System.nanoTime();
@@ -113,7 +114,7 @@ public class VideoController {
 
 		listener = panel; // only 1 listener at a time currently :-p
 		//drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
-		this.scale(drawImg[0].getWidth(null), drawImg[0].getHeight(null));
+		this.scale();
 	}
 #else
 	final public void addListener(Graphics grfx) {
@@ -122,9 +123,10 @@ public class VideoController {
 	}
 #endif
 
-	public void scale(int width, int height) {
-		if (width <  scale*MIN_WIDTH)  width  = scale*MIN_WIDTH;
-		if (height < scale*MIN_HEIGHT) height = scale*MIN_HEIGHT;
+	public void scale() {
+		scale = nscale;
+		int width  = scale*MIN_WIDTH;
+		int height = scale*MIN_HEIGHT;
 #ifndef USE_JAVA_142
 		if (listener == null) {
 			System.out.println("creating BufferedImage's");
@@ -217,6 +219,7 @@ public class VideoController {
 	static long lastms;
 	static int fps23fix=0;
 	final private void blitImage() {
+		if (scale != nscale) scale();
 		//Graphics g = drawImg[curDrawImg^1].getGraphics();
 #ifndef USE_JAVA_142
 		WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
