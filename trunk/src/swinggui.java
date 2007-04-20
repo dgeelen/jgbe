@@ -112,7 +112,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
    grfx=new DrawingArea( cpu.VC );
    grfx.setFocusable(true);
    grfx.addKeyListener(this);
-   grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+   grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) );
    contentPane.add( grfx, BorderLayout.CENTER );
   }
 
@@ -142,9 +142,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
   public void componentShown(ComponentEvent e) {}
 
   public void componentResized(ComponentEvent e) {
-   cpu.VC.scale(grfx.getWidth(),
-                grfx.getHeight());
-   System.out.println("Window resized");
   }
 
   public void actionPerformed( ActionEvent e ) {
@@ -156,21 +153,21 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
     System.exit(0);
    }
    else if (e.getSource().equals( menuitemScale1x )) {
-    VC.scale = 1;
-     grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
-    grfx.setSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    VC.nscale = 1;
+     grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) );
+    grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) );
     frame.pack();
    }
    else if (e.getSource().equals( menuitemScale2x )) {
-    VC.scale = 2;
-     grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
-    grfx.setSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    VC.nscale = 2;
+     grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) );
+    grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) );
     frame.pack();
    }
    else if (e.getSource().equals( menuitemScale3x )) {
-    VC.scale = 3;
-     grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
-    grfx.setSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    VC.nscale = 3;
+     grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) );
+    grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) );
     frame.pack();
    }
    else if(e.getSource().equals( menuitemOpenROM )) {
