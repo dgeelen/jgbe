@@ -157,6 +157,11 @@ public class CPU
 			PRINTFREEMEM("CPU created");
 		}
 
+		public static final void setCartridge(Cartridge acartridge) {
+			cartridge = acartridge;
+			reset();
+		}
+
 		static private int[][] rMemMap = new int[0x10][];
 		static private int[][] wMemMap = new int[0x10][];
 
@@ -588,8 +593,7 @@ public class CPU
 			VC.isCGB = bios ? false : isCGB();
 			refreshMemMap();
 
-			if (bios)
-				PC=0x100;
+			PC = 0x100;
 
 			//AF=$01B0
 			A=VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
@@ -874,7 +878,8 @@ public class CPU
 		static long lastuf = 0;
 		static int samplesLeft = 0;
 
-		final public int nextinstruction() {
+		static final public int nextinstruction() {
+			//System.out.printf("execing stuff PC=0x%04x\n",PC);
 			int res = 4*execute();
 			SP &= 0xffff;
 			PC &= 0xffff;

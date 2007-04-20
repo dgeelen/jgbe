@@ -11,16 +11,31 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.LinkedList;
 import java.net.*;
+import java.io.*;
 import java.awt.image.BufferedImage;
+
+  class CPURunner implements Runnable {
+   public void run() {
+    while (!Thread.interrupted() && (CPU.nextinstruction()!=0)) {};
+   }
+  }
 
 public class swinggui implements ActionListener, ItemListener, KeyListener, ComponentListener {
   public static boolean RIGHT_TO_LEFT = false;
   private static DrawingArea grfx;
   private static JMenuBar menubar;
   protected VideoController VC;
-  protected Cartridge cartridge;
   protected CPU cpu;
   private int fps;
+  JMenuItem menuitemExit;
+  JMenuItem menuitemScale1x;
+  JMenuItem menuitemScale2x;
+  JMenuItem menuitemScale3x;
+  JMenuItem menuitemOpenROM;
+  JMenuItem menuitemSeparator;
+
+  CPURunner cpuRunner;
+  Thread cpurunthread;
 
   public class DrawingArea extends JPanel{
    VideoController VC;
@@ -41,20 +56,42 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
   private JMenuBar createJMenuBar() {
    JMenuBar mainMenuBar;
    JMenu menuFile;
-   JMenuItem menuitemExit;
+   JMenu menuSettings;
+   JMenu menuScaling;
    mainMenuBar = new JMenuBar();
 
    menuFile = new JMenu( "File" );
    menuFile.setMnemonic( KeyEvent.VK_F );
    mainMenuBar.add( menuFile );
+   menuSettings = new JMenu( "Settings" );
+   menuSettings.setMnemonic( KeyEvent.VK_S );
+   mainMenuBar.add( menuSettings );
 
 
+
+   menuitemOpenROM = new JMenuItem("Open ROM", KeyEvent.VK_O);
+   menuitemOpenROM.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, ActionEvent.CTRL_MASK ) );
+   menuitemOpenROM.addActionListener( this );
+   menuFile.add(menuitemOpenROM);
    menuitemExit = new JMenuItem( "Exit", KeyEvent.VK_X );
-
-
-   menuitemExit.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_1, ActionEvent.ALT_MASK ) );
+   menuitemExit.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_Q, ActionEvent.CTRL_MASK) );
    menuitemExit.addActionListener( this );
    menuFile.add( menuitemExit );
+
+   menuScaling = new JMenu( "Scaling");
+   menuitemScale1x = new JMenuItem( "Scale 1x", KeyEvent.VK_1 );
+   menuitemScale2x = new JMenuItem( "Scale 2x", KeyEvent.VK_2 );
+   menuitemScale3x = new JMenuItem( "Scale 3x", KeyEvent.VK_3 );
+   menuitemScale1x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_1, ActionEvent.CTRL_MASK ) );
+   menuitemScale2x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_2, ActionEvent.CTRL_MASK ) );
+   menuitemScale3x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_3, ActionEvent.CTRL_MASK ) );
+   menuitemScale1x.addActionListener( this );
+   menuitemScale2x.addActionListener( this );
+   menuitemScale3x.addActionListener( this );
+   menuScaling.add( menuitemScale1x );
+   menuScaling.add( menuitemScale2x );
+   menuScaling.add( menuitemScale3x );
+   menuSettings.add( menuScaling) ;
    return mainMenuBar;
   }
 
@@ -86,7 +123,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
    frame = new JFrame( "JGameBoy Emulator V0.01" );
    frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-   frame.setBounds( 60,60,100,100 );
+
 
 
    frame.setJMenuBar( createJMenuBar() );
@@ -94,7 +131,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
    frame.addComponentListener(this);
    frame.setLocationRelativeTo(null);
-
+   frame.setResizable(false);
    frame.pack();
    frame.setVisible( true );
 
@@ -105,8 +142,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
   public void componentShown(ComponentEvent e) {}
 
   public void componentResized(ComponentEvent e) {
-   cpu.VC.scale(e.getComponent().getWidth() - 10,
-                e.getComponent().getHeight() - 55);
+   cpu.VC.scale(grfx.getWidth(),
+                grfx.getHeight());
    System.out.println("Window resized");
   }
 
@@ -115,9 +152,55 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 
 
-   frame.setTitle("" + fps + " - JGameBoy Emulator V0.01");
+   if (e.getSource().equals( menuitemExit)) {
+    System.exit(0);
+   }
+   else if (e.getSource().equals( menuitemScale1x )) {
+    VC.scale = 1;
+     grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    grfx.setSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    frame.pack();
+   }
+   else if (e.getSource().equals( menuitemScale2x )) {
+    VC.scale = 2;
+     grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    grfx.setSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    frame.pack();
+   }
+   else if (e.getSource().equals( menuitemScale3x )) {
+    VC.scale = 3;
+     grfx.setPreferredSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    grfx.setSize( new Dimension( 160*cpu.VC.scale, 144*cpu.VC.scale ) );
+    frame.pack();
+   }
+   else if(e.getSource().equals( menuitemOpenROM )) {
+    JFileChooser fc = new JFileChooser(".");
 
-   fps = 0;
+
+    fc.showOpenDialog(frame);
+    File selFile = fc.getSelectedFile();
+    if(selFile != null) {
+     System.out.println(selFile.getAbsolutePath());
+
+     try {
+      cpurunthread.interrupt();
+      cpurunthread.join();
+     }
+     catch (java.lang.InterruptedException e2) {};
+
+     CPU.setCartridge(new Cartridge(selFile.getAbsolutePath()));
+
+     cpuRunner = new CPURunner();
+     cpurunthread = new Thread(cpuRunner);
+     cpurunthread.start();
+    }
+   }
+   else {
+
+    frame.setTitle("" + fps + " - JGameBoy Emulator V0.01");
+
+    fps = 0;
+   }
   }
 
   public void itemStateChanged( ItemEvent e ) {
@@ -216,6 +299,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
   public static void main( String[] args ) {
    final swinggui gui=new swinggui();
+   Cartridge cart;
 
    boolean sound=true, debug=true;
    String romfile="", logfile="";
@@ -238,14 +322,14 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
     return;
    }
 
-   gui.cartridge = new Cartridge(romfile);
-   if(gui.cartridge.getError()!=null) {
-    System.out.println("ERROR: "+gui.cartridge.getError());
+   cart = new Cartridge(romfile);
+   if(cart.getError()!=null) {
+    System.out.println("ERROR: "+cart.getError());
     return;
    }
 
    System.out.println("Succesfully loaded ROM :)");
-   gui.cpu = new CPU(gui.cartridge);
+   gui.cpu = new CPU(cart);
    gui.VC = gui.cpu.VC;
 
    gui.createAndShowGUI();
@@ -264,7 +348,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
     final Debugger dbgr=new Debugger(gui, logfile);
    }
    else {
-    while (gui.cpu.nextinstruction()!=0) {};
+
+    gui.cpuRunner = new CPURunner();
+    gui.cpurunthread = new Thread(gui.cpuRunner);
+    gui.cpurunthread.start();
    }
   }
  }
