@@ -434,16 +434,18 @@ public class VideoController {
 	}
 
 	final public boolean renderNextScanline() {
-		++LY;
-		if (LY >= 154)
-			LY = 0;
-
+		// this is before the ++LY because it fixes the Turtles III line
+		// maybe this can be redone when we got proper mode timing
 		STAT &= ~(1<<2);             // clear coincidence bit
 		if (LY==LYC) {               // if equal
 			STAT |= 1<<2;              // then set it
 			if ((STAT&(1<<6))!=0)      // if LYC=LY is enabled in STAT reg
 				cpu.triggerInterrupt(1); // request int STAT/LYC=LY
 		}
+
+		++LY;
+		if (LY >= 154)
+			LY = 0;
 
 		if (LY < 144) {              // HBLANK
 			if (cfskip == 0)
