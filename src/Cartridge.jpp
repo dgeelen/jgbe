@@ -76,7 +76,7 @@ public class Cartridge {
 		 * used to initialize RAM and ROM banks
 		 */
 		MM_ROM[0] = new int[MEMMAP_SIZE]; // init first memmap chunk
-		DataInputStream distream = FHandler.getDataStream(file_name);
+		DataInputStream distream = FHandler.getDataInputStream(file_name);
 		System.out.println("cartridge got distream="+distream);
 		// load first memmap chunk into memory
 		PRINTFREEMEM("cartridge");

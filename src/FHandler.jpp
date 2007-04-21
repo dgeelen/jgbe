@@ -2,7 +2,7 @@
 import java.io.*;
 import java.util.zip.*;
 public final class FHandler {
-	public static DataInputStream getDataStream(String fname) throws IOException {
+	public static DataInputStream getDataInputStream(String fname) throws IOException {
  			int dotPos=0;
     	int dp = fname.indexOf(".");
     	while(dp>0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
@@ -44,4 +44,34 @@ public final class FHandler {
 #endif
 		}
 	}
+
+	public static DataOutputStream getDataOutputStream(String fname) throws IOException {
+ 			int dotPos=0;
+    	int dp = fname.indexOf(".");
+    	while(dp>0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
+    		dotPos=dp;
+    		dp=fname.indexOf(".",dp+1);
+    	}
+    	String fext = fname.substring(dotPos);
+			if ( !fext.equals(".zip") ) {
+			// plain files
+#ifndef USE_JAVA_142
+			FileOutputStream fostream = new FileOutputStream(fname);
+			BufferedOutputStream bostream = new BufferedOutputStream(fostream);
+#else
+			System.out.println("NonStatic.class.getResourceAsStream("+fname+");");
+			Class clazz = Runtime.getRuntime().getClass();
+			OutputStream bostream = clazz.getResourceAsStream(fname);
+			System.out.println("bostream="+bostream);
+#endif
+			DataOutputStream dostream = new DataOutputStream(bostream);
+			System.out.println("dostream="+dostream);
+			return dostream;
+		}
+		else {
+			System.out.println("FHandler opening zipfile not supported!");
+			return null;
+		}
+	}
+
 }

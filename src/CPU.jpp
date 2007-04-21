@@ -1,5 +1,6 @@
 //Yoshi no tamago: $293 call crashes
 #include "Global.inc"
+import java.io.*;
 public class CPU
 {
 		static private CPU singleton = null;
@@ -50,6 +51,9 @@ public class CPU
 		//IO
 		static public int DirectionKeyStatus=0x0f; //bitmask
 		static public int ButtonKeyStatus=0x3f; //bitmask
+
+		static boolean BIOS_enabled = false;
+
 		//CPU Class variables
 		static private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
 		static private int lastException=0;
@@ -81,6 +85,59 @@ public class CPU
 			PRINTFREEMEM("CPU created");
 		}
 
+		private static final void stateSaveLoad(boolean save, DataOutputStream dostream, DataInputStream distream)
+		throws IOException
+		{
+			SL_UINT8(B);
+			SL_UINT8(C);
+			SL_UINT8(D);
+			SL_UINT8(E);
+			SL_UINT8(H);
+			SL_UINT8(L);
+			SL_UINT8(F);
+			SL_UINT8(A);
+			SL_ARR(UINT8, IOP, 0x80);
+			SL_ARR(UINT8, HRAM, 0x7f);
+			SL_ARR_2D(UINT8, WRAM, 0x08, 0x10000);
+			SL_INT(CurrentWRAMBank);
+			SL_BOOL(doublespeed);
+			SL_BOOL(speedswitch);
+			SL_INT(DIVcntdwn);
+			SL_INT(TIMAcntdwn);
+			SL_INT(VBLANKcntdwn);
+			SL_UINT16(PC);
+			SL_UINT16(SP);
+			SL_UINT8(IE);
+			SL_BOOL(IME);
+			SL_BOOL(halted);
+			SL_UINT8(DirectionKeyStatus);
+			SL_UINT8(ButtonKeyStatus);
+			SL_INT(lastException);
+			SL_BOOL(BIOS_enabled);
+
+			SL_OBJ(cartridge);
+			SL_OBJ(VC);
+			SL_OBJ(AC);
+
+			System.out.printf("PC=0x%04x\n",PC);
+
+			if (!save) refreshMemMap();
+		}
+		
+		public static final void saveState(DataOutputStream dostream)
+		throws IOException
+		{
+			System.out.println("Saving State...");
+			stateSaveLoad(true, dostream, null);
+		}
+
+		public static final void loadState(DataInputStream distream)
+		throws IOException
+		{
+			System.out.println("Loading State...");
+			stateSaveLoad(false, null, distream);
+		}
+
 		public static final void setCartridge(Cartridge acartridge) {
 			cartridge = acartridge;
 			reset();
@@ -93,8 +150,6 @@ public class CPU
 			//System.out.println("** <INSERT DESCRIPTIVE TEXT HERE> ** [0x0143] = " + read(0x0143));
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
-
-		static boolean BIOS_enabled = false;
 
 		static final private void refreshMemMap() {
 			if (BIOS_enabled)
