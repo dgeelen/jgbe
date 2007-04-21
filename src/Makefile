@@ -21,18 +21,19 @@ CLASSFILES:=$(shell echo $(CLASSFILES) | sort | uniq)
 
 all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 
-fun: all
-	#cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb -nodebug
-	cd $(CLASSDIR) && aoss java swinggui ../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc -nodebug
+ROMNAME='/home/simon/gbroms/Bionic Commando.zip'
+#ROMNAME='/home/simon/gbroms/Turtles 3.zip'
+#ROMNAME='/home/simon/gbroms/Metal Slug.zip'
+#ROMNAME=../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
 
+fun: all
+	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nodebug
 
 silence: all
-	cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb -nodebug -nosound
+	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nodebug -nosound
 
 run: all
-	#cd $(CLASSDIR) && aoss java swinggui ../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
-	#cd $(CLASSDIR) && aoss java swinggui ../../roms/Super\ Mario\ Land\ 2\ -\ 6\ Golden\ Coins\ \(UE\)\ \(V1.0\)\ \[\!\].gb
-	cd $(CLASSDIR) && aoss java swinggui ../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
+	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME)
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge

@@ -17,6 +17,7 @@ public class VideoController {
 #else
 	private JPanel listener = null;
 	private Image drawImg[];
+	private int drawData[];
 #endif
 	private int curDrawImg = 0;
 
@@ -61,9 +62,9 @@ public class VideoController {
 	private int palColors[][] = new int[8*4*2][3];
 // 	private Color colColors[] = new Color[8*4*2];
 #else
-#define BLITPIXTYPE Object
-	private Object blitImg[][] =new Object[144][160]; // [y][x]
-	private Object palColors[] = new Object[8*4*2];
+#define BLITPIXTYPE int
+	private BLITPIXTYPE blitImg[][] =new BLITPIXTYPE[144][160]; // [y][x]
+	private BLITPIXTYPE palColors[] = new BLITPIXTYPE[8*4*2];
 #endif
 	private int patpix[][][] = new int[4096][][]; // see updatepatpix()
 	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
@@ -76,8 +77,8 @@ public class VideoController {
 	private long ptick;
 	private long ftick;
 
-	private int scale = 1;
-	public int nscale = 1;
+	private int scale = 2;
+	public int nscale = 2;
 	private int cfskip = 0;
 	private int fskip = 1; // 1 is off
 
@@ -90,7 +91,8 @@ public class VideoController {
 		this.isCGB = cpu.isCGB();
 
 		long x = System.nanoTime();
-#ifndef USE_JAVA_142
+//#ifndef USE_JAVA_142
+#if 0
 		for (int i = 0; i < palColors.length; ++i)
 			palColors[i] =
 				((BufferedImage)drawImg[curDrawImg^1]).
@@ -123,10 +125,11 @@ public class VideoController {
 	}
 #endif
 
-	public void scale() {
+	private void scale() {
 		scale = nscale;
-		int width  = scale*MIN_WIDTH;
+		int width = scale*MIN_WIDTH;
 		int height = scale*MIN_HEIGHT;
+		drawData = new int[width*height];
 #ifndef USE_JAVA_142
 		if (listener == null) {
 			System.out.println("creating BufferedImage's");
@@ -147,6 +150,12 @@ public class VideoController {
 			//drawImg[1]=listener.createVolatileImage(width, height);
 			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+			//source = new MemoryImageSource(width, height, drawData, 0, width);
+	    //source.setAnimated(true);
+	    //source.setFullBufferUpdates(true);
+			//Image offscreen = Toolkit.getDefaultToolkit().createImage(source);
+			//drawImg[0] = offscreen;
+			//drawImg[1] = offscreen;
 		}
 #endif
 	}
@@ -175,9 +184,11 @@ public class VideoController {
 // 		colColors[palcol] = new Color(r,g,b);
 #else
 		palColors[palcol] =
-			((BufferedImage)drawImg[curDrawImg^1]).
+		/*	((BufferedImage)drawImg[curDrawImg^1]).
 			getColorModel().
 			getDataElements((r<<16)|(g<<8)|(b<<0), null);
+		*/
+		((r<<16)|(g<<8)|(b<<0));
 #endif
 	}
 
@@ -192,8 +203,23 @@ public class VideoController {
 #define BLIT_PIX_W2(x,y, col) \
 	wr.setDataElements(x,y, palColors[col])
 
-#define BLIT_PIX_W3(x,y, col) \
-	wr.setDataElements(x,y, col)
+#define BLIT_PIX_W3(x,y, col) {\
+	int[] tmp = new int[1]; \
+	tmp[0] = col; \
+	wr.setDataElements(x,y, tmp); \
+}
+
+#define BLIT_PIX_W4(x,y, col) \
+//	wr.setDataElements(0,y,x,1, col)
+
+#define BLIT_PIX_W5(x,y, col) \
+	drawData[((y)*MIN_WIDTH*scale)+(x)] = col
+//	wr.setDataElements(0,y,x,1, col)
+
+#define BLIT_PIX_WI(i, col) \
+	drawData[++i] = col
+//	wr.setDataElements(0,y,x,1, col)
+
 
 #define BLIT_PIX_GR(x,y, col) { \
 	g.setColor(colColors[col]); \
@@ -206,11 +232,11 @@ public class VideoController {
 	listener.drawRect(x,y, 0, 0); \
 }
 
-//#define EQ(a,b) ((a) == (b))
-#define EQ(a,b) ((a).equals(b))
+#define EQ(a,b) ((a) == (b))
+//#define EQ(a,b) ((a).equals(b))
 
 #ifndef USE_JAVA_142
-#define BLIT_PIX BLIT_PIX_W3
+#define BLIT_PIX BLIT_PIX_W5
 #else
 #define BLIT_PIX BLIT_PIX_USE_JAVA_142
 #endif
@@ -227,9 +253,10 @@ public class VideoController {
 		if (scale == 1) {
 			for (int y = 0; y < 144; ++y) {
 				BLITPIXTYPE[] blitLine = blitImg[y];
-				for (int x = 0; x < 160; ++x) {
-					BLIT_PIX(x, y, blitLine[x]);
-				}
+//				for (int x = 0; x < 160; ++x)	 {
+//					BLIT_PIX(x, y, blitLine[x]);
+//				}
+				wr.setDataElements(0,y,160,1, blitLine);
 			}
 		}
 		else if (scale == 2) {
@@ -243,6 +270,8 @@ public class VideoController {
 			#define G blitLine3[xn]
 			#define H blitLine3[x]
 			#define I blitLine3[xp]
+			int ti1 = -1, ti2 = -1;
+			ti2 += 160*2;
 			for (int y = 0; y < 144; ++y) {
 				int yn = (y==0  )?0  :y-1;
 				int yp = (y==143)?143:y+1;
@@ -254,22 +283,28 @@ public class VideoController {
 					int xp = (x==159)?159:x+1;
 					if (!EQ(blitLine2[xn], blitLine2[xp])
 					&&  !EQ(blitLine1[x] , blitLine3[x])) {
-						BLIT_PIX(x*2  ,y*2  , EQ(B, D) ? D : E);
-						BLIT_PIX(x*2+1,y*2  , EQ(B, F) ? F : E);
-						BLIT_PIX(x*2  ,y*2+1, EQ(H, D) ? D : E);
-						BLIT_PIX(x*2+1,y*2+1, EQ(H, F) ? F : E);
+						BLIT_PIX_WI(ti1, EQ(B, D) ? D : E);
+						BLIT_PIX_WI(ti1, EQ(B, F) ? F : E);
+						BLIT_PIX_WI(ti2, EQ(H, D) ? D : E);
+						BLIT_PIX_WI(ti2, EQ(H, F) ? F : E);
 					}
 					else {
 						BLITPIXTYPE col = E;
-						BLIT_PIX(x*2  ,y*2  , col);
-						BLIT_PIX(x*2+1,y*2  , col);
-						BLIT_PIX(x*2  ,y*2+1, col);
-						BLIT_PIX(x*2+1,y*2+1, col);
+						BLIT_PIX_WI(ti1, col);
+						BLIT_PIX_WI(ti1, col);
+						BLIT_PIX_WI(ti2, col);
+						BLIT_PIX_WI(ti2, col);
 					}
 				}
+				ti1 += 160*2;
+				ti2 += 160*2;
 			}
+			wr.setDataElements(0,0,160*scale,144*scale, drawData);
 		} else if (scale == 3) {
 			// 'scale3x' algo // http://scale2x.sourceforge.net/algorithm.html
+			int ti1 = -1, ti2 = -1, ti3 = -1;
+			ti2 += 160*3;
+			ti3 += 160*3*2;
 			for (int y = 0; y < 144; ++y) {
 				int yn = (y==0  )?0  :y-1;
 				int yp = (y==143)?143:y+1;
@@ -280,29 +315,75 @@ public class VideoController {
 					int xn = (x==0  )?0  :x-1;
 					int xp = (x==159)?159:x+1;
 					if (!EQ(B, H) && !EQ(D, F)) {
-						BLIT_PIX(x*3  ,y*3  , EQ(D, B) ? D : E);
-						BLIT_PIX(x*3+1,y*3  , (EQ(D, B) && !EQ(E, C)) || (EQ(B, F) && !EQ(E, A))? B : E);
-						BLIT_PIX(x*3+2,y*3  , EQ(B, F) ? F : E);
-						BLIT_PIX(x*3  ,y*3+1, (EQ(D, B) && !EQ(E, G)) || (EQ(D, H) && !EQ(E, A))? D : E);
-						BLIT_PIX(x*3+1,y*3+1, E);
-						BLIT_PIX(x*3+2,y*3+1, (EQ(B, F) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, C))? F : E);
-						BLIT_PIX(x*3  ,y*3+2, EQ(D, H) ? D : E);
-						BLIT_PIX(x*3+1,y*3+2, (EQ(D, H) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, G))? H : E);
-						BLIT_PIX(x*3+2,y*3+2, EQ(H, F) ? F : E);
+						BLIT_PIX_WI(ti1 , EQ(D, B) ? D : E);
+						BLIT_PIX_WI(ti1 , (EQ(D, B) && !EQ(E, C)) || (EQ(B, F) && !EQ(E, A))? B : E);
+						BLIT_PIX_WI(ti1 , EQ(B, F) ? F : E);
+						BLIT_PIX_WI(ti2 , (EQ(D, B) && !EQ(E, G)) || (EQ(D, H) && !EQ(E, A))? D : E);
+						BLIT_PIX_WI(ti2 , E);
+						BLIT_PIX_WI(ti2 , (EQ(B, F) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, C))? F : E);
+						BLIT_PIX_WI(ti3 , EQ(D, H) ? D : E);
+						BLIT_PIX_WI(ti3 , (EQ(D, H) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, G))? H : E);
+						BLIT_PIX_WI(ti3 , EQ(H, F) ? F : E);
 					} else {
 						BLITPIXTYPE col = E;
-						BLIT_PIX(x*3  ,y*3  , col);
-						BLIT_PIX(x*3+1,y*3  , col);
-						BLIT_PIX(x*3+2,y*3  , col);
-						BLIT_PIX(x*3  ,y*3+1, col);
-						BLIT_PIX(x*3+1,y*3+1, col);
-						BLIT_PIX(x*3+2,y*3+1, col);
-						BLIT_PIX(x*3  ,y*3+2, col);
-						BLIT_PIX(x*3+1,y*3+2, col);
-						BLIT_PIX(x*3+2,y*3+2, col);
+						BLIT_PIX_WI(ti1 , col);
+						BLIT_PIX_WI(ti1 , col);
+						BLIT_PIX_WI(ti1 , col);
+						BLIT_PIX_WI(ti2 , col);
+						BLIT_PIX_WI(ti2 , col);
+						BLIT_PIX_WI(ti2 , col);
+						BLIT_PIX_WI(ti3 , col);
+						BLIT_PIX_WI(ti3 , col);
+						BLIT_PIX_WI(ti3 , col);
 					}
 				}
+				ti1 += 160*3*2;
+				ti2 += 160*3*2;
+				ti3 += 160*3*2;
 			}
+			wr.setDataElements(0,0,160*scale,144*scale, drawData);
+		}
+		else if (scale == 4) {
+			// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
+			int ti1 = -1, ti2 = -1, ti3 = -1, ti4 = -1;
+			ti2 += 160*4;
+			ti3 += 160*4*2;
+			ti4 += 160*4*3;
+			for (int y = 0; y < 144; ++y) {
+				int yn = (y==0  )?0  :y-1;
+				int yp = (y==143)?143:y+1;
+				BLITPIXTYPE[] blitLine2 = blitImg[y];
+				BLITPIXTYPE[] blitLine1 = blitImg[yn];
+				BLITPIXTYPE[] blitLine3 = blitImg[yp];
+				for (int x = 0; x < 160; ++x) {
+					int xn = (x==0  )?0  :x-1;
+					int xp = (x==159)?159:x+1;
+					BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
+					BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
+					BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
+					BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
+					BLIT_PIX_WI(ti2, EQ(B, D) ? B : E);
+					BLIT_PIX_WI(ti2, E);
+					BLIT_PIX_WI(ti2, E);
+					BLIT_PIX_WI(ti2, EQ(B, F) ? B : E);
+					BLIT_PIX_WI(ti3, EQ(H, D) ? H : E);
+					BLIT_PIX_WI(ti3, E);
+					BLIT_PIX_WI(ti3, E);
+					BLIT_PIX_WI(ti3, EQ(H, F) ? H : E);
+					BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
+					BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
+					BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
+					BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
+				}
+				ti1 += 160*4*3;
+				ti2 += 160*4*3;
+				ti3 += 160*4*3;
+				ti4 += 160*4*3;
+			}
+			wr.setDataElements(0,0,160*scale,144*scale, drawData);
+		}
+		//source.newPixels();
+		curDrawImg ^= 1;
 #undef A
 #undef B
 #undef C
@@ -312,8 +393,6 @@ public class VideoController {
 #undef G
 #undef H
 #undef I
-		}
-		curDrawImg ^= 1;
 	}
 
 	final public void setMonoColData(int index, int value) {
@@ -412,11 +491,11 @@ public class VideoController {
 			if (i == 896) break;
 			if (!patdirty[i]/* && !alldirty*/) continue;
 			if (patpix[i]==null) {
-				patpix[i] = new int[8][8];
+				patpix[i]      = new int[8][8];
 				patpix[i+1024] = new int[8][8];
 				patpix[i+2048] = new int[8][8];
 				patpix[i+3072] = new int[8][8];
-				}
+			}
 			patdirty[i] = false;
 
 			for (int y = 0; y < 8; ++y) {
@@ -437,15 +516,13 @@ public class VideoController {
 	}
 
 	final public boolean renderNextScanline() {
-		// this is before the ++LY because it fixes the Turtles III line
-		// maybe this can be redone when we got proper mode timing
 		STAT &= ~(1<<2);             // clear coincidence bit
 		if (LY==LYC) {               // if equal
 			STAT |= 1<<2;              // then set it
 			if ((STAT&(1<<6))!=0)      // if LYC=LY is enabled in STAT reg
 				cpu.triggerInterrupt(1); // request int STAT/LYC=LY
 		}
-
+		
 		++LY;
 		if (LY >= 154)
 			LY = 0;
