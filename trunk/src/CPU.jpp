@@ -85,7 +85,7 @@ public class CPU
 			PRINTFREEMEM("CPU created");
 		}
 
-		private static final void stateSaveLoad(boolean save, DataOutputStream dostream, DataInputStream distream)
+		protected static final void stateSaveLoad(boolean save, DataOutputStream dostream, DataInputStream distream)
 		throws IOException
 		{
 			SL_UINT8(B);

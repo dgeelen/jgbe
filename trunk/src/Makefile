@@ -21,7 +21,9 @@ CLASSFILES:=$(shell echo $(CLASSFILES) | sort | uniq)
 
 all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 
-ROMNAME='/home/simon/gbroms/Bionic Commando.zip'
+
+# use ROMNAME='/what/ever/file.gbc' make [run|fun|silence]
+#ROMNAME='/home/simon/gbroms/Bionic Commando.zip'
 #ROMNAME='/home/simon/gbroms/Turtles 3.zip'
 #ROMNAME='/home/simon/gbroms/Metal Slug.zip'
 #ROMNAME=../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc

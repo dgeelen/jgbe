@@ -56,16 +56,16 @@
 }
 
 #define SL_ARR(type, var, len) {\
-	for (int i = 0; i < len; ++i) \
+	for (int i = 0; i < (len); ++i) \
 		SL_ ## type (var[i]); \
 }
 
 #define SL_ARR_2D(type, var, len1, len2) {\
-	for (int i = 0; i < len1; ++i) \
-		for (int j = 0; j < len2; ++j) \
+	for (int i = 0; i < (len1); ++i) \
+		for (int j = 0; j < (len2); ++j) \
 			SL_ ## type (var[i][j]); \
 }
 
 /* TODO */
 #define SL_OBJ(obj) \
-	//(obj).stateSaveLoad(save, dostream, distream);
+	(obj).stateSaveLoad(save, dostream, distream);
