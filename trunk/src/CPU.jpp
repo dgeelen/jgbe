@@ -119,8 +119,6 @@ public class CPU
 			SL_OBJ(VC);
 			SL_OBJ(AC);
 
-			System.out.printf("PC=0x%04x\n",PC);
-
 			if (!save) refreshMemMap();
 		}
 		
