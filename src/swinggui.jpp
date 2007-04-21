@@ -35,6 +35,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemLoadState;
 		JMenuItem menuitemIncFrameSkip;
 		JMenuItem menuitemDecFrameSkip;
+		JMenuItem menuitemSoundEnable;
+		JMenuItem menuitemSoundDisable;
+		JMenuItem menuitemSoundToggle;
 		JMenuItem[] menuitemSelectState;
 		JMenuItem menuitemSeparator;
 
@@ -109,6 +112,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			JMenu menuScaling;
 			JMenu menuFrameSkip;
 			JMenu menuState;
+			JMenu menuSound;
 			mainMenuBar = new JMenuBar();
 
 			menuFile = new JMenu( "File" );
@@ -173,6 +177,20 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				menuState.add(menuitemSelectState[i]);
 			}
 			mainMenuBar.add( menuState) ;
+
+			menuSound = new JMenu( "Sound");
+			menuitemSoundEnable = new JMenuItem( "Enable Sound", KeyEvent.VK_E );
+			menuitemSoundDisable = new JMenuItem( "Disable Sound", KeyEvent.VK_D );
+			menuitemSoundToggle = new JMenuItem( "Toggle Sound", KeyEvent.VK_T );
+			menuitemSoundToggle.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_A, ActionEvent.CTRL_MASK ) );
+			menuitemSoundEnable.addActionListener( this );
+			menuitemSoundDisable.addActionListener( this );
+			menuitemSoundToggle.addActionListener( this );
+			menuSound.add( menuitemSoundEnable );
+			menuSound.add( menuitemSoundDisable );
+			menuSound.add( menuitemSoundToggle );
+			mainMenuBar.add( menuSound) ;
+
 			return mainMenuBar;
 		}
 
@@ -262,6 +280,18 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			else if (e.getSource().equals( menuitemDecFrameSkip )) {
 				if (VC.fskip>1) --VC.fskip;
 				addOSDLine("Decreased frameskip: "+VC.fskip);
+			}
+			else if (e.getSource().equals( menuitemSoundEnable )) {
+				cpu.AC.isMuted = false;
+				addOSDLine("Enabled sound");
+			}
+			else if (e.getSource().equals( menuitemSoundDisable )) {
+				cpu.AC.isMuted = true;
+				addOSDLine("Disabled sound");
+			}
+			else if (e.getSource().equals( menuitemSoundToggle )) {
+				cpu.AC.isMuted = !cpu.AC.isMuted;
+				addOSDLine(cpu.AC.isMuted ? "Disabled sound" : "Enabled sound");
 			}
 			else if(e.getSource().equals( menuitemOpenROM )) {
 				JFileChooser fc = new JFileChooser(".");
