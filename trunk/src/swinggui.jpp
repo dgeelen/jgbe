@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.LinkedList;
+import java.util.Vector;
 import java.net.*;
 import java.io.*;
 import java.awt.image.BufferedImage;
@@ -23,6 +23,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		protected CPU cpu;
 		private int fps;
 		private int selectedState = 0;
+		Vector osdLines = new Vector();
+		int osdTime = 0;
 		String curcartname;
 		JMenuItem menuitemExit;
 		JMenuItem menuitemScale1x;
@@ -77,8 +79,24 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				g.drawImage(cpu.VC.getImage(),0,0, this);
+				if (osdTime > 0) {
+					g.setColor(new Color(255,255,255));
+					--osdTime;
+					if ((osdTime == 0) && (osdLines.size()>0)){
+						osdLines.remove(0);
+						osdTime = 15;
+					}
+					for (int i = 0; i < osdLines.size(); ++i) {
+						g.drawString((String)osdLines.elementAt(i), 10, 10+10*i);
+					}
+				}
 				++fps;
     	}
+		}
+
+		public void addOSDLine(String line) {
+			osdLines.add(line);
+			osdTime = 200;
 		}
 
 		public swinggui() {
@@ -217,18 +235,21 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				System.exit(0);
 			}
 			else if (e.getSource().equals( menuitemScale1x )) {
+				addOSDLine("Set scaling: Scale1x");
 				VC.nscale = 1;
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 			}
 			else if (e.getSource().equals( menuitemScale2x )) {
+				addOSDLine("Set scaling: Scale2x");
 				VC.nscale = 2;
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 			}
 			else if (e.getSource().equals( menuitemScale3x )) {
+				addOSDLine("Set scaling: Scale3x");
 				VC.nscale = 3;
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
@@ -236,9 +257,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
 				++VC.fskip;
+				addOSDLine("Increased frameskip: "+VC.fskip);
 			}
 			else if (e.getSource().equals( menuitemDecFrameSkip )) {
 				if (VC.fskip>1) --VC.fskip;
+				addOSDLine("Decreased frameskip: "+VC.fskip);
 			}
 			else if(e.getSource().equals( menuitemOpenROM )) {
 				JFileChooser fc = new JFileChooser(".");
@@ -253,6 +276,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 					CPU.setCartridge(new Cartridge(selFile.getAbsolutePath()));
 					updateCartName(selFile.getAbsolutePath());
+					addOSDLine("loaded Rom: " + curcartname);
 
 					startCPU();
 				}
@@ -260,7 +284,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			else if(e.getSource().equals( menuitemSaveState )) {
 				stopCPU();
 				String stname = "/tmp/" + curcartname + ".st" + selectedState;
-				System.out.println("Saving State... (" + stname + ")");
+				addOSDLine("Saving State "+selectedState);
 				try {
 					DataOutputStream dostream = FHandler.getDataOutputStream(stname);
 					CPU.saveState(dostream);
@@ -274,7 +298,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			else if(e.getSource().equals( menuitemLoadState )) {
 				stopCPU();
 				String stname = "/tmp/" + curcartname + ".st" + selectedState;
-				System.out.println("Loading State... (" + stname + ")");
+				addOSDLine("Loading State "+selectedState);
 				try {
 					DataInputStream distream = FHandler.getDataInputStream(stname);
 					CPU.loadState(distream);
@@ -289,7 +313,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				for (int i = 0; i < 10; ++i) {
 					if (e.getSource().equals(menuitemSelectState[i])) {
 						selectedState = i;
-						System.out.println("Selected State "+selectedState);
+						addOSDLine("Selected State "+selectedState);
 						return;
 					}
 				}
