@@ -106,10 +106,17 @@ public class VideoController {
 					getColorModel().
 					getDataElements(0, null);
 #endif
-	for(int i=0; i<1024; ++i) {
-		patdirty[i]=true;
-	}
-	updatepatpix();
+		for(int i=0; i<1024; ++i) {
+			patdirty[i]=true;
+		}
+		anydirty = true;
+		for (int i = 0; i < 0x20; ++i) {
+			updateBGColData(i);
+			updateOBColData(i);
+		};
+		updateMonoColData(0);
+		updateMonoColData(1);
+		updateMonoColData(2);
 	}
 
 
@@ -137,10 +144,19 @@ public class VideoController {
 		SL_UINT8(OBPI);
 		SL_ARR(UINT8, OBPD, 8*4*2);
 
-		for(int i=0; i<1024; ++i) {
-			patdirty[i]=true;
+		if (!save) {
+			for(int i=0; i<1024; ++i) {
+				patdirty[i]=true;
+			}
+			anydirty = true;
+			for (int i = 0; i < 0x20; ++i) {
+				updateBGColData(i);
+				updateOBColData(i);
+			};
+			updateMonoColData(0);
+			updateMonoColData(1);
+			updateMonoColData(2);
 		}
-		anydirty = true;
 	}
 
 #ifndef USE_JAVA_142
@@ -427,12 +443,14 @@ public class VideoController {
 #undef I
 	}
 
-	final public void setMonoColData(int index, int value) {
+	final public void updateMonoColData(int index) {
 		// index = 0 -> FF47 - BGP - BG Palette Data (R/W) - Non CGB Mode Only
 		// index = 1 -> FF48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
 		// index = 2 -> FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
 
 		if (isCGB) return;
+
+		int value = CPU.read(index + 0xff47); // could fix this to hold those values ourselves..
 
 		if (index==0) index= (0x20>>2);
 		else --index;
@@ -442,12 +460,19 @@ public class VideoController {
 		temp = GRAYSHADES[(value>>4)&3]; palChange((index<<2) | 2, temp[0], temp[1], temp[2]);
 		temp = GRAYSHADES[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
 	}
-
+	
 	final public void setBGColData(int value) {
 		BGPD[BGPI&0x3f] = value;
+		int bnum = (BGPI & 0x3e) >> 1;
+		updateBGColData(bnum);
+		if ((BGPI&(1<<7))!=0)
+			++BGPI;
+	}
+	
+	final public void updateBGColData(int bnum) {
+		int base = bnum << 1;
 
 		// calculate color now
-		int base = (BGPI & 0x3e);
 		int data = BGPD[base] | (BGPD[base+1]<<8);
 		int palnum = base >> 3;
 		int colnum = (base >> 1) & 3;
@@ -464,9 +489,6 @@ public class VideoController {
 		// fading issue is somethere else, maybe int timing issue?
 
 		palChange((palnum << 2) | colnum | 0x20, r, g, b);
-
-		if ((BGPI&(1<<7))!=0)
-			++BGPI;
 	}
 
 	final public int getBGColData() {
@@ -475,9 +497,16 @@ public class VideoController {
 
 	final public void setOBColData(int value) {
 		OBPD[OBPI&0x3f] = value;
+		int bnum = (OBPI & 0x3e) >> 1;
+		updateOBColData(bnum);
+		if ((OBPI&(1<<7))!=0)
+			++OBPI;
+	}
+
+	final public void updateOBColData(int bnum) {
+		int base = bnum << 1;
 
 		// calculate color now
-		int base = (OBPI & 0x3e);
 		int data = OBPD[base] | (OBPD[base+1]<<8);
 		int palnum = base >> 3;
 		int colnum = (base >> 1) & 3;
@@ -490,9 +519,6 @@ public class VideoController {
 		b <<= 3; b |= (b >> 5);
 
 		palChange((palnum << 2) | colnum, r, g, b);
-
-		if ((OBPI&(1<<7))!=0)
-			++OBPI;
 	}
 
 	final public int getOBColData() {
