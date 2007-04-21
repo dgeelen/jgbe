@@ -125,14 +125,12 @@ public class CPU
 		public static final void saveState(DataOutputStream dostream)
 		throws IOException
 		{
-			System.out.println("Saving State...");
 			stateSaveLoad(true, dostream, null);
 		}
 
 		public static final void loadState(DataInputStream distream)
 		throws IOException
 		{
-			System.out.println("Loading State...");
 			stateSaveLoad(false, null, distream);
 		}
 
