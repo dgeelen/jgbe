@@ -20,7 +20,7 @@ public class Bios {
 	public void loadFromFile(String fname, int[] location) throws IOException {
 		// filesize in bytes
 		long fsize = 256;
-		DataInputStream distream = FHandler.getDataStream(fname);
+		DataInputStream distream = FHandler.getDataInputStream(fname);
 		PRINTFREEMEM("bios");
 		for (int i = 0; i < fsize; ++i) {
 			location[i] = distream.readUnsignedByte();

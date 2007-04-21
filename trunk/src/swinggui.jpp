@@ -27,10 +27,26 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemScale2x;
 		JMenuItem menuitemScale3x;
 		JMenuItem menuitemOpenROM;
+		JMenuItem menuitemSaveState;
+		JMenuItem menuitemLoadState;
 		JMenuItem menuitemSeparator;
 
 		CPURunner cpuRunner;
 		Thread cpurunthread;
+
+		public void startCPU() {
+			cpuRunner = new CPURunner();
+			cpurunthread = new Thread(cpuRunner);
+			cpurunthread.start();
+		}
+
+		public void stopCPU() {
+			try {
+				cpurunthread.interrupt();
+				cpurunthread.join();
+			}
+			catch (java.lang.InterruptedException e2) {};
+		}
 
 		public class DrawingArea extends JPanel{
 			VideoController VC;
@@ -52,7 +68,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			JMenuBar mainMenuBar;
 			JMenu menuFile;
 			JMenu menuSettings;
-			JMenu  menuScaling;
+			JMenu menuScaling;
+			JMenu menuState;
 			mainMenuBar = new JMenuBar();
 
 			menuFile = new JMenu( "File" );
@@ -87,6 +104,17 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuScaling.add( menuitemScale2x );
 			menuScaling.add( menuitemScale3x );
 			menuSettings.add( menuScaling) ;
+
+			menuState = new JMenu("State");
+			menuitemSaveState = new JMenuItem( "Save State", KeyEvent.VK_S );
+			menuitemLoadState = new JMenuItem( "Load State", KeyEvent.VK_L );
+			menuitemSaveState.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, ActionEvent.CTRL_MASK ) );
+			menuitemLoadState.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_L, ActionEvent.CTRL_MASK ) );
+			menuitemSaveState.addActionListener( this );
+			menuitemLoadState.addActionListener( this );
+			menuState.add( menuitemSaveState );
+			menuState.add( menuitemLoadState );
+			mainMenuBar.add( menuState) ;
 			return mainMenuBar;
 		}
 
@@ -175,18 +203,32 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				if(selFile != null) {
 					System.out.println(selFile.getAbsolutePath());
 
-					try {
-						cpurunthread.interrupt();
-						cpurunthread.join();
-					}
-					catch (java.lang.InterruptedException e2) {};
+					stopCPU();
 
 					CPU.setCartridge(new Cartridge(selFile.getAbsolutePath()));
 
-					cpuRunner = new CPURunner();
-					cpurunthread = new Thread(cpuRunner);
-					cpurunthread.start();
+					startCPU();
 				}
+			}
+			else if(e.getSource().equals( menuitemSaveState )) {
+				stopCPU();
+				try {
+					DataOutputStream dostream = FHandler.getDataOutputStream("/tmp/jgbe.st0");
+					CPU.saveState(dostream);
+					dostream.close();
+				}
+				catch (java.io.IOException ioe) {};
+				startCPU();
+			}
+			else if(e.getSource().equals( menuitemLoadState )) {
+				stopCPU();
+				try {
+					DataInputStream distream = FHandler.getDataInputStream("/tmp/jgbe.st0");
+					CPU.loadState(distream);
+					distream.close();
+				}
+				catch (java.io.IOException ioe) {};
+				startCPU();
 			}
 			else {
 				//System.out.println("timer!");
@@ -341,10 +383,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				final Debugger dbgr=new Debugger(gui, logfile); //The GUI to which this debugger belongs
 			}
 			else {
-// 				while (gui.cpu.nextinstruction()!=0) {};
-				gui.cpuRunner = new CPURunner();
-				gui.cpurunthread = new Thread(gui.cpuRunner);
-				gui.cpurunthread.start();
+				gui.startCPU();
 			}
 		}
 	}
