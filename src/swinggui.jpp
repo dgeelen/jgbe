@@ -38,14 +38,20 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			cpuRunner = new CPURunner();
 			cpurunthread = new Thread(cpuRunner);
 			cpurunthread.start();
+			while (!cpurunthread.isAlive()) {}; // wait for thread to actually start
 		}
 
 		public void stopCPU() {
 			try {
-				cpurunthread.interrupt();
-				cpurunthread.join();
+				while (cpurunthread.isAlive()) {;
+					cpurunthread.interrupt();
+					cpurunthread.join(100);
+				}
 			}
-			catch (java.lang.InterruptedException e2) {};
+			catch (java.lang.InterruptedException e2) {
+				System.out.println("Error while trying to stop cpu thread...");
+				e2.printStackTrace();
+			};
 		}
 
 		public class DrawingArea extends JPanel{
