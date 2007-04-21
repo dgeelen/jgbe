@@ -1,4 +1,5 @@
 #include "Global.inc"
+import java.io.*;
 #ifdef USE_JAVA_142
 import javax.microedition.lcdui.*;
 import javax.microedition.lcdui.game.GameCanvas;
@@ -109,6 +110,37 @@ public class VideoController {
 		patdirty[i]=true;
 	}
 	updatepatpix();
+	}
+
+
+	protected final void stateSaveLoad(boolean save, DataOutputStream dostream, DataInputStream distream)
+	throws IOException
+	{
+		SL_INT(CurrentVRAMBank);
+		SL_ARR(UINT8, VRAM, 0x4000);
+		SL_ARR(UINT8, OAM, 0xa0);
+
+		//SL_BOOL(isCGB); should be correct already
+
+		SL_UINT8(LY);
+		SL_UINT8(LYC);
+		SL_UINT8(SCX);
+		SL_UINT8(SCY);
+		SL_UINT8(WX);
+		SL_UINT8(WY);
+		SL_UINT8(LCDC);
+		SL_UINT8(STAT);
+
+		SL_UINT8(BGPI);
+		SL_ARR(UINT8, BGPD, 8*4*2);
+
+		SL_UINT8(OBPI);
+		SL_ARR(UINT8, OBPD, 8*4*2);
+
+		for(int i=0; i<1024; ++i) {
+			patdirty[i]=true;
+		}
+		anydirty = true;
 	}
 
 #ifndef USE_JAVA_142
