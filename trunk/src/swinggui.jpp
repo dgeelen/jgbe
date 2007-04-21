@@ -31,6 +31,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
+		JMenuItem menuitemIncFrameSkip;
+		JMenuItem menuitemDecFrameSkip;
 		JMenuItem[] menuitemSelectState;
 		JMenuItem menuitemSeparator;
 
@@ -87,13 +89,14 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			JMenu menuFile;
 			JMenu menuSettings;
 			JMenu menuScaling;
+			JMenu menuFrameSkip;
 			JMenu menuState;
 			mainMenuBar = new JMenuBar();
 
 			menuFile = new JMenu( "File" );
 			menuFile.setMnemonic( KeyEvent.VK_F );
 			mainMenuBar.add( menuFile );
-			menuSettings = new JMenu( "Settings" );
+			menuSettings = new JMenu( "Video" );
 			menuSettings.setMnemonic( KeyEvent.VK_S );
 			mainMenuBar.add( menuSettings );
 
@@ -122,6 +125,17 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuScaling.add( menuitemScale2x );
 			menuScaling.add( menuitemScale3x );
 			menuSettings.add( menuScaling) ;
+
+			menuFrameSkip = new JMenu( "Frame Skipping");
+			menuitemIncFrameSkip = new JMenuItem( "Increase Frame Skip", KeyEvent.VK_I );
+			menuitemDecFrameSkip = new JMenuItem( "Decrease Frame Skip", KeyEvent.VK_D );
+			menuitemIncFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_BRACELEFT, ActionEvent.CTRL_MASK ) );
+			menuitemDecFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_BRACERIGHT, ActionEvent.CTRL_MASK ) );
+			menuitemIncFrameSkip.addActionListener( this );
+			menuitemDecFrameSkip.addActionListener( this );
+			menuFrameSkip.add( menuitemIncFrameSkip );
+			menuFrameSkip.add( menuitemDecFrameSkip );
+			menuSettings.add( menuFrameSkip) ;
 
 			menuState = new JMenu("State");
 			menuitemSaveState = new JMenuItem( "Save State", KeyEvent.VK_S );
@@ -219,6 +233,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
+			}
+			else if (e.getSource().equals( menuitemIncFrameSkip )) {
+				++VC.fskip;
+			}
+			else if (e.getSource().equals( menuitemDecFrameSkip )) {
+				if (VC.fskip>1) --VC.fskip;
 			}
 			else if(e.getSource().equals( menuitemOpenROM )) {
 				JFileChooser fc = new JFileChooser(".");

@@ -81,7 +81,7 @@ public class VideoController {
 	private int scale = 2;
 	public int nscale = 2;
 	private int cfskip = 0;
-	private int fskip = 1; // 1 is off
+	public int fskip = 1; // 1 is off
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
