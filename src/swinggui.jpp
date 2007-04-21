@@ -22,6 +22,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		protected VideoController VC;
 		protected CPU cpu;
 		private int fps;
+		private int selectedState = 0;
+		String curcartname;
 		JMenuItem menuitemExit;
 		JMenuItem menuitemScale1x;
 		JMenuItem menuitemScale2x;
@@ -29,10 +31,20 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
+		JMenuItem[] menuitemSelectState;
 		JMenuItem menuitemSeparator;
 
 		CPURunner cpuRunner;
 		Thread cpurunthread;
+
+		public void updateCartName(String fname) {
+			int slashPos = MAX(fname.lastIndexOf("\\"), fname.lastIndexOf("/"));
+			int dotPos = fname.lastIndexOf(".");
+			if (dotPos == -1) dotPos = fname.length()+1;
+
+			curcartname = fname.substring(slashPos+1, dotPos);
+			System.out.println("cartname = " + curcartname);
+		}
 
 		public void startCPU() {
 			cpuRunner = new CPURunner();
@@ -120,6 +132,14 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemLoadState.addActionListener( this );
 			menuState.add( menuitemSaveState );
 			menuState.add( menuitemLoadState );
+			//menuState.add( menuitemSeparator );
+			menuitemSelectState = new JMenuItem[10];
+			for (int i = 0; i < 10; ++i) {
+				menuitemSelectState[i] = new JMenuItem( "Select State " + i, KeyEvent.VK_0 + i);
+				menuitemSelectState[i].setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_0 + i, 0));
+				menuitemSelectState[i].addActionListener( this );
+				menuState.add(menuitemSelectState[i]);
+			}
 			mainMenuBar.add( menuState) ;
 			return mainMenuBar;
 		}
@@ -212,31 +232,47 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					stopCPU();
 
 					CPU.setCartridge(new Cartridge(selFile.getAbsolutePath()));
+					updateCartName(selFile.getAbsolutePath());
 
 					startCPU();
 				}
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				stopCPU();
+				String stname = "/tmp/" + curcartname + ".st" + selectedState;
+				System.out.println("Saving State... (" + stname + ")");
 				try {
-					DataOutputStream dostream = FHandler.getDataOutputStream("/tmp/jgbe.st0");
+					DataOutputStream dostream = FHandler.getDataOutputStream(stname);
 					CPU.saveState(dostream);
 					dostream.close();
 				}
-				catch (java.io.IOException ioe) {};
+				catch (java.io.IOException ioe) {
+					System.out.println("Error saving state! ");
+				};
 				startCPU();
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
 				stopCPU();
+				String stname = "/tmp/" + curcartname + ".st" + selectedState;
+				System.out.println("Loading State... (" + stname + ")");
 				try {
-					DataInputStream distream = FHandler.getDataInputStream("/tmp/jgbe.st0");
+					DataInputStream distream = FHandler.getDataInputStream(stname);
 					CPU.loadState(distream);
 					distream.close();
 				}
-				catch (java.io.IOException ioe) {};
+				catch (java.io.IOException ioe) {
+					System.out.println("Error loading state! " + ioe.getMessage());
+				};
 				startCPU();
 			}
 			else {
+				for (int i = 0; i < 10; ++i) {
+					if (e.getSource().equals(menuitemSelectState[i])) {
+						selectedState = i;
+						System.out.println("Selected State "+selectedState);
+						return;
+					}
+				}
 				//System.out.println("timer!");
 				frame.setTitle("" + fps + " - JGameBoy Emulator V0.01");
 				//cpu.AC.srendered = 0;
@@ -368,6 +404,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				System.out.println("ERROR: "+cart.getError());
 				return;
 			}
+			gui.updateCartName(romfile);
 
 			System.out.println("Succesfully loaded ROM :)");
 			gui.cpu = new CPU(cart);
