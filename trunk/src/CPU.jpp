@@ -122,7 +122,7 @@ public class CPU
 
 			if (!save) refreshMemMap();
 		}
-		
+
 		public static final void saveState(DataOutputStream dostream)
 		throws IOException
 		{
@@ -395,7 +395,7 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-			//PRINTF("Writing to IO address $%04x value=$%02x\n",index, value);
+// wMemMap[0xa][0x901]=0;//This get unmapped ?!
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
 				mm[index&0x0FFF] = value;
@@ -595,7 +595,7 @@ public class CPU
 
 		static final public void reset(boolean bios) {
 			BIOS_enabled = bios;
-			VC.isCGB = bios ? false : isCGB();
+ 			VC.reset();
 			refreshMemMap();
 
 			PC = 0x100;
@@ -702,11 +702,14 @@ public class CPU
 			return 0; // No interrupts to service
 		}
 
+		public static boolean interrupting=false;
 		static final protected void interrupt(int i) { //execute interrupt #i
-			//System.out.println("INTERRUPT: " + i);
+// 			System.out.printf("INTERRUPT: PC=$%04x, interrupt=$%02x\n",PC,i);
 			IME = false;
+
 			PUSH_OLD(PC);
 			PC = i;
+			interrupting = true;
 		}
 
 		static final protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
@@ -720,7 +723,9 @@ public class CPU
 				checkInterrupts();
 				halted = false;
 				//return 12; // 12 cycles for this?
+ 				return 4;/* FIXME(?) For break on interrupt */
 			}
+			interrupting=false;
 			if (halted) return 4;
 			int op = FETCH;
 			cycles = Tables.cycles[op];
@@ -772,7 +777,7 @@ public class CPU
 				case 0x74: WRITE_V(R16RHL, H); break;               // LD   (HL), H
 				case 0x75: WRITE_V(R16RHL, L); break;               // LD   (HL), L
 				case 0x77: WRITE_V(R16RHL, A); break;               // LD   (HL), A
-				case 0x76: halted = true;	break;                    // HALT
+				case 0x76: halted = true;	/*System.out.println("CPU HALTED");*/ break;                    // HALT
 				case 0xd9: IME = true; DO_RET; break;               // RETI
 				case 0xc1: R16WBC_V(POP); break;                    // PUSH BC
 				case 0xd1: R16WDE_V(POP); break;                    // PUSH DE

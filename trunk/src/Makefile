@@ -26,10 +26,11 @@ all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 #ROMNAME='/home/simon/gbroms/Bionic Commando.zip'
 #ROMNAME='/home/simon/gbroms/Turtles 3.zip'
 #ROMNAME='/home/simon/gbroms/Metal Slug.zip'
-ROMNAME='/home/simon/gbroms/Double Dragon 3.zip'
+#ROMNAME='/home/simon/gbroms/Double Dragon 3.zip'
 #ROMNAME='/home/simon/gbroms/Pokemon Yellow.zip'
 #ROMNAME='/home/simon/gbroms/Pokemon Diamond.zip'
 #ROMNAME='/home/simon/gbroms/Pokemon Blue.zip'
+#ROMNAME=../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
 #ROMNAME=../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
 
 fun: all
@@ -42,7 +43,7 @@ run: all
 	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME)
 
 debug: all
-	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nosound 
+	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nosound
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge

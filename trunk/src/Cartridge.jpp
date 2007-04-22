@@ -216,7 +216,7 @@ public class Cartridge {
 			case 1:
 			case 3:
 				//MBC3 TODO: RTC CRAP
-				System.out.println("Error: not using memmap, or reading from cartridge with a non cartridge address!");
+				System.out.printf("Error: not using memmap, or reading from cartridge with a noncartridge address $%04x\n", index);
 				return MM_ROM[index>>12][index&0x0fff];
 			case 5:
 				// MBC5
@@ -235,6 +235,7 @@ public class Cartridge {
 				if ((index>=0x0000) && (index <0x2000)) { // RAM Enable
 					if ((value&0x0f) == 0x0A) ram_enabled = true; // 0x0Ah enable
 					else ram_enabled = false;
+// 					System.out.println("Setting ram_enabled="+ram_enabled);
 				}
 				else if(index<0x4000)  { // 2000-3FFF - ROM Bank Number (Write Only)
 					CurrentROMBank=Math.max(1, value&0x1f);
@@ -251,7 +252,8 @@ public class Cartridge {
 						//System.out.println("Selecting ROM bank"+CurrentROMBank);
 					}
 					else { // Select RAM
-						CurrentRAMBank=Math.max(1,value&0x03);
+						//not neccessary to take max(1, n) because there is only 1 slot where the rambanks may be mapped
+						CurrentRAMBank=value&0x03;
 					}
 				}
 				else if(index<0x8000) { //6000-7FFF - ROM/RAM Mode Select (Write Only)
@@ -259,7 +261,7 @@ public class Cartridge {
 				}
 				else if ((index>=0xA000) && (index <= 0xBFFF))	{
 						// RAM Bank 00-03, if any
-						System.out.println("TODO: MBC1 writing to RAM");
+						System.out.printf("TODO: MBC1 writing to RAM. index=$%04x, value=$%02x\n",index,value);
 				}
 				else PRINTF("TODO: Cartridge writing to $%04x\n", index); // TODO all option
 				break;
