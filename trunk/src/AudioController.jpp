@@ -1,6 +1,8 @@
 #include "Global.inc"
 import java.io.*;
 import javax.sound.sampled.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 // Sound IO ports:
 // FF10 - NR10 - Channel 1 Sweep register (R/W)
 // FF11 - NR11 - Channel 1 Sound length/Wave pattern duty (R/W)
@@ -588,6 +590,73 @@ public class AudioController {
 		0x5a,0x22,0x23,0x33,0x35,0x55,0x40,0x00,
 	};
 
+	public class MatchMixerInfo {
+		private Pattern pat_name;
+		private Pattern pat_vendor;
+		private Pattern pat_description;
+		private Pattern pat_version;
+		public int buffersize;
+		public MatchMixerInfo(String name, String vendor, String description, String version, int size) {
+			pat_name        = Pattern.compile(name);
+			pat_vendor      = Pattern.compile(vendor);
+			pat_description = Pattern.compile(description);
+			pat_version     = Pattern.compile(version);
+			buffersize      = size;
+		}
+		public boolean Match(Mixer.Info mixinfo) {
+			Matcher matcher;
+
+			matcher = pat_name.matcher(mixinfo.getName());
+			if (!matcher.find()) return false;
+			matcher = pat_vendor.matcher(mixinfo.	getVendor());
+			if (!matcher.find()) return false;
+			matcher = pat_description.matcher(mixinfo.getDescription());
+			if (!matcher.find()) return false;
+			matcher = pat_version.matcher(mixinfo.getVersion());
+			if (!matcher.find()) return false;
+			return true;
+		}
+	}
+	
+	private static SourceDataLine trygetSourceDataLine(MatchMixerInfo tMixer,
+							AudioFormat audioFormat)
+	{
+		SourceDataLine rline = null;
+		try {
+			if (tMixer != null) {
+				DataLine.Info	lineinfo = new DataLine.Info(SourceDataLine.class, audioFormat, tMixer.buffersize);
+				Mixer.Info[]	asInfo = AudioSystem.getMixerInfo();
+				for (int i = 0; i < asInfo.length; i++) {
+					if (tMixer.Match(asInfo[i])) {
+						Mixer mixer = AudioSystem.getMixer(asInfo[i]);
+						if (mixer.isLineSupported(lineinfo)) {
+							rline = (SourceDataLine) mixer.getLine(lineinfo);
+						}
+					}
+				}
+				if (rline != null)
+					rline.open(audioFormat, tMixer.buffersize);
+			}
+			else {
+				DataLine.Info	lineinfo = new DataLine.Info(SourceDataLine.class, audioFormat);
+				rline = (SourceDataLine) AudioSystem.getLine(lineinfo);
+				rline.open(audioFormat);
+			}
+		}
+		catch (LineUnavailableException e)
+		{
+			rline = null;
+			e.printStackTrace();
+		}
+		catch (Exception e)
+		{
+			rline = null;
+			e.printStackTrace();
+		}
+		return rline;
+	}
+
+
 	public int samplesQueued = 0;
 	protected boolean isMuted=false;
 	private boolean isEnabled=true;
@@ -606,7 +675,6 @@ public class AudioController {
 	private boolean SweepTimerTick; // 128hz
 	private int RATE;
 	public int CRATE;
-	private int draincnt=1;
 	public class SoundRegister {
 		int on;
 		int pos; // TODO: unsigned?
@@ -623,16 +691,30 @@ public class AudioController {
 	//private SoundRegister SR5; //On cartridge, not used atm
 	protected CPU cpu;
 
-
 	public AudioController(CPU cpu) {
 		this.cpu=cpu;
 		audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
 #ifndef JMGBE
 		try {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
-			myLineInfo = new DataLine.Info(SourceDataLine.class,myAudioFormat);
-			audioSource = (SourceDataLine)AudioSystem.getLine(myLineInfo);
-			audioSource.open(myAudioFormat, 1<<12);
+			MatchMixerInfo mixers[] = {
+				/** "rev50 [plughw:0,0]" (linux) works brilliantly but claims the audio hardware for itself */
+				new MatchMixerInfo("plughw"              , "", "", "", 1536),
+				/** "Primary Sound Driver" seems to work good under windows */
+				new MatchMixerInfo("Primary Sound Driver", "", "", "", 1536),
+				//"Alsa DataLine Mixer (hw:0)", // can't get this to work... :-(
+				//"Java Sound Audio Engine", // piece of crap...
+				null }; // tries default, crappy buffer setting... lags...
+			audioSource = null;
+			int i = 0;
+			while ((audioSource==null) && (i < mixers.length)) {
+				try {
+					audioSource = trygetSourceDataLine(mixers[i++], myAudioFormat);
+				}
+				catch (Exception E) {
+					audioSource = null;
+				}
+			}
 			audioSource.start();
 		}
 		catch (Exception e) {
@@ -652,7 +734,6 @@ public class AudioController {
 		CRATE = (4194304 / sampleRate);
 		//4194304 == (1<<23)
 	}
-
 
 	protected final void stateSaveLoad(boolean save, DataOutputStream dostream, DataInputStream distream)
 	throws IOException
@@ -926,12 +1007,8 @@ public class AudioController {
 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
 
-			if (audioBufferIndex >= 512) {
+			if (audioBufferIndex >= 128) {
 #ifndef JMGBE
-				if (++draincnt == 22050/512*5) {
-					draincnt = 0;
-					audioSource.drain();
-				}
 				audioSource.write(audioBuffer, 0, audioBufferIndex);
 #endif
 				audioBufferIndex = 0;
