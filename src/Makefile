@@ -8,8 +8,8 @@ PREVERIFY_OPTS:=-classpath $(CLASSPATH)
 #HAX!
 # VM_DEST:=-target 1.4.2
 # VM_SOURCE:=-source 1.4
-VM_DEST:=-target 1.5
-VM_SOURCE:=-source 1.5
+#VM_DEST:=-target 1.5
+#VM_SOURCE:=-source 1.5
 JAVAC_OPTS:=$(PREVERIFY_OPTS) -bootclasspath $(BOOTCLASSPATH) $(VM_DEST) $(VM_SOURCE) -Xlint
 JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -Xlint -O -d $(CLASSDIR)
 
@@ -26,6 +26,10 @@ all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 #ROMNAME='/home/simon/gbroms/Bionic Commando.zip'
 #ROMNAME='/home/simon/gbroms/Turtles 3.zip'
 #ROMNAME='/home/simon/gbroms/Metal Slug.zip'
+ROMNAME='/home/simon/gbroms/Double Dragon 3.zip'
+#ROMNAME='/home/simon/gbroms/Pokemon Yellow.zip'
+#ROMNAME='/home/simon/gbroms/Pokemon Diamond.zip'
+#ROMNAME='/home/simon/gbroms/Pokemon Blue.zip'
 #ROMNAME=../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
 
 fun: all
@@ -36,6 +40,9 @@ silence: all
 
 run: all
 	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME)
+
+debug: all
+	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nosound 
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge

@@ -62,6 +62,7 @@ public class CPU
 		#endif
 		static protected VideoController VC;
 		static protected AudioController AC;
+		static int vcmode;
 
 		public CPU( Cartridge cartridge ) {
 			if (singleton != null) {
@@ -286,9 +287,7 @@ public class CPU
 						b = VC.LCDC;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
-						//BLAAAA
-						b = VC.STAT|(((new java.util.Random()).nextInt(2))<<1); //HAX I wanna play!!!
-						b = (VC.STAT^=2); //HAX: Toggle MODE2 I wanna play!!!
+						b = ((VC.STAT & ~3) | vcmode);
 						break;
 					case 0xff42: // SCY
 						b = VC.SCY;
@@ -788,7 +787,7 @@ public class CPU
 				case 0x29: DO_ADD_HL(H, L); break;                  // ADD  HL  , HL
 				case 0x39: DO_ADD_HL((SP>>8), (SP&0xff)); break;    // ADD  HL  , SP
 				case 0xe9: PC = R16RHL; break;                      // JP   HL
-				case 0x2f: A ^= 0xFF; F |= (FN|FH); break;          // CPL
+				case 0x2f: A ^= 0xff; F |= (FN|FH); break;          // CPL
 				case 0x36: WRITE_V(R16RHL, IMM8); break;            // LD   (HL), n
 				case 0x07: DO_SHOP_R(RLC, A); F &= FC; break;       // RLA
 				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RL
@@ -905,7 +904,7 @@ public class CPU
 			++TotalInstrCount;
 			TotalCycleCount += res;
 			lastException = ((res!=0) ? 0 : 1);
-			if (res > 0)  {
+			if (res > 0) {
 				//clockfreq = 4194304hz
 				DIVcntdwn -= res;
 				if (DIVcntdwn < 0) {
@@ -937,13 +936,27 @@ public class CPU
 					VBLANKcntdwn -= res;
 					AC.render(res); //render enough sound bytes for res Cycles
 				}
+
+				/** TODO: put this logic inside VideoController */
 				if (VBLANKcntdwn < 0) {
 					VBLANKcntdwn += 456;   // 4194304/9198
-					VC.renderNextScanline();
+					++VC.LY;
+					if (VC.LY >= 154)
+						VC.LY = 0;
 				}
+				int mode = 2;
+				if (VBLANKcntdwn < 376) mode = 3;
+				if (VBLANKcntdwn < 204) mode = 0;
+				if (VC.LY>144)          mode = 1;
+
+				if (mode != vcmode) {
+					vcmode = mode;
+					VC.modeChanged(mode);
+				}
+
 				// [0 <= VBLANKcntdwn < 456]
-				// [0..80)   [80..252)   [252..456)
-				// mode 2    mode 3      mode 0
+				// [0..204)  [204..376)  [376..456)
+				// mode 0    mode 3      mode 2
 				// when LY>144 then mode 1
 
 			}

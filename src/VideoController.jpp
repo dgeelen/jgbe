@@ -573,27 +573,21 @@ public class VideoController {
 		//alldirty = false;
 	}
 
-	final public boolean renderNextScanline() {
-		STAT &= ~(1<<2);             // clear coincidence bit
-		if (LY==LYC) {               // if equal
-			STAT |= 1<<2;              // then set it
-			if ((STAT&(1<<6))!=0)      // if LYC=LY is enabled in STAT reg
-				cpu.triggerInterrupt(1); // request int STAT/LYC=LY
-		}
-		
-		++LY;
-		if (LY >= 154)
-			LY = 0;
-
-		if (LY < 144) {              // HBLANK
-			if (cfskip == 0)
-				renderScanLine(); // renders LY
-			STAT &= ~(3);              // mode=0
-			if ((STAT&(1<<3))!=0)      // if HBlank is enabled in STAT reg
-				cpu.triggerInterrupt(1); // request int STAT/HBlank
-		}
-
-		if (LY == 144) {             // VBLANK
+	final public void modeChanged(int mode) {
+		if ((mode == 2)
+		 && (LY==LYC)
+		 && ((STAT&(1<<6))!=0))
+			cpu.triggerInterrupt(1);
+		if ((mode == 2)
+		 && ((STAT&(1<<5))!=0))
+			cpu.triggerInterrupt(1);
+		if ((mode == 0)
+		 && ((STAT&(1<<3))!=0))
+			cpu.triggerInterrupt(1);
+		if ((mode == 1)
+		 && ((STAT&(1<<4))!=0))
+			cpu.triggerInterrupt(1);
+		if (mode == 1) {
 			if (cfskip == 0) {
 				blitImage();
 #ifndef USE_JAVA_142
@@ -602,13 +596,11 @@ public class VideoController {
 			}
 			cfskip--;
 			if (cfskip < 0) cfskip += fskip;
-			STAT &= ~(3);
-			STAT |= 1;                 // mode=1
-			if ((STAT&(1<<4))!=0)      // if VBlank is enabled in STAT reg
-				cpu.triggerInterrupt(1); // request int STAT/VBlank
-			cpu.triggerInterrupt(0);   // always request int VBLANK
+			cpu.triggerInterrupt(0);
 		}
-		return (LY == 144);
+		if ((mode == 0)
+		 && (LY < 144))
+			renderScanLine();
 	}
 
 	final public int read(int index) {
