@@ -151,8 +151,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuFrameSkip = new JMenu( "Frame Skipping");
 			menuitemIncFrameSkip = new JMenuItem( "Increase Frame Skip", KeyEvent.VK_I );
 			menuitemDecFrameSkip = new JMenuItem( "Decrease Frame Skip", KeyEvent.VK_D );
-			menuitemIncFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_BRACELEFT, ActionEvent.CTRL_MASK ) );
-			menuitemDecFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_BRACERIGHT, ActionEvent.CTRL_MASK ) );
+			menuitemIncFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_CLOSE_BRACKET, ActionEvent.CTRL_MASK ) );
+			menuitemDecFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_OPEN_BRACKET, ActionEvent.CTRL_MASK ) );
 			menuitemIncFrameSkip.addActionListener( this );
 			menuitemDecFrameSkip.addActionListener( this );
 			menuFrameSkip.add( menuitemIncFrameSkip );
@@ -219,7 +219,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JFrame frame;
 
 		private void createAndShowGUI() {
-			JFrame.setDefaultLookAndFeelDecorated( true );
+			//JFrame.setDefaultLookAndFeelDecorated( true );
 
 			frame = new JFrame( "JGameBoy Emulator V0.01" );
 			frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
