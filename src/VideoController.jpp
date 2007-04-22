@@ -70,7 +70,7 @@ public class VideoController {
 	private int patpix[][][] = new int[4096][][]; // see updatepatpix()
 	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
 	private boolean anydirty = true;                // see updatepatpix()
-	private boolean alldirty = true;                // see updatepatpix()
+// 	private boolean alldirty = true;                // see updatepatpix()
 
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
 
@@ -82,6 +82,26 @@ public class VideoController {
 	public int nscale = 2;
 	private int cfskip = 0;
 	public int fskip = 1; // 1 is off
+
+	public void reset() {
+		this.isCGB = cpu.isCGB();
+		CurrentVRAMBank=0;
+		LY=0;
+		LYC=0;
+		SCX=0;
+		SCY=0;
+		WX=0;
+		WY=0;
+		LCDC=0;
+		STAT=0; // FF41 - STAT - LCDC Status (R/W)
+		BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
+		OBPI=0;              //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
+		anydirty = true;                // see updatepatpix()
+		for(int i=0; i<1024; ++i) {
+			patdirty[i]=true;
+		}
+		updatepatpix();
+	}
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
@@ -291,7 +311,7 @@ public class VideoController {
 
 	//static long lastms = System.nanoTime();
 	static long lastms;
-	static int fps23fix=0;
+// 	static int fps23fix=0;
 	final private void blitImage() {
 		if (scale != nscale) scale();
 		//Graphics g = drawImg[curDrawImg^1].getGraphics();

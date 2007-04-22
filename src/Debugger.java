@@ -36,6 +36,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
  private RDParser parser;
  private int[] oldRegVal;
  private Writer logwriter;
+ private boolean bpi;
  public Debugger(swinggui gui, String logfilename) {
   this.gui=gui;
   try {
@@ -47,7 +48,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
    logwriter = null;
   }
   deasm= new Disassembler(gui.cpu);
-  oldRegVal=new int[10];
+  oldRegVal=new int[11];
   parser=new RDParser();
 
   createAndShowGUI();
@@ -191,6 +192,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
      if (dbg.gui.cpu.read(dbg.gui.cpu.PC) == breakinstr) {
       setStatus(0);
      }
+     if(bpi && dbg.gui.cpu.interrupting) {
+      setStatus(0);
+     }
     }
     setRunFor(-1);
    }
@@ -304,7 +308,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
   for(int i=0; i<8; ++i) {
    mem.setValueAt(String.format("$%04x",m), i,0);
    for(int j=2; j<10; ++j) {
-    mem.setValueAt(String.format("$%02x",gui.cpu.read(m++)), i,j);
+    mem.setValueAt(String.format("$%02x",(m<=0xffff)?gui.cpu.read(m++):0x1000), i,j);
    }
   }
  }
@@ -326,7 +330,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
   int pc=gui.cpu.PC;
   for(int i=0; i<7; ++i) {
    pc=seekBackOneInstruction(pc);
-
+   instrs.setValueAt(instrs.getValueAt(i+1,0), i,0);
    }
   for(int i=0; i<16; ++i) {
    if (i==7) pc=gui.cpu.PC;
@@ -400,6 +404,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
   regs2.setValueAt(flags, 0,3);
   c = m.getColumn(3);
   c.setCellRenderer( oldRegVal[5]==gui.cpu.F ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+
+
+
+
+
  }
 
  private void createAndShowGUI() {
@@ -526,51 +535,84 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
     parser.addVariable("PC", oldRegVal[8]);
     parser.addVariable("SP", oldRegVal[9]);
     parser.addVariable("HL", oldRegVal[7]|(oldRegVal[6]<<8));
+    parser.addVariable("M", memaddr);
+    parser.addVariable("a", oldRegVal[0]);
+    parser.addVariable("b", oldRegVal[1]);
+    parser.addVariable("c", oldRegVal[2]);
+    parser.addVariable("d", oldRegVal[3]);
+    parser.addVariable("e", oldRegVal[4]);
+    parser.addVariable("f", oldRegVal[5]);
+    parser.addVariable("h", oldRegVal[6]);
+    parser.addVariable("l", oldRegVal[7]);
+    parser.addVariable("pc", oldRegVal[8]);
+    parser.addVariable("sp", oldRegVal[9]);
+    parser.addVariable("hl", oldRegVal[7]|(oldRegVal[6]<<8));
+    parser.addVariable("m", memaddr);
+    System.out.println("memaddr="+memaddr);
     int v = parser.Evaluate(s.substring(i+1).trim());
     if(!parser.parseError) {
-     if(l.equals("A")){
+     if(l.equalsIgnoreCase("a")){
       gui.cpu.A=v&0xFF;
       update();
      }
-     else if(l.equals("B")){
+     else if(l.equalsIgnoreCase("b")){
       gui.cpu.B=v&0xFF;
       update();
      }
-     else if(l.equals("C")){
+     else if(l.equalsIgnoreCase("c")){
       gui.cpu.C=v&0xFF;
       update();
      }
-     else if(l.equals("D")){
+     else if(l.equalsIgnoreCase("d")){
       gui.cpu.D=v&0xFF;
       update();
      }
-     else if(l.equals("E")){
+     else if(l.equalsIgnoreCase("e")){
       gui.cpu.E=v&0xFF;
       update();
      }
-     else if(l.equals("F")){
+     else if(l.equalsIgnoreCase("f")){
       gui.cpu.F=v&0xFF;
       update();
      }
-     else if(l.equals("H")){
+     else if(l.equalsIgnoreCase("h")){
       gui.cpu.H=v&0xFF;
       update();
      }
-     else if(l.equals("L")){
+     else if(l.equalsIgnoreCase("l")){
       gui.cpu.L=v&0xFF;
       update();
      }
-     else if(l.equals("HL")){
+     else if(l.equalsIgnoreCase("hl")){
       gui.cpu.H=(v>>8)&0xFF;
       gui.cpu.L=v&0xFF;
       update();
      }
-     else if(l.equals("PC")){
+     else if(l.equalsIgnoreCase("pc")){
       gui.cpu.PC=v&0xFFFF;
       update();
      }
-     else if(l.equals("SP")){
+     else if(l.equalsIgnoreCase("sp")){
       gui.cpu.SP=v&0xFFFF;
+      update();
+     }
+     else if(l.equalsIgnoreCase("m")){
+      memaddr=v&0xFFFF;
+      update();
+     }
+     else if(l.equalsIgnoreCase("af")){
+      gui.cpu.A=(v>>8)&0xFF;
+      gui.cpu.F=v&0xFF;
+      update();
+     }
+     else if(l.equalsIgnoreCase("bc")){
+      gui.cpu.B=(v>>8)&0xFF;
+      gui.cpu.C=v&0xFF;
+      update();
+     }
+     else if(l.equalsIgnoreCase("de")){
+      gui.cpu.D=(v>>8)&0xFF;
+      gui.cpu.E=v&0xFF;
       update();
      }
      else {
@@ -578,9 +620,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener {
      }
     }
    }
-   if(s.charAt(0)=='m') {
-    memaddr = parser.StrToInt(s.substring(1));
-    update();
+   if(s.equals("bi")) {
+    bpi = true;
+
+   }
+   if(s.equals("ci")) {
+    bpi = false;
+
    }
   }
   else {
