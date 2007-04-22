@@ -242,7 +242,6 @@ public class CPU
 				b=read(index-0x2000);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
-				//System.out.println("TODO: CPU.read(): Sprite Attribute Table");
 				b=VC.read(index);
 			}
 			else if(index < 0xff00) { //Not Usable
@@ -252,6 +251,7 @@ public class CPU
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
+						//System.out.printf("DEBUG: CPU.read(): YOYP (PC=0x%04x)\n", PC);
 						b=IOP[index-0xff00]&0xf0;
 						if((b&(1<<4))==0) { // Direction keys, 0=select
 							b|=DirectionKeyStatus;
@@ -341,6 +341,25 @@ public class CPU
 					case 0xff70: // SVBK - CGB Mode Only - WRAM Bank
 						b = CurrentWRAMBank;
 						break;
+					/** some 'undocemented' stuff... */
+					case 0xff6c: // Undocumented (FEh) - bit 0 (Read/Write)
+						PRINTF("WARNING: CPU.read(): Read from *undocumented* IO port $%04x\n",index);
+						b = IOP[index-0xff00] | 0xfe;
+						break;
+					case 0xff72: // Undocumented (00h) - Bit 0-7 (Read/Write)
+					case 0xff73: // Undocumented (00h) - Bit 0-7 (Read/Write)
+					case 0xff74: // Undocumented (00h) - Bit 0-7 (Read/Write)
+						b = IOP[index-0xff00];
+						break;
+					case 0xff75: // Undocumented (8Fh) - Bit 4-6 (Read/Write)
+						PRINTF("WARNING: CPU.read(): Read from *undocumented* IO port $%04x\n",index);
+						b = IOP[index-0xff00] | 0x8f;
+						break;
+					case 0xff76: // Undocumented (00h) - Always 00h (Read Only)
+					case 0xff77: // Undocumented (00h) - Always 00h (Read Only)
+						PRINTF("WARNING: CPU.read(): Read from *undocumented* IO port $%04x\n",index);
+						b = 0;
+						break;
 					default:
 						PRINTF("TODO: CPU.read(): Read from IO port $%04x\n",index);
 						b=0xff; // GnuBoy compat
@@ -410,7 +429,7 @@ public class CPU
 				VC.write(index, value);
 			}
 			else if(index < 0xff00) { //Not Usable
-				PRINTF("TODO: CPU.write(): Write to unusable memory (0xfea-0xfeff) index=$%04x, value=$%02x\n",index,value);
+				PRINTF("WARNING: CPU.write(): Write to unusable memory (0xfea-0xfeff) index=$%04x, value=$%02x\n",index,value);
 			}
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
@@ -540,6 +559,19 @@ public class CPU
 						CurrentWRAMBank=MAX(value&0x07, 1);
 						refreshMemMap();
 						break;
+					/** some 'undocemented' stuff... */
+					case 0xff6c: // Undocumented (FEh) - bit 0 (Read/Write)
+					case 0xff72: // Undocumented (00h) - Bit 0-7 (Read/Write)
+					case 0xff73: // Undocumented (00h) - Bit 0-7 (Read/Write)
+					case 0xff74: // Undocumented (00h) - Bit 0-7 (Read/Write)
+					case 0xff75: // Undocumented (8Fh) - Bit 4-6 (Read/Write)
+						PRINTF("WARNING: CPU.write(): Write to *undocumented* IO port $%04x\n",index);
+						IOP[index-0xff00] = value;
+						break;
+					case 0xff76: // Undocumented (00h) - Always 00h (Read Only)
+					case 0xff77: // Undocumented (00h) - Always 00h (Read Only)
+						PRINTF("WARNING: CPU.write(): Write to *undocumented* IO port $%04x\n",index);
+						break;
 					default:
 						PRINTF("TODO: CPU.write(): Write to IO port $%04x\n",index);
 						break;
@@ -549,7 +581,6 @@ public class CPU
 				HRAM[index-0xff80] = value;
 			}
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
-				//System.out.println("TODO: CPU.write(): Write to Interrupt Enable Register (0xffff)");
 				IE=value; // Interrupt Enable Register
 				//System.out.println("IE write: VBlank="+(IE&1)+" STAT="+((IE&2)>>1)+" Timer="+((IE&4)>>2)+" Serial="+((IE&8)>>3)+" Joypad="+((IE&16)>>4 ));
 			}
@@ -757,7 +788,7 @@ public class CPU
 				case 0x29: DO_ADD_HL(H, L); break;                  // ADD  HL  , HL
 				case 0x39: DO_ADD_HL((SP>>8), (SP&0xff)); break;    // ADD  HL  , SP
 				case 0xe9: PC = R16RHL; break;                      // JP   HL
-				case 0x2f: A ^= 0xFF; F |= (FN|FH); break;             // CPL
+				case 0x2f: A ^= 0xFF; F |= (FN|FH); break;          // CPL
 				case 0x36: WRITE_V(R16RHL, IMM8); break;            // LD   (HL), n
 				case 0x07: DO_SHOP_R(RLC, A); F &= FC; break;       // RLA
 				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RL
@@ -775,8 +806,8 @@ public class CPU
 				case 0x3f: F &= (FZ|FC); F ^= FC; break;            // CCF
 				case 0x08: {                                        // LD   (nn), SP
 					t_acc = IMM16;
-					WRITE_F(t_acc , SP>>8);
-					WRITE_V((t_acc+1)&0xffff, SP&0xff);
+					WRITE_V(t_acc, SP&0xff);
+					WRITE_F((t_acc+1)&0xffff , SP>>8);
 				}; break;
 				case 0xf8:{                                         // LD  HL, SP+dd
 					R16WHL(SP);
@@ -873,7 +904,7 @@ public class CPU
 			PC &= 0xffff;
 			++TotalInstrCount;
 			TotalCycleCount += res;
-			lastException = (res!=0) ? 0 : 1;
+			lastException = ((res!=0) ? 0 : 1);
 			if (res > 0)  {
 				//clockfreq = 4194304hz
 				DIVcntdwn -= res;
