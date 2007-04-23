@@ -26,15 +26,23 @@
 //#define MIN(a,b) (Math.min((a), (b))
 
 /* save state macro's here */
+#define SAVELOAD_FUNCTION \
+	protected final void stateSaveLoad(boolean save, int version, DataOutputStream dostream, DataInputStream distream) throws IOException
+	
+#define SL_SAVE (save)
+#define SL_LOAD (!save)
+
+#define SL_MAGIX (0x4a374a53) // JGBS = Java GameBoy State
+
 #define SL_UINT8(x) {\
-	if (save) \
+	if (SL_SAVE) \
 		dostream.writeByte((x)&0xff); \
 	else \
 		(x) = distream.readUnsignedByte(); \
 }
 
 #define SL_UINT16(x) {\
-	if (save) \
+	if (SL_SAVE) \
 		dostream.writeShort((x)&0xffff); \
 	else \
 		(x) = distream.readUnsignedShort(); \
@@ -42,14 +50,14 @@
 
 #define SL_INT SL_INT32
 #define SL_INT32(x) {\
-	if (save) \
+	if (SL_SAVE) \
 		dostream.writeInt(x); \
 	else \
 		(x) = distream.readInt(); \
 }
 
 #define SL_BOOL(x) {\
-	if (save) \
+	if (SL_SAVE) \
 		dostream.writeBoolean(x); \
 	else \
 		(x) = distream.readBoolean(); \
@@ -66,6 +74,14 @@
 			SL_ ## type (var[i][j]); \
 }
 
-/* TODO */
+#define SL_IF_VERSION(a, b) \
+	if ( ((a == -1) || (a <= version)) && ((b == -1) || (version <=b)) )
+
+#define SL_SKIP(type, len) { \
+	int tempskip = 0; \
+	for (int i = 0; i < (len); ++i) \
+		SL_ ## type (tempskip); \
+}
+
 #define SL_OBJ(obj) \
-	(obj).stateSaveLoad(save, dostream, distream);
+	(obj).stateSaveLoad(save, version, dostream, distream);

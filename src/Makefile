@@ -24,7 +24,7 @@ all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 
 # use ROMNAME='/what/ever/file.gbc' make [run|fun|silence]
 #ROMNAME='/home/simon/gbroms/Bionic Commando.zip'
-#ROMNAME='/home/simon/gbroms/Turtles 3.zip'
+ROMNAME='/home/simon/gbroms/Turtles 3.zip'
 #ROMNAME='/home/simon/gbroms/Metal Slug.zip'
 #ROMNAME='/home/simon/gbroms/Double Dragon 3.zip'
 #ROMNAME='/home/simon/gbroms/Pokemon Yellow.zip'
@@ -34,7 +34,7 @@ all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 #ROMNAME=../../roms/../roms/Super\ Mario\ Land\ 2\ -\ 6\ Golden\ Coins\ \(UE\)\ \(V1.0\)\ \[\!\].gb
 #ROMNAME=../../roms/Castelian\ \(U\).gb
 #ROMNAME=../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
-ROMNAME=../../roms/Double\ Dragon\ 3.zip
+#ROMNAME=../../roms/Double\ Dragon\ 3.zip
 
 fun: all
 	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nodebug

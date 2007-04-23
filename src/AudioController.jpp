@@ -741,8 +741,7 @@ public class AudioController {
 		//4194304 == (1<<23)
 	}
 
-	protected final void stateSaveLoad(boolean save, DataOutputStream dostream, DataInputStream distream)
-	throws IOException
+	SAVELOAD_FUNCTION
 	{
 		// it already seems to work fine,
 		// so saving sound state isnt needed?

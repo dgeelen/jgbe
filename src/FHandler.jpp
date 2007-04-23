@@ -65,7 +65,7 @@ public final class FHandler {
 			System.out.println("bostream="+bostream);
 #endif
 			DataOutputStream dostream = new DataOutputStream(bostream);
-			System.out.println("dostream="+dostream);
+			//System.out.println("dostream="+dostream);
 			return dostream;
 		}
 		else {
