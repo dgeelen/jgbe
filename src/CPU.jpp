@@ -103,7 +103,7 @@ public class CPU
 			SL_IF_VERSION(0, 0) {
 				for (int j = 0; j < 8; ++j) {
 					SL_ARR(UINT8, WRAM[j], 0x1000);
-//					SL_SKIP(UINT8, 0x10000 - 0x1000);
+					//SL_SKIP(UINT8, 0x10000 - 0x1000);
 				}
 			}
 			SL_IF_VERSION(1, -1)
@@ -135,10 +135,10 @@ public class CPU
 		public static final void saveState(DataOutputStream dostream)
 		throws IOException
 		{
-			int saveversion = 1; //change when changing savestate format
+			int saveversion = SL_SAVE_VERSION; //change when changing savestate format
 			dostream.writeInt(SL_MAGIX);
 			dostream.writeInt(saveversion);
-			//System.out.println("saving state version:"+saveversion);
+			System.out.println("saving state version:"+saveversion);
 			stateSaveLoad(true, saveversion, dostream, null);
 		}
 
@@ -148,6 +148,7 @@ public class CPU
 			int loadversion;
 			int magix = distream.readInt();
 			if (magix != SL_MAGIX) {
+				// throw new IOException("save state not valid");
 				// hax! 1 in 0xffffffff chance this goes wrong!
 				loadversion = 0;
 				B = (magix >> 24) & 0xff;
@@ -157,9 +158,11 @@ public class CPU
 			}
 			else
 				loadversion = distream.readInt();
-			if (loadversion < 0/*minimumsupportedversion*/)
+			if (loadversion < SL_LOAD_MIN_VERSION)
 				throw new IOException("save state too old");
-			//System.out.println("loading state version:"+loadversion);
+			if (loadversion > SL_LOAD_MAX_VERSION)
+				throw new IOException("save state too new");
+			System.out.println("loading state version:"+loadversion);
 			stateSaveLoad(false, loadversion, null, distream);
 		}
 

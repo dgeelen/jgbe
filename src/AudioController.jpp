@@ -801,8 +801,8 @@ public class AudioController {
 		SL_INT(S4.envol);
 		SL_INT(S4.endir);
 
-	if(!save) //restoring gamestate
-		audioBufferIndex=0;
+		if (SL_LOAD) //restoring gamestate
+			audioBufferIndex=0;
 	}
 
 	void s1_init() {
