@@ -10,8 +10,12 @@ import java.io.*;
 import java.awt.image.BufferedImage;
 
 		class CPURunner implements Runnable {
+			private boolean Threadinterrupted=false;
+			synchronized public final void toggleThreadinterrupted(){
+				Threadinterrupted=!Threadinterrupted;
+			}
 			public void run() {
-				while (!Thread.interrupted()  && (CPU.nextinstruction()!=0)) {};
+				while (!Threadinterrupted  && (CPU.nextinstruction()!=0)) {};
 			}
 		}
 
@@ -63,7 +67,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public void stopCPU() {
 			try {
 				while (cpurunthread.isAlive()) {;
-					cpurunthread.interrupt();
+					cpuRunner.toggleThreadinterrupted();
 					cpurunthread.join(100);
 				}
 			}
@@ -370,82 +374,74 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		public void keyPressed(KeyEvent e) {
+			int oldButtonKeyStatus=cpu.ButtonKeyStatus;
+			int oldDirectionKeyStatus=cpu.DirectionKeyStatus;
 			switch(e.getKeyCode()){
 				case KeyEvent.VK_Z:
 					cpu.ButtonKeyStatus&=~1; // A
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_X:
 					cpu.ButtonKeyStatus&=~2; // B
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_MINUS:
 					cpu.ButtonKeyStatus&=~4; // Select
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_EQUALS:
 					cpu.ButtonKeyStatus&=~8; // Start
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_RIGHT:
 					cpu.DirectionKeyStatus&=~1; // Right
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_LEFT:
 					cpu.DirectionKeyStatus&=~2; // Left
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_UP:
 					cpu.DirectionKeyStatus&=~4; // Up
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_DOWN:
 					cpu.DirectionKeyStatus&=~8; // Down
-					cpu.triggerInterrupt(4);
 					break;
 				default:
 					//System.out.println("keyPressed");
 					break;
-				}
+			}
+			if((oldButtonKeyStatus!=cpu.ButtonKeyStatus)|(cpu.DirectionKeyStatus!=oldDirectionKeyStatus))
+				cpu.triggerInterrupt(4);
 		}
 		public void keyReleased(KeyEvent e) {
+			int oldButtonKeyStatus=cpu.ButtonKeyStatus;
+			int oldDirectionKeyStatus=cpu.DirectionKeyStatus;
 			switch(e.getKeyCode()){
 				case KeyEvent.VK_Z:
 					cpu.ButtonKeyStatus|=1; // A
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_X:
 					cpu.ButtonKeyStatus|=2; // B
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_MINUS:
 					cpu.ButtonKeyStatus|=4; // Select
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_EQUALS:
 					cpu.ButtonKeyStatus|=8; // Start
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_RIGHT:
 					cpu.DirectionKeyStatus|=1; // Right
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_LEFT:
 					cpu.DirectionKeyStatus|=2; // Left
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_UP:
 					cpu.DirectionKeyStatus|=4; // Up
-					cpu.triggerInterrupt(4);
 					break;
 				case KeyEvent.VK_DOWN:
 					cpu.DirectionKeyStatus|=8; // Down
-					cpu.triggerInterrupt(4);
 					break;
 				default:
 					//System.out.println("keyReleased" + e.getKeyCode());
 					break;
-				}
+			}
+		if((oldButtonKeyStatus!=cpu.ButtonKeyStatus)|(cpu.DirectionKeyStatus!=oldDirectionKeyStatus))
+			cpu.triggerInterrupt(4);
 		}
 
 

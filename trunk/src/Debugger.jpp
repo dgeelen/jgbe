@@ -370,7 +370,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		regs1.setValueAt(String.format("F=$%02x",gui.cpu.F), 0,5);
 		c = m.getColumn(5);
 		c.setCellRenderer( oldRegVal[5]==gui.cpu.F ? normal : colored );
-		oldRegVal[5]=gui.cpu.F;
+// 		oldRegVal[5]=gui.cpu.F;
 
 		regs1.setValueAt(String.format("H=$%02x",gui.cpu.H), 0,6);
 		c = m.getColumn(6);
@@ -399,11 +399,36 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		regs2.setValueAt(flags, 0,3);
 		c = m.getColumn(3);
 		c.setCellRenderer( oldRegVal[5]==gui.cpu.F ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		oldRegVal[5]=gui.cpu.F;
 
-/* 		String ime=(gui.cpu.IME?"I ":"i ")
- 		int intstat=gui.cpu.IOP[0x0f]|(gui.cpu.IE<<5)|(gui.cpu.IME?1<<10:0);
- 		oldRegVal[10]=&IE
- 		regs2.setValueAt(ime, 0,2);*/
+		/*0=VBlANK
+			1=LCD STAT
+			2=Timer
+			3=Serial
+			4=Joypad*/
+
+		//0 98765 43210
+		//        4
+		int intstat=(gui.cpu.IOP[0x0f]&0x1f)|((gui.cpu.IE&0x1f)<<5)|(gui.cpu.IME?1<<10:0);
+		String ime=((intstat&(1<<10))!=0?"I ":"i ");
+		ime+=(gui.cpu.IE       &(1<<4))!=0?"J":"j";
+		ime+=(gui.cpu.IOP[0x0f]&(1<<4))!=0?"+":"-";
+		ime+=" ";
+		ime+=(gui.cpu.IE       &(1<<3))!=0?"S":"s";
+		ime+=(gui.cpu.IOP[0x0f]&(1<<3))!=0?"+":"-";
+		ime+=" ";
+		ime+=(gui.cpu.IE       &(1<<2))!=0?"T":"t";
+		ime+=(gui.cpu.IOP[0x0f]&(1<<2))!=0?"+":"-";
+		ime+=" ";
+		ime+=(gui.cpu.IE       &(1<<1))!=0?"L":"l";
+		ime+=(gui.cpu.IOP[0x0f]&(1<<1))!=0?"+":"-";
+		ime+=" ";
+		ime+=(gui.cpu.IE       &(1<<0))!=0?"V":"v";
+		ime+=(gui.cpu.IOP[0x0f]&(1<<0))!=0?"+":"-";
+ 		regs2.setValueAt(ime, 0,2);
+ 		c = m.getColumn(2);
+		c.setCellRenderer( oldRegVal[10]==intstat ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+ 		oldRegVal[10]=intstat;
 	}
 
 	private void createAndShowGUI() {

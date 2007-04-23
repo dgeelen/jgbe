@@ -31,12 +31,12 @@ public class CPU
 		protected static int L = 7;
 		protected static int A = 0;
 
-		static private int[] IOP = new int[0x80]; //IO Ports
-		static private int[] HRAM = new int[0x7F]; //HighRAM
-		static private int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
-		static private int CurrentWRAMBank=1;
+		static protected int[] IOP = new int[0x80]; //IO Ports
+		static protected int[] HRAM = new int[0x7F]; //HighRAM
+		static protected int[][] WRAM = new int[0x08][0x10000]; //8x4k InternalRAM
+		static protected int CurrentWRAMBank=1;
 
-		static private boolean doublespeed = false;
+		static protected boolean doublespeed = false;
 		static private boolean speedswitch = false;
 
 		static private int DIVcntdwn = 0;
@@ -99,7 +99,12 @@ public class CPU
 			SL_UINT8(A);
 			SL_ARR(UINT8, IOP, 0x80);
 			SL_ARR(UINT8, HRAM, 0x7f);
-			SL_ARR_2D(UINT8, WRAM, 0x08, 0x10000);
+			//if (save) {
+				SL_ARR_2D(UINT8, WRAM, 0x08, 0x1000);
+			//}
+			//else {
+				//SL_ARR_2D(UINT8, WRAM, 0x08, 0x10000);
+			//}
 			SL_INT(CurrentWRAMBank);
 			SL_BOOL(doublespeed);
 			SL_BOOL(speedswitch);
@@ -716,14 +721,31 @@ public class CPU
 			IOP[0x0f] |= (1<<i);
 		}
 
+		/*DoubleDragon HAX*/
+		private static int keyBounce=0;
+		private static int keyBounceWaitNext=0;
+		private static int hax=0;
+
 		static final protected int execute() {
 			int cycles;
 			TVARS;
+			hax|=(IOP[0x0f]&(1<<4));
 			if (CHECK_INTS) {
 				checkInterrupts();
 				halted = false;
 				//return 12; // 12 cycles for this?
  				return 4;/* FIXME(?) For break on interrupt */
+			}
+			if((++keyBounceWaitNext&0x80)==0) {//wait some instructions
+// 				if(hax!=0)System.out.printf(".");
+				if((hax!=0) && (++keyBounce<4)) { //Joystick interrupt triggered
+					IOP[0x0f]|=hax;
+// 					System.out.printf("bounce hax=0x%04x keyBounce=0x%04x iop[0x0f]=0x%04x\n",hax, keyBounce, IOP[0x0f]);
+					}
+				else {
+					keyBounce=0;
+					hax=0;
+				}
 			}
 			interrupting=false;
 			if (halted) return 4;
