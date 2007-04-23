@@ -49,7 +49,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		Thread cpurunthread;
 
 		public void updateCartName(String fname) {
-			int slashPos = MAX(fname.lastIndexOf("\\"), fname.lastIndexOf("/"));
+			int slashPos = fname.lastIndexOf(File.separator);
 			int dotPos = fname.lastIndexOf(".");
 			if (dotPos == -1) dotPos = fname.length()+1;
 

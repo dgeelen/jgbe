@@ -33,7 +33,7 @@ all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 #ROMNAME=../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
 #ROMNAME=../../roms/../roms/Super\ Mario\ Land\ 2\ -\ 6\ Golden\ Coins\ \(UE\)\ \(V1.0\)\ \[\!\].gb
 #ROMNAME=../../roms/Castelian\ \(U\).gb
-ROMNAME=../../roms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
+ROMNAME=/home/simon/gbroms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
 #ROMNAME=../../roms/Double\ Dragon\ 3.zip
 
 fun: all

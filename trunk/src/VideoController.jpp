@@ -140,8 +140,7 @@ public class VideoController {
 	}
 
 
-	SAVELOAD_FUNCTION
-	{
+	SAVELOAD_FUNCTION {
 		SL_INT(CurrentVRAMBank);
 		SL_ARR(UINT8, VRAM, 0x4000);
 		SL_ARR(UINT8, OAM, 0xa0);
