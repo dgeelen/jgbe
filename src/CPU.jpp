@@ -86,9 +86,8 @@ public class CPU
 			PRINTFREEMEM("CPU created");
 		}
 
-		static SAVELOAD_FUNCTION
-		{
-			SL_IF_VERSION(1, -1) {
+		static SAVELOAD_FUNCTION {
+			SL_IF_VERSION( 1, -1) {
 				SL_UINT8(B);
 				SL_UINT8(C);
 				SL_UINT8(D);
@@ -100,14 +99,13 @@ public class CPU
 			SL_UINT8(A);
 			SL_ARR(UINT8, IOP, 0x80);
 			SL_ARR(UINT8, HRAM, 0x7f);
-			SL_IF_VERSION(0, 0) {
-				for (int j = 0; j < 8; ++j) {
-					SL_ARR(UINT8, WRAM[j], 0x1000);
-					//SL_SKIP(UINT8, 0x10000 - 0x1000);
+			SL_IF_VERSION( 0,  0) {
+				for (int i = 0; i < 8; ++i) {
+					SL_ARR(UINT8, WRAM[i], 0x1000);
+					SL_SKIP(UINT8, 0x10000 - 0x1000);
 				}
 			}
-			SL_IF_VERSION(1, -1)
-				SL_ARR_2D(UINT8, WRAM, 0x08, 0x1000);
+			SL_IF_VERSION( 1, -1) SL_ARR_2D(UINT8, WRAM, 0x08, 0x1000);
 			SL_INT(CurrentWRAMBank);
 			SL_BOOL(doublespeed);
 			SL_BOOL(speedswitch);
@@ -119,17 +117,22 @@ public class CPU
 			SL_UINT8(IE);
 			SL_BOOL(IME);
 			SL_BOOL(halted);
-			SL_UINT8(DirectionKeyStatus);
-			SL_UINT8(ButtonKeyStatus);
+			SL_IF_VERSION( 0,  2) SL_UINT8(DirectionKeyStatus);
+			SL_IF_VERSION( 0,  2) SL_UINT8(ButtonKeyStatus);
 			SL_INT(lastException);
 			SL_BOOL(BIOS_enabled);
 
 			SL_OBJ(cartridge);
 			SL_OBJ(VC);
-			SL_IF_VERSION(2, -1)
-				SL_OBJ(AC);
+			SL_IF_VERSION( 2, -1) SL_OBJ(AC);
 
-			if (SL_LOAD) refreshMemMap();
+			SL_IF_VERSION( 3, -1) SL_UINT8(vcmode);
+			SL_IF_VERSION( 3, -1) SL_INT(TotalInstrCount);
+			SL_IF_VERSION( 3, -1) SL_INT(TotalCycleCount);
+
+			if (SL_LOAD) {
+				refreshMemMap();
+			}
 		}
 
 		public static final void saveState(DataOutputStream dostream)
