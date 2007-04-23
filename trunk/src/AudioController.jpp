@@ -743,8 +743,66 @@ public class AudioController {
 
 	SAVELOAD_FUNCTION
 	{
-		// it already seems to work fine,
-		// so saving sound state isnt needed?
+		SL_ARR(UINT8, IO, 0x20);
+		SL_ARR(UINT8, WAVE, 0x10);
+		SL_INT(cyclesLeftToRender);
+		SL_INT(TimerCountDown);
+		SL_BOOL(SweepTimerTick);
+
+		SL_INT(S1.on);
+		SL_INT(S1.pos);
+		SL_INT(S1.cnt);
+		SL_INT(S1.encnt);
+		SL_INT(S1.swcnt);
+		SL_INT(S1.len);
+		SL_INT(S1.enlen);
+		SL_INT(S1.swlen);
+		SL_INT(S1.swfreq);
+		SL_INT(S1.freq);
+		SL_INT(S1.envol);
+		SL_INT(S1.endir);
+
+		SL_INT(S2.on);
+		SL_INT(S2.pos);
+		SL_INT(S2.cnt);
+		SL_INT(S2.encnt);
+		SL_INT(S2.swcnt);
+		SL_INT(S2.len);
+		SL_INT(S2.enlen);
+		SL_INT(S2.swlen);
+		SL_INT(S2.swfreq);
+		SL_INT(S2.freq);
+		SL_INT(S2.envol);
+		SL_INT(S2.endir);
+
+		SL_INT(S3.on);
+		SL_INT(S3.pos);
+		SL_INT(S3.cnt);
+		SL_INT(S3.encnt);
+		SL_INT(S3.swcnt);
+		SL_INT(S3.len);
+		SL_INT(S3.enlen);
+		SL_INT(S3.swlen);
+		SL_INT(S3.swfreq);
+		SL_INT(S3.freq);
+		SL_INT(S3.envol);
+		SL_INT(S3.endir);
+
+		SL_INT(S4.on);
+		SL_INT(S4.pos);
+		SL_INT(S4.cnt);
+		SL_INT(S4.encnt);
+		SL_INT(S4.swcnt);
+		SL_INT(S4.len);
+		SL_INT(S4.enlen);
+		SL_INT(S4.swlen);
+		SL_INT(S4.swfreq);
+		SL_INT(S4.freq);
+		SL_INT(S4.envol);
+		SL_INT(S4.endir);
+
+	if(!save) //restoring gamestate
+		audioBufferIndex=0;
 	}
 
 	void s1_init() {
