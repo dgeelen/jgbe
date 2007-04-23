@@ -53,17 +53,16 @@ public class Cartridge {
 	PRINTFREEMEM("cartridge.create done");
 	}
 
-	protected final void stateSaveLoad(boolean save, DataOutputStream dostream, DataInputStream distream)
-	throws IOException
+	SAVELOAD_FUNCTION
 	{
 		boolean isnull = false;
 		for (int t = 0; t < MAX_RAM_MM; ++t) {
-			if (save)
+			if (SL_SAVE)
 				isnull = (MM_RAM[t] == null);
 			SL_BOOL(isnull);
 			if (!isnull)
 				SL_ARR(UINT8, MM_RAM[t], MEMMAP_SIZE)
-			else if (!save)
+			else if (SL_LOAD)
 				MM_RAM[t] = null;
 		}
 
