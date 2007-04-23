@@ -317,21 +317,41 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				stopCPU();
-				String stname = "/tmp/" + curcartname + ".st" + selectedState;
-				addOSDLine("Saving State "+selectedState);
-				try {
-					DataOutputStream dostream = FHandler.getDataOutputStream(stname);
-					CPU.saveState(dostream);
-					dostream.close();
+				String stname = System.getProperty("user.home")+"/.jgbe/";
+				File jgbedir=new File(stname);
+				if(!jgbedir.exists()){
+					System.out.printf("Creating new directory: `"+stname+"'... ");
+					if(jgbedir.mkdir())
+						System.out.printf("ok.\n");
+					else
+						System.out.printf("failed!\n");
 				}
-				catch (java.io.IOException ioe) {
-					System.out.println("Error saving state! ");
-				};
-				startCPU();
+				stname += "savestates/";
+				File sstatedir=new File(stname);
+				if(!sstatedir.exists()){
+					System.out.printf("Creating new directory: `"+stname+"'... ");
+					if(sstatedir.mkdir())
+						System.out.printf("ok.\n");
+					else
+						System.out.printf("failed!\n");
+					}
+				if(sstatedir.exists()) {
+					stname += curcartname + ".st" + selectedState;
+					addOSDLine("Saving State "+selectedState);
+					try {
+						DataOutputStream dostream = FHandler.getDataOutputStream(stname);
+						CPU.saveState(dostream);
+						dostream.close();
+					}
+					catch (java.io.IOException ioe) {
+						System.out.println("Error saving state! ");
+					};
+					startCPU();
+				}
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
 				stopCPU();
-				String stname = "/tmp/" + curcartname + ".st" + selectedState;
+				String stname = System.getProperty("user.home")+"/.jgbe/savestates/" + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
 				try {
 					DataInputStream distream = FHandler.getDataInputStream(stname);
