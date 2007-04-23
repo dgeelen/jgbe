@@ -117,8 +117,8 @@ public class CPU
 			SL_UINT8(IE);
 			SL_BOOL(IME);
 			SL_BOOL(halted);
-			SL_IF_VERSION( 0,  2) SL_UINT8(DirectionKeyStatus);
-			SL_IF_VERSION( 0,  2) SL_UINT8(ButtonKeyStatus);
+			SL_IF_VERSION( 0,  2) SL_SKIP(UINT8, 1); //SL_UINT8(DirectionKeyStatus);
+			SL_IF_VERSION( 0,  2) SL_SKIP(UINT8, 1); //SL_UINT8(ButtonKeyStatus);
 			SL_INT(lastException);
 			SL_BOOL(BIOS_enabled);
 
