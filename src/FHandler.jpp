@@ -5,7 +5,7 @@ public final class FHandler {
 	public static DataInputStream getDataInputStream(String fname) throws IOException {
  			int dotPos=0;
     	int dp = fname.indexOf(".");
-    	while(dp>0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
+    	while(dp>=0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
     		dotPos=dp;
     		dp=fname.indexOf(".",dp+1);
     	}
@@ -19,10 +19,10 @@ public final class FHandler {
 			System.out.println("NonStatic.class.getResourceAsStream("+fname+");");
 			Class clazz = Runtime.getRuntime().getClass();
 			InputStream bistream = clazz.getResourceAsStream(fname);
-			System.out.println("bistream="+bistream);
+// 			System.out.println("bistream="+bistream);
 #endif
 			DataInputStream distream = new DataInputStream(bistream);
-			System.out.println("distream="+distream);
+// 			System.out.println("distream="+distream);
 			return distream;
 		}
 		else {

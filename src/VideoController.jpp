@@ -480,7 +480,7 @@ public class VideoController {
 		temp = GRAYSHADES[(value>>4)&3]; palChange((index<<2) | 2, temp[0], temp[1], temp[2]);
 		temp = GRAYSHADES[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
 	}
-	
+
 	final public void setBGColData(int value) {
 		BGPD[BGPI&0x3f] = value;
 		int bnum = (BGPI & 0x3e) >> 1;
@@ -488,7 +488,7 @@ public class VideoController {
 		if ((BGPI&(1<<7))!=0)
 			++BGPI;
 	}
-	
+
 	final public void updateBGColData(int bnum) {
 		int base = bnum << 1;
 
@@ -597,7 +597,7 @@ public class VideoController {
 		STAT &= ~(1<<2);
 		if (LY==LYC)
 			STAT |= (1<<2);
-		if ((mode == 2)
+		if ((mode == 0)
 		 && (LY==LYC)
 		 && ((STAT&(1<<6))!=0))
 			cpu.triggerInterrupt(1);

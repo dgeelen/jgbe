@@ -617,7 +617,7 @@ public class AudioController {
 			return true;
 		}
 	}
-	
+
 	private static SourceDataLine trygetSourceDataLine(MatchMixerInfo tMixer,
 							AudioFormat audioFormat)
 	{
@@ -692,14 +692,19 @@ public class AudioController {
 	protected CPU cpu;
 
 	public AudioController(CPU cpu) {
+					Mixer.Info[]	asInfo = AudioSystem.getMixerInfo();
+					for (int i = 0; i < asInfo.length; i++)
+  					System.out.println(asInfo[i].getName());
+
+
 		this.cpu=cpu;
-		audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
+		audioBuffer = new byte[sampleRate>>7]; //allocate enough buffer for 1 second
 #ifndef JMGBE
 		try {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			MatchMixerInfo mixers[] = {
 				/** "rev50 [plughw:0,0]" (linux) works brilliantly but claims the audio hardware for itself */
-				new MatchMixerInfo("plughw"              , "", "", "", 1536),
+				new MatchMixerInfo("plughw:0,0"              , "", "", "", 1536),
 				/** "Primary Sound Driver" seems to work good under windows */
 				new MatchMixerInfo("Primary Sound Driver", "", "", "", 1536),
 				//"Alsa DataLine Mixer (hw:0)", // can't get this to work... :-(
@@ -709,6 +714,7 @@ public class AudioController {
 			int i = 0;
 			while ((audioSource==null) && (i < mixers.length)) {
 				try {
+					System.out.println("Trying to get mixers["+i+"]: "+mixers[i]);
 					audioSource = trygetSourceDataLine(mixers[i++], myAudioFormat);
 				}
 				catch (Exception E) {
@@ -1007,7 +1013,7 @@ public class AudioController {
 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
 
-			if (audioBufferIndex >= 128) {
+			if (audioBufferIndex >= 32) {
 #ifndef JMGBE
 				audioSource.write(audioBuffer, 0, audioBufferIndex);
 #endif
