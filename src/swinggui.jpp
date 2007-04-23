@@ -317,24 +317,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				stopCPU();
-				String stname = System.getProperty("user.home")+"/.jgbe/";
+				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 				File jgbedir=new File(stname);
-				if(!jgbedir.exists()){
-					System.out.printf("Creating new directory: `"+stname+"'... ");
-					if(jgbedir.mkdir())
-						System.out.printf("ok.\n");
-					else
-						System.out.printf("failed!\n");
-				}
-				stname += "savestates/";
+				if(!jgbedir.exists()) if(!jgbedir.mkdir()) System.out.printf("failed!\n");
+				stname += "savestates"+File.separator;
 				File sstatedir=new File(stname);
-				if(!sstatedir.exists()){
-					System.out.printf("Creating new directory: `"+stname+"'... ");
-					if(sstatedir.mkdir())
-						System.out.printf("ok.\n");
-					else
-						System.out.printf("failed!\n");
-					}
+				if(!sstatedir.exists()) if(!sstatedir.mkdir()) System.out.printf("failed!\n");
 				if(sstatedir.exists()) {
 					stname += curcartname + ".st" + selectedState;
 					addOSDLine("Saving State "+selectedState);
@@ -351,7 +339,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
 				stopCPU();
-				String stname = System.getProperty("user.home")+"/.jgbe/savestates/" + curcartname + ".st" + selectedState;
+				String stname = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"savestates"+File.separator + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
 				try {
 					DataInputStream distream = FHandler.getDataInputStream(stname);
