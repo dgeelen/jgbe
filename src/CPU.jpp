@@ -103,7 +103,7 @@ public class CPU
 			SL_IF_VERSION(0, 0) {
 				for (int j = 0; j < 8; ++j) {
 					SL_ARR(UINT8, WRAM[j], 0x1000);
-					SL_SKIP(UINT8, 0x10000 - 0x1000);
+//					SL_SKIP(UINT8, 0x10000 - 0x1000);
 				}
 			}
 			SL_IF_VERSION(1, -1)
@@ -759,9 +759,9 @@ public class CPU
 				//return 12; // 12 cycles for this?
  				return 4;/* FIXME(?) For break on interrupt */
 			}
-			if((++keyBounceWaitNext&0x80)==0) {//wait some instructions
+			if((++keyBounceWaitNext&0x3f)==0) {//wait some instructions
 // 				if(hax!=0)System.out.printf(".");
-				if((hax!=0) && (++keyBounce<4)) { //Joystick interrupt triggered
+				if((hax!=0) && (++keyBounce<8)) { //Joystick interrupt triggered
 					IOP[0x0f]|=hax;
 // 					System.out.printf("bounce hax=0x%04x keyBounce=0x%04x iop[0x0f]=0x%04x\n",hax, keyBounce, IOP[0x0f]);
 					}
