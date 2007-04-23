@@ -952,7 +952,7 @@ public class CPU
 				int mode = 2;
 				if (VBLANKcntdwn < 376) mode = 3;
 				if (VBLANKcntdwn < 204) mode = 0;
-				if (VC.LY>144)          mode = 1;
+				if (VC.LY >= 144)       mode = 1;
 
 				if (mode != vcmode) {
 					vcmode = mode;

@@ -594,6 +594,9 @@ public class VideoController {
 	}
 
 	final public void modeChanged(int mode) {
+		STAT &= ~(1<<2);
+		if (LY==LYC)
+			STAT |= (1<<2);
 		if ((mode == 2)
 		 && (LY==LYC)
 		 && ((STAT&(1<<6))!=0))
@@ -619,7 +622,7 @@ public class VideoController {
 			cpu.triggerInterrupt(0);
 		}
 		if ((mode == 0)
-		 && (LY < 144))
+		 && (cfskip == 0))
 			renderScanLine();
 	}
 
