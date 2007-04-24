@@ -10,12 +10,45 @@ import java.io.*;
 import java.awt.image.BufferedImage;
 
 		class CPURunner implements Runnable {
-			private boolean Threadinterrupted=false;
-			synchronized public final void toggleThreadinterrupted(){
-				Threadinterrupted=!Threadinterrupted;
+			private volatile int threadStatus = 0;
+			private Thread cpurunthread;
+			// 0 means suspended
+			// 1 means suspend->running requested
+			// 2 means running
+			// 3 means running->suspended requested
+			synchronized public final void suspend() {
+				while (threadStatus != 0) {
+					threadStatus = 3;
+					while (threadStatus == 3) { Thread.yield(); };
+				}
 			}
+			
+			synchronized public final void resume() {
+				while (threadStatus != 2) {
+					threadStatus = 1;
+					while (threadStatus == 1) { Thread.yield(); };
+				}
+			}
+
+			CPURunner() {
+				cpurunthread = new Thread(this);
+				cpurunthread.start();
+				while (!cpurunthread.isAlive()) { Thread.yield(); }; // wait for thread to actually start
+			}
+
 			public void run() {
-				while (!Threadinterrupted  && (CPU.nextinstruction()!=0)) {};
+				while (true) {
+					// suspended
+					while (threadStatus == 0) { Thread.yield(); };
+					// suspend -> running
+					if (threadStatus == 1) threadStatus = 2;
+					// running
+					while ((threadStatus == 2) && (CPU.nextinstruction()!=0)) {};
+					if (threadStatus == 2) threadStatus = 3; // CPU returned exception
+					// running -> suspended
+					if (threadStatus == 3) threadStatus = 0;
+					// suspended
+				}
 			}
 		}
 
@@ -46,7 +79,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemSeparator;
 
 		CPURunner cpuRunner;
-		Thread cpurunthread;
 
 		public void updateCartName(String fname) {
 			int slashPos = fname.lastIndexOf(File.separator);
@@ -55,26 +87,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			curcartname = fname.substring(slashPos+1, dotPos);
 			System.out.println("cartname = " + curcartname);
-		}
-
-		public void startCPU() {
-			cpuRunner = new CPURunner();
-			cpurunthread = new Thread(cpuRunner);
-			cpurunthread.start();
-			while (!cpurunthread.isAlive()) {}; // wait for thread to actually start
-		}
-
-		public void stopCPU() {
-			try {
-				while (cpurunthread.isAlive()) {;
-					cpuRunner.toggleThreadinterrupted();
-					cpurunthread.join(100);
-				}
-			}
-			catch (java.lang.InterruptedException e2) {
-				System.out.println("Error while trying to stop cpu thread...");
-				e2.printStackTrace();
-			};
 		}
 
 		public class DrawingArea extends JPanel{
@@ -306,17 +318,17 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				if(selFile != null) {
 					System.out.println(selFile.getAbsolutePath());
 
-					stopCPU();
+					cpuRunner.suspend();
 
 					CPU.setCartridge(new Cartridge(selFile.getAbsolutePath()));
 					updateCartName(selFile.getAbsolutePath());
 					addOSDLine("loaded Rom: " + curcartname);
 
-					startCPU();
+					cpuRunner.resume();
 				}
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
-				stopCPU();
+				cpuRunner.suspend();
 				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 				File jgbedir=new File(stname);
 				if(!jgbedir.exists()) if(!jgbedir.mkdir()) System.out.printf("failed!\n");
@@ -334,11 +346,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					catch (java.io.IOException ioe) {
 						System.out.println("Error saving state! ");
 					};
-					startCPU();
 				}
+				cpuRunner.resume();
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
-				stopCPU();
+				cpuRunner.suspend();
 				String stname = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"savestates"+File.separator + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
 				try {
@@ -349,7 +361,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				catch (java.io.IOException ioe) {
 					System.out.println("Error loading state! " + ioe.getMessage());
 				};
-				startCPU();
+				cpuRunner.resume();
 			}
 			else {
 				for (int i = 0; i < 10; ++i) {
@@ -512,7 +524,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				final Debugger dbgr=new Debugger(gui, logfile); //The GUI to which this debugger belongs
 			}
 			else {
-				gui.startCPU();
+				gui.cpuRunner = new CPURunner();
+				gui.cpuRunner.resume();
 			}
 		}
 	}
