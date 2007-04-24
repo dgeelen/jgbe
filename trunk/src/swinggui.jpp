@@ -61,6 +61,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		private int fps;
 		private int selectedState = 0;
 		Vector osdLines = new Vector();
+		Vector rcFiles = new Vector();
 		int osdTime = 0;
 		String curcartname;
 		JMenuItem menuitemExit;
@@ -475,6 +476,38 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			return classString.substring( dotIndex+1 );	//Returns only Class name
 		}
 
+		public void loadRCFiles() {
+			try {
+				String rcfilename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"rcfiles.log";
+				BufferedReader in = new BufferedReader(new FileReader(rcfilename));
+				String str;
+				rcFiles.clear();
+				while ((str = in.readLine()) != null) {
+						rcFiles.add(str);
+				}
+				in.close();
+			} catch (IOException e) {
+				System.out.println("error reading rcfiles.log");
+			}
+		}
+
+		public void saveRCFiles() {
+			try {
+				String rcfilename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"rcfiles.log";
+				BufferedWriter out = new BufferedWriter(new FileWriter(rcfilename));
+				String str;
+				int num = MIN(10, rcFiles.size());
+				for (int i = 0; i < num; ++i) {
+					str = (String)rcFiles.elementAt(i);
+					out.write(str, 0, str.length());
+					out.newLine();
+				}
+				out.close();
+			} catch (IOException e) {
+				System.out.println("error writing rcfiles.log");
+			}
+		}
+
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
 			Cartridge cart = null;
@@ -490,6 +523,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					sound = false;
 				if (args[i].equals("-nodebug"))
 					debug = false;
+				if ((args[i].equals("-lastcart")) && (gui.rcFiles.size() > 0))
+					romfile = (String)gui.rcFiles.elementAt(0);
 			}
 			if (!romfile.equals("")) {
 				cart = new Cartridge(romfile);
