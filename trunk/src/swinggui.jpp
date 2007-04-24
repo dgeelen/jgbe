@@ -320,7 +320,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 					cpuRunner.suspend();
 
-					CPU.setCartridge(new Cartridge(selFile.getAbsolutePath()));
+					CPU.loadCartridge(new Cartridge(selFile.getAbsolutePath()));
 					updateCartName(selFile.getAbsolutePath());
 					addOSDLine("loaded Rom: " + curcartname);
 
@@ -505,7 +505,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			gui.updateCartName(romfile);
 
 			System.out.println("Succesfully loaded ROM :)");
-			gui.cpu = new CPU(cart);
+			gui.cpu = new CPU();
+			gui.cpu.loadCartridge(cart);
 			gui.VC = gui.cpu.VC;
 
 			gui.createAndShowGUI();
