@@ -64,26 +64,24 @@ public class CPU
 		static protected AudioController AC;
 		static int vcmode;
 
-		public CPU( Cartridge cartridge ) {
+		public CPU() {
 			if (singleton != null) {
 				System.out.println("FATAL: trying to instantiate second instance of CPU singleton class");
 				int x[]=null;
 				x[0] = 0;
 			}
 			singleton = this;
-			this.cartridge = cartridge;
-			PRINTFREEMEM("CPU refreshMemMap");
-			refreshMemMap();
 			#ifndef USE_JAVA_142
 				deasm = new Disassembler(this);
 			#endif
-			PRINTFREEMEM("CPU new VC");
 			VC = new VideoController(this, 160, 144);
-			PRINTFREEMEM("CPU new AC");
 			AC = new AudioController(this);
-			PRINTFREEMEM("CPU RESET");
+			cartridge = null;
+		}
+
+		public static final void loadCartridge(Cartridge acartridge) {
+			cartridge = acartridge;
 			reset();
-			PRINTFREEMEM("CPU created");
 		}
 
 		static SAVELOAD_FUNCTION {
@@ -167,11 +165,6 @@ public class CPU
 				throw new IOException("save state too new");
 			System.out.println("loading state version:"+loadversion);
 			stateSaveLoad(false, loadversion, null, distream);
-		}
-
-		public static final void setCartridge(Cartridge acartridge) {
-			cartridge = acartridge;
-			reset();
 		}
 
 		static private int[][] rMemMap = new int[0x10][];

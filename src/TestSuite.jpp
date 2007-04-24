@@ -63,7 +63,8 @@ public class TestSuite
 			}
 
 			System.out.println("Succesfully loaded ROM :)");
-			cpu = new CPU(cartridge);
+			cpu = new CPU();
+			cpu.loadCartridge(cartridge);
 
 			runinstr(0xf3);             // DI
 			runinstr((0x06+(4<<3)), 0xff);
