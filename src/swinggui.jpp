@@ -22,7 +22,7 @@ import java.awt.image.BufferedImage;
 					while (threadStatus == 3) { Thread.yield(); };
 				}
 			}
-			
+
 			synchronized public final void resume() {
 				while (threadStatus != 2) {
 					threadStatus = 1;
@@ -79,6 +79,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem[] menuitemSelectState;
 		JMenuItem menuitemSeparator;
 
+  	JMenuItem[] menuItems;
+
 		CPURunner cpuRunner;
 
 		public void updateCartName(String fname) {
@@ -126,9 +128,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public swinggui() {
 		}
 
+
+		private JMenu menuFile;
+
 		private JMenuBar createJMenuBar() {
 			JMenuBar mainMenuBar;
-			JMenu menuFile;
 			JMenu menuSettings;
 			JMenu menuScaling;
 			JMenu menuFrameSkip;
@@ -142,8 +146,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuSettings = new JMenu( "Video" );
 			menuSettings.setMnemonic( KeyEvent.VK_S );
 			mainMenuBar.add( menuSettings );
-
-
 
 			menuitemOpenROM = new JMenuItem("Open ROM", KeyEvent.VK_O);
 			menuitemOpenROM.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, ActionEvent.CTRL_MASK ) );
@@ -379,6 +381,21 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						return;
 					}
 				}
+
+				for (int i = 0; i < menuItems.length; ++i) {
+					if (e.getSource().equals(menuItems[i])) {
+						//System.out.println(menuItems[i].getText());
+
+						cpuRunner.suspend();
+
+						CPU.loadCartridge(new Cartridge(menuItems[i].getText()));
+						updateCartName(menuItems[i].getText());
+						addOSDLine("loaded Rom: " + curcartname);
+
+						if (CPU.canRun());
+							cpuRunner.resume();
+					}
+				}
 				//System.out.println("timer!");
 				frame.setTitle("" + fps + " - JGameBoy Emulator V0.01");
 				//cpu.AC.srendered = 0;
@@ -472,6 +489,22 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			cpu.triggerInterrupt(4);
 		}
 
+		public void makeRcFilesMenuItems() {
+
+			while (menuFile.getItemCount() > 2) {
+				menuFile.remove(2);
+			}
+
+ 			menuItems = new JMenuItem[rcFiles.size()];
+
+			for (int i = 0; i < rcFiles.size(); ++i) {
+				menuItems[i] = new JMenuItem((String)rcFiles.get(i));
+				menuFile.add(menuItems[i]);
+				menuItems[i].addActionListener(this);
+			}
+
+		}
+
 
 		// Returns the class name, no package info
 		protected static String getClassName( Object o ) {
@@ -510,6 +543,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			} catch (IOException e) {
 				System.out.println("error writing rcfiles.log");
 			}
+			makeRcFilesMenuItems();
 		}
 
 		public static void main( String[] args ) {
@@ -568,6 +602,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				if (CPU.canRun())
 					gui.cpuRunner.resume();
 			}
+
+			gui.makeRcFilesMenuItems();
 		}
 	}
 #endif
