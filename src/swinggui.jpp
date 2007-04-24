@@ -498,6 +498,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 				menuItems = new JMenuItem[rcFiles.size()];
 
+				menuFile.addSeparator();
+
 				for (int i = 0; i < rcFiles.size(); ++i) {
 					String lname = (String)rcFiles.get(i);
 					String name = lname.substring(lname.lastIndexOf(File.separator) + 1);
