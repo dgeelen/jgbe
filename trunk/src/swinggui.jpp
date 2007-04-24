@@ -388,8 +388,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 						cpuRunner.suspend();
 
-						CPU.loadCartridge(new Cartridge(menuItems[i].getText()));
-						updateCartName(menuItems[i].getText());
+						CPU.loadCartridge(new Cartridge((String)rcFiles.elementAt(i)));
+						updateCartName((String)rcFiles.elementAt(i));
 						addOSDLine("loaded Rom: " + curcartname);
 
 						if (CPU.canRun());
@@ -498,7 +498,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
  			menuItems = new JMenuItem[rcFiles.size()];
 
 			for (int i = 0; i < rcFiles.size(); ++i) {
-				menuItems[i] = new JMenuItem((String)rcFiles.get(i));
+				String lname = (String)rcFiles.get(i);
+				String name = lname.substring(lname.lastIndexOf(File.separator) + 1);
+				menuItems[i] = new JMenuItem(name);
 				menuFile.add(menuItems[i]);
 				menuItems[i].addActionListener(this);
 			}
