@@ -92,7 +92,7 @@ public class VideoController {
 		SCY=0;
 		WX=0;
 		WY=0;
-		LCDC=0;
+		LCDC=0x91; // 0?
 		STAT=0; // FF41 - STAT - LCDC Status (R/W)
 		BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
 		OBPI=0;              //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
