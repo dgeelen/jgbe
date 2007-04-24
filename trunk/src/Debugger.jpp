@@ -19,6 +19,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public JTable regs1;
 	public JTable regs2;
 	public JTable mem;
+	public boolean memiseditable=true;
 	public JTable instrs;
 	public JTextField cmds;
 	private Disassembler deasm;
@@ -31,7 +32,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	private RDParser parser;
 	private int[] oldRegVal;
 	private Writer logwriter;
-	private boolean bpi; //break on interrupt
+	private int bpm=-1; //break on memory access
 	public Debugger(swinggui gui, String logfilename) {
 		this.gui=gui;
 		try {
@@ -187,8 +188,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					if (dbg.gui.cpu.read(dbg.gui.cpu.PC) == breakinstr) {
 						setStatus(0);
 					}
-					if(bpi && dbg.gui.cpu.interrupting) {
+					if((bpm>=0)&&(bpm==dbg.gui.cpu.last_memory_access)) {
 						setStatus(0);
+						System.out.printf("Break due to memory access of $%04x\n", dbg.gui.cpu.last_memory_access);
 					}
 				}
 				setRunFor(-1);
@@ -214,6 +216,26 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			if((this.Row==-1)||(this.Row==row)) setBackground(C);
 			else setBackground(Color.WHITE);
 			return this;
+		}
+	}
+
+	public class EditMemTableModelListener implements TableModelListener { //for editing the memory
+		public void tableChanged(TableModelEvent evt) {
+			if(memiseditable) {
+				if (evt.getType() == TableModelEvent.UPDATE) {
+					int column = evt.getColumn();
+					int row = evt.getFirstRow();
+	 				System.out.println("row: " + row + " column: " + column);
+					int index = (row)*8 + (column-2) + memaddr;
+					int i=memaddr; memaddr=index; prepareParser(); memaddr=i; //HAXHAXHAXHAXHAXHAX
+					int value = parser.Evaluate(((String)mem.getValueAt(row, column)).trim());
+					System.out.printf("index=$%04x, value=$%02x\n", index , value);
+					gui.cpu.write(index, value);
+					update();
+	/*				mem.setColumnSelectionInterval(column + 1, column + 1);
+					mem.setRowSelectionInterval(row, row);*/
+				}
+			}
 		}
 	}
 
@@ -253,7 +275,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.LINE_END );
-		mem = new JTable(8,8+2);
+
+
+		DefaultTableModel tableModel = new DefaultTableModel(8,8+2);
+		tableModel.addTableModelListener(new EditMemTableModelListener());
+		mem = new JTable();
+		mem.setModel(tableModel);
+		mem.setSurrendersFocusOnKeystroke(true);
 		mem.setTableHeader(null);
 		mem.setFont(MonoFont);
 		scroll = new JScrollPane(mem);
@@ -299,6 +327,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	}
 
 	public void updateMemory() {
+		memiseditable=false;
 		int m=memaddr;
 		for(int i=0; i<8; ++i) {
 			mem.setValueAt(String.format("$%04x",m), i,0);
@@ -306,6 +335,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				mem.setValueAt(String.format("$%02x",(m<=0xffff)?gui.cpu.read(m++):0x1000), i,j);
 			}
 		}
+		memiseditable=true;
 	}
 
 	private int seekBackOneInstruction(int pc) {
@@ -431,119 +461,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
  		oldRegVal[10]=intstat;
 	}
 
-	private void createAndShowGUI() {
-		JFrame.setDefaultLookAndFeelDecorated( true );
-		JFrame frame = new JFrame( "JGameBoy Emulator DEBUGGER" );
-		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-		//Set up the content pane and add swing components to it
-		addComponentsToPane( frame.getContentPane() );
-		frame.pack();
-		frame.setLocation(00, 0);
-		frame.setSize(new Dimension(480,640));
-		frame.setVisible( true );
-		//frame.addKeyListener(this); TODO: Shortcut keys
-	}
-
-	public void actionPerformed( ActionEvent e ) {
-		JTextField f = ( JTextField )( e.getSource() );
-		if(f==cmds) {
-			int i=0;
-			String s=cmds.getText().trim();
-			cmds.selectAll();
-			//System.out.println("Command='"+s+"'");
-			if(s.equals("s")) {
-				//System.out.println("SingleStep");
-				gui.cpu.nextinstruction();
-				update();
-			}
-			if(s.equals("reset")) {
-				gui.cpu.reset();
-				update();
-			}
-			if(s.equals("so")) {
-				if (runner.getStatus() == 1) {
-					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
-					runner.setStatus(2);
-					while (runner.getStatus() == 2) {};
-				}
-			}
-
-			if(s.charAt(0)=='w') {
-				String ss = s.substring( s.lastIndexOf(" ") + 1);
-				if( ss.charAt(0)=='$' )
-					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
-			}
-
-			if(s.charAt(0)=='i') {
-				String ss = s.substring( s.lastIndexOf(" ") + 1);
-				if( ss.charAt(0)=='$' )
-					runner.setBreakInstr(Integer.parseInt( ss.substring(1), 16 ));
-			}
-
-			if(s.charAt(0)=='p') {
-				runner.setRunFor(parser.StrToInt(s.substring(1)));
-				runner.setStatus(3);
-				while (runner.getStatus() != 1) {};
-				update();
-			}
-
-			if(s.charAt(0)=='g') {
-				if (runner.getStatus() == 1) {
-					runner.setStatus(2);
-					while (runner.getStatus() == 2) {};
-				}
-			}
-			if(s.charAt(0)=='b') {
-				if (runner.getStatus() == 3) {
-					if (logwriter != null) {
-						try {
-							logwriter.flush();
-						}
-						catch (java.io.IOException e2) {
-							System.out.println("Error flushing logfile:" + e2.getMessage());
-							logwriter = null;
-						}
-					}
-					runner.setStatus(0);
-					while (runner.getStatus() != 1) {};
-					update();
-				}
-			}
-			if(s.charAt(0)=='r') {
-				try {
-					if (runner.getStatus() == 1) {
-						String ss = s.substring( s.lastIndexOf(" ") + 1);
-						if( ss.charAt(0)=='$' ) {
-							runner.setBreakPoint(Integer.parseInt( ss.substring(1), 16 ));
-							runner.setStatus(2);
-							while (runner.getStatus() == 2) {};
-						}
-					}
-				}
-				catch ( NumberFormatException ee ) {
-						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
-				}
-				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
-				update();
-			}
-			if(s.charAt(0)=='c') {
-				try {
-					if (runner.getStatus() == 1) {
-						String ss = s.substring( s.lastIndexOf(" ") + 1);
-						runner.setInstrStop(Integer.parseInt( ss.substring(0), 10 ));
-					}
-				}
-				catch ( NumberFormatException ee ) {
-						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
-				}
-				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
-				update();
-			}
-			i=s.indexOf("=");
-			if(i>-1) { //assignment
-				String l = s.substring(0,i).trim();
-				updateRegisters(); //sets the variables
-				parser.removeVariables();
+	public void prepareParser(){
+					parser.removeVariables();
 				parser.addVariable("A", oldRegVal[0]);
 				parser.addVariable("B", oldRegVal[1]);
 				parser.addVariable("C", oldRegVal[2]);
@@ -568,86 +487,180 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 				parser.addVariable("sp", oldRegVal[9]);
 				parser.addVariable("hl", oldRegVal[7]|(oldRegVal[6]<<8));
 				parser.addVariable("m", memaddr);
-				System.out.println("memaddr="+memaddr);
+				parser.addVariable("M", memaddr);
+				parser.addVariable("q", gui.cpu.read(memaddr));
+				parser.addVariable("Q", gui.cpu.read(memaddr));
+	}
+
+	private void createAndShowGUI() {
+		JFrame.setDefaultLookAndFeelDecorated( true );
+		JFrame frame = new JFrame( "JGameBoy Emulator DEBUGGER" );
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		//Set up the content pane and add swing components to it
+		addComponentsToPane( frame.getContentPane() );
+		frame.pack();
+		frame.setLocation(00, 0);
+		frame.setSize(new Dimension(480,640));
+		frame.setVisible( true );
+		//frame.addKeyListener(this); TODO: Shortcut keys
+	}
+
+	public void actionPerformed( ActionEvent e ) {
+		JTextField f = ( JTextField )( e.getSource() );
+		if(f==cmds) {
+			int i=0;
+			String s=cmds.getText().trim();
+			cmds.selectAll();
+			//System.out.println("Command='"+s+"'");
+			if(s.equals("s")) {
+				//System.out.println("SingleStep");
+				gui.cpu.nextinstruction();
+			}
+			if(s.equals("reset")) {
+				gui.cpu.reset();
+			}
+			if(s.equals("so")) {
+				if (runner.getStatus() == 1) {
+					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
+					runner.setStatus(2);
+					while (runner.getStatus() == 2) {};
+				}
+			}
+			if(s.charAt(0)=='w') {
+				String ss = s.substring( s.lastIndexOf(" ") + 1);
+				if( ss.charAt(0)=='$' )
+					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
+			}
+			if(s.charAt(0)=='i') {
+				String ss = s.substring( s.lastIndexOf(" ") + 1);
+				if( ss.charAt(0)=='$' )
+					runner.setBreakInstr(Integer.parseInt( ss.substring(1), 16 ));
+			}
+			if(s.charAt(0)=='p') {
+				runner.setRunFor(parser.StrToInt(s.substring(1)));
+				runner.setStatus(3);
+				while (runner.getStatus() != 1) {};
+			}
+			if(s.charAt(0)=='g') {
+				if (runner.getStatus() == 1) {
+					runner.setStatus(2);
+					while (runner.getStatus() == 2) {};
+				}
+			}
+			if(s.charAt(0)=='b') {
+				if (runner.getStatus() == 3) {
+					if (logwriter != null) {
+						try {
+							logwriter.flush();
+						}
+						catch (java.io.IOException e2) {
+							System.out.println("Error flushing logfile:" + e2.getMessage());
+							logwriter = null;
+						}
+					}
+					runner.setStatus(0);
+					while (runner.getStatus() != 1) {};
+				}
+			}
+			if(s.charAt(0)=='r') {
+				try {
+					if (runner.getStatus() == 1) {
+						String ss = s.substring( s.lastIndexOf(" ") + 1);
+						if( ss.charAt(0)=='$' ) {
+							runner.setBreakPoint(Integer.parseInt( ss.substring(1), 16 ));
+							runner.setStatus(2);
+							while (runner.getStatus() == 2) {};
+						}
+					}
+				}
+				catch ( NumberFormatException ee ) {
+						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				}
+				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
+			}
+			if(s.charAt(0)=='c') {
+				try {
+					if (runner.getStatus() == 1) {
+						String ss = s.substring( s.lastIndexOf(" ") + 1);
+						runner.setInstrStop(Integer.parseInt( ss.substring(0), 10 ));
+					}
+				}
+				catch ( NumberFormatException ee ) {
+						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				}
+				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
+			}
+			i=s.indexOf("=");
+			if(i>-1) { //assignment
+				String l = s.substring(0,i).trim();
+				updateRegisters(); //sets the variables
+				prepareParser();
+// 				System.out.println("memaddr="+memaddr);
 				int v = parser.Evaluate(s.substring(i+1).trim());
 				if(!parser.parseError) {
 					if(l.equalsIgnoreCase("a")){
 						gui.cpu.A=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("b")){
 						gui.cpu.B=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("c")){
 						gui.cpu.C=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("d")){
 						gui.cpu.D=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("e")){
 						gui.cpu.E=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("f")){
 						gui.cpu.F=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("h")){
 						gui.cpu.H=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("l")){
 						gui.cpu.L=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("hl")){
 						gui.cpu.H=(v>>8)&0xFF;
 						gui.cpu.L=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("pc")){
 						gui.cpu.PC=v&0xFFFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("sp")){
 						gui.cpu.SP=v&0xFFFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("m")){
 						memaddr=v&0xFFFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("af")){
 						gui.cpu.A=(v>>8)&0xFF;
 						gui.cpu.F=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("bc")){
 						gui.cpu.B=(v>>8)&0xFF;
 						gui.cpu.C=v&0xFF;
-						update();
 					}
 					else if(l.equalsIgnoreCase("de")){
 						gui.cpu.D=(v>>8)&0xFF;
 						gui.cpu.E=v&0xFF;
-						update();
+					}
+					else if(l.equalsIgnoreCase("bpi")){ //break on interrupt i
+							runner.setBreakPoint(v);
+							runner.setStatus(2);
+							while (runner.getStatus() == 2) {};
+					}
+					else if(l.equalsIgnoreCase("bpm")){ //break on memory access
+						bpm = v;
 					}
 					else {
-						System.out.println("Assignment to '"+l+"' with v="+v);
+						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
 					}
 				}
 			}
-			if(s.equals("bi")) { //break on interrupt
-				bpi = true;
-// 				System.out.println("Debugger: BI");
-			}
-			if(s.equals("ci")) { //continue on interrupt
-				bpi = false;
-// 				System.out.println("Debugger: CI");
-			}
+			update();
 		}
 		else {
 			System.out.println( "Action event i an instance of " + getClassName( f ));

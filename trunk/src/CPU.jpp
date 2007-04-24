@@ -49,8 +49,8 @@ public class CPU
 		protected static boolean IME=true; ///< Interrupt Master Enable
 		protected static boolean halted=false;
 		//IO
-		static public int DirectionKeyStatus=0x0f; //bitmask
-		static public int ButtonKeyStatus=0x3f; //bitmask
+		static public int DirectionKeyStatus=0x3f; //bitmask
+ 		static public int ButtonKeyStatus=0x3f; //bitmask
 
 		static boolean BIOS_enabled = false;
 
@@ -63,6 +63,9 @@ public class CPU
 		static protected VideoController VC;
 		static protected AudioController AC;
 		static int vcmode;
+		//Debug helpers
+		protected static int last_memory_access=-1;
+		protected static int last_memory_access_internal=-1;
 
 		public CPU() {
 			if (singleton != null) {
@@ -104,7 +107,7 @@ public class CPU
 			SL_IF_VERSION( 0,  0) {
 				for (int i = 0; i < 8; ++i) {
 					SL_ARR(UINT8, WRAM[i], 0x1000);
-					SL_SKIP(UINT8, 0x10000 - 0x1000);
+					//SL_SKIP(UINT8, 0x10000 - 0x1000);
 				}
 			}
 			SL_IF_VERSION( 1, -1) SL_ARR_2D(UINT8, WRAM, 0x08, 0x1000);
@@ -213,6 +216,7 @@ public class CPU
 		}
 
 		static final protected int read(int index) {
+			last_memory_access_internal=index;
 			int mm[]=rMemMap[index>>12];
 			if (mm!=null)
 				return mm[index&0x0FFF];
@@ -234,7 +238,9 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
+
 			int b;
+			last_memory_access_internal=index;
 			//System.out.println("ERROR: not using memmap "+ index);
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
@@ -277,7 +283,7 @@ public class CPU
 				b=VC.read(index);
 			}
 			else if(index < 0xff00) { //Not Usable
-				System.out.println("WARNING: CPU.read(): Read from unusable memory (0xfea-0xfeff)");
+				System.out.println("WARNING: CPU.read(): Read from unusable memory (0xfea0-0xfeff)");
 				b=0;
 			}
 			else if(index < 0xff80) { //I/O Ports
@@ -411,7 +417,7 @@ public class CPU
 			return b;
 		}
 
-		static final private void write(int index, int value) {
+		static final public void write(int index, int value) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -426,7 +432,7 @@ public class CPU
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-// wMemMap[0xa][0x901]=0;//This get unmapped ?!
+			last_memory_access_internal=index;
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
 				mm[index&0x0FFF] = value;
@@ -459,7 +465,7 @@ public class CPU
 				VC.write(index, value);
 			}
 			else if(index < 0xff00) { //Not Usable
-				PRINTF("WARNING: CPU.write(): Write to unusable memory (0xfea-0xfeff) index=$%04x, value=$%02x\n",index,value);
+				PRINTF("WARNING: CPU.write(): Write to unusable memory (0xfea0-0xfeff) index=$%04x, value=$%02x\n",index,value);
 			}
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
@@ -726,14 +732,12 @@ public class CPU
 			return 0; // No interrupts to service
 		}
 
-		public static boolean interrupting=false;
 		static final protected void interrupt(int i) { //execute interrupt #i
 // 			System.out.printf("INTERRUPT: PC=$%04x, interrupt=$%02x\n",PC,i);
 			IME = false;
 
 			PUSH_OLD(PC);
 			PC = i;
-			interrupting = true;
 		}
 
 		static final protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
@@ -746,6 +750,7 @@ public class CPU
 		private static int hax=0;
 
 		static final protected int execute() {
+// 			if(last_memory_access_internal==0xff00) System.out.println("ASDASDASDSADDSA");
 			int cycles;
 			TVARS;
 			hax|=(IOP[0x0f]&(1<<4));
@@ -766,7 +771,6 @@ public class CPU
 					hax=0;
 				}
 			}
-			interrupting=false;
 			if (halted) return 4;
 			int op = FETCH;
 			cycles = Tables.cycles[op];
@@ -945,6 +949,7 @@ public class CPU
 		static final public int nextinstruction() {
 			//System.out.printf("execing stuff PC=0x%04x\n",PC);
 			int res = 4*execute();
+			last_memory_access=last_memory_access_internal;
 			SP &= 0xffff;
 			PC &= 0xffff;
 			++TotalInstrCount;
