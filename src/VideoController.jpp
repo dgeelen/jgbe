@@ -101,6 +101,14 @@ public class VideoController {
 			patdirty[i]=true;
 		}
 		updatepatpix();
+
+		for (int i = 0; i < 0x20; ++i) {
+			updateBGColData(i);
+			updateOBColData(i);
+		};
+		updateMonoColData(0);
+		updateMonoColData(1);
+		updateMonoColData(2);
 	}
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
@@ -109,34 +117,6 @@ public class VideoController {
 		drawImg=new Image[2];
 #endif
 		scale();
-		this.isCGB = cpu.isCGB();
-
-		long x = System.nanoTime();
-//#ifndef USE_JAVA_142
-#if 0
-		for (int i = 0; i < palColors.length; ++i)
-			palColors[i] =
-				((BufferedImage)drawImg[curDrawImg^1]).
-				getColorModel().
-				getDataElements(0, null);
-		for (int ty = 0; ty < 144; ++ty)
-			for (int tx = 0; tx < 160; ++tx)
-				blitImg[ty][tx] =
-					((BufferedImage)drawImg[curDrawImg^1]).
-					getColorModel().
-					getDataElements(0, null);
-#endif
-		for(int i=0; i<1024; ++i) {
-			patdirty[i]=true;
-		}
-		anydirty = true;
-		for (int i = 0; i < 0x20; ++i) {
-			updateBGColData(i);
-			updateOBColData(i);
-		};
-		updateMonoColData(0);
-		updateMonoColData(1);
-		updateMonoColData(2);
 	}
 
 

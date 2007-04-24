@@ -84,6 +84,10 @@ public class CPU
 			reset();
 		}
 
+		public static boolean canRun() {
+			return (cartridge != null);
+		}
+
 		static SAVELOAD_FUNCTION {
 			SL_IF_VERSION( 1, -1) {
 				SL_UINT8(B);

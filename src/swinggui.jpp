@@ -324,10 +324,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					updateCartName(selFile.getAbsolutePath());
 					addOSDLine("loaded Rom: " + curcartname);
 
-					cpuRunner.resume();
+					if (CPU.canRun());
+						cpuRunner.resume();
 				}
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
+				if (!CPU.canRun()) return;
 				cpuRunner.suspend();
 				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 				File jgbedir=new File(stname);
@@ -350,6 +352,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cpuRunner.resume();
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
+				if (!CPU.canRun()) return;
 				cpuRunner.suspend();
 				String stname = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"savestates"+File.separator + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
@@ -474,7 +477,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
-			Cartridge cart;
+			Cartridge cart = null;
 
 			boolean sound=true, debug=true;
 			String romfile="", logfile="";
@@ -488,29 +491,22 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				if (args[i].equals("-nodebug"))
 					debug = false;
 			}
-			if (romfile.equals("")) {
-				System.out.println();
-				System.out.println("ERROR: missing argument");
-				System.out.println();
-				System.out.println("USAGE: java swinggui ROMFILE [-log LOGFILE] [-nosound] [-nodebug]");
-				System.out.println();
-				return;
+			if (!romfile.equals("")) {
+				cart = new Cartridge(romfile);
+				if(cart.getError()!=null) {
+					System.out.println("ERROR: "+cart.getError());
+					cart = null;
+				}
+				else {
+					gui.updateCartName(romfile);
+					System.out.println("Succesfully loaded ROM :)");
+				}
 			}
 
-			cart = new Cartridge(romfile);
-			if(cart.getError()!=null) {
-				System.out.println("ERROR: "+cart.getError());
-				return;
-			}
-			gui.updateCartName(romfile);
-
-			System.out.println("Succesfully loaded ROM :)");
 			gui.cpu = new CPU();
-			gui.cpu.loadCartridge(cart);
 			gui.VC = gui.cpu.VC;
 
 			gui.createAndShowGUI();
-			gui.cpu.reset();
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
 				gui.cpu.AC.isMuted = true;
@@ -519,6 +515,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			timer.setInitialDelay(1000);
 			timer.start();
 
+			if (cart != null)
+				gui.cpu.loadCartridge(cart);
 
 			/*DEBUGGER*/
 			if (debug) {
@@ -526,7 +524,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else {
 				gui.cpuRunner = new CPURunner();
-				gui.cpuRunner.resume();
+				if (CPU.canRun())
+					gui.cpuRunner.resume();
 			}
 		}
 	}
