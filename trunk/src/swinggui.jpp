@@ -331,7 +331,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					updateCartName(selFile.getAbsolutePath());
 					addOSDLine("loaded Rom: " + curcartname);
 
-					if (CPU.canRun());
+					if (CPU.canRun())
 						cpuRunner.resume();
 				}
 			}
@@ -392,7 +392,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						updateCartName((String)rcFiles.elementAt(i));
 						addOSDLine("loaded Rom: " + curcartname);
 
-						if (CPU.canRun());
+						if (CPU.canRun())
 							cpuRunner.resume();
 					}
 				}
@@ -491,18 +491,20 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 		public void makeRcFilesMenuItems() {
 
-			while (menuFile.getItemCount() > 2) {
-				menuFile.remove(2);
-			}
+			if (menuFile != null) {
+				while (menuFile.getItemCount() > 2) {
+					menuFile.remove(2);
+				}
 
- 			menuItems = new JMenuItem[rcFiles.size()];
+				menuItems = new JMenuItem[rcFiles.size()];
 
-			for (int i = 0; i < rcFiles.size(); ++i) {
-				String lname = (String)rcFiles.get(i);
-				String name = lname.substring(lname.lastIndexOf(File.separator) + 1);
-				menuItems[i] = new JMenuItem(name);
-				menuFile.add(menuItems[i]);
-				menuItems[i].addActionListener(this);
+				for (int i = 0; i < rcFiles.size(); ++i) {
+					String lname = (String)rcFiles.get(i);
+					String name = lname.substring(lname.lastIndexOf(File.separator) + 1);
+					menuItems[i] = new JMenuItem(name);
+					menuFile.add(menuItems[i]);
+					menuItems[i].addActionListener(this);
+				}
 			}
 
 		}
