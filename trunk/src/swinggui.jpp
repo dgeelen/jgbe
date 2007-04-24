@@ -88,6 +88,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			curcartname = fname.substring(slashPos+1, dotPos);
 			System.out.println("cartname = " + curcartname);
+
+			rcFiles.remove(fname);
+			rcFiles.insertElementAt(fname, 0);
+			saveRCFiles();
 		}
 
 		public class DrawingArea extends JPanel{
@@ -511,6 +515,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
 			Cartridge cart = null;
+
+			gui.loadRCFiles();
 
 			boolean sound=true, debug=true;
 			String romfile="", logfile="";

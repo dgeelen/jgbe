@@ -21,32 +21,17 @@ CLASSFILES:=$(shell echo $(CLASSFILES) | sort | uniq)
 
 all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 
-
-# use ROMNAME='/what/ever/file.gbc' make [run|fun|silence]
-#ROMNAME='/home/simon/gbroms/Bionic Commando.zip'
-#ROMNAME='/home/simon/gbroms/Turtles 3.zip'
-#ROMNAME='/home/simon/gbroms/Metal Slug.zip'
-#ROMNAME='/home/simon/gbroms/Double Dragon 3.zip'
-#ROMNAME='/home/simon/gbroms/Pokemon Yellow.zip'
-#ROMNAME='/home/simon/gbroms/Pokemon Diamond.zip'
-#ROMNAME='/home/simon/gbroms/Pokemon Blue.zip'
-#ROMNAME=../../roms/Pokemon\ -\ Yellow\ Version\ \(UE\)\ \[C\]\[\!\].gbc
-#ROMNAME=../../roms/../roms/Super\ Mario\ Land\ 2\ -\ 6\ Golden\ Coins\ \(UE\)\ \(V1.0\)\ \[\!\].gb
-#ROMNAME=../../roms/Castelian\ \(U\).gb
-ROMNAME=/home/simon/gbroms/Teenage\ Mutant\ Ninja\ Turtles\ III\ -\ Radical\ Rescue\ \(U\).gb
-#ROMNAME=../../roms/Double\ Dragon\ 3.zip
-
 fun: all
-	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nodebug
+	cd $(CLASSDIR) && aoss java swinggui -lastcart -nodebug
 
 silence: all
-	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nodebug -nosound
+	cd $(CLASSDIR) && aoss java swinggui -lastcart -nodebug -nosound
 
 run: all
-	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME)
+	cd $(CLASSDIR) && aoss java swinggui -lastcart
 
 debug: all
-	cd $(CLASSDIR) && aoss java swinggui $(ROMNAME) -nosound
+	cd $(CLASSDIR) && aoss java swinggui -lastcart -nosound
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge
