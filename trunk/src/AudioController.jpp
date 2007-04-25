@@ -1038,6 +1038,7 @@ public class AudioController {
 
 			if (audioBufferIndex >= 32) {
 #ifndef JMGBE
+			if (!isMuted)
 				audioSource.write(audioBuffer, 0, audioBufferIndex);
 #endif
 				audioBufferIndex = 0;
@@ -1073,8 +1074,6 @@ public class AudioController {
 
 	static byte bla=0;
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
-		if (isMuted)
-			return;
 		cyclesLeftToRender+=nrCycles;
 		int i=cyclesLeftToRender;
 		//cyclesLeftToRender>>=1;

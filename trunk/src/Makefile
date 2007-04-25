@@ -8,8 +8,8 @@ PREVERIFY_OPTS:=-classpath $(CLASSPATH)
 #HAX!
 # VM_DEST:=-target 1.4.2
 # VM_SOURCE:=-source 1.4
-#VM_DEST:=-target 1.5
-#VM_SOURCE:=-source 1.5
+VM_DEST:=-target 1.5
+VM_SOURCE:=-source 1.5
 JAVAC_OPTS:=$(PREVERIFY_OPTS) -bootclasspath $(BOOTCLASSPATH) $(VM_DEST) $(VM_SOURCE) -Xlint
 JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -Xlint -O -d $(CLASSDIR)
 
