@@ -55,6 +55,7 @@ import java.awt.image.BufferedImage;
 public class swinggui implements ActionListener, ItemListener, KeyListener, ComponentListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
+		private static Debugger dbgr;
 		private static JMenuBar menubar;
 		protected VideoController VC;
 		protected CPU cpu;
@@ -381,19 +382,19 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						return;
 					}
 				}
+				if(menuItems!=null)
+					for (int i = 0; i < menuItems.length; ++i) {
+						if (e.getSource().equals(menuItems[i])) {
+							//System.out.println(menuItems[i].getText());
 
-				for (int i = 0; i < menuItems.length; ++i) {
-					if (e.getSource().equals(menuItems[i])) {
-						//System.out.println(menuItems[i].getText());
-
-						cpuRunner.suspend();
+						if(cpuRunner!=null) cpuRunner.suspend();
 
 						CPU.loadCartridge(new Cartridge((String)rcFiles.elementAt(i)));
 						updateCartName((String)rcFiles.elementAt(i));
 						addOSDLine("loaded Rom: " + curcartname);
 
 						if (CPU.canRun())
-							cpuRunner.resume();
+							if(cpuRunner!=null) cpuRunner.resume();
 					}
 				}
 				//System.out.println("timer!");
@@ -401,6 +402,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
+			if(dbgr != null) dbgr.update();
 		}
 
 		public void itemStateChanged( ItemEvent e ) {
@@ -601,7 +603,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			/*DEBUGGER*/
 			if (debug) {
-				final Debugger dbgr=new Debugger(gui, logfile); //The GUI to which this debugger belongs
+				dbgr=new Debugger(gui, logfile); //The GUI to which this debugger belongs
 			}
 			else {
 				gui.cpuRunner = new CPURunner();

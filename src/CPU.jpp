@@ -223,6 +223,7 @@ public class CPU
 			return read_slow(index);
 		}
 
+static int togglestart=0;
 		static final private int read_slow(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
@@ -290,6 +291,12 @@ public class CPU
 				switch(index) {
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
 						//System.out.printf("DEBUG: CPU.read(): YOYP (PC=0x%04x)\n", PC);
+// 						if(togglestart--==0){
+// 							ButtonKeyStatus ^= 8;
+// 							togglestart=2;
+// // 							System.out.println("ButtonKeyStatus="+ButtonKeyStatus);
+// 						}
+
 						b=IOP[index-0xff00]&0xf0;
 						if((b&(1<<4))==0) { // Direction keys, 0=select
 							b|=DirectionKeyStatus;
