@@ -18,6 +18,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	private static final int aaarg=650;
 	public JTable regs1;
 	public JTable regs2;
+	public JTable hwregs;
 	public JTable mem;
 	public boolean memiseditable=true;
 	public JTable instrs;
@@ -199,22 +200,18 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	}
 
 	public class MyCellRenderer extends DefaultTableCellRenderer { //for coloring cells
-		private Color C;
-		private int Row=-1;
-		public MyCellRenderer(Color c) {
+		private Color[] Colors=null;
+		public MyCellRenderer(Color[] c) {
 			super();
-			this.C=c;
-		}
-		public MyCellRenderer(Color c, int r) {
-			super();
-			this.C=c;
-			Row=r;
+			Colors=c;
 		}
 
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			setText(String.valueOf(value));
-			if((this.Row==-1)||(this.Row==row)) setBackground(C);
+// 			System.out.println("row "+row+"="+this.Colors[row]);
+			if((this.Colors!=null)) setBackground(this.Colors[row]);
 			else setBackground(Color.WHITE);
+			setFont(MonoFont);
 			return this;
 		}
 	}
@@ -271,11 +268,26 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.NORTH );
 
-		scroll = new JScrollPane(new JLabel("Memory:"));
+		scroll = new JScrollPane(new JLabel("Hardware registers:"));
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.LINE_END );
 
+		hwregs = new JTable(5,4);
+		hwregs.setCellSelectionEnabled(false);
+		hwregs.setColumnSelectionAllowed(false);
+		hwregs.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		hwregs.setTableHeader(null);
+		hwregs.setFont(MonoFont);
+		scroll = new JScrollPane(hwregs);
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19*5));
+		contentPane.add( scroll, BorderLayout.NORTH );
+
+		scroll = new JScrollPane(new JLabel("Memory:"));
+		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
+		scroll.setPreferredSize(new Dimension(aaarg, 19));
+		contentPane.add( scroll, BorderLayout.LINE_END );
 
 		DefaultTableModel tableModel = new DefaultTableModel(8,8+2);
 		tableModel.addTableModelListener(new EditMemTableModelListener());
@@ -297,7 +309,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		instrs.setTableHeader(null);
 		TableColumnModel m = instrs.getColumnModel();
 		TableColumn c = m.getColumn(0);
-		MyCellRenderer r = new MyCellRenderer(new Color(222,222,255), 7);
+		Color[] ccc=new Color[16];
+		for(int i=0; i<16; ++i) ccc[i]=new Color(255,255,255);
+		ccc[7]=new Color(222,222,255);
+		MyCellRenderer r = new MyCellRenderer(ccc);
 		r.setFont(MonoFont);
 		c.setCellRenderer(r);
 
@@ -321,9 +336,105 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	synchronized public void update() {
 		if (runner.getStatus() == 1) {
 			updateRegisters();
+			updateHWRegs();
 			updateMemory();
 			updateInstructions();
 		}
+	}
+
+	public int[] oldHWRegs=new int[18];
+	public void updateHWRegs() {
+// Status of VirtualBoy @Return from call at 4003:
+// [FF40h] LCDCONT=43h   [FF41h] LCDSTAT=02h
+// [FF44h] CURLINE=84h   [FF45h] CMPLINE=00h
+// [FF48h] SPR0PAL=D0h   [FF49h] SPR1PAL=38h
+// [FF05h] TIMECNT=01h   [FF06h] TIMEMOD=00h
+// [FF07h] TIMEFRQ=F8h   [FF04h] DIVREG=7Bh
+// [FF02h] SIOCONT=7Eh   [FF01h] SIODATA=00h
+// [FFFFh] ISWITCH=01h   [FF0Fh] IFLAGS=00h
+// [FF4Bh,FF4Ah] Window Position at 7,136
+// [FF43h,FF42h] Scroll Position at 0,0
+
+		TableColumnModel m = hwregs.getColumnModel();
+		TableColumn c;
+		Color[] colors=new Color[5];
+		colors[3]=Color.BLUE;
+		int i=0, j=0, k=0;
+
+		i=gui.cpu.read(0xFF40);
+		hwregs.setValueAt(String.format("ff40:   cont=$%02x",i), k,0);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF48);
+		hwregs.setValueAt(String.format("ff48:spr0pal=$%02x",i), k,0);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF07);
+		hwregs.setValueAt(String.format("ff07:timefrq=$%02x",i), k,0);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFFFF);
+		hwregs.setValueAt(String.format("ffff:iswitch=$%02x",i), k,0);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF43);
+		hwregs.setValueAt(String.format("ff43:scrollx=$%02x",i), k,0);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+ 		c = m.getColumn(0);
+ 		c.setCellRenderer( new MyCellRenderer(colors) );
+
+		colors=new Color[5]; k=0;
+		i=gui.cpu.read(0xFF41);
+		hwregs.setValueAt(String.format("ff41:   STAT=$%02x",i), k,01);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF49);
+		hwregs.setValueAt(String.format("ff49:spr1pal=$%02x",i), k,1);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF04);
+		hwregs.setValueAt(String.format("ff04:timemod=$%02x",i), k,1);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF0f);
+		hwregs.setValueAt(String.format("ff0f: divreg=$%02x",i), k,1);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF42);
+		hwregs.setValueAt(String.format("ff42:scrolly=$%02x",i), k,1);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+ 		c = m.getColumn(1);
+ 		c.setCellRenderer( new MyCellRenderer(colors) );
+
+		colors=new Color[5];k=0;
+		i=gui.cpu.read(0xFF44);
+		hwregs.setValueAt(String.format("ff44:curline=$%02x",i), k,2);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF05);
+		hwregs.setValueAt(String.format("ff05:timecnt=$%02x",i), k,2);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF02);
+		hwregs.setValueAt(String.format("ff02:siocont=$%02x",i), k,2);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF4b);
+		hwregs.setValueAt(String.format("ff4b:wndxpos=$%02x",i), k,2);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		//
+		hwregs.setValueAt("<TODO: watch 1>", k,2);
+		colors[k++]=new Color(220,255,220);
+ 		c = m.getColumn(2);
+ 		c.setCellRenderer( new MyCellRenderer(colors) );
+
+		colors=new Color[5];k=0;
+		i=gui.cpu.read(0xFF45);
+		hwregs.setValueAt(String.format("ff45:cmpline=$%02x",i), k,3);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF06);
+		hwregs.setValueAt(String.format("ff06:timemod=$%02x",i), k,3);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF01);
+		hwregs.setValueAt(String.format("ff01:siodata=$%02x",i), k,3);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		i=gui.cpu.read(0xFF4a);
+		hwregs.setValueAt(String.format("ff4a:wndypos=$%02x",i), k,3);
+		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+		//
+		hwregs.setValueAt("<TODO: watch 2>", k,3);
+		colors[k++]=new Color(220,255,220);
+ 		c = m.getColumn(3);
+ 		c.setCellRenderer( new MyCellRenderer(colors) );
 	}
 
 	public void updateMemory() {
@@ -363,14 +474,15 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 // 			instrs.setValueAt(deasm.disassemble(pc), i,0);
 			pc+=deasm.instructionLength(pc);
 		}
-
 	}
 
 	private void updateRegisters() { //TODO: Dit moet makkelijker kunnen ...
 		TableColumnModel m = regs1.getColumnModel();
 		TableColumn c;
 		DefaultTableCellRenderer normal=new DefaultTableCellRenderer();
-		MyCellRenderer colored = new MyCellRenderer(UpdateColor);
+		Color[] colors = new Color[1];
+		colors[0]=UpdateColor;
+		MyCellRenderer colored = new MyCellRenderer(colors);
 
 		regs1.setValueAt(String.format("A=$%02x",gui.cpu.A), 0,0);
 		c = m.getColumn(0);
@@ -379,7 +491,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 
 		regs1.setValueAt(String.format("B=$%02x",gui.cpu.B), 0,1);
 		c = m.getColumn(1);
-		c.setCellRenderer( oldRegVal[1]==gui.cpu.B ? new DefaultTableCellRenderer() : new MyCellRenderer(UpdateColor) );
+		c.setCellRenderer( oldRegVal[1]==gui.cpu.B ? normal : colored );
 		oldRegVal[1]=gui.cpu.B;
 
 		regs1.setValueAt(String.format("C=$%02x",gui.cpu.C), 0,2);
@@ -428,7 +540,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		flags += (( gui.cpu.F & gui.cpu.CF_Mask ) == gui.cpu.CF_Mask )?"C ":"c ";
 		regs2.setValueAt(flags, 0,3);
 		c = m.getColumn(3);
-		c.setCellRenderer( oldRegVal[5]==gui.cpu.F ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[5]==gui.cpu.F ? normal : colored);
 		oldRegVal[5]=gui.cpu.F;
 
 		/*0=VBlANK
@@ -457,7 +569,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		ime+=(gui.cpu.IOP[0x0f]&(1<<0))!=0?"+":"-";
  		regs2.setValueAt(ime, 0,2);
  		c = m.getColumn(2);
-		c.setCellRenderer( oldRegVal[10]==intstat ? new DefaultTableCellRenderer(): new MyCellRenderer(UpdateColor));
+		c.setCellRenderer( oldRegVal[10]==intstat ? normal : colored);
  		oldRegVal[10]=intstat;
 	}
 
@@ -500,7 +612,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		addComponentsToPane( frame.getContentPane() );
 		frame.pack();
 		frame.setLocation(00, 0);
-		frame.setSize(new Dimension(480,640));
+		frame.setSize(new Dimension(480,720));
 		frame.setVisible( true );
 		//frame.addKeyListener(this); TODO: Shortcut keys
 	}

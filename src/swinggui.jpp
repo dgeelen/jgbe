@@ -402,7 +402,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
-			if(dbgr != null) dbgr.update();
+//STOP DOING THIS !! 			if(dbgr != null) dbgr.update();
 		}
 
 		public void itemStateChanged( ItemEvent e ) {
