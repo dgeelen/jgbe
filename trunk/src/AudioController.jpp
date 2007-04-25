@@ -712,7 +712,7 @@ public class AudioController {
 
 
 		this.cpu=cpu;
-		audioBuffer = new byte[sampleRate>>7]; //allocate enough buffer for 1 second
+		audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
 #ifndef JMGBE
 		try {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
@@ -1036,7 +1036,7 @@ public class AudioController {
 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
 
-			if (audioBufferIndex >= 32) {
+			if (audioBufferIndex >= 64) {
 #ifndef JMGBE
 			if (!isMuted)
 				audioSource.write(audioBuffer, 0, audioBufferIndex);

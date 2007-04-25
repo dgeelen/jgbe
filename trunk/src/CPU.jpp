@@ -223,7 +223,7 @@ public class CPU
 			return read_slow(index);
 		}
 
-static int togglestart=0;
+static int togglestart=1;
 		static final private int read_slow(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
@@ -242,7 +242,7 @@ static int togglestart=0;
 
 			int b;
 			last_memory_access_internal=index;
-			//System.out.println("ERROR: not using memmap "+ index);
+// 			System.out.println("ERROR: not using memmap "+ index);
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
 				b=-1;
@@ -293,7 +293,7 @@ static int togglestart=0;
 						//System.out.printf("DEBUG: CPU.read(): YOYP (PC=0x%04x)\n", PC);
 // 						if(togglestart--==0){
 // 							ButtonKeyStatus ^= 8;
-// 							togglestart=2;
+// 							togglestart=10;
 // // 							System.out.println("ButtonKeyStatus="+ButtonKeyStatus);
 // 						}
 
@@ -445,6 +445,7 @@ static int togglestart=0;
 				mm[index&0x0FFF] = value;
 				return;
 			}
+
 			if(index<0) { //Invalid
 				System.out.println("ERROR: CPU.write(): No negative addresses in GameBoy memorymap.");
 			}
@@ -640,6 +641,8 @@ static int togglestart=0;
 		static final public void reset(boolean bios) {
 			BIOS_enabled = bios;
  			VC.reset();
+ 			cartridge.CurrentRAMBank=0;
+ 			cartridge.CurrentROMBank=1;
 			refreshMemMap();
 
 			PC = 0x100;
@@ -740,7 +743,7 @@ static int togglestart=0;
 		}
 
 		static final protected void interrupt(int i) { //execute interrupt #i
-// 			System.out.printf("INTERRUPT: PC=$%04x, interrupt=$%02x\n",PC,i);
+//  			System.out.printf("INTERRUPT: PC=$%04x, interrupt=$%02x, LY=%d\n",PC,i,VC.LY);
 			IME = false;
 
 			PUSH_OLD(PC);
@@ -996,12 +999,19 @@ static int togglestart=0;
 				}
 
 				/** TODO: put this logic inside VideoController */
+/*			Mode 0  ___000___000___000___000___000___000________________000
+				Mode 1  ____________________________________11111111111111_____
+				Mode 2  2_____2_____2_____2_____2_____2___________________2____
+				Mode 3  _33____33____33____33____33____33__________________3___
+*/
 				if (VBLANKcntdwn < 0) {
+// 					VBLANKcntdwn += 456;   // 4194304/9198
 					VBLANKcntdwn += 456;   // 4194304/9198
 					++VC.LY;
 					if (VC.LY >= 154)
 						VC.LY = 0;
 				}
+
 				int mode = 2;
 				if (VBLANKcntdwn < 376) mode = 3;
 				if (VBLANKcntdwn < 204) mode = 0;
@@ -1010,8 +1020,10 @@ static int togglestart=0;
 				if (mode != vcmode) {
 					vcmode = mode;
 					VC.modeChanged(mode);
-				}
-
+// 				System.out.printf("\n");
+				}/*
+				for(int i=0; i<res; ++i)
+					System.out.printf("%d",mode);*/
 				// [0 <= VBLANKcntdwn < 456]
 				// [0..204)  [204..376)  [376..456)
 				// mode 0    mode 3      mode 2
