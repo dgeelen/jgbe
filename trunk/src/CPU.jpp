@@ -538,9 +538,12 @@ static int togglestart=1;
 						//PRINTF("Setting LYC=%d ($%02x)\n",value,value);
 						break;
 					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
+// 						System.out.println("WARNING: CPU.write(): TODO: Untimed DMA Transfer");
+						last_memory_access=last_memory_access_internal;
 						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
 							write(0xfe00|i, read(i+(value<<8)));
 						}
+						last_memory_access_internal=last_memory_access;
 /*						VC.STAT|=2; //MODE2 or 3
 						int cnt=0;
 						while(cnt<160) { //Timing :D
@@ -578,6 +581,7 @@ static int togglestart=1;
 						int len = ((value & 0x7f)+1)<<4;
 						int mode = value >> 7;
 						if (mode == 0) {
+// 							System.out.println("WARNING: CPU.write(): TODO: Untimed H-DMA Transfer");
 							// TODO: this should take more than 4-12 cycles :O
 							//PRINTF("DONE: General HDMA transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
 							for (int i = 0; i < len; ++i)
