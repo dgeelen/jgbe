@@ -339,14 +339,14 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				if(selFile != null) {
 					System.out.println(selFile.getAbsolutePath());
 
-					cpuRunner.suspend();
+					if(cpuRunner!=null) cpuRunner.suspend();
 
 					CPU.loadCartridge(new Cartridge(selFile.getAbsolutePath()));
 					updateCartName(selFile.getAbsolutePath());
 					addOSDLine("loaded Rom: " + curcartname);
 
 					if (CPU.canRun())
-						cpuRunner.resume();
+						if(cpuRunner!=null) cpuRunner.resume();
 				}
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
