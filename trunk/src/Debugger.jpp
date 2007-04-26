@@ -13,7 +13,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.io.*;
 
-public class Debugger implements ActionListener, ItemListener, KeyListener { //GUI
+public class Debugger implements ActionListener, ItemListener, KeyListener, AdjustmentListener { //GUI
 	public static boolean RIGHT_TO_LEFT = false;
 	private static final int aaarg=650;
 	public JTable regs1;
@@ -23,6 +23,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	public boolean memiseditable=true;
 	public JTable instrs;
 	public JTextField cmds;
+
+	private JScrollBar memScroller;
+
 	private Disassembler deasm;
 	private int memaddr=0;
 	private Color UpdateColor = new Color(255,200,200);
@@ -237,6 +240,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		}
 	}
 
+
+	public void adjustmentValueChanged(AdjustmentEvent e) {
+		memaddr = e.getValue();
+		update();
+	}
+
 	public void addComponentsToPane( Container contentPane ) {
 		// Use BorderLayout. Default empty constructor with no horizontal and vertical
 		// gaps
@@ -290,6 +299,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.LINE_END );
 
+		JPanel memPanel = new JPanel();
+		memPanel.setLayout(new BorderLayout());
+
 		DefaultTableModel tableModel = new DefaultTableModel(8,8+2);
 		tableModel.addTableModelListener(new EditMemTableModelListener());
 		mem = new JTable();
@@ -300,7 +312,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		scroll = new JScrollPane(mem);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 131));
-		contentPane.add( scroll, BorderLayout.LINE_END );
+		//contentPane.add( scroll, BorderLayout.LINE_END );
+
+		memScroller = new JScrollBar(java.awt.Adjustable.VERTICAL,0,100,0,0xFFFF + 37); // HAXHAXHAXHAXHAXHAXHAXHAXHAX
+		memScroller.addAdjustmentListener(this);
+		contentPane.add( memScroller, BorderLayout.EAST);
+
+		//memPanel.add(scroll, BorderLayout.CENTER);
+		memPanel.add(mem, BorderLayout.CENTER);
+		memPanel.add(memScroller, BorderLayout.EAST);
+
+		contentPane.add( memPanel, BorderLayout.LINE_END );
 
 		scroll = new JScrollPane(new JLabel("Instructions:"));
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
@@ -340,6 +362,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			updateHWRegs();
 			updateMemory();
 			updateInstructions();
+			memScroller.setValue(Math.min(memaddr, memScroller.getMaximum()));
 		}
 // 		System.out.println("update all");
 	}
@@ -622,7 +645,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 		addComponentsToPane( frame.getContentPane() );
 		frame.pack();
 		frame.setLocation(00, 0);
-		frame.setSize(new Dimension(480,720));
+		frame.setSize(new Dimension(520,720));
 		frame.setVisible( true );
 		//frame.addKeyListener(this); TODO: Shortcut keys
 	}
