@@ -550,10 +550,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		public void makeRcFilesMenuItems() {
+			int staticMenuItems = 4;
 
 			if (menuFile != null) {
-				while (menuFile.getItemCount() > 4) {
-					menuFile.remove(2);
+				while (menuFile.getItemCount() > staticMenuItems) {
+					menuFile.remove(staticMenuItems);
 				}
 
 				menuItems = new JMenuItem[rcFiles.size()];
