@@ -351,7 +351,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;
-				cpuRunner.suspend();
+				if(cpuRunner!=null) cpuRunner.suspend();
+				if(dbgr!=null) dbgr.runner.setStatus(0);
 				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 				File jgbedir=new File(stname);
 				if(!jgbedir.exists()) if(!jgbedir.mkdir()) System.out.printf("failed!\n");
@@ -370,11 +371,13 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						System.out.println("Error saving state! ");
 					};
 				}
-				cpuRunner.resume();
+				if(cpuRunner!=null) cpuRunner.resume();
+				if(dbgr!=null) dbgr.runner.setStatus(3);
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
 				if (!CPU.canRun()) return;
-				cpuRunner.suspend();
+				if(cpuRunner!=null) cpuRunner.suspend();
+				if(dbgr!=null) dbgr.runner.setStatus(0);
 				String stname = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"savestates"+File.separator + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
 				try {
@@ -385,7 +388,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				catch (java.io.IOException ioe) {
 					System.out.println("Error loading state! " + ioe.getMessage());
 				};
-				cpuRunner.resume();
+				if(cpuRunner!=null) cpuRunner.resume();
+				if(dbgr!=null) dbgr.runner.setStatus(3);
 			}
 			else if(e.getSource().equals( menuitemPause )) {
 				// 0 means suspended
