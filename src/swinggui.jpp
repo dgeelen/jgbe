@@ -36,6 +36,9 @@ import java.awt.image.BufferedImage;
 				while (!cpurunthread.isAlive()) { Thread.yield(); }; // wait for thread to actually start
 			}
 
+			public int getStatus() {
+				return threadStatus;
+			}
 			public void run() {
 				while (true) {
 					// suspended
@@ -79,7 +82,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemSoundToggle;
 		JMenuItem[] menuitemSelectState;
 		JMenuItem menuitemSeparator;
-
+		JMenuItem menuitemPause;
+		JMenuItem menuitemReset;
   	JMenuItem[] menuItems;
 
 		CPURunner cpuRunner;
@@ -152,6 +156,15 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemOpenROM.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, ActionEvent.CTRL_MASK ) );
 			menuitemOpenROM.addActionListener( this );
 			menuFile.add(menuitemOpenROM);
+			menuitemPause=new JMenuItem("Pause", KeyEvent.VK_P);
+			menuitemPause.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_P, ActionEvent.CTRL_MASK) );
+			menuitemPause.addActionListener(this);
+			menuFile.add(menuitemPause);
+			menuitemReset=new JMenuItem("Reset", KeyEvent.VK_R);
+			menuitemReset.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_R, ActionEvent.CTRL_MASK) );
+			menuitemReset.addActionListener(this);
+			menuFile.add(menuitemReset);
+
 			menuitemExit = new JMenuItem( "Exit", KeyEvent.VK_X );
 			menuitemExit.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_Q, ActionEvent.CTRL_MASK) );
 			menuitemExit.addActionListener( this );
@@ -374,6 +387,47 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				};
 				cpuRunner.resume();
 			}
+			else if(e.getSource().equals( menuitemPause )) {
+				// 0 means suspended
+				// 1 means suspend->running requested
+				// 2 means running
+				// 3 means running->suspended requested
+				if(cpuRunner!=null) {
+					if(cpuRunner.getStatus()==0) {
+						cpuRunner.resume();
+						addOSDLine("Unpaused gameboy");
+					}
+					else if(cpuRunner.getStatus()==2) {
+						cpuRunner.suspend();
+						addOSDLine("Paused gameboy");
+					}
+				}
+				if(dbgr!=null) {
+					if(dbgr.runner.getStatus()!=3) {
+						dbgr.runner.setStatus(3);
+						addOSDLine("Unpaused gameboy");
+					}
+					else if(dbgr.runner.getStatus()==3){
+						dbgr.runner.setStatus(0);
+						addOSDLine("Paused gameboy");
+					}
+				}
+			}
+			else if(e.getSource().equals( menuitemReset )) {
+				if(cpuRunner!=null){
+					cpuRunner.suspend();
+					while(cpuRunner.getStatus()!=0) {};
+					cpu.reset();
+					cpuRunner.resume();
+					addOSDLine("Reset gameboy");
+				}
+				if(dbgr!=null){
+					dbgr.runner.setStatus(0);
+					cpu.reset();
+					dbgr.runner.setStatus(3);
+					addOSDLine("Reset gameboy");
+				}
+			}
 			else {
 				for (int i = 0; i < 10; ++i) {
 					if (e.getSource().equals(menuitemSelectState[i])) {
@@ -494,7 +548,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public void makeRcFilesMenuItems() {
 
 			if (menuFile != null) {
-				while (menuFile.getItemCount() > 2) {
+				while (menuFile.getItemCount() > 4) {
 					menuFile.remove(2);
 				}
 

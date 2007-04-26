@@ -29,7 +29,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 	private Disassembler deasm;
 	private int memaddr=0;
 	private Color UpdateColor = new Color(255,200,200);
-	private TheRunner runner;
+	public TheRunner runner;
 	private Thread runthread;
 	swinggui gui;
 	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
