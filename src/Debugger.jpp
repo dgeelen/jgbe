@@ -108,9 +108,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 	 	}
 
 		public void run() {
+		setStatus(1);
+		dbg.update(); //System.out.println("update run");
 			while (true) {
 				setStatus(1);
-				dbg.update();
 				while (getStatus() == 1) {
 					try {
 						Thread.sleep(100);
@@ -228,7 +229,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					int value = parser.Evaluate(((String)mem.getValueAt(row, column)).trim());
 					System.out.printf("index=$%04x, value=$%02x\n", index , value);
 					gui.cpu.write(index, value);
-					update();
+					update(); //System.out.println("update EditMemTableModelListener");
 	/*				mem.setColumnSelectionInterval(column + 1, column + 1);
 					mem.setRowSelectionInterval(row, row);*/
 				}
@@ -340,11 +341,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 			updateMemory();
 			updateInstructions();
 		}
+// 		System.out.println("update all");
 	}
 
-	public int[] oldHWRegs=new int[18];
+	public int[] oldHWRegs=new int[20];
+	public int[] watches={-1, -1};
 	public void updateHWRegs() {
-// Status of VirtualBoy @Return from call at 4003:
+// Status of VirtualBoy @Return from call at 4003: (Super Mario Land 2: 6 Golden Coins)
 // [FF40h] LCDCONT=43h   [FF41h] LCDSTAT=02h
 // [FF44h] CURLINE=84h   [FF45h] CMPLINE=00h
 // [FF48h] SPR0PAL=D0h   [FF49h] SPR1PAL=38h
@@ -355,86 +358,93 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 // [FF4Bh,FF4Ah] Window Position at 7,136
 // [FF43h,FF42h] Scroll Position at 0,0
 
-		TableColumnModel m = hwregs.getColumnModel();
-		TableColumn c;
-		Color[] colors=new Color[5];
-		colors[3]=Color.BLUE;
-		int i=0, j=0, k=0;
+	TableColumnModel m = hwregs.getColumnModel();
+	TableColumn c;
+	Color[] colors=new Color[5];
+	colors[3]=Color.BLUE;
+	int i=0, j=0, k=0;
 
-		i=gui.cpu.read(0xFF40);
-		hwregs.setValueAt(String.format("ff40:   cont=$%02x",i), k,0);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF48);
-		hwregs.setValueAt(String.format("ff48:spr0pal=$%02x",i), k,0);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF07);
-		hwregs.setValueAt(String.format("ff07:timefrq=$%02x",i), k,0);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFFFF);
-		hwregs.setValueAt(String.format("ffff:iswitch=$%02x",i), k,0);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF43);
-		hwregs.setValueAt(String.format("ff43:scrollx=$%02x",i), k,0);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
- 		c = m.getColumn(0);
- 		c.setCellRenderer( new MyCellRenderer(colors) );
+	i=gui.cpu.read(0xFF40);
+	hwregs.setValueAt(String.format("ff40: LCDC=$%02x",i), k,0);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF48);
+	hwregs.setValueAt(String.format("ff48: OBP0=$%02x",i), k,0);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF07);
+	hwregs.setValueAt(String.format("ff07:  TAC=$%02x",i), k,0);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFFFF);
+	hwregs.setValueAt(String.format("ffff:   IE=$%02x",i), k,0);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF43);
+	hwregs.setValueAt(String.format("ff43:  SCX=$%02x",i), k,0);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	c = m.getColumn(0);
+	c.setCellRenderer( new MyCellRenderer(colors) );
 
-		colors=new Color[5]; k=0;
-		i=gui.cpu.read(0xFF41);
-		hwregs.setValueAt(String.format("ff41:   STAT=$%02x",i), k,01);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF49);
-		hwregs.setValueAt(String.format("ff49:spr1pal=$%02x",i), k,1);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF04);
-		hwregs.setValueAt(String.format("ff04:timemod=$%02x",i), k,1);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF0f);
-		hwregs.setValueAt(String.format("ff0f: divreg=$%02x",i), k,1);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF42);
-		hwregs.setValueAt(String.format("ff42:scrolly=$%02x",i), k,1);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
- 		c = m.getColumn(1);
- 		c.setCellRenderer( new MyCellRenderer(colors) );
+	colors=new Color[5]; k=0;
+	i=gui.cpu.read(0xFF41);
+	hwregs.setValueAt(String.format("ff41: STAT=$%02x",i), k,01);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF49);
+	hwregs.setValueAt(String.format("ff49: OBP1=$%02x",i), k,1);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF04);
+	hwregs.setValueAt(String.format("ff04:  DIV=$%02x",i), k,1);
+// 	System.out.println("DIV: i="+i+" old="+oldHWRegs[j]);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF0f);
+	hwregs.setValueAt(String.format("ff0f:   IF=$%02x",i), k,1);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF42);
+	hwregs.setValueAt(String.format("ff42:  SCY=$%02x",i), k,1);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	c = m.getColumn(1);
+	c.setCellRenderer( new MyCellRenderer(colors) );
 
-		colors=new Color[5];k=0;
-		i=gui.cpu.read(0xFF44);
-		hwregs.setValueAt(String.format("ff44:curline=$%02x",i), k,2);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF05);
-		hwregs.setValueAt(String.format("ff05:timecnt=$%02x",i), k,2);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF02);
-		hwregs.setValueAt(String.format("ff02:siocont=$%02x",i), k,2);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF4b);
-		hwregs.setValueAt(String.format("ff4b:wndxpos=$%02x",i), k,2);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		//
-		hwregs.setValueAt("<TODO: watch 1>", k,2);
-		colors[k++]=new Color(220,255,220);
- 		c = m.getColumn(2);
- 		c.setCellRenderer( new MyCellRenderer(colors) );
+	colors=new Color[5];k=0;
+	i=gui.cpu.read(0xFF44);
+	hwregs.setValueAt(String.format("ff44:   LY=$%02x",i), k,2);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF05);
+	hwregs.setValueAt(String.format("ff05: TIMA=$%02x",i), k,2);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF02);
+	hwregs.setValueAt(String.format("ff02:   SC=$%02x",i), k,2);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF4b);
+	hwregs.setValueAt(String.format("ff4b:   WX=$%02x",i), k,2);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=0x100;
+	if(watches[0]>=0) {
+		i=gui.cpu.read(watches[0]);
+		hwregs.setValueAt(String.format("%04x:   w0=$%02x",watches[0],i), k,2);
+	} else hwregs.setValueAt("w0 unset", k,2);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	c = m.getColumn(2);
+	c.setCellRenderer( new MyCellRenderer(colors) );
 
-		colors=new Color[5];k=0;
-		i=gui.cpu.read(0xFF45);
-		hwregs.setValueAt(String.format("ff45:cmpline=$%02x",i), k,3);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF06);
-		hwregs.setValueAt(String.format("ff06:timemod=$%02x",i), k,3);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF01);
-		hwregs.setValueAt(String.format("ff01:siodata=$%02x",i), k,3);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		i=gui.cpu.read(0xFF4a);
-		hwregs.setValueAt(String.format("ff4a:wndypos=$%02x",i), k,3);
-		colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-		//
-		hwregs.setValueAt("<TODO: watch 2>", k,3);
-		colors[k++]=new Color(220,255,220);
- 		c = m.getColumn(3);
- 		c.setCellRenderer( new MyCellRenderer(colors) );
+	colors=new Color[5];k=0;
+	i=gui.cpu.read(0xFF45);
+	hwregs.setValueAt(String.format("ff45:  LYC=$%02x",i), k,3);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF06);
+	hwregs.setValueAt(String.format("ff06:  TMA=$%02x",i), k,3);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF01);
+	hwregs.setValueAt(String.format("ff01:   SB=$%02x",i), k,3);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=gui.cpu.read(0xFF4a);
+	hwregs.setValueAt(String.format("ff4a:   WY=$%02x",i), k,3);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	i=0x100;
+	if(watches[1]>=0) {
+		i=gui.cpu.read(watches[1]);
+		hwregs.setValueAt(String.format("%04x:   w1=$%02x",watches[1],i), k,3);
+	} else hwregs.setValueAt("w1 unset", k,3);
+	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
+	c = m.getColumn(3);
+	c.setCellRenderer( new MyCellRenderer(colors) );
 	}
 
 	public void updateMemory() {
@@ -767,12 +777,18 @@ public class Debugger implements ActionListener, ItemListener, KeyListener { //G
 					else if(l.equalsIgnoreCase("bpm")){ //break on memory access
 						bpm = v;
 					}
+					else if(l.equalsIgnoreCase("w0")){
+						watches[0] = v;
+					}
+					else if(l.equalsIgnoreCase("w1")){
+						watches[1] = v;
+					}
 					else {
 						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
 					}
 				}
 			}
-			update();
+			update(); //System.out.println("update action");
 		}
 		else {
 			System.out.println( "Action event i an instance of " + getClassName( f ));
