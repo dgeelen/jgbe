@@ -199,6 +199,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 					}
 				}
 				setRunFor(-1);
+				setStatus(1);
+// 				dbg.update(); System.out.println("Update RUN");
 			}
 		}
 	}
@@ -364,7 +366,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 			updateInstructions();
 			memScroller.setValue(Math.min(memaddr, memScroller.getMaximum()));
 		}
-// 		System.out.println("update all");
+//  		System.out.println("update all");
 	}
 
 	public int[] oldHWRegs=new int[20];
@@ -660,9 +662,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 			if(s.equals("s")) {
 				//System.out.println("SingleStep");
 				gui.cpu.nextinstruction();
+				update();
 			}
 			if(s.equals("reset")) {
 				gui.cpu.reset();
+				update();
 			}
 			if(s.equals("so")) {
 				if (runner.getStatus() == 1) {
@@ -745,52 +749,67 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 				if(!parser.parseError) {
 					if(l.equalsIgnoreCase("a")){
 						gui.cpu.A=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("b")){
 						gui.cpu.B=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("c")){
 						gui.cpu.C=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("d")){
 						gui.cpu.D=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("e")){
 						gui.cpu.E=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("f")){
 						gui.cpu.F=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("h")){
 						gui.cpu.H=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("l")){
 						gui.cpu.L=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("hl")){
 						gui.cpu.H=(v>>8)&0xFF;
 						gui.cpu.L=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("pc")){
 						gui.cpu.PC=v&0xFFFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("sp")){
 						gui.cpu.SP=v&0xFFFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("m")){
 						memaddr=v&0xFFFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("af")){
 						gui.cpu.A=(v>>8)&0xFF;
 						gui.cpu.F=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("bc")){
 						gui.cpu.B=(v>>8)&0xFF;
 						gui.cpu.C=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("de")){
 						gui.cpu.D=(v>>8)&0xFF;
 						gui.cpu.E=v&0xFF;
+						update();
 					}
 					else if(l.equalsIgnoreCase("bpi")){ //break on interrupt i
 							runner.setBreakPoint(v);
@@ -802,16 +821,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 					}
 					else if(l.equalsIgnoreCase("w0")){
 						watches[0] = v;
+						update();
 					}
 					else if(l.equalsIgnoreCase("w1")){
 						watches[1] = v;
+						update();
 					}
 					else {
 						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
 					}
 				}
 			}
-			update(); //System.out.println("update action");
 		}
 		else {
 			System.out.println( "Action event i an instance of " + getClassName( f ));
