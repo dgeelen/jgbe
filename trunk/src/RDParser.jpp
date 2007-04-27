@@ -98,11 +98,13 @@ public class RDParser {
 			case 16:
 				if((c>='A')&&(c<='F')) return true;
 				if((c>='a')&&(c<='f')) return true;
+				if((c>='0')&&(c<='9')) return true;
+				return false;
 			case 10:
 			default:
 				if((c>='0')&&(c<='9')) return true;
+				return false;
 		}
-		return false;
 	}
 
 	public int StrToInt(String in) {
