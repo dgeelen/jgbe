@@ -1,5 +1,5 @@
 #include "Global.inc"
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
@@ -63,13 +63,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		protected CPU cpu;
 		private int fps;
 		private int selectedState = 0;
-#ifdef USE_JAVA_142
-		Vector osdLines = new Vector();
-		Vector rcFiles = new Vector();
-#else
-		Vector<String> osdLines = new Vector<String>();
-		Vector<String> rcFiles = new Vector<String>();
-#endif
+		VECTOR(String) osdLines = new VECTOR(String)();
+		VECTOR(String) rcFiles = new VECTOR(String)();
 		int osdTime = 0;
 		String curcartname;
 		//menuitem <-- here for my KDev autocomplete
@@ -387,10 +382,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cpuRunner.suspend();
 				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 				File jgbedir=new File(stname);
-				if(!jgbedir.exists()) if(!jgbedir.mkdir()) System.out.printf("failed!\n");
+				if(!jgbedir.exists()) if(!jgbedir.mkdir()) PRINTF("failed!\n");
 				stname += "savestates"+File.separator;
 				File sstatedir=new File(stname);
-				if(!sstatedir.exists()) if(!sstatedir.mkdir()) System.out.printf("failed!\n");
+				if(!sstatedir.exists()) if(!sstatedir.mkdir()) PRINTF("failed!\n");
 				if(sstatedir.exists()) {
 					stname += curcartname + ".st" + selectedState;
 					addOSDLine("Saving State "+selectedState);

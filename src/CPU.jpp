@@ -59,7 +59,7 @@ public class CPU
 		//CPU Class variables
 		static private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
 		static private int lastException=0;
-		#ifndef USE_JAVA_142
+		#ifndef USE_JAVA_MOBILE
 			static private Disassembler deasm;
 		#endif
 		static protected VideoController VC;
@@ -76,7 +76,7 @@ public class CPU
 				x[0] = 0;
 			}
 			singleton = this;
-			#ifndef USE_JAVA_142
+			#ifndef USE_JAVA_MOBILE
 				deasm = new Disassembler(this);
 			#endif
 			VC = new VideoController(this, 160, 144);
@@ -389,7 +389,7 @@ static int togglestart=1;
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
-						//System.out.printf("DEBUG: CPU.read(): YOYP (PC=0x%04x)\n", PC);
+						//PRINTF("DEBUG: CPU.read(): YOYP (PC=0x%04x)\n", PC);
 // 						if(togglestart--==0){
 // 							ButtonKeyStatus ^= 8;
 // 							togglestart=10;
@@ -812,7 +812,7 @@ static int togglestart=1;
 			System.out.println( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
 			PRINTF( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
 			PRINTF( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
-			#ifndef USE_JAVA_142
+			#ifndef USE_JAVA_MOBILE
 				System.out.println( "  "+deasm.simple_disasm( PC ) );
 			#endif
 		}
@@ -850,7 +850,7 @@ static int togglestart=1;
 		}
 
 		static final protected void interrupt(int i) { //execute interrupt #i
-//  			System.out.printf("INTERRUPT: PC=$%04x, interrupt=$%02x, LY=%d\n",PC,i,VC.LY);
+//  			PRINTF("INTERRUPT: PC=$%04x, interrupt=$%02x, LY=%d\n",PC,i,VC.LY);
 			IME = false;
 
 			PUSH_OLD(PC);
@@ -1090,7 +1090,7 @@ static int togglestart=1;
 		static int samplesLeft = 0;
 
 		static final public int nextinstruction() {
-			//System.out.printf("execing stuff PC=0x%04x VBLANKcntdwn=%05d, mode=%d\n",PC, VBLANKcntdwn, R_STAT&3);
+			//PRINTF("execing stuff PC=0x%04x VBLANKcntdwn=%05d, mode=%d\n",PC, VBLANKcntdwn, R_STAT&3);
 			int res = 4*execute();
 			last_memory_access=last_memory_access_internal;
 			SP &= 0xffff;
@@ -1154,11 +1154,11 @@ static int togglestart=1;
 				if (mode != vcmode) {
 					vcmode = mode;
 					VC.modeChanged(mode);
-// 				System.out.printf("\n");
+// 				PRINTF("\n");
 				}*/
 				/*
 				for(int i=0; i<res; ++i)
-					System.out.printf("%d",mode);*/
+					PRINTF("%d",mode);*/
 				// [0 <= VBLANKcntdwn < 456]
 				// [0..204)  [204..376)  [376..456)
 				// mode 0    mode 3      mode 2

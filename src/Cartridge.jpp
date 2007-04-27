@@ -45,7 +45,7 @@ public class Cartridge {
 			System.out.println("error loading cartridge from file!: " + e.getMessage());
 			err_msg = e.getMessage();
 		}
-#ifdef USE_JAVA_142
+#ifdef USE_JAVA_MOBILE
 		new Bios("/boot.rom", BIOS_ROM);
 #else
 		new Bios("boot.rom", BIOS_ROM);
@@ -214,8 +214,8 @@ public class Cartridge {
 			case 1:
 			case 3:
 				//MBC3 TODO: RTC CRAP
-				System.out.printf("Error: not using memmap, or reading from cartridge with a noncartridge address $%04x\n", index);
-				System.out.printf("CurRombank: %d CurrentRAMBank: %d\n", CurrentROMBank, CurrentRAMBank);
+				PRINTF("Error: not using memmap, or reading from cartridge with a noncartridge address $%04x\n", index);
+				PRINTF("CurRombank: %d CurrentRAMBank: %d\n", CurrentROMBank, CurrentRAMBank);
 
 				int x[]=null;
 				x[0] = 0;
@@ -241,7 +241,7 @@ public class Cartridge {
 				}
 				else if(index<0x4000)  { // 2000-3FFF - ROM Bank Number (Write Only)
 					int i=Math.max(1, value&0x1f);
-// 					System.out.printf("Change rombank bits 0-4: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i,value, CPU.PC);
+// 					PRINTF("Change rombank bits 0-4: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i,value, CPU.PC);
 					CurrentROMBank=i;
 					//System.out.println("Selecting ROM bank"+CurrentROMBank);
 				}
@@ -251,7 +251,7 @@ public class Cartridge {
  						i=(CurrentROMBank&0x1f)|((value&0x03)<<5);
 						/*j=(CurrentROMBank&0x1f)|((value&0x03)<<4);
 						k=(CurrentROMBank&0x0f)|((value&0x03)<<4);*/
-// 						System.out.printf("Change rombank bits 5-6: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i, value,CPU.PC);
+// 						PRINTF("Change rombank bits 5-6: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i, value,CPU.PC);
 						CurrentROMBank=i;
 						//System.out.println("Selecting ROM bank"+CurrentROMBank);
 					}
@@ -265,7 +265,7 @@ public class Cartridge {
 				}
 				else if ((index>=0xA000) && (index <= 0xBFFF))	{ // Handled by MemMap
 						// RAM Bank 00-03, if any
-// 						System.out.printf("TODO: MBC1 writing to RAM. index=$%04x, value=$%02x\n",index,value);
+// 						PRINTF("TODO: MBC1 writing to RAM. index=$%04x, value=$%02x\n",index,value);
 				}
 				else PRINTF("TODO: Cartridge writing to $%04x\n", index); // TODO all option
 				break;
