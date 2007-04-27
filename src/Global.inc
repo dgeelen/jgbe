@@ -2,6 +2,15 @@
 #define IF_STAT (1<<1)
 #define IF_VBLANK (1<<0)
 
+#define BUTTON_RIGHT  (1<<0)
+#define BUTTON_LEFT   (1<<1)
+#define BUTTON_UP     (1<<2)
+#define BUTTON_DOWN   (1<<3)
+#define BUTTON_A      (1<<4)
+#define BUTTON_B      (1<<5)
+#define BUTTON_SELECT (1<<6)
+#define BUTTON_START  (1<<7)
+
 #define ASSERT(cond) \
   if (!(cond)) throw new Error("Assertion failed: " + #cond)
 
@@ -35,7 +44,7 @@
 
 /* save state macro's here */
 #define SL_MAGIX (0x4a374a53)                // JGBS = <J>ava <G>ame<B>oy <S>tate in ascii hex
-#define SL_SAVE_VERSION     3                // version we save, change when changing savestate format
+#define SL_SAVE_VERSION     4                // version we save, change when changing savestate format
 #define SL_LOAD_MIN_VERSION 0                // oldest version we can handle
 #define SL_LOAD_MAX_VERSION SL_SAVE_VERSION  // newest version we can handle, normally the same as what we save
 

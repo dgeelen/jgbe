@@ -50,8 +50,9 @@ public class CPU
 		protected static boolean halted=false;
 		protected static int hw_ilines=0;  ///< gnuboy magix
 		//IO
-		static public int DirectionKeyStatus=0x3f; //bitmask
- 		static public int ButtonKeyStatus=0x3f; //bitmask
+ 		static public int KeyStatus=0; //bitmask, low 4=direction, upper 4=start,select,a,b, inverted from GameBoy POV
+		private static int keyBounce=0;
+		private static int keyBounceWaitNext=0x3f;
 
 		static boolean BIOS_enabled = false;
 
@@ -135,6 +136,8 @@ public class CPU
 			SL_IF_VERSION( 3, -1) SL_UINT8(vcmode);
 			SL_IF_VERSION( 3, -1) SL_INT(TotalInstrCount);
 			SL_IF_VERSION( 3, -1) SL_INT(TotalCycleCount);
+
+			SL_IF_VERSION( 4, -1) SL_UINT8(hw_ilines);
 
 			if (SL_LOAD) {
 				refreshMemMap();
@@ -392,13 +395,14 @@ static int togglestart=1;
 // // 							System.out.println("ButtonKeyStatus="+ButtonKeyStatus);
 // 						}
 
-						b=IOP[index-0xff00]&0xf0;
+						b=(IOP[index-0xff00]&0x30)|0xc0;
 						if((b&(1<<4))==0) { // Direction keys, 0=select
-							b|=DirectionKeyStatus;
+							b|=(KeyStatus&0x0f);
 						}
 						if((b&(1<<5))==0) { // Buttons, 0=select
-							b|=ButtonKeyStatus;
+							b|=(KeyStatus>>4);
 						}
+						b^=0x0f;
 						break;
 					case 0xff01: // SB - Serial transfer data (R/W)
 					case 0xff02: // SC - Serial Transfer Control (R/W)
@@ -785,8 +789,7 @@ static int togglestart=1;
 			IE=0;         ///< Interrupt Enable (allowed interrupts)
 			IME=true; ///< Interrupt Master Enable
 			halted=false;
-			DirectionKeyStatus=0x0f; //bitmask
-			ButtonKeyStatus=0x3f; //bitmask
+			KeyStatus=0; //bitmask
 			lastException=0;
 			hw_ilines = 0;
 		}
@@ -875,31 +878,39 @@ static int togglestart=1;
 			hw_ilines |= i;
 		}
 
-		/*DoubleDragon HAX*/
-		private static int keyBounce=0;
-		private static int keyBounceWaitNext=0;
-		private static int hax=0;
+		public static final void pressButton(int i) {
+			if ((KeyStatus&i) != 0) return;
+			KeyStatus |= i;
+			keyBounce=1000; //times to bounce the key
+		}
+
+		public static final void releaseButton(int i) {
+			if ((KeyStatus&i) == 0) return;
+			KeyStatus&=~i;
+			keyBounce=1000; //times to bounce the key
+		}
+
+
+
+
 
 		static final protected int execute() {
 // 			if(last_memory_access_internal==0xff00) System.out.println("ASDASDASDSADDSA");
 			int cycles;
 			TVARS;
-			hax|=(IOP[0x0f]&(1<<4));
 			if (CHECK_INTS) {
 				checkInterrupts();
 				halted = false;
 				//return 12; // 12 cycles for this?
  				return 4;/* FIXME(?) For break on interrupt */
 			}
-			if((++keyBounceWaitNext&0x3f)==0) {//wait some instructions
-// 				if(hax!=0)System.out.printf(".");
-				if((hax!=0) && (++keyBounce<8)) { //Joystick interrupt triggered
-					IOP[0x0f]|=hax;
-// 					System.out.printf("bounce hax=0x%04x keyBounce=0x%04x iop[0x0f]=0x%04x\n",hax, keyBounce, IOP[0x0f]);
-					}
-				else {
-					keyBounce=0;
-					hax=0;
+			--keyBounceWaitNext;
+			if(keyBounceWaitNext == 0) {//wait some instructions
+				keyBounceWaitNext=1000;
+				if (keyBounce > 0) {
+// 					PRINTF(".keyBounce\n");
+					triggerInterrupt(4);
+					--keyBounce;
 				}
 			}
 			if (halted) return 4;
