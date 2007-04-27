@@ -523,6 +523,8 @@ static int togglestart=1;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
 						VC.STAT = (VC.STAT&7)|(value&~7); //lower 3bits are readonly
+						if (!VC.isCGB && ((VC.STAT & 2)!=0)) /* DMG STAT write bug => interrupt */
+							triggerInterrupt(1);
 						break;
 					case 0xff42: // SCY
 						VC.SCY = value;
@@ -994,7 +996,7 @@ static int togglestart=1;
 				}
 
 				if (doublespeed) {
-					VBLANKcntdwn -= res/2; // more instrs per vblank int
+					VBLANKcntdwn -= res>>1; // more instrs per vblank int
 					AC.render(res>>1); //render enough sound bytes for res Cycles
 				}
 			 	else {
@@ -1009,7 +1011,6 @@ static int togglestart=1;
 				Mode 3  _33____33____33____33____33____33__________________3___
 */
 				if (VBLANKcntdwn < 0) {
-// 					VBLANKcntdwn += 456;   // 4194304/9198
 					VBLANKcntdwn += 456;   // 4194304/9198
 					++VC.LY;
 					if (VC.LY >= 154)
@@ -1025,13 +1026,23 @@ static int togglestart=1;
 					vcmode = mode;
 					VC.modeChanged(mode);
 // 				System.out.printf("\n");
-				}/*
+				}
+				/*
 				for(int i=0; i<res; ++i)
 					System.out.printf("%d",mode);*/
 				// [0 <= VBLANKcntdwn < 456]
 				// [0..204)  [204..376)  [376..456)
 				// mode 0    mode 3      mode 2
 				// when LY>144 then mode 1
+
+				// HBlank - HBlank = 456
+				// VBlank - VBlank = 70224
+				// [0 ................................................................................. 70224]
+				// [                                                                  4560 - 1111111111111111] // mode 1 - 4560cycles
+				// [                                                                                         ] // mode 2 - 80  cycles
+				// [                                                                                         ] // mode 3 - 172 cycles
+				// [                                                                                         ] // mode 0 - 204 cycles
+				// 80+172+204=456
 
 			}
 
