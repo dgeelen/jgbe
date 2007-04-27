@@ -1,5 +1,6 @@
 //#define USE_JAVA_142
-
+#define IF_STAT (1<<1)
+#define IF_VBLANK (1<<0)
 
 #ifdef USE_JAVA_142
 	#define PRINTFREEMEM(x)  { System.out.println("in "+x+": Free Memory="+(Runtime.getRuntime().freeMemory()/1024) + "  used = "+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)); }
@@ -33,7 +34,7 @@
 
 #define SAVELOAD_FUNCTION \
 	protected final void stateSaveLoad(boolean save, int version, DataOutputStream dostream, DataInputStream distream) throws IOException
-	
+
 #define SL_SAVE (save)
 #define SL_LOAD (!save)
 
