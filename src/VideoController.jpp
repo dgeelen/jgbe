@@ -616,6 +616,10 @@ public class VideoController {
 
 		if (stat != 1) CPU.hw_interrupt(0, IF_VBLANK);
 		/* hw_interrupt((stat == 1) ? IF_VBLANK : 0, IF_VBLANK); */
+		if(stat == 1) {
+			blitImage();
+			if (listener != null) listener.updateUI();
+		}
 		stat_trigger();
 	}
 
