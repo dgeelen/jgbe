@@ -578,22 +578,62 @@ public class VideoController {
 		//alldirty = false;
 	}
 
+#define R_LY LY
+#define R_LYC LYC
+#define R_STAT STAT
+#define R_LCDC LCDC
+
+	final protected void stat_trigger()
+	{
+		int condbits[] = { 0x08, 0x30, 0x20, 0x00 };
+		int flag = 0;
+
+		if ((R_LY < 0x91) && (R_LY == R_LYC))
+		{
+			R_STAT |= 0x04;
+			if (0!=(R_STAT & 0x40)) flag = IF_STAT;
+		}
+		else R_STAT &= ~0x04;
+
+		if (0!=(R_STAT & condbits[R_STAT&3])) flag = IF_STAT;
+
+		if (0==(R_LCDC & 0x80)) flag = 0;
+
+		CPU.hw_interrupt(flag, IF_STAT);
+	}
+
+	/*
+	* stat_change is called when a transition results in a change to the
+	* LCD STAT condition (the low 2 bits of R_STAT).  It raises or lowers
+	* the VBLANK interrupt line appropriately and calls stat_trigger to
+	* update the STAT interrupt line.
+	*/
+
+	final protected void stat_change(int stat)
+	{
+		stat &= 3;
+		R_STAT = (R_STAT & 0x7C) | stat;
+
+		if (stat != 1) CPU.hw_interrupt(0, IF_VBLANK);
+		/* hw_interrupt((stat == 1) ? IF_VBLANK : 0, IF_VBLANK); */
+		stat_trigger();
+	}
+
 	final public void modeChanged(int mode) {
+/*	TEST: it no verk :(
+		STAT &=0xfc;
+		STAT |=(mode&0x03);*/
+
 		STAT &= ~(1<<2);
 		if (LY==LYC)
 			STAT |= (1<<2);
-		if ((mode == 0)
-		 && (LY==LYC)
-		 && ((STAT&(1<<6))!=0))
+		if ((mode == 0) && (LY==LYC) && ((STAT&(1<<6))!=0)) // LYC=LY Coincidence Interrupt
 			cpu.triggerInterrupt(1);
-		if ((mode == 2)
-		 && ((STAT&(1<<5))!=0))
+		if ((mode == 2) && ((STAT&(1<<5))!=0)) // Mode 2 OAM Interrupt
 			cpu.triggerInterrupt(1);
-		if ((mode == 0)
-		 && ((STAT&(1<<3))!=0))
+		if ((mode == 1) && ((STAT&(1<<4))!=0)) // Mode 1 V-Blank Interrupt
 			cpu.triggerInterrupt(1);
-		if ((mode == 1)
-		 && ((STAT&(1<<4))!=0))
+		if ((mode == 0) && ((STAT&(1<<3))!=0)) // Mode 0 H-Blank Interrupt
 			cpu.triggerInterrupt(1);
 		if (mode == 1) {
 			if (cfskip == 0) {
@@ -606,8 +646,7 @@ public class VideoController {
 			if (cfskip < 0) cfskip += fskip;
 			cpu.triggerInterrupt(0);
 		}
-		if ((mode == 0)
-		 && (cfskip == 0))
+		if ((mode == 0) && (cfskip == 0))
 			renderScanLine();
 	}
 
@@ -679,7 +718,7 @@ public class VideoController {
 
 #define DRAWPIX_S(x, pal, col) DRAWPIX(x, (pal << 2), col)
 
-	final private void renderScanLine() {
+	final public void renderScanLine() {
 		/* FF40 - LCDC - LCD Control (R/W)
 		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
 		* Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
