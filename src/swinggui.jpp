@@ -278,7 +278,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		private void createAndShowGUI() {
 			//JFrame.setDefaultLookAndFeelDecorated( true );
 
-			frame = new JFrame( "JGameBoy Emulator V0.01" );
+			frame = new JFrame( "JGameBoy Emulator V0.42" );
 			frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 // 			frame.setBounds( 60,60,100,100 );
 
