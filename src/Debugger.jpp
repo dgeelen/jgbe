@@ -1,7 +1,6 @@
 #include "Global.inc"
 #ifndef USE_JAVA_MOBILE
 import javax.swing.*;
-import javax.swing.JTable.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
