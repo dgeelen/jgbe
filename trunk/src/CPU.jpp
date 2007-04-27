@@ -183,13 +183,14 @@ public class CPU
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
 
-//#define C VBLANKcntdwn
+#define C VBLANKcntdwn
 #define R_LCDC VC.LCDC
 #define R_STAT VC.STAT
 #define R_LY VC.LY
 		static final  private void lcdc_trans() {
 			if (0==(R_LCDC & 0x80))
 			{
+				assert C <= 0;
 				while (C <= 0)
 				{
 					switch ((byte)(R_STAT & 3))
@@ -213,7 +214,9 @@ public class CPU
 					}
 					return;
 				}
+				assert false;
 			}
+			assert C <= 0;
 			while (C <= 0)
 			{
 				switch ((R_STAT & 3))
@@ -241,11 +244,12 @@ public class CPU
 						R_LY = -1;
 						C += 200;
 					}
-					R_LY++;
+					++R_LY;
 					VC.stat_trigger();
 					break;
 				case 2:
-					VC.renderScanLine();
+					if (R_LY < 144)
+						VC.renderScanLine();
 					VC.stat_change(3);
 					C += 86;
 					break;
@@ -273,6 +277,7 @@ public class CPU
 					C += 40;
 					break;
 				}
+				assert C > 0;
 			}
 		}
 #undef C
@@ -425,7 +430,7 @@ static int togglestart=1;
 						b = VC.LCDC;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
-						b = ((VC.STAT & ~3) | vcmode);
+						b = VC.STAT;
 						break;
 					case 0xff42: // SCY
 						b = VC.SCY;
@@ -1077,7 +1082,7 @@ static int togglestart=1;
 		static int samplesLeft = 0;
 
 		static final public int nextinstruction() {
-// 			System.out.printf("execing stuff PC=0x%04x\n",PC);
+			//System.out.printf("execing stuff PC=0x%04x VBLANKcntdwn=%05d, mode=%d\n",PC, VBLANKcntdwn, R_STAT&3);
 			int res = 4*execute();
 			last_memory_access=last_memory_access_internal;
 			SP &= 0xffff;

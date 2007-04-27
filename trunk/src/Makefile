@@ -22,16 +22,16 @@ CLASSFILES:=$(shell echo $(CLASSFILES) | sort | uniq)
 all: .Global.dummy $(JAVAFILES) $(CLASSFILES)
 
 fun: all
-	cd $(CLASSDIR) && aoss java swinggui -lastcart -nodebug
+	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart -nodebug
 
 silence: all
-	cd $(CLASSDIR) && aoss java swinggui -lastcart -nodebug -nosound
+	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart -nodebug -nosound
 
 run: all
-	cd $(CLASSDIR) && aoss java swinggui -lastcart
+	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart
 
 debug: all
-	cd $(CLASSDIR) && aoss java swinggui -lastcart -nosound
+	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart -nosound
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge
