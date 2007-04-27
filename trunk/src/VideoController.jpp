@@ -83,6 +83,14 @@ public class VideoController {
 	private int cfskip = 0;
 	public int fskip = 1; // 1 is off
 
+	public void setGrayShades(int[][] g) {
+		GRAYSHADES = g;
+		updateMonoColData(0); //???
+		updateMonoColData(1);
+		updateMonoColData(2);
+	}
+
+
 	public void reset() {
 		this.isCGB = cpu.isCGB();
 		CurrentVRAMBank=0;

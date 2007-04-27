@@ -59,7 +59,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
 		private static Debugger dbgr;
-		private static JMenuBar menubar;
 		protected VideoController VC;
 		protected CPU cpu;
 		private int fps;
@@ -68,6 +67,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		Vector rcFiles = new Vector();
 		int osdTime = 0;
 		String curcartname;
+		//menuitem <-- here for my KDev autocomplete
 		JMenuItem menuitemExit;
 		JMenuItem menuitemScale1x;
 		JMenuItem menuitemScale2x;
@@ -84,6 +84,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemSeparator;
 		JMenuItem menuitemPause;
 		JMenuItem menuitemReset;
+		JMenu menuColorScheme;
+		JMenuItem menuitemColorSchemeOriginalGameboy;
+		JMenuItem menuitemColorSchemeBlackAndWhite;
+		JMenuItem menuitemColorSchemeGreys;
   	JMenuItem[] menuItems;
 
 		CPURunner cpuRunner;
@@ -195,6 +199,21 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuFrameSkip.add( menuitemIncFrameSkip );
 			menuFrameSkip.add( menuitemDecFrameSkip );
 			menuSettings.add( menuFrameSkip) ;
+
+			menuColorScheme = new JMenu("Color scheme");
+			menuitemColorSchemeOriginalGameboy = new JMenuItem("GameBoy LCD", KeyEvent.VK_L);
+			menuitemColorSchemeBlackAndWhite = new JMenuItem("Black and White", KeyEvent.VK_B);
+			menuitemColorSchemeGreys = new JMenuItem("Graytones", KeyEvent.VK_G);
+			menuitemColorSchemeOriginalGameboy.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_0, ActionEvent.CTRL_MASK));
+			menuitemColorSchemeBlackAndWhite.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_9, ActionEvent.CTRL_MASK));
+			menuitemColorSchemeGreys.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_8, ActionEvent.CTRL_MASK));
+			menuColorScheme.add(menuitemColorSchemeOriginalGameboy);
+			menuColorScheme.add(menuitemColorSchemeBlackAndWhite);
+			menuColorScheme.add(menuitemColorSchemeGreys);
+			menuitemColorSchemeOriginalGameboy.addActionListener(this);
+			menuitemColorSchemeBlackAndWhite.addActionListener(this);
+			menuitemColorSchemeGreys.addActionListener(this);
+			menuSettings.add(menuColorScheme);
 
 			menuState = new JMenu("State");
 			menuitemSaveState = new JMenuItem( "Save State", KeyEvent.VK_S );
@@ -432,6 +451,27 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					addOSDLine("Reset gameboy");
 				}
 			}
+			else if(e.getSource().equals( menuitemColorSchemeOriginalGameboy )) {
+			int[][] c={ {0xa0, 0xe0, 0x20},	// WHITE
+									{0x70, 0xb0, 0x40},  // LIGHTGRAY
+									{0x40, 0x70, 0x32},  // DARKGRAY
+									{0x10, 0x50, 0x26}}; // BLACK
+			cpu.VC.setGrayShades(c);
+			}
+			else if(e.getSource().equals( menuitemColorSchemeBlackAndWhite )) {
+			int[][] c={ {0xFF, 0xFF, 0xFF},	// WHITE
+									{0x80, 0x80, 0x80},  // LIGHTGRAY
+									{0x40, 0x40, 0x40},  // DARKGRAY
+									{0x00, 0x00, 0x00}}; // BLACK
+			cpu.VC.setGrayShades(c);
+			}
+			else if(e.getSource().equals( menuitemColorSchemeGreys )) {
+			int[][] c={ {0xc5, 0xc5, 0xc5},	// WHITE
+									{0x9a, 0x9a, 0x9a},  // LIGHTGRAY
+									{0x61, 0x61, 0x61},  // DARKGRAY
+									{0x3f, 0x3f, 0x3f}}; // BLACK
+			cpu.VC.setGrayShades(c);
+			}
 			else {
 				for (int i = 0; i < 10; ++i) {
 					if (e.getSource().equals(menuitemSelectState[i])) {
@@ -478,75 +518,67 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			//System.out.println("keyTyped");
 		}
 
-		public void keyPressed(KeyEvent e) {
-			int oldButtonKeyStatus=cpu.ButtonKeyStatus;
-			int oldDirectionKeyStatus=cpu.DirectionKeyStatus;
+		public void keyReleased(KeyEvent e) {
 			switch(e.getKeyCode()){
 				case KeyEvent.VK_Z:
-					cpu.ButtonKeyStatus&=~1; // A
+					cpu.releaseButton(BUTTON_A);
 					break;
 				case KeyEvent.VK_X:
-					cpu.ButtonKeyStatus&=~2; // B
+					cpu.releaseButton(BUTTON_B);
 					break;
 				case KeyEvent.VK_MINUS:
-					cpu.ButtonKeyStatus&=~4; // Select
+					cpu.releaseButton(BUTTON_SELECT);
 					break;
 				case KeyEvent.VK_EQUALS:
-					cpu.ButtonKeyStatus&=~8; // Start
+					cpu.releaseButton(BUTTON_START);
 					break;
 				case KeyEvent.VK_RIGHT:
-					cpu.DirectionKeyStatus&=~1; // Right
+					cpu.releaseButton(BUTTON_RIGHT);
 					break;
 				case KeyEvent.VK_LEFT:
-					cpu.DirectionKeyStatus&=~2; // Left
+					cpu.releaseButton(BUTTON_LEFT);
 					break;
 				case KeyEvent.VK_UP:
-					cpu.DirectionKeyStatus&=~4; // Up
+					cpu.releaseButton(BUTTON_UP);
 					break;
 				case KeyEvent.VK_DOWN:
-					cpu.DirectionKeyStatus&=~8; // Down
+					cpu.releaseButton(BUTTON_DOWN);
 					break;
 				default:
 					//System.out.println("keyPressed");
 					break;
 			}
-			if((oldButtonKeyStatus!=cpu.ButtonKeyStatus)|(cpu.DirectionKeyStatus!=oldDirectionKeyStatus))
-				cpu.triggerInterrupt(4);
 		}
-		public void keyReleased(KeyEvent e) {
-			int oldButtonKeyStatus=cpu.ButtonKeyStatus;
-			int oldDirectionKeyStatus=cpu.DirectionKeyStatus;
+		public void keyPressed(KeyEvent e) {
 			switch(e.getKeyCode()){
 				case KeyEvent.VK_Z:
-					cpu.ButtonKeyStatus|=1; // A
+					cpu.pressButton(BUTTON_A);
 					break;
 				case KeyEvent.VK_X:
-					cpu.ButtonKeyStatus|=2; // B
+					cpu.pressButton(BUTTON_B);
 					break;
 				case KeyEvent.VK_MINUS:
-					cpu.ButtonKeyStatus|=4; // Select
+					cpu.pressButton(BUTTON_SELECT);
 					break;
 				case KeyEvent.VK_EQUALS:
-					cpu.ButtonKeyStatus|=8; // Start
+					cpu.pressButton(BUTTON_START);
 					break;
 				case KeyEvent.VK_RIGHT:
-					cpu.DirectionKeyStatus|=1; // Right
+					cpu.pressButton(BUTTON_RIGHT);
 					break;
 				case KeyEvent.VK_LEFT:
-					cpu.DirectionKeyStatus|=2; // Left
+					cpu.pressButton(BUTTON_LEFT);
 					break;
 				case KeyEvent.VK_UP:
-					cpu.DirectionKeyStatus|=4; // Up
+					cpu.pressButton(BUTTON_UP);
 					break;
 				case KeyEvent.VK_DOWN:
-					cpu.DirectionKeyStatus|=8; // Down
+					cpu.pressButton(BUTTON_DOWN);
 					break;
 				default:
 					//System.out.println("keyReleased" + e.getKeyCode());
 					break;
 			}
-		if((oldButtonKeyStatus!=cpu.ButtonKeyStatus)|(cpu.DirectionKeyStatus!=oldDirectionKeyStatus))
-			cpu.triggerInterrupt(4);
 		}
 
 		public void makeRcFilesMenuItems() {
