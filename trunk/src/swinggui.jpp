@@ -9,62 +9,67 @@ import java.net.*;
 import java.io.*;
 import java.awt.image.BufferedImage;
 
-		class CPURunner implements Runnable {
-			private volatile int threadStatus = 0;
-			private Thread cpurunthread;
-			// 0 means suspended
-			// 1 means suspend->running requested
-			// 2 means running
-			// 3 means running->suspended requested
-			synchronized public final void suspend() {
-				while (threadStatus != 0) {
-					threadStatus = 3;
-					while (threadStatus == 3) { Thread.yield(); };
-				}
-			}
-
-			synchronized public final void resume() {
-				while (threadStatus != 2) {
-					threadStatus = 1;
-					while (threadStatus == 1) { Thread.yield(); };
-				}
-			}
-
-			CPURunner() {
-				cpurunthread = new Thread(this);
-				cpurunthread.start();
-				while (!cpurunthread.isAlive()) { Thread.yield(); }; // wait for thread to actually start
-			}
-
-			public int getStatus() {
-				return threadStatus;
-			}
-			public void run() {
-				while (true) {
-					// suspended
-					while (threadStatus == 0) { Thread.yield(); };
-					// suspend -> running
-					if (threadStatus == 1) threadStatus = 2;
-					// running
-					while ((threadStatus == 2) && (CPU.nextinstruction()!=0)) {};
-					if (threadStatus == 2) threadStatus = 3; // CPU returned exception
-					// running -> suspended
-					if (threadStatus == 3) threadStatus = 0;
-					// suspended
-				}
-			}
+class SimpleCPURunner implements CPURunner, Runnable {
+	private volatile int threadStatus = 0;
+	private Thread cpurunthread;
+	// 0 means suspended
+	// 1 means suspend->running requested
+	// 2 means running
+	// 3 means running->suspended requested
+	synchronized public void suspend() {
+		while (threadStatus != 0) {
+			threadStatus = 3;
+			while (threadStatus == 3) { Thread.yield(); };
 		}
+	}
+
+	synchronized public void resume() {
+		while (threadStatus != 2) {
+			threadStatus = 1;
+			while (threadStatus == 1) { Thread.yield(); };
+		}
+	}
+
+	public boolean isRunning() {
+		return (threadStatus != 0);
+	}
+
+	SimpleCPURunner() {
+		cpurunthread = new Thread(this);
+		cpurunthread.start();
+		while (!cpurunthread.isAlive()) { Thread.yield(); }; // wait for thread to actually start
+	}
+
+	public void run() {
+		while (true) {
+			// suspended
+			while (threadStatus == 0) { Thread.yield(); };
+			// suspend -> running
+			if (threadStatus == 1) threadStatus = 2;
+			// running
+			while ((threadStatus == 2) && (CPU.nextinstruction()!=0)) {};
+			if (threadStatus == 2) threadStatus = 3; // CPU returned exception
+			// running -> suspended
+			if (threadStatus == 3) threadStatus = 0;
+			// suspended
+		}
+	}
+}
 
 public class swinggui implements ActionListener, ItemListener, KeyListener, ComponentListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
-		private static Debugger dbgr;
 		protected VideoController VC;
 		protected CPU cpu;
 		private int fps;
 		private int selectedState = 0;
+#ifdef USE_JAVA_142
 		Vector osdLines = new Vector();
 		Vector rcFiles = new Vector();
+#else
+		Vector<String> osdLines = new Vector<String>();
+		Vector<String> rcFiles = new Vector<String>();
+#endif
 		int osdTime = 0;
 		String curcartname;
 		//menuitem <-- here for my KDev autocomplete
@@ -379,8 +384,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;
-				if(cpuRunner!=null) cpuRunner.suspend();
-				if(dbgr!=null) dbgr.runner.setStatus(0);
+				cpuRunner.suspend();
 				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 				File jgbedir=new File(stname);
 				if(!jgbedir.exists()) if(!jgbedir.mkdir()) System.out.printf("failed!\n");
@@ -399,13 +403,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						System.out.println("Error saving state! ");
 					};
 				}
-				if(cpuRunner!=null) cpuRunner.resume();
-				if(dbgr!=null) dbgr.runner.setStatus(3);
+				cpuRunner.resume();
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
 				if (!CPU.canRun()) return;
-				if(cpuRunner!=null) cpuRunner.suspend();
-				if(dbgr!=null) dbgr.runner.setStatus(0);
+				cpuRunner.suspend();
 				String stname = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"savestates"+File.separator + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
 				try {
@@ -416,49 +418,27 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				catch (java.io.IOException ioe) {
 					System.out.println("Error loading state! " + ioe.getMessage());
 				};
-				if(cpuRunner!=null) cpuRunner.resume();
-				if(dbgr!=null) dbgr.runner.setStatus(3);
+				cpuRunner.resume();
 			}
 			else if(e.getSource().equals( menuitemPause )) {
 				// 0 means suspended
 				// 1 means suspend->running requested
 				// 2 means running
 				// 3 means running->suspended requested
-				if(cpuRunner!=null) {
-					if(cpuRunner.getStatus()==0) {
-						cpuRunner.resume();
-						addOSDLine("Unpaused gameboy");
-					}
-					else if(cpuRunner.getStatus()==2) {
-						cpuRunner.suspend();
-						addOSDLine("Paused gameboy");
-					}
+				if(!cpuRunner.isRunning()) {
+					cpuRunner.resume();
+					addOSDLine("Unpaused gameboy");
 				}
-				if(dbgr!=null) {
-					if(dbgr.runner.getStatus()!=3) {
-						dbgr.runner.setStatus(3);
-						addOSDLine("Unpaused gameboy");
-					}
-					else if(dbgr.runner.getStatus()==3){
-						dbgr.runner.setStatus(0);
-						addOSDLine("Paused gameboy");
-					}
+				else {
+					cpuRunner.suspend();
+					addOSDLine("Paused gameboy");
 				}
 			}
 			else if(e.getSource().equals( menuitemReset )) {
-				if(cpuRunner!=null){
-					cpuRunner.suspend();
-					while(cpuRunner.getStatus()!=0) {};
-					cpu.reset();
-					cpuRunner.resume();
-					addOSDLine("Reset gameboy");
-				}
-				if(dbgr!=null){
-					dbgr.runner.setStatus(0);
-					cpu.reset();
-					dbgr.runner.setStatus(3);
-					addOSDLine("Reset gameboy");
-				}
+				cpuRunner.suspend();
+				cpu.reset();
+				cpuRunner.resume();
+				addOSDLine("Reset gameboy");
 			}
 			else if(e.getSource().equals( menuitemColorSchemeOriginalGameboy )) {
 			int[][] c={ {0xa0, 0xe0, 0x20},	// WHITE
@@ -703,10 +683,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			/*DEBUGGER*/
 			if (debug) {
-				dbgr=new Debugger(gui, logfile); //The GUI to which this debugger belongs
+				Debugger dbgr = new Debugger(gui, logfile); //The GUI to which this debugger belongs
+				gui.cpuRunner = dbgr.runner;
 			}
 			else {
-				gui.cpuRunner = new CPURunner();
+				gui.cpuRunner = new SimpleCPURunner();
 				if (CPU.canRun())
 					gui.cpuRunner.resume();
 			}

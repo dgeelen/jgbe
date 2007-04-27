@@ -1,6 +1,3 @@
-//#define 
-//#define byte int
-
 class Tables {
 public final static int FZ = 1 << 7;
 public final static int FN = 1 << 6;
