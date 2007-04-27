@@ -2,6 +2,13 @@
 #define IF_STAT (1<<1)
 #define IF_VBLANK (1<<0)
 
+#define ASSERT(cond) \
+  if (!(cond)) throw new Error("Assertion failed: " + #cond)
+
+// java way
+//#define ASSERT(cond) \
+//	assert (cond)
+
 #ifdef USE_JAVA_142
 	#define PRINTFREEMEM(x)  { System.out.println("in "+x+": Free Memory="+(Runtime.getRuntime().freeMemory()/1024) + "  used = "+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)); }
 #else
