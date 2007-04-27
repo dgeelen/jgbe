@@ -1,6 +1,6 @@
 #include "Global.inc"
 import java.io.*;
-#ifdef USE_JAVA_142
+#ifdef USE_JAVA_MOBILE
 import javax.microedition.lcdui.*;
 import javax.microedition.lcdui.game.GameCanvas;
 #else
@@ -13,7 +13,7 @@ public class VideoController {
 	private static final int MIN_WIDTH  = 160;
 	private static final int MIN_HEIGHT = 144;
 
-#ifdef USE_JAVA_142
+#ifdef USE_JAVA_MOBILE
 	private Graphics listener = null;
 #else
 	private JPanel listener = null;
@@ -57,7 +57,7 @@ public class VideoController {
 	private int OBPD[]=new int[8*4*2]; //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
 
 	/* caching vars */
-#ifdef USE_JAVA_142
+#ifdef USE_JAVA_MOBILE
 #define BLITPIXTYPE int[]
 	private int blitImg[][][]=new int[144][160][3]; // [y][x]
 	private int palColors[][] = new int[8*4*2][3];
@@ -128,7 +128,7 @@ public class VideoController {
 
 	public VideoController(CPU cpu, int image_width, int image_height) {
 		this.cpu = cpu;
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 		drawImg=new Image[2];
 #endif
 		scale();
@@ -172,7 +172,7 @@ public class VideoController {
 		}
 	}
 
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 	final public void addListener(JPanel panel) {
 
 		listener = panel; // only 1 listener at a time currently :-p
@@ -191,7 +191,7 @@ public class VideoController {
 		int width = scale*MIN_WIDTH;
 		int height = scale*MIN_HEIGHT;
 		drawData = new int[width*height];
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 		if (listener == null) {
 			System.out.println("creating BufferedImage's");
 			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -221,7 +221,7 @@ public class VideoController {
 #endif
 	}
 
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 	final public Image getImage() {
 		// return ((VolatileImage)drawImg[curDrawImg]).getScaledInstance(image_width, image_height,Image.SCALE_FAST); // display image not being drawn to
 		return drawImg[curDrawImg]; // display image not being drawn to
@@ -237,7 +237,7 @@ public class VideoController {
 	}
 
 	final private void palChange(int palcol, int r, int g, int b) {
-#ifdef USE_JAVA_142
+#ifdef USE_JAVA_MOBILE
 		palColors[palcol][0] = r;
 		palColors[palcol][1] = g;
 		palColors[palcol][2] = b;
@@ -287,7 +287,7 @@ public class VideoController {
 	g.drawRect(x,y, 0, 0); \
 }
 
-#define BLIT_PIX_USE_JAVA_142(x,y, col) { \
+#define BLIT_PIX_USE_JAVA_MOBILE(x,y, col) { \
 	int[] tcol = col; \
 	listener.setColor(tcol[0], tcol[1], tcol[2]); \
 	listener.drawRect(x,y, 0, 0); \
@@ -296,10 +296,10 @@ public class VideoController {
 #define EQ(a,b) ((a) == (b))
 //#define EQ(a,b) ((a).equals(b))
 
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 #define BLIT_PIX BLIT_PIX_W5
 #else
-#define BLIT_PIX BLIT_PIX_USE_JAVA_142
+#define BLIT_PIX BLIT_PIX_USE_JAVA_MOBILE
 #endif
 
 	//static long lastms = System.nanoTime();
@@ -313,7 +313,7 @@ public class VideoController {
 			return;
 		if (scale != nscale) scale();
 		//Graphics g = drawImg[curDrawImg^1].getGraphics();
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 		WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
 #endif
 		if (scale == 1) {

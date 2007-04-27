@@ -12,7 +12,7 @@ public final class FHandler {
     	String fext = fname.substring(dotPos);
 			if ( !fext.equals(".zip") ) {
 			// plain files
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 			FileInputStream fistream = new FileInputStream(fname);
 			BufferedInputStream bistream = new BufferedInputStream(fistream);
 #else
@@ -26,7 +26,7 @@ public final class FHandler {
 			return distream;
 		}
 		else {
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 			// Open the ZIP file
 			FileInputStream fistream = new FileInputStream(fname);
 			ZipInputStream zistream = new ZipInputStream(fistream);
@@ -55,7 +55,7 @@ public final class FHandler {
     	String fext = fname.substring(dotPos);
 			if ( !fext.equals(".zip") ) {
 			// plain files
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 			FileOutputStream fostream = new FileOutputStream(fname);
 			BufferedOutputStream bostream = new BufferedOutputStream(fostream);
 #else

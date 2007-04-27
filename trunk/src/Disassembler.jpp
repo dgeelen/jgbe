@@ -1,5 +1,5 @@
 #include "Global.inc"
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 import java.io.*;
 
 public class Disassembler
@@ -101,13 +101,13 @@ public class Disassembler
       i=op.indexOf("IMM08");
       if(i>-1) {
         immediate= cpu.read(PC+1);
-        s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+        s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
         bytecount=2;
 			}
 			i=op.indexOf("IMM16");
 			if(i>-1) {
 				immediate=(cpu.read(PC+2)<<8)|cpu.read(PC+1); //little endian
-				s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
+				s=STRFORMAT(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
 				bytecount=3;
 			}
 
@@ -125,10 +125,10 @@ public class Disassembler
 					}
 					if(immediate>-1) {
 						if(immediate>0xffff) {
-							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
+							s=STRFORMAT(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
 							}
 						else {
-							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+							s=STRFORMAT(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
 						}
 					}
 					//part 2
@@ -142,10 +142,10 @@ public class Disassembler
 					}
 					if(immediate>-1) {
 						if(immediate>0xffff) {
-							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
+							s=STRFORMAT(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
 							}
 						else {
-							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+							s=STRFORMAT(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
 						}
 					}
 				}
@@ -159,10 +159,10 @@ public class Disassembler
 					}
 					if(immediate>-1) {
 						if(immediate>0xffff) {
-							s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
+							s=STRFORMAT(s.substring(0,i+1)+"$%04x"+s.substring(i+3),immediate&0xffff);
 						}
 						else {
-							s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+							s=STRFORMAT(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
 						}
 					}
 				}
@@ -172,7 +172,7 @@ public class Disassembler
 				immediate=cpu.read(PC+1);
 				bytecount=2;
 				if(op.indexOf("LDH")>-1) immediate|=0xff00;
-				s=String.format(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
+				s=STRFORMAT(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
 			}
 			i=op.indexOf("dd");
 			if(i>-1) { //specialcase
@@ -185,12 +185,12 @@ public class Disassembler
 				bytecount=2;
 			}
 
-			String prefix=String.format("$%04x ",PC);
+			String prefix=STRFORMAT("$%04x ",PC);
 			for(i=0; i<bytecount;  ++i) {
-				prefix+=String.format("$%02x ", cpu.read(PC+i));
+				prefix+=STRFORMAT("$%02x ", cpu.read(PC+i));
 			}
 			for(i=0; i<3-bytecount; ++i){
-			  prefix+=String.format("    ", cpu.read(PC+i));
+			  prefix+=STRFORMAT("    ", cpu.read(PC+i));
 			}
       return prefix + s + (new String(whitespace, 0, 18 - s.length())) + "// "+op ;
     }
@@ -213,34 +213,34 @@ public class Disassembler
       i=op.indexOf("IMM08");
       if(i>-1) {
         immediate = cpu.read(PC+1);
-        s=String.format(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+        s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
         bytecount=2;
 			}
 			i=op.indexOf("IMM16");
 			if(i>-1) {
 				immediate=(cpu.read(PC+2)<<8)|cpu.read(PC+1); //little endian
-				s=String.format(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
+				s=STRFORMAT(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
 				bytecount=3;
 			}
 			i=s.indexOf("[n]");
 			if(i>-1) { //specialcase
 				immediate=cpu.read(PC+1);
 				bytecount=2;
-				s=String.format(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+				s=STRFORMAT(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
 			}
 			i=op.indexOf("dd");
 			if(i>-1) { //specialcase
 				immediate=cpu.read(PC+1);
 				bytecount=2;
-				s=String.format(s.substring(0,i)+"$%02x"+s.substring(i+2),immediate);
+				s=STRFORMAT(s.substring(0,i)+"$%02x"+s.substring(i+2),immediate);
 			}
 
-			String prefix=String.format("$%04x: ",PC);
+			String prefix=STRFORMAT("$%04x: ",PC);
 			for(i=0; i<bytecount;  ++i) {
-				prefix+=String.format("$%02x ", cpu.read(PC+i));
+				prefix+=STRFORMAT("$%02x ", cpu.read(PC+i));
 			}
 			for(; i<3; ++i) {
-			  prefix+=String.format("    ", cpu.read(PC+i));
+			  prefix+=STRFORMAT("    ", cpu.read(PC+i));
 			}
       return prefix + " " + s;
     }

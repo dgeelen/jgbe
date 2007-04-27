@@ -1,4 +1,10 @@
+//#define USE_JAVA_MOBILE
 //#define USE_JAVA_142
+
+#ifdef USE_JAVA_MOBILE
+	#define USE_JAVA_142
+#endif
+
 #define DEBUG
 
 #ifdef NODEBUG
@@ -29,10 +35,18 @@
 #define BUTTON_SELECT (1<<6)
 #define BUTTON_START  (1<<7)
 
-#ifdef USE_JAVA_142
+#ifdef USE_JAVA_MOBILE
 	#define PRINTFREEMEM(x)  { System.out.println("in "+x+": Free Memory="+(Runtime.getRuntime().freeMemory()/1024) + "  used = "+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)); }
 #else
 	#define PRINTFREEMEM(x)
+#endif
+
+#ifdef USE_JAVA_142
+	#define STRFORMAT(x...) ("")
+	#define VECTOR(t) Vector
+#else
+	#define STRFORMAT(x...) String.format(x)
+	#define VECTOR(t) Vector<t>
 #endif
 
 #ifdef DEBUG

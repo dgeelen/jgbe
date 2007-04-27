@@ -1,5 +1,5 @@
 #include "Global.inc"
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 import java.io.*;
 public class romtester {
 	public static void main( String[] args ) {
@@ -47,7 +47,7 @@ public class romtester {
 
 		while (true) {
 			if (logwriter != null) {
-				String out = String.format("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
+				String out = STRFORMAT("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
 					cpu.PC,
 					cpu.A,
 					cpu.F,
@@ -67,12 +67,12 @@ public class romtester {
 				}
 			}
 			if ((--instrlimit==0) || cpu.nextinstruction()==0) {
-				String s= (new String()).format("%02x",cpu.read(cpu.PC));
-				String ss= (new String()).format("%04x",cpu.PC);
+				String s= STRFORMAT("%02x",cpu.read(cpu.PC));
+				String ss= STRFORMAT("%04x",cpu.PC);
 				s=s.toUpperCase();
 				ss=ss.toUpperCase();
 				if (logwriter != null) {
-					String out = String.format("invalid opcode 0x"+s+" at address 0x"+ss+", rombank = "+cartridge.CurrentROMBank+"\n");
+					String out = STRFORMAT("invalid opcode 0x"+s+" at address 0x"+ss+", rombank = "+cartridge.CurrentROMBank+"\n");
 					try {
 						logwriter.write(out);
 					}

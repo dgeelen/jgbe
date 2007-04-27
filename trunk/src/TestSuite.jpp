@@ -1,5 +1,5 @@
 #include "Global.inc"
-#ifndef USE_JAVA_142
+#ifndef USE_JAVA_MOBILE
 public class TestSuite
 {
 	private CPU cpu;
@@ -32,7 +32,7 @@ public class TestSuite
 		String s = deasm.simple_disasm(0x100);
 		if (s.indexOf("**MISSING    INSTRUCTION**") > -1)
 			return 0;
-		System.out.printf("%-40s",s);
+		PRINTF("%-40s",s);
 		int cycles = 4194304;
 		long ct1 = System.currentTimeMillis();
 		for (; cycles > 0;) {
@@ -42,7 +42,7 @@ public class TestSuite
 			//cpu.cycles();
 		}
 		long ct2 = System.currentTimeMillis();
-		System.out.printf("%5dms\n",ct2-ct1);
+		PRINTF("%5dms\n",ct2-ct1);
 		return ct2-ct1;
 	}
 
@@ -77,13 +77,13 @@ public class TestSuite
 				time = runinstr(i, 0xff, 0x80);            //NOP
 			}
 			time = runinstr(0);            //NOP
-			//System.out.printf("DI        : %6d\n", time);
+			//PRINTF("DI        : %6d\n", time);
 			//time = runinstr(0x00);            //NOP
-			//System.out.printf("NOP       : %6d\n", time);
+			//PRINTF("NOP       : %6d\n", time);
 			//time = runinstr(0xc3, 0x34, 0x45);            //CPL
-			//System.out.printf("JUMP IMM16: %6d\n", time);
+			//PRINTF("JUMP IMM16: %6d\n", time);
 			//time = runinstr(4194304/4, 0xfa, 0x80, 0xff);//CPL
-			//System.out.printf("1.000.000x LD A,(nn): %6d\n", time);
+			//PRINTF("1.000.000x LD A,(nn): %6d\n", time);
 
 	}
 
