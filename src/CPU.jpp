@@ -190,33 +190,29 @@ public class CPU
 		static final  private void lcdc_trans() {
 			if (0==(R_LCDC & 0x80))
 			{
-				assert C <= 0;
-				while (C <= 0)
+				ASSERT(C <= 0);
+				switch (R_STAT & 3)
 				{
-					switch ((byte)(R_STAT & 3))
-					{
-					case 0:
-					case 1:
-						VC.stat_change(2);
-						C += 40;
-						break;
-					case 2:
-						VC.stat_change(3);
-						C += 86;
-						break;
-					case 3:
-						VC.stat_change(0);
-						//if (hw.hdma & 0x80)
-						//	hw_hdma();
-						//else
-							C += 102;
-						break;
-					}
-					return;
+				case 0:
+				case 1:
+					VC.stat_change(2);
+					C += 40;
+					break;
+				case 2:
+					VC.stat_change(3);
+					C += 86;
+					break;
+				case 3:
+					VC.stat_change(0);
+					//if (hw.hdma & 0x80)
+					//	hw_hdma();
+					//else
+						C += 102;
+					break;
 				}
-				assert false;
+				return;
 			}
-			assert C <= 0;
+			ASSERT(C <= 0);
 			while (C <= 0)
 			{
 				switch ((R_STAT & 3))
@@ -277,7 +273,7 @@ public class CPU
 					C += 40;
 					break;
 				}
-				assert C > 0;
+				//ASSERT(C > 0);
 			}
 		}
 #undef C
