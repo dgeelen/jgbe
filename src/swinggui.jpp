@@ -106,6 +106,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		public class DrawingArea extends JPanel{
+			private static final long serialVersionUID = 1L; // prevent warning
 			VideoController VC;
 			public DrawingArea(VideoController vc) {
 			super();
@@ -350,7 +351,15 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				addOSDLine(cpu.AC.isMuted ? "Disabled sound" : "Enabled sound");
 			}
 			else if(e.getSource().equals( menuitemOpenROM )) {
-				JFileChooser fc = new JFileChooser(".");
+				JFileChooser fc;
+				if (rcFiles.size() > 0) {
+					String lastpath = (String)rcFiles.elementAt(0);
+					int slashPos = lastpath.lastIndexOf(File.separator);
+					lastpath = lastpath.substring(0, slashPos+1);
+					fc = new JFileChooser(lastpath);
+				}
+				else
+					fc = new JFileChooser(".");
 
 				// Show open dialog; this method does not return until the dialog is closed
 				fc.showOpenDialog(frame);

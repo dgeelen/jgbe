@@ -1,6 +1,24 @@
 //#define USE_JAVA_142
+#define DEBUG
+
+#ifdef NODEBUG
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif
+
 #define IF_STAT (1<<1)
 #define IF_VBLANK (1<<0)
+
+#ifdef DEBUG
+	#define ASSERT(cond) \
+		if (!(cond)) throw new Error("Assertion failed: " + #cond)
+	// java way
+	//#define ASSERT(cond) \
+	//	assert (cond)
+#else //DEBUG
+	#define ASSERT(cond)
+#endif //DEBUG
 
 #define BUTTON_RIGHT  (1<<0)
 #define BUTTON_LEFT   (1<<1)
@@ -11,13 +29,6 @@
 #define BUTTON_SELECT (1<<6)
 #define BUTTON_START  (1<<7)
 
-#define ASSERT(cond) \
-  if (!(cond)) throw new Error("Assertion failed: " + #cond)
-
-// java way
-//#define ASSERT(cond) \
-//	assert (cond)
-
 #ifdef USE_JAVA_142
 	#define PRINTFREEMEM(x)  { System.out.println("in "+x+": Free Memory="+(Runtime.getRuntime().freeMemory()/1024) + "  used = "+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)); }
 #else
@@ -25,14 +36,14 @@
 #endif
 
 #ifdef DEBUG
-	#define PRINTF(x...) System.out.printf(x)
-#else
 	#ifdef USE_JAVA_142
 		#define PRINTF(x...) /*System.out.printf(x)*/
 	#else
 		//FIXME
 		#define PRINTF(x...) System.out.printf(x)
 	#endif
+#else
+	#define PRINTF(x...) /*System.out.printf(x)*/
 #endif
 
 /* first one nearly 10% faster! (sometimes :-p)*/
