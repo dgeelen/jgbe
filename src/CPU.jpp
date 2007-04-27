@@ -150,7 +150,7 @@ public class CPU
 			int saveversion = SL_SAVE_VERSION; //change when changing savestate format
 			dostream.writeInt(SL_MAGIX);
 			dostream.writeInt(saveversion);
-			System.out.println("saving state version:"+saveversion);
+			//System.out.println("saving state version:"+saveversion);
 			stateSaveLoad(true, saveversion, dostream, null);
 		}
 
@@ -174,7 +174,8 @@ public class CPU
 				throw new IOException("save state too old");
 			if (loadversion > SL_LOAD_MAX_VERSION)
 				throw new IOException("save state too new");
-			System.out.println("loading state version:"+loadversion);
+			if (loadversion != SL_SAVE_VERSION)
+				System.out.println("loading state with old version:"+loadversion);
 			stateSaveLoad(false, loadversion, null, distream);
 		}
 

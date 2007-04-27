@@ -29,8 +29,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 	private Disassembler deasm;
 	private int memaddr=0;
 	private Color UpdateColor = new Color(255,200,200);
-	public TheRunner runner;
-	private Thread runthread;
+	public DebugRunner runner;
 	swinggui gui;
 	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
 	private RDParser parser;
@@ -50,82 +49,97 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 		deasm= new Disassembler(gui.cpu);
 		oldRegVal=new int[11];
 		parser=new RDParser();
-//		runthread.suspend();
+		
+		runner = new DebugRunner(this);
 		createAndShowGUI();
-		runner = new TheRunner(this);
-		runthread = new Thread(runner);
-		runthread.start();
-		while (runner.getStatus() != 1) {};
+		update();
 	}
 
-	public class TheRunner implements Runnable {
-		private int status;
+	public class DebugRunner implements Runnable, CPURunner {
+		private volatile int threadStatus = 0;
+		private Thread cpurunthread;
+		// 0 means suspended
+		// 1 means suspend->running requested
+		// 2 means running
+		// 3 means running->suspended requested
 		private Debugger dbg;
 		private int stopaddr = -1;
 		private int watchaddr = -1;
 		private int runFor=-1;
 		private int instrstop=-1;
 		private int breakinstr=-1;
-		synchronized public int getStatus() {
-			return status;
+
+		synchronized public void suspend() {
+			while (threadStatus != 0) {
+				threadStatus = 3;
+				while (threadStatus == 3) { Thread.yield(); };
+			}
 		}
-		synchronized public void setStatus(int val) {
-			status = val;
+		
+		synchronized public void resume() {
+			if (threadStatus != 2) {
+				threadStatus = 1;
+				while (threadStatus == 1) { Thread.yield(); };
+			}
+		}
+		
+		public boolean isRunning() {
+			return (threadStatus != 0);
 		}
 
-		synchronized public void setBreakPoint(int addr) {
-			if (getStatus()==1)
+		public void setBreakPoint(int addr) {
+			if (threadStatus == 0)
 				stopaddr = addr;
 		}
 
-		synchronized public void setBreakInstr(int instr) {
-			if (getStatus()==1)
+		public void setBreakInstr(int instr) {
+			if (threadStatus == 0)
 				breakinstr = instr;
 		}
 
-		synchronized public void setWatchPoint(int addr) {
-			if (getStatus()==1)
+		public void setWatchPoint(int addr) {
+			if (threadStatus == 0)
 				watchaddr = addr;
 		}
 
-		synchronized public void setInstrStop(int instrs) {
-			if (getStatus()==1)
+		public void setInstrStop(int instrs) {
+			if (threadStatus == 0)
 				instrstop = instrs;
 		}
 
-		synchronized public void setRunFor(int i) {
-			this.runFor=i;
+		public void setRunFor(int i) {
+			if (threadStatus == 0)
+				this.runFor=i;
 		}
 
-		synchronized public int getRunFor() {
-			return this.runFor;
+		public int getRunFor() {
+				return this.runFor;
 		}
 
-		synchronized public void decRunFor() {
+		public void decRunFor() {
 			this.runFor--;
 		}
 
-		public TheRunner(Debugger tdbg) { //Pass something
-	 		setStatus(0);
+		public DebugRunner(Debugger tdbg) { //Pass something
 			dbg = tdbg;
+			cpurunthread = new Thread(this);
+			cpurunthread.start();
+			while (!cpurunthread.isAlive()) { Thread.yield(); }; // wait for thread to actually start
 	 	}
 
 		public void run() {
-		setStatus(1);
-		dbg.update(); //System.out.println("update run");
 			while (true) {
-				setStatus(1);
-				while (getStatus() == 1) {
-					try {
-						Thread.sleep(100);
-					} catch (java.lang.InterruptedException e) {
-					}
-				}
-				setStatus(3);
+				// suspended
+				while (threadStatus == 0) { Thread.yield(); };
+				// suspend -> running
+				if (threadStatus == 1) threadStatus = 2;
+				
+				// running..
 				int cycling = 69905;
 				long curms = System.currentTimeMillis();
 
-				while ((getStatus() == 3) && (getRunFor()!=0)) {
+				boolean keeprunning = true;
+				while ((threadStatus == 2) && keeprunning) {
 					int wval = (watchaddr>=0) ? dbg.gui.cpu.read(watchaddr) : 0;
 					int OldPC=gui.cpu.PC;
 					try {
@@ -140,7 +154,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 						gui.cpu.PC=OldPC;
 						gui.cpu.printCPUstatus();
 						System.out.println("+=================================================+");
-						setStatus(0);
+						keeprunning = false;
 					}
 					if (logwriter != null) {
 						String out = String.format("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
@@ -165,13 +179,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 						}
 					}
 					if (dbg.gui.cpu.TotalInstrCount == instrstop) {
-						setStatus(0);
+						keeprunning = false;
 					}
 					if (dbg.gui.cpu.PC == stopaddr) {
-						setStatus(0);
+						keeprunning = false;
 					}
 					if ((watchaddr>=0) && (wval != dbg.gui.cpu.read(watchaddr))) {
-						setStatus(0);
+						keeprunning = false;
 					}
 					if (
 						(dbg.gui.cpu.B<0) || (dbg.gui.cpu.B>0xff) ||
@@ -184,23 +198,27 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 						(dbg.gui.cpu.SP<0) || (dbg.gui.cpu.SP>0xffff) ||
 						(dbg.gui.cpu.PC<0) || (dbg.gui.cpu.PC>0xffff)
 					) {
-						setStatus(0);
+						keeprunning = false;
 					}
 					if (dbg.gui.cpu.exception() != 0) {
-						setStatus(0);
+						keeprunning = false;
 						gui.cpu.printCPUstatus();
 					}
 					if (dbg.gui.cpu.read(dbg.gui.cpu.PC) == breakinstr) {
-						setStatus(0);
+						keeprunning = false;
 					}
 					if((bpm>=0)&&(bpm==dbg.gui.cpu.last_memory_access)) {
-						setStatus(0);
+						keeprunning = false;
 						System.out.printf("Break due to memory access of $%04x\n", dbg.gui.cpu.last_memory_access);
 					}
+					if (getRunFor()==0)
+						keeprunning = false;
 				}
-				setRunFor(-1);
-				setStatus(1);
-// 				dbg.update(); System.out.println("Update RUN");
+				if (threadStatus == 2) threadStatus = 3; // BREAK!
+				// running -> suspended
+				if (threadStatus == 3) threadStatus = 0;
+				// suspended
+				dbg.update();
 			}
 		}
 	}
@@ -360,7 +378,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 	}
 
 	synchronized public void update() {
-		if (runner.getStatus() == 1) {
+		if (!runner.isRunning()) {
 			updateRegisters();
 			updateHWRegs();
 			updateMemory();
@@ -670,10 +688,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 				update();
 			}
 			if(s.equals("so")) {
-				if (runner.getStatus() == 1) {
+				if (!runner.isRunning()) {
 					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
-					runner.setStatus(2);
-					while (runner.getStatus() == 2) {};
+					runner.resume();
 				}
 			}
 			if(s.charAt(0)=='w') {
@@ -688,17 +705,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 			}
 			if(s.charAt(0)=='p') {
 				runner.setRunFor(parser.StrToInt(s.substring(1)));
-				runner.setStatus(3);
-				while (runner.getStatus() != 1) {};
+				runner.resume();
 			}
 			if(s.charAt(0)=='g') {
-				if (runner.getStatus() == 1) {
-					runner.setStatus(2);
-					while (runner.getStatus() == 2) {};
-				}
+				runner.resume();
 			}
 			if(s.charAt(0)=='b') {
-				if (runner.getStatus() == 3) {
+				if (runner.isRunning()) {
 					if (logwriter != null) {
 						try {
 							logwriter.flush();
@@ -708,18 +721,16 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 							logwriter = null;
 						}
 					}
-					runner.setStatus(0);
-					while (runner.getStatus() != 1) {};
+					runner.suspend();
 				}
 			}
 			if(s.charAt(0)=='r') {
 				try {
-					if (runner.getStatus() == 1) {
+					if (!runner.isRunning()) {
 						String ss = s.substring( s.lastIndexOf(" ") + 1);
 						if( ss.charAt(0)=='$' ) {
 							runner.setBreakPoint(Integer.parseInt( ss.substring(1), 16 ));
-							runner.setStatus(2);
-							while (runner.getStatus() == 2) {};
+							runner.resume();
 						}
 					}
 				}
@@ -730,7 +741,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 			}
 			if(s.charAt(0)=='c') {
 				try {
-					if (runner.getStatus() == 1) {
+					if (!runner.isRunning()) {
 						String ss = s.substring( s.lastIndexOf(" ") + 1);
 						runner.setInstrStop(Integer.parseInt( ss.substring(0), 10 ));
 					}
@@ -814,8 +825,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 					}
 					else if(l.equalsIgnoreCase("bpi")){ //break on interrupt i
 							runner.setBreakPoint(v);
-							runner.setStatus(2);
-							while (runner.getStatus() == 2) {};
+							runner.resume();
 					}
 					else if(l.equalsIgnoreCase("bpm")){ //break on memory access
 						bpm = v;
