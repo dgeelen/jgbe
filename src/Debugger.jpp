@@ -751,8 +751,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 						update();
 					}
 					else if(l.equalsIgnoreCase("bpi")){ //break on interrupt i
-							runner.setBreakPoint(v);
-							runner.resume();
+						runner.setBreakPoint(v);
+						runner.resume();
 					}
 					else if(l.equalsIgnoreCase("bpm")){ //break on memory access
 						bpm = v;

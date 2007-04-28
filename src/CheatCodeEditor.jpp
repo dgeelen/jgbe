@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.LinkedList;
+import java.util.Vector;
 import java.net.*;
 import java.awt.image.BufferedImage;
 import javax.swing.table.*;
@@ -38,6 +38,7 @@ import java.io.*;
 
 public class CheatCodeEditor implements ComponentListener, ActionListener { ///implements ActionListener, ItemListener, KeyListener, ComponentListener{
 	class DbTable extends JTable {
+		private static final long serialVersionUID = 1L; // prevent warning
 		public DbTable(DefaultTableModel m){
 			super(m);
 		}
@@ -109,10 +110,10 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 			}
 		}
 		boolean inEffect=false;
-		LinkedList undos;
+		VECTOR(undoCheat) undos;
 		public void addUndo(int a, int b, int v) {
 			undoCheat u = new undoCheat(a, b, v);
-			undos.add((Object)u);
+			undos.add(u);
 		}
 		public void undoAll() {
 		}
@@ -147,14 +148,17 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 				String OldData = "$"+c.substring(6,7)+c.substring(8,9);
 				address = parser.StrToInt(addr) ^ 0xf000;
 				patch = parser.StrToInt(NewData);
-				oldvalue = (ShTables.RRC_val[ShTables.RRC_val[(parser.StrToInt(OldData)^0xff)]])^0x45; // equiv (data>>2)^0xba?
+				oldvalue = parser.StrToInt(OldData)&0xff;
+				oldvalue = ShTables.RRC_val[oldvalue];
+				oldvalue = ShTables.RRC_val[oldvalue];
+				oldvalue ^= 0xba;
 				if(address>0x7fff) address=-1;
 				System.out.println("addr="+address+" patch="+patch+" old="+oldvalue);
 				strCode=c.substring(0,3)+"-"+c.substring(3,6)+"-"+c.substring(6,9);
 			}
 		}
 	}
-	LinkedList codes;
+	VECTOR(CheatCode) codes = new VECTOR(CheatCode)();
 	JDialog dialog;
 	JFrame owner;
 	DbTable tableCodes;
@@ -167,7 +171,6 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 	public CheatCodeEditor(JFrame o) {
 		owner = o;
 		JScrollPane scroll;
-		codes=new LinkedList();
 		dialog= new JDialog(owner, "CheatCodeEditor Code Editor", true);
 		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 			dialog.addWindowListener(new WindowAdapter() {
@@ -180,6 +183,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		tablemodelcodes= new DefaultTableModel(1,3);
 		tablemodelcodes.addTableModelListener(new CheatCodeEditorTableModelListener());
 		tableCodes = new DbTable(tablemodelcodes) {
+			private static final long serialVersionUID = 1L; // prevent warning
 			public Class getColumnClass(int column) { //enable JTable to use different renderers, eg Checkbox for Boolean
 				return getValueAt(0, column).getClass();
 			}
@@ -200,7 +204,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		codes.add(new CheatCode(true, "00D-44B-218", "Small Mario has a giant fist when he jumping"));
 		codes.add(new CheatCode(true, "35B-8EB-E69", "Big Mario with invincibility and super jumps"));
 		codes.add(new CheatCode(false, "DCA-17B-C49", "Fireballs suspended in animation cover each level"));
-		codes.add(new CheatCode(false, "DOA-17B-C49", "Mario cannot shoot fireballs"));
+		codes.add(new CheatCode(false, "D0A-17B-C49", "Mario cannot shoot fireballs"));
 		listCodes(); //fill table with codes
 
 		scroll.setPreferredSize(new Dimension(320, 240));
@@ -318,7 +322,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		else if (e.getSource().equals( buttonDone )) {
 // 			applyCheatCodes();
 			saveCheatCodes();
-			dialog.hide();
+			dialog.setVisible(false);
 		}
 		else {
 			System.out.println("Unhandled event");
