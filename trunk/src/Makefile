@@ -51,6 +51,11 @@ $(CLASSDIR)/%.class: %.java
 	@cat Autogen.txt > $@
 	@gcc -MD -E -x c $< | grep -v "^#" | sed "s:cycles\;[ 	]*case:cycles\;\\n	case:g" >> $@
 	@sed -i "s=\.o:=\.java:=g" $*.d
+# next line from http://make.paulandlesley.org/autodep.html
+	@cp $*.d $*.dd; \
+	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	  -e '/^$$/ d' -e 's/$$/ :/' < $*.dd >> $*.d; \
+	  rm -f $*.dd
 	@mv $*.d $(DEPSDIR)/
 
 clean:
