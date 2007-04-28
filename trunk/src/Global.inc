@@ -53,11 +53,11 @@
 #endif
 
 #ifdef USE_JAVA_142
-	#define STRFORMAT(x...) ("")
+	#define STRFORMAT(x, y...) (x)
 	#define VECTOR(t) Vector
 	#define FOREACH(type, var, vec) \
-		for (int foreach = 0; foreach < codes.size(); ++foreach) \
-			for (type var = (type)codes.elementAt(foreach); var != null; var = null)
+		for (int foreach = 0; foreach < (vec).size(); ++foreach) \
+			for (type var = (type)((vec).elementAt(foreach)); var != null; var = null)
 #else
 	#define STRFORMAT(x...) String.format(x)
 	#define VECTOR(t) Vector<t>
@@ -67,7 +67,7 @@
 
 #ifdef DEBUG
 	#ifdef USE_JAVA_142
-		#define PRINTF(x...) /*System.out.printf(x)*/
+		#define PRINTF(x, y...) System.out.print(x)
 	#else
 		//FIXME
 		#define PRINTF(x...) System.out.printf(x)
