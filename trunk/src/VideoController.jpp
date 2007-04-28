@@ -46,11 +46,13 @@ public class VideoController {
 // 	                                 {0xBE, 0xBE, 0xBE},   // DARKGRAY
 // 	                                 {0x00, 0x00, 0x00} }; // BLACK
 
- 	// Looks a lot like Origional Gameboy
- 	protected int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
- 	                                 {0x70, 0xb0, 0x40},   // LIGHTGRAY
- 	                                 {0x40, 0x70, 0x32},   // DARKGRAY
- 	                                 {0x10, 0x50, 0x26} }; // BLACK
+	// Looks a lot like Origional Gameboy
+	static final private int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
+	                               {0x70, 0xb0, 0x40},   // LIGHTGRAY
+	                               {0x40, 0x70, 0x32},   // DARKGRAY
+	                               {0x10, 0x50, 0x26} }; // BLACK
+
+	private int GrayColors[][][] = { GRAYSHADES, GRAYSHADES, GRAYSHADES };
 
 	protected int BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
 	private int BGPD[]=new int[8*4*2]; //BCPD/BGPD - CGB Mode Only - Background Palette Data
@@ -86,12 +88,22 @@ public class VideoController {
 	public int fskip = 1; // 1 is off
 
 	public void setGrayShades(int[][] g) {
-		GRAYSHADES = g;
+		GrayColors[0] = g;
+		GrayColors[1] = g;
+		GrayColors[2] = g;
 		updateMonoColData(0); //???
 		updateMonoColData(1);
 		updateMonoColData(2);
 	}
 
+	public void setGrayShades(int[][] g1, int[][] g2, int[][] g3) {
+		GrayColors[0] = g1;
+		GrayColors[1] = g2;
+		GrayColors[2] = g3;
+		updateMonoColData(0); //???
+		updateMonoColData(1);
+		updateMonoColData(2);
+	}
 
 	public void reset() {
 		this.isCGB = cpu.isCGB();
@@ -471,15 +483,17 @@ public class VideoController {
 
 		if (isCGB) return;
 
+		int [][] curColors = GrayColors[index];
+
 		int value = CPU.read(index + 0xff47); // could fix this to hold those values ourselves..
 
 		if (index==0) index= (0x20>>2);
 		else --index;
-		int temp[] = new int[3];
-		temp = GRAYSHADES[(value>>0)&3]; palChange((index<<2) | 0, temp[0], temp[1], temp[2]);
-		temp = GRAYSHADES[(value>>2)&3]; palChange((index<<2) | 1, temp[0], temp[1], temp[2]);
-		temp = GRAYSHADES[(value>>4)&3]; palChange((index<<2) | 2, temp[0], temp[1], temp[2]);
-		temp = GRAYSHADES[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
+		int temp[] = null;
+		temp = curColors[(value>>0)&3]; palChange((index<<2) | 0, temp[0], temp[1], temp[2]);
+		temp = curColors[(value>>2)&3]; palChange((index<<2) | 1, temp[0], temp[1], temp[2]);
+		temp = curColors[(value>>4)&3]; palChange((index<<2) | 2, temp[0], temp[1], temp[2]);
+		temp = curColors[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
 	}
 
 	final public void setBGColData(int value) {
