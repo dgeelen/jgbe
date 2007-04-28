@@ -1,3 +1,6 @@
+#ifndef CPU_INC
+#define CPU_INC
+
 #define LB(x) ((x)&0xff)
 //assuming no numbers larger then 2^16:
 #define HB(x) (((x)>>8))
@@ -425,3 +428,5 @@ F = FN \
 
 #define PRE_INT ( DI, PUSH(PC) )
 #define THROW_INT(n) ( (IF &= ~(1<<(n))), (PC = 0x40+((n)<<3)) )
+
+#endif//CPU_INC
