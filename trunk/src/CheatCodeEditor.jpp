@@ -37,6 +37,8 @@ import java.io.*;
 //    Example: 3D2-ABF-3BE - Set 3Dh (DEC A command) at address F2ABh
 
 public class CheatCodeEditor implements ComponentListener, ActionListener { ///implements ActionListener, ItemListener, KeyListener, ComponentListener{
+	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
+	String cartname;
 	class DbTable extends JTable {
 		private static final long serialVersionUID = 1L; // prevent warning
 		public DbTable(DefaultTableModel m){
@@ -71,6 +73,21 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 			}
 		}
 	}
+	public class MyCellRenderer extends DefaultTableCellRenderer { //for coloring cells
+		private static final long serialVersionUID = 1L; // prevent warning
+		public MyCellRenderer() {
+			super();
+		}
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+			setText(String.valueOf(value));
+			CheatCode c=(CheatCode)codes.get(row);
+			if(c.address<0) setBackground(new Color(255,220,220));
+			else setBackground(Color.WHITE);
+			setFont(MonoFont);
+			return this;
+		}
+	}
+
 	public class tableCodesRightClick extends MouseAdapter {
 		private void checkRightClick(MouseEvent e) {
 			if (e.isPopupTrigger()) {
@@ -129,7 +146,8 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		}
 		public void setCode(String s) {
 			s=s.toUpperCase();
-
+			address=-1;
+			strCode=s;
 			String c="";
 			//handle just GameGenie for now, later do it based on length of code?
 			for(int i=0; i<s.length(); ++i) {
@@ -168,15 +186,15 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 	JMenuItem menuitemRemoveCode;
 	JMenuItem menuitemToggleActive;
 	RDParser parser = new RDParser();
-	public CheatCodeEditor(JFrame o) {
+	public CheatCodeEditor(JFrame o, String cartname) {
 		owner = o;
 		JScrollPane scroll;
-		dialog= new JDialog(owner, "CheatCodeEditor Code Editor", true);
+		dialog= new JDialog(owner, "Cheat Code Editor", true);
 		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 			dialog.addWindowListener(new WindowAdapter() {
 				public void windowClosing(WindowEvent we) {
 // 					applyCheatCodes();
-					saveCheatCodes();
+ 					saveCheatCodes();
 					dialog.setVisible(false);
 			}
 		});
@@ -194,20 +212,19 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		tableCodes.getColumnModel().getColumn(tableCodes.convertColumnIndexToView(1)).setHeaderValue("Code");
 		tableCodes.getColumnModel().getColumn(tableCodes.convertColumnIndexToView(2)).setHeaderValue("Effect");
 		tableCodes.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		tableCodes.setPreferredColumnWidths(new int[]{38,90,189});
+		tableCodes.setPreferredColumnWidths(new int[]{38,90,480-38-90-3});
 		tableCodes.doLayout();
 
 		scroll  = new JScrollPane(tableCodes);
-		codes.add(new CheatCode(true, "008-60A-E6E", "Unlimited time"));
-		codes.add(new CheatCode(true, "00A-17B-C49", "Always have power ball"));
-		codes.add(new CheatCode(true, "009-C3B-554", "Disable jumping"));
-		codes.add(new CheatCode(true, "00D-44B-218", "Small Mario has a giant fist when he jumping"));
-		codes.add(new CheatCode(true, "35B-8EB-E69", "Big Mario with invincibility and super jumps"));
-		codes.add(new CheatCode(false, "DCA-17B-C49", "Fireballs suspended in animation cover each level"));
-		codes.add(new CheatCode(false, "D0A-17B-C49", "Mario cannot shoot fireballs"));
-		listCodes(); //fill table with codes
+// 		codes.add(new CheatCode(true,  "008-60A-E6E", "Unlimited time"));
+// 		codes.add(new CheatCode(true,  "00A-17B-C49", "Always have power ball"));
+// 		codes.add(new CheatCode(true,  "009-C3B-554", "Disable jumping"));
+// 		codes.add(new CheatCode(true,  "00D-44B-218", "Small Mario has a giant fist when he jumping"));
+// 		codes.add(new CheatCode(true,  "35B-8EB-E69", "Big Mario with invincibility and super jumps"));
+// 		codes.add(new CheatCode(false, "DCA-17B-C49", "Fireballs suspended in animation cover each level"));
+// 		codes.add(new CheatCode(false, "DOA-17B-C49", "Mario cannot shoot fireballs"));
 
-		scroll.setPreferredSize(new Dimension(320, 240));
+		scroll.setPreferredSize(new Dimension(480, 240));
 		dialog.add(scroll,BorderLayout.CENTER);
 
 		buttonDone = new JButton("Done");
@@ -230,22 +247,81 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		menuitemRemoveCode.addActionListener(this);
 		menuitemToggleActive= new JMenuItem("Toggle Active");
 		menuitemToggleActive.addActionListener(this);
+
+		TableColumnModel m = tableCodes.getColumnModel();
+		MyCellRenderer r = new MyCellRenderer();
+		TableColumn c = m.getColumn(1);
+		c.setCellRenderer(r);
+		this.cartname=cartname;
+ 		loadCheatCodes();
+ 		if(codes.size()==0) {
+ 			codes.add(new CheatCode(false,"",""));
+ 		}
+		listCodes(); //fill table with codes
 	}
 
+	public void loadCheatCodes() {
+		String name = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator+"cheats"+File.separator;
+		File cheatsdir=new File(name);
+		if(cheatsdir.exists()) {
+			name += cartname + ".cht";
+			try {
+				BufferedReader in = new BufferedReader(new FileReader(name));
+				String str;
+				codes.clear();
+				while ((str = in.readLine()) != null) {
+					int i=str.indexOf(",");
+					int j=str.indexOf(",",i+1);
+					codes.add(new CheatCode(str.substring(0,i).equals("on")?true:false,
+					                        str.substring(i+2,j),
+					                        str.substring(j+2)));
+				}
+				in.close();
+			} catch (IOException e) {
+				System.out.println("error reading `"+name+"'");
+			}
+		}
+	}
 	public void componentHidden(ComponentEvent e) {}
 	public void componentMoved(ComponentEvent e) {}
 	public void componentShown(ComponentEvent e) {}
 	public void componentResized(ComponentEvent e) {}
 
-// 	public void applyCheatCodes() { System.out.println("TODO: apply cheats");}
-	public void saveCheatCodes() { System.out.println("TODO: save cheats");}
+	public void saveCheatCodes() {
+		String name = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
+		File jgbedir=new File(name);
+		if(!jgbedir.exists()) if(!jgbedir.mkdir()) PRINTF("failed!\n");
+		name += "cheats"+File.separator;
+		File cheatsdir=new File(name);
+		if(!cheatsdir.exists()) if(!cheatsdir.mkdir()) PRINTF("failed!\n");
+		if(cheatsdir.exists()) {
+			name += cartname + ".cht";
+			try {
+				BufferedWriter out = new BufferedWriter(new FileWriter(name));
+				String str;
+				for (Object o : codes) {
+					CheatCode c = (CheatCode)o;
+					str = c.enabled?"on":"off";
+					str+= ", "+c.strCode;
+					str+= ", "+c.Description;
+					out.write(str, 0, str.length());
+					out.newLine();
+				}
+				out.close();
+			} catch (IOException e) {
+				System.out.println("error writing to `"+name+"'");
+			}
+		}
+//		System.out.println("TODO: save cheats");
+	}
+
 	private void listCodes() {
 		Object[] o;
 		tablemodelcodes.setRowCount(0);
 		for(Object i : codes) {
 			CheatCode ggc = (CheatCode)i;
 			o=new Object[3];
-			o[0]=(ggc.enabled?Boolean.TRUE:Boolean.FALSE);
+			o[0]=new Boolean(ggc.enabled);
 			o[1]=ggc.strCode;
 			o[2]=ggc.Description;
 			tablemodelcodes.addRow(o);
@@ -321,7 +397,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		}
 		else if (e.getSource().equals( buttonDone )) {
 // 			applyCheatCodes();
-			saveCheatCodes();
+ 			saveCheatCodes();
 			dialog.setVisible(false);
 		}
 		else {
