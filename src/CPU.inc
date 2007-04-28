@@ -136,13 +136,13 @@
 
 
 #define DO_INC8(r) { \
-	(r) = (((r)+1)&0xff); \
+	r = (((r)+1)&0xff); \
 	F &= FC; \
 	F |= Tables.incflag[(r)]; \
 }
 
 #define DO_DEC8(r) { \
-	(r) = (((r)-1)&0xff); \
+	r = (((r)-1)&0xff); \
 	F &= FC; \
 	F |= Tables.decflag[(r)]; \
 }
@@ -169,7 +169,7 @@
 	F = (ZFLAG(LB(t_acc))) \
 	| (FH & (((r) ^ (n) ^ LB(t_acc)) << 1)) \
 	| (HB(t_acc) << 4); \
-	(r) = LB(t_acc); }
+	r = LB(t_acc); }
 
 
 /* #define DO_ADD_T(r, n) { \
@@ -179,7 +179,7 @@
 		F |= FC; \
 	}	\
 	F |= ZFLAG(r); \
-	(r) = t_acc&0xff;\
+	r = t_acc&0xff;\
 }
 
 #define LB(x) ((x)&0xff)
@@ -197,7 +197,7 @@ F = FN \
 #define DO_SUB_T(r, n) { \
 	F = FN | \
 	(FH & ((A ^ (n) ^ LB(acc)) << 1)); \
-	(r) = A - (n); \
+	r = A - (n); \
 	if ( (r)<0 ) { \
 		F |= FC; \
 		(r) &= 0xff; \
@@ -275,7 +275,7 @@ F = FN \
 	CASE_LD_16_RI(r) \
 
 #define CASE_LD_RHL(r) \
-	case (0x46+(RNUM(r)<<3)): (r) = READ_V(R16RHL); break;
+	case (0x46+(RNUM(r)<<3)): r = READ_V(R16RHL); break;
 
 #define CASES_LD_RX(r) \
 	CASE_LD_RR(r, B) \
@@ -352,10 +352,10 @@ F = FN \
 	case (base)+7: DO_ ## op ## _N(A); break; \
 
 
-#define DO_SET_R(bitnum, r) { (r) |= (1 << bitnum); }
+#define DO_SET_R(bitnum, r) { r |= (1 << bitnum); }
 #define DO_SET_HL(bitnum) { WRITE_V(R16RHL, READ_V(R16RHL) | (1 << bitnum)); }
 
-#define DO_RES_R(bitnum, r) { (r) &= ~(1 << bitnum); }
+#define DO_RES_R(bitnum, r) { r &= ~(1 << bitnum); }
 #define DO_RES_HL(bitnum) { WRITE_V(R16RHL, READ_V(R16RHL) & ~(1 << bitnum)); }
 
 #define DO_BIT_R(bitnum, r) { F = (F & FC) | FH | ZFLAG((r) & (1 << bitnum)); }
@@ -385,8 +385,9 @@ F = FN \
 #define DO_SHOP_R(op, r) { \
 	t_acc = (r) | ((F&FC)<<4); \
 	F = ShTables. op ## _flag[t_acc]; \
-	(r) = ShTables. op ## _val[t_acc]; \
+	r = ShTables. op ## _val[t_acc]; \
 }
+
 #define DO_SHOP_HL(op) { \
 	t_acc = READ_V(R16RHL) | ((F&FC)<<4); \
 	F = ShTables. op ## _flag[t_acc]; \

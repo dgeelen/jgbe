@@ -84,14 +84,14 @@
 	if (SL_SAVE) \
 		dostream.writeByte((var)&0xff); \
 	else \
-		(var) = distream.readUnsignedByte(); \
+		var = distream.readUnsignedByte(); \
 }
 
 #define SL_UINT16(var) {\
 	if (SL_SAVE) \
 		dostream.writeShort((var)&0xffff); \
 	else \
-		(var) = distream.readUnsignedShort(); \
+		var = distream.readUnsignedShort(); \
 }
 
 #define SL_INT SL_INT32
@@ -99,14 +99,14 @@
 	if (SL_SAVE) \
 		dostream.writeInt(var); \
 	else \
-		(var) = distream.readInt(); \
+		var = distream.readInt(); \
 }
 
 #define SL_BOOL(var) {\
 	if (SL_SAVE) \
 		dostream.writeBoolean(var); \
 	else \
-		(var) = distream.readBoolean(); \
+		var = distream.readBoolean(); \
 }
 
 #define SL_ARR(type, var, len) {\
