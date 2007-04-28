@@ -23,7 +23,9 @@ CLASSFILES:=$(AJAVAFILES:%.java=$(CLASSDIR)/%.class)
 #swinggui.class first class file to compile to speed up building
 CLASSFILES:=$(CLASSDIR)/swinggui.class $(CLASSFILES)
 
-all: $(GJAVAFILES) $(CLASSFILES)
+all: preprocess $(CLASSFILES)
+
+preprocess: $(GJAVAFILES)
 
 fun: all
 	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart -nodebug
