@@ -95,6 +95,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemSoundChannel4;
 		JMenu menuOther;
 		JMenuItem menuitemCheats;
+		JMenuItem menuitemToggleCheats;
   	JMenuItem[] menuItems;
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
@@ -273,10 +274,15 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuSound.add(menuSoundChannels);
 			mainMenuBar.add( menuSound) ;
 			menuOther=new JMenu("Other");
-			menuitemCheats = new JMenuItem("Cheats", KeyEvent.VK_C);
+			menuitemCheats = new JMenuItem("Edit cheats", KeyEvent.VK_C);
 			menuitemCheats.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_BACK_QUOTE, ActionEvent.CTRL_MASK ));
 			menuitemCheats.addActionListener(this);
 			menuOther.add(menuitemCheats);
+			menuitemToggleCheats=new JMenuItem("Toggle cheats on/off", KeyEvent.VK_T);
+			menuitemToggleCheats.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_BACK_SLASH, ActionEvent.CTRL_MASK ));
+			menuitemToggleCheats.addActionListener(this);
+			menuOther.add(menuitemCheats);
+			menuOther.add(menuitemToggleCheats);
 			mainMenuBar.add( menuOther) ;
 
 
@@ -416,6 +422,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cpu.AC.toggleChannelOnOff(4);
 				addOSDLine(cpu.AC.S4.muted==0 ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
 			}
+			else if (e.getSource().equals( menuitemToggleCheats)) {
+			cheatcodes.ToggleCheats(cart);
+			addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
+			}
 			else if (e.getSource().equals( menuitemCheats)) {
 				pauseEmulation();
 				cheatcodes.editCodes();
@@ -441,11 +451,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					System.out.println(selFile.getAbsolutePath());
 
 					if(cpuRunner!=null) cpuRunner.suspend();
-
-					CPU.loadCartridge(new Cartridge(selFile.getAbsolutePath()));
+					cart=new Cartridge(selFile.getAbsolutePath());
+					CPU.loadCartridge(cart);
 					updateCartName(selFile.getAbsolutePath());
 					cheatcodes = new CheatCodeEditor(frame, curcartname);
-
+					cheatcodes.applyCheatCodes(cart);
 					addOSDLine("loaded Rom: " + curcartname);
 
 					if (CPU.canRun())
@@ -534,10 +544,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 							//System.out.println(menuItems[i].getText());
 
 						if(cpuRunner!=null) cpuRunner.suspend();
-
-						CPU.loadCartridge(new Cartridge((String)rcFiles.elementAt(i)));
+						cart=new Cartridge((String)rcFiles.elementAt(i));
+						CPU.loadCartridge(cart);
 						updateCartName((String)rcFiles.elementAt(i));
 						cheatcodes = new CheatCodeEditor(frame, curcartname);
+						cheatcodes.applyCheatCodes(cart);
 						addOSDLine("loaded Rom: " + curcartname);
 
 						if (CPU.canRun())
@@ -730,6 +741,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			gui.createAndShowGUI();
 			cheatcodes = new CheatCodeEditor(frame, curcartname);
+			cheatcodes.applyCheatCodes(cart);
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
 				gui.cpu.AC.isMuted = true;
