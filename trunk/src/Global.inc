@@ -10,6 +10,14 @@
 
 #define DEBUG
 
+#define YIELD { \
+	try { \
+		Thread.sleep(100); /*100?*/ \
+	} \
+	catch (Exception e) { \
+	} \
+}
+
 #ifdef NODEBUG
 #ifdef DEBUG
 #undef DEBUG

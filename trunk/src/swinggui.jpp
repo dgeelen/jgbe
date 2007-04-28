@@ -19,14 +19,14 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	synchronized public void suspend() {
 		while (threadStatus != 0) {
 			threadStatus = 3;
-			while (threadStatus == 3) { Thread.yield(); };
+			while (threadStatus == 3) { YIELD; };
 		}
 	}
 
 	synchronized public void resume() {
 		while (threadStatus != 2) {
 			threadStatus = 1;
-			while (threadStatus == 1) { Thread.yield(); };
+			while (threadStatus == 1) { YIELD; };
 		}
 	}
 
@@ -37,13 +37,13 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	SimpleCPURunner() {
 		cpurunthread = new Thread(this);
 		cpurunthread.start();
-		while (!cpurunthread.isAlive()) { Thread.yield(); }; // wait for thread to actually start
+		while (!cpurunthread.isAlive()) { YIELD; }; // wait for thread to actually start
 	}
 
 	public void run() {
 		while (true) {
 			// suspended
-			while (threadStatus == 0) { Thread.yield(); };
+			while (threadStatus == 0) { YIELD; };
 			// suspend -> running
 			if (threadStatus == 1) threadStatus = 2;
 			// running
@@ -291,7 +291,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			frame.setResizable(false);
 			frame.pack();
 			frame.setVisible( true );
-
 		}
 
 		public void componentHidden(ComponentEvent e) {}
@@ -436,25 +435,25 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				addOSDLine("Reset gameboy");
 			}
 			else if(e.getSource().equals( menuitemColorSchemeOriginalGameboy )) {
-			int[][] c={ {0xa0, 0xe0, 0x20},	// WHITE
-									{0x70, 0xb0, 0x40},  // LIGHTGRAY
-									{0x40, 0x70, 0x32},  // DARKGRAY
-									{0x10, 0x50, 0x26}}; // BLACK
-			cpu.VC.setGrayShades(c);
+				int[][] c={ {0xa0, 0xe0, 0x20},	// WHITE
+										{0x70, 0xb0, 0x40},  // LIGHTGRAY
+										{0x40, 0x70, 0x32},  // DARKGRAY
+										{0x10, 0x50, 0x26}}; // BLACK
+				cpu.VC.setGrayShades(c);
 			}
 			else if(e.getSource().equals( menuitemColorSchemeBlackAndWhite )) {
-			int[][] c={ {0xFF, 0xFF, 0xFF},	// WHITE
-									{0x80, 0x80, 0x80},  // LIGHTGRAY
-									{0x40, 0x40, 0x40},  // DARKGRAY
-									{0x00, 0x00, 0x00}}; // BLACK
-			cpu.VC.setGrayShades(c);
+				int[][] c={ {0xFF, 0xFF, 0xFF},	// WHITE
+										{0x80, 0x80, 0x80},  // LIGHTGRAY
+										{0x40, 0x40, 0x40},  // DARKGRAY
+										{0x00, 0x00, 0x00}}; // BLACK
+				cpu.VC.setGrayShades(c);
 			}
 			else if(e.getSource().equals( menuitemColorSchemeGreys )) {
-			int[][] c={ {0xc5, 0xc5, 0xc5},	// WHITE
-									{0x9a, 0x9a, 0x9a},  // LIGHTGRAY
-									{0x61, 0x61, 0x61},  // DARKGRAY
-									{0x3f, 0x3f, 0x3f}}; // BLACK
-			cpu.VC.setGrayShades(c);
+				int[][] c={ {0xc5, 0xc5, 0xc5},	// WHITE
+										{0x9a, 0x9a, 0x9a},  // LIGHTGRAY
+										{0x61, 0x61, 0x61},  // DARKGRAY
+										{0x3f, 0x3f, 0x3f}}; // BLACK
+				cpu.VC.setGrayShades(c);
 			}
 			else {
 				for (int i = 0; i < 10; ++i) {
