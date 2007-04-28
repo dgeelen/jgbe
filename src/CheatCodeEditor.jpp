@@ -109,7 +109,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		public void mousePressed(MouseEvent e) { checkRightClick(e); }
 	}
 	class CheatCode {
-		public Boolean enabled=false;
+		public boolean enabled=false;
 		public String Description="";
 		public String strCode;
 		private int address;
