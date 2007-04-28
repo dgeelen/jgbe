@@ -299,8 +299,8 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 			try {
 				BufferedWriter out = new BufferedWriter(new FileWriter(name));
 				String str;
-				for (Object o : codes) {
-					CheatCode c = (CheatCode)o;
+				for (int i = 0; i < codes.size(); ++i) {
+					CheatCode c = (CheatCode)codes.elementAt(i);
 					str = c.enabled?"on":"off";
 					str+= ", "+c.strCode;
 					str+= ", "+c.Description;
@@ -318,8 +318,8 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 	private void listCodes() {
 		Object[] o;
 		tablemodelcodes.setRowCount(0);
-		for(Object i : codes) {
-			CheatCode ggc = (CheatCode)i;
+		for (int i = 0; i < codes.size(); ++i) {
+			CheatCode ggc = (CheatCode)codes.elementAt(i);
 			o=new Object[3];
 			o[0]=new Boolean(ggc.enabled);
 			o[1]=ggc.strCode;
@@ -338,8 +338,8 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 	}
 	public void applyCheatCodes(Cartridge cart) {
 		System.out.println("(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)");
-		for(Object o : codes) {
-			CheatCode c=(CheatCode)o;
+		for (int j = 0; j < codes.size(); ++j) {
+			CheatCode c=(CheatCode)codes.elementAt(j);
 			if(c.enabled) {
 				if(c.address >=0) { //valid code
 					if(c.address < 0x4000) { //ROMBANK0
