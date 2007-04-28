@@ -326,7 +326,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 		tableModel.addTableModelListener(new EditMemTableModelListener());
 		mem = new JTable();
 		mem.setModel(tableModel);
+#ifndef USE_GCJ
 		mem.setSurrendersFocusOnKeystroke(true);
+#endif
 		mem.setTableHeader(null);
 		mem.setFont(MonoFont);
 		scroll = new JScrollPane(mem);
