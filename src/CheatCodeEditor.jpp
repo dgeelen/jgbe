@@ -1,0 +1,328 @@
+#include "Global.inc"
+#ifndef USE_JAVA_MOBILE
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.LinkedList;
+import java.net.*;
+import java.awt.image.BufferedImage;
+import javax.swing.table.*;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.io.*;
+// Gamegenie codes consist of nine-digit hex numbers, formatted as ABC-DEF-GHI, the meaning of the separate digits is:
+//
+//   AB    New data
+//   FCDE  Memory address, XORed by 0F000h
+//   GI    Old data, XORed by 0BAh and rotated left by two
+//   H     Don't know, maybe checksum and/or else
+//
+// The address should be located in ROM area 0000h-7FFFh, the adapter permanently compares address/old data with address/data being read by the game, and replaces that data by new data if necessary. That method (more or less) prohibits unwanted patching of wrong memory banks. Eventually it is also possible to patch external RAM ?
+// Newer devices reportedly allow to specify only the first six digits (optionally). As far as I rememeber, around three or four codes can be used simultaneously.
+
+// 3. What is the meaning of the digits in CheatCodeEditor code for GameBoy?
+//
+//   * All digits are in hexadecimal system
+//
+//          GameBoy CheatCodeEditor Code:     DD2-103-???
+//
+//          DD         - Data Byte
+//          0,1,2,3    - Address, reads as 3210
+//          ???        - Meaning of these digits is unknown.
+//                       It is suspected that they represent the
+//                       ROM paging register, but no information
+//                       is available.
+//
+//    Example: 3D2-ABF-3BE - Set 3Dh (DEC A command) at address F2ABh
+
+public class CheatCodeEditor implements ComponentListener, ActionListener { ///implements ActionListener, ItemListener, KeyListener, ComponentListener{
+	class DbTable extends JTable {
+		public DbTable(DefaultTableModel m){
+			super(m);
+		}
+		public void setPreferredColumnWidths(double[] percentages) {
+			Dimension tableDim = this.getPreferredSize();
+			double total = 0;
+			for(int i = 0; i < getColumnModel().getColumnCount(); i++)
+				total += percentages[i];
+			for(int i = 0; i < getColumnModel().getColumnCount(); i++) {
+				TableColumn column = getColumnModel().getColumn(i);
+				column.setPreferredWidth((int) (tableDim.width * (percentages[i] / total)));
+			}
+		}
+		public void setPreferredColumnWidths(int[] widths) {
+			for(int i = 0; i < getColumnModel().getColumnCount(); i++) {
+				TableColumn column = getColumnModel().getColumn(i);
+				column.setPreferredWidth(widths[i]);
+			}
+		}
+	}
+	public class CheatCodeEditorTableModelListener implements TableModelListener {
+		public void tableChanged(TableModelEvent evt) {
+				if (evt.getType() == TableModelEvent.UPDATE) {
+					int column = evt.getColumn();
+					int row = evt.getFirstRow();
+					CheatCode c = (CheatCode)codes.get(row);
+					c.enabled = ((Boolean)tableCodes.getValueAt(row, 0)).booleanValue();
+					c.setCode((String)tableCodes.getValueAt(row, 1));
+					c.Description=(String)tableCodes.getValueAt(row, 2);
+			}
+		}
+	}
+	public class tableCodesRightClick extends MouseAdapter {
+		private void checkRightClick(MouseEvent e) {
+			if (e.isPopupTrigger()) {
+				JTable source = (JTable)e.getSource();
+				int row = source.rowAtPoint( e.getPoint() );
+				int column = source.columnAtPoint( e.getPoint() );
+				source.changeSelection(row, column, false, false);
+				JPopupMenu popup = new JPopupMenu();
+				popup.add( menuitemAddNewCode );
+				popup.add( menuitemRemoveCode );
+				popup.add( menuitemToggleActive );
+				menuitemRemoveCode.setEnabled(source.getRowCount()>1);
+				popup.show(e.getComponent(), e.getX(), e.getY());
+			}
+		}
+		//Note: Popup menus are triggered differently on different systems.
+		//Therefore, isPopupTrigger should be checked in both mousePressed and mouseReleased for proper cross-platform functionality.
+		public void mouseReleased(MouseEvent e) { checkRightClick(e); }
+		public void mousePressed(MouseEvent e) { checkRightClick(e); }
+	}
+	class CheatCode {
+		public Boolean enabled=false;
+		public String Description="";
+		public String strCode;
+		private int address;
+		private int patch;
+		private int oldvalue;
+
+		class undoCheat {
+			int MM_ROM_index_a=0;
+			int MM_ROM_index_b=0;
+			int MM_ROM_value=0;
+			public undoCheat(int a, int b, int v) {
+				MM_ROM_index_a=a;
+				MM_ROM_index_b=b;
+				MM_ROM_value=v;
+			}
+		}
+		boolean inEffect=false;
+		LinkedList undos;
+		public void addUndo(int a, int b, int v) {
+			undoCheat u = new undoCheat(a, b, v);
+			undos.add((Object)u);
+		}
+		public void undoAll() {
+		}
+		public CheatCode() {}
+		public CheatCode(boolean e, String s,String d) {
+			enabled=e;
+			Description=d;
+			setCode(s);
+		}
+		private boolean isHex(String s) {
+			String hex="1234567890ABCDEF";
+			return (hex.indexOf(s) > -1);
+		}
+		public void setCode(String s) {
+			s=s.toUpperCase();
+
+			String c="";
+			//handle just GameGenie for now, later do it based on length of code?
+			for(int i=0; i<s.length(); ++i) {
+				c+=isHex(s.substring(i,i+1))?s.substring(i,i+1):"";
+			}
+			if(c.length()>9) c=c.substring(0,8);
+			if(c.length()==9) {
+				// Gamegenie codes consist of nine-digit hex numbers, formatted as ABC-DEF-GHI, the meaning of the separate digits is:
+				//
+				//   AB    New data
+				//   FCDE  Memory address, XORed by 0F000h
+				//   GI    Old data, XORed by 0BAh and rotated left by two
+				//   H     Don't know, maybe checksum and/or else
+				String addr = "$"+c.substring(5,6)+c.substring(2,3)+c.substring(3,4)+c.substring(4,5);
+				String NewData = "$"+c.substring(0,2);
+				String OldData = "$"+c.substring(6,7)+c.substring(8,9);
+				address = parser.StrToInt(addr) ^ 0xf000;
+				patch = parser.StrToInt(NewData);
+				oldvalue = (ShTables.RRC_val[ShTables.RRC_val[(parser.StrToInt(OldData)^0xff)]])^0x45; // equiv (data>>2)^0xba?
+				if(address>0x7fff) address=-1;
+				System.out.println("addr="+address+" patch="+patch+" old="+oldvalue);
+				strCode=c.substring(0,3)+"-"+c.substring(3,6)+"-"+c.substring(6,9);
+			}
+		}
+	}
+	LinkedList codes;
+	JDialog dialog;
+	JFrame owner;
+	DbTable tableCodes;
+	DefaultTableModel tablemodelcodes;
+	JButton buttonDone;
+	JMenuItem menuitemAddNewCode;
+	JMenuItem menuitemRemoveCode;
+	JMenuItem menuitemToggleActive;
+	RDParser parser = new RDParser();
+	public CheatCodeEditor(JFrame o) {
+		owner = o;
+		JScrollPane scroll;
+		codes=new LinkedList();
+		dialog= new JDialog(owner, "CheatCodeEditor Code Editor", true);
+		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+			dialog.addWindowListener(new WindowAdapter() {
+				public void windowClosing(WindowEvent we) {
+// 					applyCheatCodes();
+					saveCheatCodes();
+					dialog.setVisible(false);
+			}
+		});
+		tablemodelcodes= new DefaultTableModel(1,3);
+		tablemodelcodes.addTableModelListener(new CheatCodeEditorTableModelListener());
+		tableCodes = new DbTable(tablemodelcodes) {
+			public Class getColumnClass(int column) { //enable JTable to use different renderers, eg Checkbox for Boolean
+				return getValueAt(0, column).getClass();
+			}
+		};
+		tableCodes.addMouseListener(new tableCodesRightClick());
+
+		tableCodes.getColumnModel().getColumn(tableCodes.convertColumnIndexToView(0)).setHeaderValue("Active");
+		tableCodes.getColumnModel().getColumn(tableCodes.convertColumnIndexToView(1)).setHeaderValue("Code");
+		tableCodes.getColumnModel().getColumn(tableCodes.convertColumnIndexToView(2)).setHeaderValue("Effect");
+		tableCodes.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		tableCodes.setPreferredColumnWidths(new int[]{38,90,189});
+		tableCodes.doLayout();
+
+		scroll  = new JScrollPane(tableCodes);
+		codes.add(new CheatCode(true, "008-60A-E6E", "Unlimited time"));
+		codes.add(new CheatCode(true, "00A-17B-C49", "Always have power ball"));
+		codes.add(new CheatCode(true, "009-C3B-554", "Disable jumping"));
+		codes.add(new CheatCode(true, "00D-44B-218", "Small Mario has a giant fist when he jumping"));
+		codes.add(new CheatCode(true, "35B-8EB-E69", "Big Mario with invincibility and super jumps"));
+		codes.add(new CheatCode(false, "DCA-17B-C49", "Fireballs suspended in animation cover each level"));
+		codes.add(new CheatCode(false, "DOA-17B-C49", "Mario cannot shoot fireballs"));
+		listCodes(); //fill table with codes
+
+		scroll.setPreferredSize(new Dimension(320, 240));
+		dialog.add(scroll,BorderLayout.CENTER);
+
+		buttonDone = new JButton("Done");
+		buttonDone.addActionListener(this);
+		dialog.add(buttonDone,BorderLayout.SOUTH);
+
+		dialog.addComponentListener(this);
+		dialog.setLocationRelativeTo(null);
+		dialog.setResizable(false);
+		dialog.pack();
+
+		Dimension d = owner.getSize();
+		Point     p = new Point();
+		p.setLocation((owner.getLocation().getX()+(d.getWidth()/2)) - (dialog.getWidth()/2), (owner.getLocation().getY()+d.getHeight()/2)-(dialog.getHeight()/2));
+		dialog.setLocation(p);
+
+		menuitemAddNewCode  = new JMenuItem("Add new code here");
+		menuitemAddNewCode.addActionListener(this);
+		menuitemRemoveCode  = new JMenuItem("Remove this code");
+		menuitemRemoveCode.addActionListener(this);
+		menuitemToggleActive= new JMenuItem("Toggle Active");
+		menuitemToggleActive.addActionListener(this);
+	}
+
+	public void componentHidden(ComponentEvent e) {}
+	public void componentMoved(ComponentEvent e) {}
+	public void componentShown(ComponentEvent e) {}
+	public void componentResized(ComponentEvent e) {}
+
+// 	public void applyCheatCodes() { System.out.println("TODO: apply cheats");}
+	public void saveCheatCodes() { System.out.println("TODO: save cheats");}
+	private void listCodes() {
+		Object[] o;
+		tablemodelcodes.setRowCount(0);
+		for(Object i : codes) {
+			CheatCode ggc = (CheatCode)i;
+			o=new Object[3];
+			o[0]=(ggc.enabled?Boolean.TRUE:Boolean.FALSE);
+			o[1]=ggc.strCode;
+			o[2]=ggc.Description;
+			tablemodelcodes.addRow(o);
+		}
+	}
+
+	private void showWindow() {
+			dialog.setVisible( true );
+	}
+
+	private void printFailedCode(CheatCode c) {
+		System.out.println("Code failed to apply: "+c.strCode+" - " +c.Description);
+		System.out.println("  Address="+c.address+" oldvalue="+c.oldvalue+" patch="+c.patch);
+	}
+	public void applyCheatCodes(Cartridge cart) {
+		System.out.println("(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)");
+		for(Object o : codes) {
+			CheatCode c=(CheatCode)o;
+			if(c.enabled) {
+				if(c.address >=0) { //valid code
+					if(c.address < 0x4000) { //ROMBANK0
+						if(cart.MM_ROM[c.address>>12][c.address&0x0fff]==c.oldvalue)
+							cart.MM_ROM[c.address>>12][c.address&0x0fff]=c.patch;
+						else
+							printFailedCode(c);
+					}
+					else { //Somewhere in ROMBANKn
+						boolean success=false;
+						for(int i=4; i<cart.MM_ROM_USED_ENTRIES; i+=4) {
+							if(cart.MM_ROM[i+((c.address>>12)&3)][c.address&0x0fff]==c.oldvalue) {
+								cart.MM_ROM[i+((c.address>>12)&3)][c.address&0x0fff]=c.patch;
+								success=true;
+							}
+						}
+						if(!success) printFailedCode(c);
+					}
+				}
+			}
+		}
+	}
+
+	public void editCodes() {
+		showWindow();
+	}
+	public void actionPerformed( ActionEvent e ) {
+		if (e.getSource().equals( menuitemAddNewCode )) {
+			int row = tableCodes.getSelectedRow();
+			codes.add(row, new CheatCode(false, "", ""));
+			Object[] o=new Object[3];
+			o[0]=Boolean.FALSE;
+			o[1]=new String();
+			o[2]=new String();
+			tablemodelcodes.insertRow(row, o);
+			tableCodes.changeSelection(row, 0, false, false);
+		}
+		else if (e.getSource().equals( menuitemRemoveCode )) {
+			int row = tableCodes.getSelectedRow();
+			codes.remove(row);
+			tablemodelcodes.removeRow(row);
+		}
+		else if (e.getSource().equals( menuitemToggleActive )) {
+			int row = tableCodes.getSelectedRow();
+			CheatCode c=(CheatCode)codes.get(row);
+			c.enabled=!c.enabled;
+			codes.set(row, c);
+			tablemodelcodes.removeRow(row);
+			Object[] o=new Object[3];
+			o[0]=new Boolean(c.enabled);
+			o[1]=c.strCode;
+			o[2]=c.Description;
+			tablemodelcodes.insertRow(row, o);
+			tableCodes.changeSelection(row, 0, false, false);
+		}
+		else if (e.getSource().equals( buttonDone )) {
+// 			applyCheatCodes();
+			saveCheatCodes();
+			dialog.hide();
+		}
+		else {
+			System.out.println("Unhandled event");
+		}
+	}
+}
+#endif

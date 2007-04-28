@@ -671,13 +671,14 @@ public class AudioController {
 	public int audioBufferIndex;
 	private int IO[];
 	private int WAVE[] = cgbwave;
-	private final int sampleRate=22050;//44100;//22050;
+	private final int sampleRate=44100;//22050;//44100;//22050;
 	public int cyclesLeftToRender;
 	private int TimerCountDown;     // 256hz
 	private boolean SweepTimerTick; // 128hz
 	private int RATE;
 	public int CRATE;
 	public class SoundRegister {
+		int muted=1;
 		int on;
 		int pos; // TODO: unsigned?
 		int cnt, encnt, swcnt;
@@ -700,12 +701,32 @@ public class AudioController {
 			SL_INT(endir);
 		}
 	}
-	private SoundRegister S1;
-	private SoundRegister S2;
-	private SoundRegister S3;
-	private SoundRegister S4;
+	protected SoundRegister S1;
+	protected SoundRegister S2;
+	protected SoundRegister S3;
+	protected SoundRegister S4;
 	//private SoundRegister SR5; //On cartridge, not used atm
 	protected CPU cpu;
+
+	public void toggleChannelOnOff(int i){
+		switch(i) {
+			case 1:
+				S1.muted = 1-S1.muted;
+				break;
+			case 2:
+				S2.muted = 1-S2.muted;
+				break;
+			case 3:
+				S3.muted = 1-S3.muted;
+				break;
+			case 4:
+				S4.muted = 1-S4.muted;
+				break;
+			default:
+				System.out.println("AudioController: No such channel to toggle: " + i);
+				break;
+		}
+	}
 
 	public AudioController(CPU cpu) {
 					Mixer.Info[]	asInfo = AudioSystem.getMixerInfo();
@@ -903,6 +924,31 @@ public class AudioController {
 	}
 
 	void sound_mix() {
+		//disable some sound channels
+// 		S1.on=0;
+// 		S2.on=0;
+	//	S3.on=0;
+// 		S4.on=0;
+
+		/*********   ***   ***        ***    ****** ******    *********
+		 *********   ***    ***      ***    ***************   *********
+		 ***                 ***    ***     ***   ***   ***   ***         ***
+		 ***                  ***  ***      ***   ***   ***   ***         ***
+		 ******      ***       ******       ***   ***   ***   *********
+		 ******      ***       ******       ***   ***   ***   *********
+		 ***         ***      ***  ***      ***   ***   ***   ***         ***
+		 ***         ***     ***    ***     ***   ***   ***   ***         ***
+		 ***         ***    ***      ***    ***   ***   ***   *********
+		 ***         ***   ***        ***   ***   ***   ***   *********
+		There is a small error in one of the sound channels which causes a annoying
+		high pitched sound to be intermixed with the real sound. It can be heard in
+		Super Mario Land 2, 'echoing' the melody quite clearly.
+		This does not happen in GnuBoy and is not audible on a real GB so we must be
+		doing something wrong :(
+		(Listen to channel #3 for Super Mario Land 2)
+		*/
+
+
 		int s, l, r, f, n;
 		//System.out.println("RATE="+RATE);
 		if (RATE==0) return;
@@ -916,7 +962,7 @@ public class AudioController {
 		{
 			l = r = 0;
 
-			if (S1.on!=0)
+			if (MIN(S1.on, S1.muted)!=0)
 			{
 				s = sqwave[IO[0x01]>>6][(S1.pos>>18)&7] & S1.envol;
 				S1.pos += S1.freq;
@@ -952,7 +998,7 @@ public class AudioController {
 // 				System.out.println("S1 l="+l+" r="+r);
 			}
 
-			if (S2.on!=0)
+			if (MIN(S2.on, S2.muted)!=0)
 			{
 				s = sqwave[IO[0x06]>>6][(S2.pos>>18)&7] & S2.envol;
 				S2.pos += S2.freq;
@@ -971,7 +1017,7 @@ public class AudioController {
 // 				System.out.println("S2 l="+l+" r="+r);
 			}
 
-			if (S3.on!=0)
+			if (MIN(S3.on, S3.muted)!=0)
 			{
 				s = WAVE[(S3.pos>>22) & 15];
 				if ((S3.pos & (1<<21))!=0) s &= 15;
@@ -987,7 +1033,7 @@ public class AudioController {
 // 				System.out.println("S3 l="+l+" r="+r);
 			}
 
-			if (S4.on!=0)
+			if (MIN(S4.on, S4.muted)!=0)
 			{
 				if ((IO[0x12] & 8)!=0) s = 1 & (noise7[
 					(S4.pos>>20)&15] >> (7-((S4.pos>>17)&7)));

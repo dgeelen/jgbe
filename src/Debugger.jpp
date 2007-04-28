@@ -48,7 +48,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 		deasm= new Disassembler(gui.cpu);
 		oldRegVal=new int[11];
 		parser=new RDParser();
-		
+
 		runner = new DebugRunner(this);
 		createAndShowGUI();
 		update();
@@ -74,14 +74,14 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 				while (threadStatus == 3) { YIELD; };
 			}
 		}
-		
+
 		synchronized public void resume() {
 			if (threadStatus != 2) {
 				threadStatus = 1;
 				while (threadStatus == 1) { YIELD; };
 			}
 		}
-		
+
 		public boolean isRunning() {
 			return (threadStatus != 0);
 		}
@@ -132,7 +132,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 				while (threadStatus == 0) { YIELD; };
 				// suspend -> running
 				if (threadStatus == 1) threadStatus = 2;
-				
+
 				// running..
 				int cycling = 69905;
 				long curms = System.currentTimeMillis();
@@ -678,80 +678,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 			int i=0;
 			String s=cmds.getText().trim();
 			cmds.selectAll();
-			//System.out.println("Command='"+s+"'");
-			if(s.equals("s")) {
-				//System.out.println("SingleStep");
-				gui.cpu.nextinstruction();
-				update();
-			}
-			if(s.equals("reset")) {
-				gui.cpu.reset();
-				update();
-			}
-			if(s.equals("so")) {
-				if (!runner.isRunning()) {
-					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
-					runner.resume();
-				}
-			}
-			if(s.charAt(0)=='w') {
-				String ss = s.substring( s.lastIndexOf(" ") + 1);
-				if( ss.charAt(0)=='$' )
-					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
-			}
-			if(s.charAt(0)=='i') {
-				String ss = s.substring( s.lastIndexOf(" ") + 1);
-				if( ss.charAt(0)=='$' )
-					runner.setBreakInstr(Integer.parseInt( ss.substring(1), 16 ));
-			}
-			if(s.charAt(0)=='p') {
-				runner.setRunFor(parser.StrToInt(s.substring(1)));
-				runner.resume();
-			}
-			if(s.charAt(0)=='g') {
-				runner.resume();
-			}
-			if(s.charAt(0)=='b') {
-				if (runner.isRunning()) {
-					if (logwriter != null) {
-						try {
-							logwriter.flush();
-						}
-						catch (java.io.IOException e2) {
-							System.out.println("Error flushing logfile:" + e2.getMessage());
-							logwriter = null;
-						}
-					}
-					runner.suspend();
-				}
-			}
-			if(s.charAt(0)=='r') {
-				try {
-					if (!runner.isRunning()) {
-						String ss = s.substring( s.lastIndexOf(" ") + 1);
-						if( ss.charAt(0)=='$' ) {
-							runner.setBreakPoint(Integer.parseInt( ss.substring(1), 16 ));
-							runner.resume();
-						}
-					}
-				}
-				catch ( NumberFormatException ee ) {
-						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
-				}
-				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
-			}
-			if(s.charAt(0)=='c') {
-				try {
-					if (!runner.isRunning()) {
-						String ss = s.substring( s.lastIndexOf(" ") + 1);
-						runner.setInstrStop(Integer.parseInt( ss.substring(0), 10 ));
-					}
-				}
-				catch ( NumberFormatException ee ) {
-						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
-				}
-				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
-			}
 			i=s.indexOf("=");
 			if(i>-1) { //assignment
 				String l = s.substring(0,i).trim();
@@ -843,6 +769,80 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
 					}
 				}
+				s="-";
+			}
+			if(s.equals("s")) {
+				//System.out.println("SingleStep");
+				gui.cpu.nextinstruction();
+				update();
+			}
+			if(s.equals("reset")) {
+				gui.cpu.reset();
+				update();
+			}
+			if(s.equals("so")) {
+				if (!runner.isRunning()) {
+					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
+					runner.resume();
+				}
+			}
+			if(s.charAt(0)=='w') {
+				String ss = s.substring( s.lastIndexOf(" ") + 1);
+				if( ss.charAt(0)=='$' )
+					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
+			}
+			if(s.charAt(0)=='i') {
+				String ss = s.substring( s.lastIndexOf(" ") + 1);
+				if( ss.charAt(0)=='$' )
+					runner.setBreakInstr(Integer.parseInt( ss.substring(1), 16 ));
+			}
+			if(s.charAt(0)=='p') {
+				runner.setRunFor(parser.StrToInt(s.substring(1)));
+				runner.resume();
+			}
+			if(s.charAt(0)=='g') {
+				runner.resume();
+			}
+			if(s.charAt(0)=='b') {
+				if (runner.isRunning()) {
+					if (logwriter != null) {
+						try {
+							logwriter.flush();
+						}
+						catch (java.io.IOException e2) {
+							System.out.println("Error flushing logfile:" + e2.getMessage());
+							logwriter = null;
+						}
+					}
+					runner.suspend();
+				}
+			}
+			if(s.charAt(0)=='r') {
+				try {
+					if (!runner.isRunning()) {
+						String ss = s.substring( s.lastIndexOf(" ") + 1);
+						if( ss.charAt(0)=='$' ) {
+							runner.setBreakPoint(Integer.parseInt( ss.substring(1), 16 ));
+							runner.resume();
+						}
+					}
+				}
+				catch ( NumberFormatException ee ) {
+						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				}
+				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
+			}
+			if(s.charAt(0)=='c') {
+				try {
+					if (!runner.isRunning()) {
+						String ss = s.substring( s.lastIndexOf(" ") + 1);
+						runner.setInstrStop(Integer.parseInt( ss.substring(0), 10 ));
+					}
+				}
+				catch ( NumberFormatException ee ) {
+						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				}
+				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
 			}
 		}
 		else {
