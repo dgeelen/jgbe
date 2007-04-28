@@ -88,8 +88,15 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemColorSchemeOriginalGameboy;
 		JMenuItem menuitemColorSchemeBlackAndWhite;
 		JMenuItem menuitemColorSchemeGreys;
+		JMenu menuSoundChannels;
+		JMenuItem menuitemSoundChannel1;
+		JMenuItem menuitemSoundChannel2;
+		JMenuItem menuitemSoundChannel3;
+		JMenuItem menuitemSoundChannel4;
+		JMenu menuOther;
+		JMenuItem menuitemCheats;
   	JMenuItem[] menuItems;
-
+		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
 
 		public void updateCartName(String fname) {
@@ -246,7 +253,32 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuSound.add( menuitemSoundEnable );
 			menuSound.add( menuitemSoundDisable );
 			menuSound.add( menuitemSoundToggle );
+			menuSoundChannels=new JMenu("Channels");
+			menuitemSoundChannel1=new JMenuItem( "Toggle channel 1", KeyEvent.VK_1 );
+			menuitemSoundChannel2=new JMenuItem( "Toggle channel 2", KeyEvent.VK_2 );
+			menuitemSoundChannel3=new JMenuItem( "Toggle channel 3", KeyEvent.VK_3 );
+			menuitemSoundChannel4=new JMenuItem( "Toggle channel 4", KeyEvent.VK_4 );
+			menuitemSoundChannel1.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_1, ActionEvent.ALT_MASK ));
+			menuitemSoundChannel2.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_2, ActionEvent.ALT_MASK ));
+			menuitemSoundChannel3.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_3, ActionEvent.ALT_MASK ));
+			menuitemSoundChannel4.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_4, ActionEvent.ALT_MASK ));
+			menuitemSoundChannel1.addActionListener(this);
+			menuitemSoundChannel2.addActionListener(this);
+			menuitemSoundChannel3.addActionListener(this);
+			menuitemSoundChannel4.addActionListener(this);
+			menuSoundChannels.add(menuitemSoundChannel1);
+			menuSoundChannels.add(menuitemSoundChannel2);
+			menuSoundChannels.add(menuitemSoundChannel3);
+			menuSoundChannels.add(menuitemSoundChannel4);
+			menuSound.add(menuSoundChannels);
 			mainMenuBar.add( menuSound) ;
+			menuOther=new JMenu("Other");
+			menuitemCheats = new JMenuItem("Cheats", KeyEvent.VK_C);
+			menuitemCheats.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_BACK_QUOTE, ActionEvent.CTRL_MASK ));
+			menuitemCheats.addActionListener(this);
+			menuOther.add(menuitemCheats);
+			mainMenuBar.add( menuOther) ;
+
 
 			return mainMenuBar;
 		}
@@ -273,7 +305,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			contentPane.add( grfx, BorderLayout.CENTER );
 		}
 
-		JFrame frame;
+		static JFrame frame;
 
 		private void createAndShowGUI() {
 			//JFrame.setDefaultLookAndFeelDecorated( true );
@@ -285,19 +317,38 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			//Set up the content pane and add swing components to it
 			frame.setJMenuBar( createJMenuBar() );
 			addComponentsToPane( frame.getContentPane() );
+			Toolkit toolkit = Toolkit.getDefaultToolkit();
+			Image image = toolkit.getImage("icon.png");
+			frame.setIconImage(image);
 
 			frame.addComponentListener(this);
-			frame.setLocationRelativeTo(null);
+
 			frame.setResizable(false);
 			frame.pack();
+			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+			Point     p = new Point();
+			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
+			frame.setLocation(p);
 			frame.setVisible( true );
 		}
 
 		public void componentHidden(ComponentEvent e) {}
 		public void componentMoved(ComponentEvent e) {}
 		public void componentShown(ComponentEvent e) {}
-
-		public void componentResized(ComponentEvent e) {
+		public void componentResized(ComponentEvent e) {}
+		public void pauseEmulation() {
+			// 0 means suspended
+			// 1 means suspend->running requested
+			// 2 means running
+			// 3 means running->suspended requested
+			if(!cpuRunner.isRunning()) {
+				cpuRunner.resume();
+				addOSDLine("Unpaused gameboy");
+			}
+			else {
+				cpuRunner.suspend();
+				addOSDLine("Paused gameboy");
+			}
 		}
 
 		public void actionPerformed( ActionEvent e ) {
@@ -348,6 +399,29 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			else if (e.getSource().equals( menuitemSoundToggle )) {
 				cpu.AC.isMuted = !cpu.AC.isMuted;
 				addOSDLine(cpu.AC.isMuted ? "Disabled sound" : "Enabled sound");
+			}
+			else if (e.getSource().equals( menuitemSoundChannel1)) {
+				cpu.AC.toggleChannelOnOff(1);
+				addOSDLine(cpu.AC.S1.muted==0 ? "Disabled soundchannel 1" : "Enabled soundchannel 1");
+			}
+			else if (e.getSource().equals( menuitemSoundChannel2)) {
+				cpu.AC.toggleChannelOnOff(2);
+				addOSDLine(cpu.AC.S2.muted==0 ? "Disabled soundchannel 2" : "Enabled soundchannel 2");
+			}
+			else if (e.getSource().equals( menuitemSoundChannel3)) {
+				cpu.AC.toggleChannelOnOff(3);
+				addOSDLine(cpu.AC.S3.muted==0 ? "Disabled soundchannel 3" : "Enabled soundchannel 3");
+			}
+			else if (e.getSource().equals( menuitemSoundChannel4)) {
+				cpu.AC.toggleChannelOnOff(4);
+				addOSDLine(cpu.AC.S4.muted==0 ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
+			}
+			else if (e.getSource().equals( menuitemCheats)) {
+				pauseEmulation();
+				cheatcodes.editCodes();
+				cheatcodes.applyCheatCodes(cart);
+				pauseEmulation();
+				addOSDLine("ZOMG CHEATER!!!!");
 			}
 			else if(e.getSource().equals( menuitemOpenROM )) {
 				JFileChooser fc;
@@ -415,18 +489,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cpuRunner.resume();
 			}
 			else if(e.getSource().equals( menuitemPause )) {
-				// 0 means suspended
-				// 1 means suspend->running requested
-				// 2 means running
-				// 3 means running->suspended requested
-				if(!cpuRunner.isRunning()) {
-					cpuRunner.resume();
-					addOSDLine("Unpaused gameboy");
-				}
-				else {
-					cpuRunner.suspend();
-					addOSDLine("Paused gameboy");
-				}
+				pauseEmulation();
 			}
 			else if(e.getSource().equals( menuitemReset )) {
 				cpuRunner.suspend();
@@ -627,10 +690,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			makeRcFilesMenuItems();
 		}
-
+		static Cartridge cart = null;
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
-			Cartridge cart = null;
 
 			gui.loadRCFiles();
 
@@ -664,6 +726,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			gui.VC = gui.cpu.VC;
 
 			gui.createAndShowGUI();
+			cheatcodes = new CheatCodeEditor(frame);
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
 				gui.cpu.AC.isMuted = true;

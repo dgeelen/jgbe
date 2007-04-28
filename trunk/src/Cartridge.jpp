@@ -15,7 +15,7 @@ public class Cartridge {
 
 	protected int[][] MM_ROM = new int[MAX_ROM_MM][];
 	protected int[][] MM_RAM = new int[MAX_RAM_MM][];;
-
+	protected int MM_ROM_USED_ENTRIES=0;
 	protected int[] BIOS_ROM = new int[0x100];
 
 	private String  file_name;
@@ -196,7 +196,7 @@ public class Cartridge {
 			PRINTF(".");
 		}
 		PRINTF("\n");
-
+		MM_ROM_USED_ENTRIES=rom_mm_size;
 		// initing RAM
 		for (int i = 0; i < ram_mm_size; ++i)
 			MM_RAM[i] = new int[MEMMAP_SIZE];
