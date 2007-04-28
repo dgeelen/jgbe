@@ -1,4 +1,6 @@
 #include "Global.inc"
+#include "SaveLoad.inc"
+
 import java.io.*;
 import javax.sound.sampled.*;
 import java.util.regex.Pattern;

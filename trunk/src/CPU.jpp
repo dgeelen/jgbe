@@ -1,5 +1,8 @@
 //Yoshi no tamago: $293 call crashes
 #include "Global.inc"
+#include "SaveLoad.inc"
+#include "CPU.inc"
+
 import java.io.*;
 public class CPU
 {
@@ -16,8 +19,6 @@ public class CPU
 		protected static final int NF_Mask  = 1 << NF_Shift;
 		protected static final int HC_Mask  = 1 << HC_Shift;
 		protected static final int CF_Mask  = 1 << CF_Shift;
-
-		#include "CPU.inc"
 
 		static protected int TotalInstrCount = 0;
 		static protected int TotalCycleCount = 0;
