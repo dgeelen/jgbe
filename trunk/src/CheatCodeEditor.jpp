@@ -119,26 +119,26 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		class undoCheat {
 			int MM_ROM_index_a=0;
 			int MM_ROM_index_b=0;
-			int MM_ROM_value=0;
-			public undoCheat(int a, int b, int v) {
+			public undoCheat(int a, int b) {
 				MM_ROM_index_a=a;
 				MM_ROM_index_b=b;
-				MM_ROM_value=v;
 			}
 		}
-		boolean inEffect=false;
 		VECTOR(undoCheat) undos;
-		public void addUndo(int a, int b, int v) {
-			undoCheat u = new undoCheat(a, b, v);
+		public void addUndo(int a, int b) {
+			undoCheat u = new undoCheat(a, b);
 			undos.add(u);
 		}
-		public void undoAll() {
+		public void undo(Cartridge cart) {
+			FOREACH(undoCheat, u, undos) {
+				cart.MM_ROM[u.MM_ROM_index_a][u.MM_ROM_index_b]=oldvalue;
+			}
 		}
-		public CheatCode() {}
 		public CheatCode(boolean e, String s,String d) {
 			enabled=e;
 			Description=d;
 			setCode(s);
+			undos = new VECTOR(undoCheat)();
 		}
 		private boolean isHex(String s) {
 			String hex="1234567890ABCDEF";
@@ -171,7 +171,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 				oldvalue = ShTables.RRC_val[oldvalue];
 				oldvalue ^= 0xba;
 				if(address>0x7fff) address=-1;
-				System.out.println("addr="+address+" patch="+patch+" old="+oldvalue);
+// 				System.out.println("addr="+address+" patch="+patch+" old="+oldvalue);
 				strCode=c.substring(0,3)+"-"+c.substring(3,6)+"-"+c.substring(6,9);
 			}
 		}
@@ -332,16 +332,24 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 
 	private void printFailedCode(CheatCode c) {
 		System.out.println("Code failed to apply: "+c.strCode+" - " +c.Description);
-		System.out.println("  Address="+c.address+" oldvalue="+c.oldvalue+" patch="+c.patch);
+// 		System.out.println("  Address="+c.address+" oldvalue="+c.oldvalue+" patch="+c.patch);
 	}
+
+	protected boolean UseCheats=true;
+	public void ToggleCheats(Cartridge cart) {
+		UseCheats = !UseCheats;
+		applyCheatCodes(cart);
+	}
+
 	public void applyCheatCodes(Cartridge cart) {
-		System.out.println("(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)(*)");
 		FOREACH(CheatCode, c, codes) {
-			if(c.enabled) {
+			if(c.enabled && UseCheats) {
 				if(c.address >=0) { //valid code
 					if(c.address < 0x4000) { //ROMBANK0
-						if(cart.MM_ROM[c.address>>12][c.address&0x0fff]==c.oldvalue)
+						if(cart.MM_ROM[c.address>>12][c.address&0x0fff]==c.oldvalue) {
+							c.addUndo(c.address>>12,c.address&0x0fff);
 							cart.MM_ROM[c.address>>12][c.address&0x0fff]=c.patch;
+							}
 						else
 							printFailedCode(c);
 					}
@@ -349,6 +357,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 						boolean success=false;
 						for(int i=4; i<cart.MM_ROM_USED_ENTRIES; i+=4) {
 							if(cart.MM_ROM[i+((c.address>>12)&3)][c.address&0x0fff]==c.oldvalue) {
+								c.addUndo(i+((c.address>>12)&3),c.address&0x0fff);
 								cart.MM_ROM[i+((c.address>>12)&3)][c.address&0x0fff]=c.patch;
 								success=true;
 							}
@@ -356,6 +365,9 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 						if(!success) printFailedCode(c);
 					}
 				}
+			}
+			else { //not active so undo changes
+				c.undo(cart);
 			}
 		}
 	}
