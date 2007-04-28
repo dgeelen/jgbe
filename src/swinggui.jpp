@@ -66,7 +66,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
 		int osdTime = 0;
-		String curcartname;
+		static public String curcartname;
 		//menuitem <-- here for my KDev autocomplete
 		JMenuItem menuitemExit;
 		JMenuItem menuitemScale1x;
@@ -444,6 +444,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 					CPU.loadCartridge(new Cartridge(selFile.getAbsolutePath()));
 					updateCartName(selFile.getAbsolutePath());
+					cheatcodes = new CheatCodeEditor(frame, curcartname);
+
 					addOSDLine("loaded Rom: " + curcartname);
 
 					if (CPU.canRun())
@@ -535,6 +537,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 						CPU.loadCartridge(new Cartridge((String)rcFiles.elementAt(i)));
 						updateCartName((String)rcFiles.elementAt(i));
+						cheatcodes = new CheatCodeEditor(frame, curcartname);
 						addOSDLine("loaded Rom: " + curcartname);
 
 						if (CPU.canRun())
@@ -726,7 +729,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			gui.VC = gui.cpu.VC;
 
 			gui.createAndShowGUI();
-			cheatcodes = new CheatCodeEditor(frame);
+			cheatcodes = new CheatCodeEditor(frame, curcartname);
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
 				gui.cpu.AC.isMuted = true;
