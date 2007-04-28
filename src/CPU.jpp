@@ -65,6 +65,10 @@ public class CPU
 		#endif
 		static protected VideoController VC;
 		static protected AudioController AC;
+		static int hblank_dma_src;
+		static int hblank_dma_dst;
+		static int hblank_dma_len;
+		static int hblank_dma_state=1<<7; //1<<7=inactive, 0=active
 		static int vcmode;
 		//Debug helpers
 		protected static int last_memory_access=-1;
@@ -188,6 +192,21 @@ public class CPU
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
 
+
+		static private int hblank_dma() {
+			if((hblank_dma_state==0)) { //HDMA, transfer 0x10 bytes per 8 clocks
+				for(int i=0; i<0x10; ++i) {
+					VC.write(hblank_dma_dst++, read(hblank_dma_src++));
+				}
+				hblank_dma_len-=0x10;
+				if(hblank_dma_len==0) hblank_dma_state=(1<<7);
+				IOP[55]=((hblank_dma_len>>4)-1)&0xff; //update Length
+// 				System.out.println("HDMA: len="+hblank_dma_len+ " IOP[55]="+IOP[55]);
+				return 8; //8 cycles /scanline
+			}
+			return 0;
+		}
+
 #define C VBLANKcntdwn
 #define R_LCDC VC.LCDC
 #define R_STAT VC.STAT
@@ -212,7 +231,7 @@ public class CPU
 					//if (hw.hdma & 0x80)
 					//	hw_hdma();
 					//else
-						C += 102;
+						C += 102 - hblank_dma();
 					break;
 				}
 				return;
@@ -260,7 +279,7 @@ public class CPU
 						//hw_hdma();
 					/* FIXME -- how much of the hblank does hdma use?? */
 					/* else */
-					C += 102;
+					C += 102-hblank_dma();
 					break;
 				case 0:
 					if (++R_LY >= 144)
@@ -468,7 +487,7 @@ static int togglestart=1;
 					case 0xff53: // FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
 					case 0xff54: // FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
 					case 0xff55: // FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
-						b = IOP[index-0xff00];
+						b = IOP[index-0xff00]|hblank_dma_state;
 						break;
 					case 0xff68: // BGPI
 						b = VC.BGPI;
@@ -691,8 +710,13 @@ static int togglestart=1;
 							for (int i = 0; i < len; ++i)
 								VC.write(dst++, read(src++));
 							IOP[0x55] = 0xff; // indicate we have finished
+							hblank_dma_state=(1<<7);
 						} else {
-							PRINTF("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
+							//PRINTF("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
+							hblank_dma_src=src;
+							hblank_dma_dst=dst;
+							hblank_dma_len=len;
+							hblank_dma_state=0;
 						}
 						break;
 					case 0xff68: // BGPI
@@ -892,14 +916,11 @@ static int togglestart=1;
 			keyBounce=1000; //times to bounce the key
 		}
 
-
-
-
-
 		static final protected int execute() {
 // 			if(last_memory_access_internal==0xff00) System.out.println("ASDASDASDSADDSA");
 			int cycles;
 			TVARS;
+
 			if (CHECK_INTS) {
 				checkInterrupts();
 				halted = false;
