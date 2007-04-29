@@ -1,10 +1,5 @@
-CLASSDIR:=classes
-DEPSDIR:=.deps
-#HAX!
-VM_DEST:=-target 1.4.2
-VM_SOURCE:=-source 1.4
-#VM_DEST:=-target 1.5
-#VM_SOURCE:=-source 1.5
+#VM_DEST:=-target 1.4.2
+#VM_SOURCE:=-source 1.4
 
 PPFLAGS = -DUSE_JAVA_142
 
@@ -14,58 +9,11 @@ CLASSPATH = .:$(RTJAR)
 
 JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -O -d $(CLASSDIR) -nowarn -classpath $(CLASSPATH)
 
-JPPFILES  :=$(shell ls *.jpp)
-GJAVAFILES:=$(JPPFILES:.jpp=.java)
-AJAVAFILES:=$(shell ls *.java) $(GJAVAFILES)
-AJAVAFILES:=$(shell echo $(AJAVAFILES) | sort | uniq)
-
-CLASSFILES:=$(AJAVAFILES:%.java=$(CLASSDIR)/%.class)
 #swinggui.class first class file to compile to speed up building
 CLASSFILES:=$(CLASSDIR)/swinggui.class $(CLASSFILES)
 
 all: preprocess $(CLASSFILES)
 
-preprocess: $(GJAVAFILES)
-
-fun: all
-	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart -nodebug
-
-silence: all
-	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart -nodebug -nosound
-
-run: all
-	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart
-
-debug: all
-	cd $(CLASSDIR) && aoss java -ea swinggui -lastcart -nosound
-
-rndCartridge: rndCartridge.cpp
-	g++ -O3 rndCartridge.cpp -o rndCartridge
-
 $(CLASSDIR)/%.class: %.java
 	@echo "[java -> class] $*"
 	@jikes $(JAVAC_OPTS) $<
-
-%.java: %.jpp
-	@echo "[jpp  -> java ] $*"
-	@cat Autogen.txt > $@
-	@gcc -MD -E $(PPFLAGS) -x c $< | grep -v "^#" | sed "s:cycles\;[ 	]*case:cycles\;\\n	case:g" >> $@
-	@sed -i "s=\.o:=\.java:=g" $*.d
-# next line from http://make.paulandlesley.org/autodep.html
-	@cp $*.d $*.dd; \
-	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-	  -e '/^$$/ d' -e 's/$$/ :/' < $*.dd >> $*.d; \
-	  rm -f $*.dd
-	@mv $*.d $(DEPSDIR)/
-
-clean:
-	rm -f $(CLASSDIR)/*.class
-	rm -f $(DEPSDIR)/*.d
-	touch $(JPPFILES)
-
-cleaner: clean
-	rm -f *.class
-	rm -f $(DEPSDIR)/*
-	rm -f $(GJAVAFILES)
-
--include $(JPPFILES:%.jpp=$(DEPSDIR)/%.d)
