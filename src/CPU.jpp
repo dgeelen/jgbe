@@ -155,7 +155,12 @@ public class CPU
 			int saveversion = SL_SAVE_VERSION; //change when changing savestate format
 			dostream.writeInt(SL_MAGIX);
 			dostream.writeInt(saveversion);
-			//System.out.println("saving state version:"+saveversion);
+			int compressionmethod = 0; // no compression
+			dostream.writeInt(compressionmethod);
+			switch (compressionmethod) {
+				case 0: break; // no compression
+				case 1: ASSERT(false); // GZIP compression
+			}
 			stateSaveLoad(true, saveversion, dostream, null);
 		}
 
@@ -181,6 +186,14 @@ public class CPU
 				throw new IOException("save state too new");
 			if (loadversion != SL_SAVE_VERSION)
 				System.out.println("loading state with old version:"+loadversion);
+
+			int compressionmethod = 0;
+			if (loadversion >= SL_LOAD_COMPRESS_VERSION)
+				compressionmethod = distream.readInt();
+			switch (compressionmethod) {
+				case 0: break; // no compression
+				case 1: ASSERT(false); // GZIP compression
+			}
 			stateSaveLoad(false, loadversion, null, distream);
 		}
 
