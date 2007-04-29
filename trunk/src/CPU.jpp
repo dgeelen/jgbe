@@ -218,17 +218,27 @@ public class CPU
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
 
+/*
+
+CA12==0 --> Error!
+happens at 0b06
+check for badness = $afa
+
+
+
+*/
+
 
 		static private int hblank_dma() {
 			if((hblank_dma_state==0)) { //HDMA, transfer 0x10 bytes per 8 clocks
 				for(int i=0; i<0x10; ++i) {
 					VC.write(hblank_dma_dst++, read(hblank_dma_src++));
 				}
-				hblank_dma_len-=0x10;
-				if(hblank_dma_len==0) hblank_dma_state=(1<<7);
-				IOP[55]=((hblank_dma_len>>4)-1)&0xff; //update Length
+				--hblank_dma_len;
+				if(hblank_dma_len<0x80) hblank_dma_state=(1<<7);
+				IOP[55]=hblank_dma_len; //update Length
 // 				System.out.println("HDMA: len="+hblank_dma_len+ " IOP[55]="+IOP[55]);
-				return 8; //8 cycles /scanline
+				return 4; //8 cycles /scanline
 			}
 			return 0;
 		}
@@ -741,7 +751,7 @@ static int togglestart=1;
 							//PRINTF("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
 							hblank_dma_src=src;
 							hblank_dma_dst=dst;
-							hblank_dma_len=len;
+							hblank_dma_len=(value&0x7f)|(1<<7);
 							hblank_dma_state=0;
 						}
 						break;

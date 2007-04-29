@@ -556,7 +556,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					}
 				}
 				//System.out.println("timer!");
-				frame.setTitle("" + fps + " - JGameBoy Emulator V0.01");
+				frame.setTitle("" + fps + " - fixme - JGameBoy Emulator V0.42");
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}

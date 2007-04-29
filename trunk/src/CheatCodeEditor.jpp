@@ -332,7 +332,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 
 	private void printFailedCode(CheatCode c) {
 		System.out.println("Code failed to apply: "+c.strCode+" - " +c.Description);
-// 		System.out.println("  Address="+c.address+" oldvalue="+c.oldvalue+" patch="+c.patch);
+		System.out.printf("  Address=$%04x oldvalue=$%02x patch=$%02x\n",c.address,c.oldvalue,c.patch);
 	}
 
 	protected boolean UseCheats=true;
