@@ -66,10 +66,7 @@ public class CPU
 		#endif
 		static protected VideoController VC;
 		static protected AudioController AC;
-		static int hblank_dma_src;
-		static int hblank_dma_dst;
-		static int hblank_dma_len;
-		static int hblank_dma_state=1<<7; //1<<7=inactive, 0=active
+		static int hblank_dma_state;
 		static int vcmode;
 		//Debug helpers
 		protected static int last_memory_access=-1;
@@ -144,6 +141,8 @@ public class CPU
 			SL_IF_VERSION( 3, -1) SL_INT(TotalCycleCount);
 
 			SL_IF_VERSION( 4, -1) SL_UINT8(hw_ilines);
+
+			SL_IF_VERSION( 7, -1) SL_UINT8(hblank_dma_state);
 
 			if (SL_LOAD) {
 				refreshMemMap();
@@ -230,16 +229,22 @@ check for badness = $afa
 
 
 		static private int hblank_dma() {
-			if((hblank_dma_state==0)) { //HDMA, transfer 0x10 bytes per 8 clocks
-				for(int i=0; i<0x10; ++i) {
-					VC.write(hblank_dma_dst++, read(hblank_dma_src++));
-				}
-				--hblank_dma_len;
-				if(hblank_dma_len<0x80) hblank_dma_state=(1<<7);
-				IOP[55]=hblank_dma_len; //update Length
-// 				System.out.println("HDMA: len="+hblank_dma_len+ " IOP[55]="+IOP[55]);
-				return 4; //8 cycles /scanline
-			}
+			if (hblank_dma_state < (1<<7)) return 0;
+
+			int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
+			int dst = (((IOP[0x53]<<8)|IOP[0x54]) & 0x1ff0) | 0x8000;
+			int len = 16;
+			
+			for (int i = 0; i < len; ++i)
+				VC.write(dst++, read(src++));
+			
+			IOP[0x51] = src >> 8;
+			IOP[0x52] = src & 0xF0;
+			IOP[0x53] = 0x1F & (dst >> 8);
+			IOP[0x54] = dst & 0xF0;
+			--IOP[0x55];
+			--hblank_dma_state;
+
 			return 0;
 		}
 
@@ -264,10 +269,7 @@ check for badness = $afa
 					break;
 				case 3:
 					VC.stat_change(0);
-					//if (hw.hdma & 0x80)
-					//	hw_hdma();
-					//else
-						C += 102 - hblank_dma();
+					C += 102 - hblank_dma();
 					break;
 				}
 				return;
@@ -311,11 +313,7 @@ check for badness = $afa
 					break;
 				case 3:
 					VC.stat_change(0);
-					//if (hw.hdma & 0x80)
-						//hw_hdma();
-					/* FIXME -- how much of the hblank does hdma use?? */
-					/* else */
-					C += 102-hblank_dma();
+					C += 102 - hblank_dma();
 					break;
 				case 0:
 					if (++R_LY >= 144)
@@ -523,7 +521,7 @@ static int togglestart=1;
 					case 0xff53: // FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
 					case 0xff54: // FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
 					case 0xff55: // FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
-						b = IOP[index-0xff00]|hblank_dma_state;
+						b = IOP[index-0xff00];
 						break;
 					case 0xff68: // BGPI
 						b = VC.BGPI;
@@ -735,24 +733,24 @@ static int togglestart=1;
 						IOP[index-0xff00] = value;
 						break;
 					case 0xff55: // FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
-						int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
-						int dst = (((IOP[0x53]<<8)|IOP[0x54]) & 0x1ff0) | 0x8000;
-						int len = ((value & 0x7f)+1)<<4;
-						int mode = value >> 7;
+						int mode = ((hblank_dma_state|value) & 0x80);
 						if (mode == 0) {
+							int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
+							int dst = (((IOP[0x53]<<8)|IOP[0x54]) & 0x1ff0) | 0x8000;
+							int len = ((value & 0x7f)+1)<<4;
 // 							System.out.println("WARNING: CPU.write(): TODO: Untimed H-DMA Transfer");
 							// TODO: this should take more than 4-12 cycles :O
 							//PRINTF("DONE: General HDMA transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
 							for (int i = 0; i < len; ++i)
 								VC.write(dst++, read(src++));
+							IOP[0x51] = src >> 8;
+							IOP[0x52] = src & 0xF0;
+							IOP[0x53] = 0x1F & (dst >> 8);
+							IOP[0x54] = dst & 0xF0;
 							IOP[0x55] = 0xff; // indicate we have finished
-							hblank_dma_state=(1<<7);
 						} else {
-							//PRINTF("TODO: HDMA HBlank transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
-							hblank_dma_src=src;
-							hblank_dma_dst=dst;
-							hblank_dma_len=(value&0x7f)|(1<<7);
-							hblank_dma_state=0;
+							hblank_dma_state = value;
+							IOP[0x55] = value & 0x7f;
 						}
 						break;
 					case 0xff68: // BGPI
@@ -854,6 +852,7 @@ static int togglestart=1;
 			KeyStatus=0; //bitmask
 			lastException=0;
 			hw_ilines = 0;
+			hblank_dma_state = 1<<7;
 		}
 
 		static final protected int cycles() {
