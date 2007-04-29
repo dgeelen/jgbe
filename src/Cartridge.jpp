@@ -15,8 +15,10 @@ public class Cartridge {
 
 	protected int[][] MM_ROM = new int[MAX_ROM_MM][];
 	protected int[][] MM_RAM = new int[MAX_RAM_MM][];;
-	protected int MM_ROM_USED_ENTRIES=0;
 	protected int[] BIOS_ROM = new int[0x100];
+
+	protected int rom_mm_size;
+	protected int ram_mm_size;
 
 	private String  file_name;
 	private String  err_msg;            // message in case of an error
@@ -151,7 +153,7 @@ public class Cartridge {
 		}
 
 		// Determine ROM size (need 4 memmap entries per bank)
-		int rom_mm_size = 0;
+		rom_mm_size = 0;
 		switch(MM_ROM[0][0x0148])	{
 			case 0x00: rom_mm_size =   2 << 2; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
 			case 0x01: rom_mm_size =   4 << 2; System.out.println("ROM size = 64KByte (4 banks)"); break;
@@ -168,7 +170,7 @@ public class Cartridge {
 		} // switch(header[0x0148])
 
 		// Determine RAM size (1 memmap entry per 4 KBytes (round up)
-		int ram_mm_size = 0;
+		ram_mm_size = 0;
 		switch(MM_ROM[0][0x0149]) {
 			case 0x00: ram_mm_size =  0; System.out.println("Card has no RAM"); break;
 			case 0x01: ram_mm_size =  1; System.out.println("Card has 2KBytes of RAM"); break;
@@ -196,7 +198,7 @@ public class Cartridge {
 			PRINTF(".");
 		}
 		PRINTF("\n");
-		MM_ROM_USED_ENTRIES=rom_mm_size;
+
 		// initing RAM
 		for (int i = 0; i < ram_mm_size; ++i)
 			MM_RAM[i] = new int[MEMMAP_SIZE];
@@ -243,8 +245,9 @@ public class Cartridge {
 				}
 				else if(index<0x4000)  { // 2000-3FFF - ROM Bank Number (Write Only)
 					int i=Math.max(1, value&0x1f);
-// 					PRINTF("Change rombank bits 0-4: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i,value, CPU.PC);
-					CurrentROMBank=i;
+ 					//PRINTF("Change rombank bits 0-4: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i,value, CPU.PC);
+					CurrentROMBank &= ~0x1f; // clear bits 0-4
+					CurrentROMBank |= i;     // set them with new value
 					//System.out.println("Selecting ROM bank"+CurrentROMBank);
 				}
 				else if(index<0x6000) { // 4000-5FFF - RAM Bank Number - or - Upper Bits of ROM Bank Number (Write Only)
@@ -253,13 +256,19 @@ public class Cartridge {
  						i=(CurrentROMBank&0x1f)|((value&0x03)<<5);
 						/*j=(CurrentROMBank&0x1f)|((value&0x03)<<4);
 						k=(CurrentROMBank&0x0f)|((value&0x03)<<4);*/
-// 						PRINTF("Change rombank bits 5-6: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i, value,CPU.PC);
+ 						//PRINTF("Change rombank bits 5-6: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i, value,CPU.PC);
 						CurrentROMBank=i;
 						//System.out.println("Selecting ROM bank"+CurrentROMBank);
 					}
 					else { // Select RAM
 						//not neccessary to take max(1, n) because there is only 1 slot where the rambanks may be mapped
 						CurrentRAMBank=value&0x03;
+						if (ram_mm_size == 0) {
+							PRINTLN("WARNING! 'Bomberman Collection (J) [S]' hack'");
+							PRINTF("setting rom banks 0-15 to banks %d-%d\n", value*16, (value*16)+15);
+							for (int i = 0; i < 64; ++i)
+								MM_ROM[i] = MM_ROM[(value*64)|i];
+						}
 					}
 				}
 				else if(index<0x8000) { //6000-7FFF - ROM/RAM Mode Select (Write Only)
