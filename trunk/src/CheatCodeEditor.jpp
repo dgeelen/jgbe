@@ -355,7 +355,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 					}
 					else { //Somewhere in ROMBANKn
 						boolean success=false;
-						for(int i=4; i<cart.MM_ROM_USED_ENTRIES; i+=4) {
+						for(int i=4; i<cart.rom_mm_size; i+=4) {
 							if(cart.MM_ROM[i+((c.address>>12)&3)][c.address&0x0fff]==c.oldvalue) {
 								c.addUndo(i+((c.address>>12)&3),c.address&0x0fff);
 								cart.MM_ROM[i+((c.address>>12)&3)][c.address&0x0fff]=c.patch;

@@ -783,7 +783,7 @@ static int togglestart=1;
 						PRINTF("WARNING: CPU.write(): Write to *undocumented* IO port $%04x\n",index);
 						break;
 					default:
-						PRINTF("TODO: CPU.write(): Write to IO port $%04x\n",index);
+						PRINTF("TODO: CPU.write(): Write %02x to IO port $%04x\n",value, index);
 						break;
 				}
 			}
