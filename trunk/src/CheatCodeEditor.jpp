@@ -349,7 +349,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 						if(cart.MM_ROM[c.address>>12][c.address&0x0fff]==c.oldvalue) {
 							c.addUndo(c.address>>12,c.address&0x0fff);
 							cart.MM_ROM[c.address>>12][c.address&0x0fff]=c.patch;
-							}
+						}
 						else
 							printFailedCode(c);
 					}
