@@ -852,7 +852,7 @@ static int togglestart=1;
 			KeyStatus=0; //bitmask
 			lastException=0;
 			hw_ilines = 0;
-			hblank_dma_state = 1<<7;
+			hblank_dma_state = 0;
 		}
 
 		static final protected int cycles() {
