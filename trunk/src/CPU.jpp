@@ -4,6 +4,7 @@
 #include "CPU.inc"
 
 import java.io.*;
+import java.util.zip.*;
 public class CPU
 {
 		static private CPU singleton = null;
@@ -155,13 +156,23 @@ public class CPU
 			int saveversion = SL_SAVE_VERSION; //change when changing savestate format
 			dostream.writeInt(SL_MAGIX);
 			dostream.writeInt(saveversion);
-			int compressionmethod = 0; // no compression
+			int compressionmethod = 1; // GZIP compression
 			dostream.writeInt(compressionmethod);
+			DeflaterOutputStream zostream = null;
 			switch (compressionmethod) {
-				case 0: break; // no compression
-				case 1: ASSERT(false); // GZIP compression
+				// no compression
+				case 0: break;
+				// GZIP compression
+				case 1: {
+					zostream = new GZIPOutputStream(dostream);
+					dostream = new DataOutputStream(zostream);
+				}; break;
 			}
 			stateSaveLoad(true, saveversion, dostream, null);
+			if (zostream != null) {
+				dostream.flush();
+				zostream.finish();
+			}
 		}
 
 		public static final void loadState(DataInputStream distream)
@@ -191,8 +202,10 @@ public class CPU
 			if (loadversion >= SL_LOAD_COMPRESS_VERSION)
 				compressionmethod = distream.readInt();
 			switch (compressionmethod) {
-				case 0: break; // no compression
-				case 1: ASSERT(false); // GZIP compression
+				// no compression
+				case 0: break;
+				// GZIP compression
+				case 1: distream = new DataInputStream(new GZIPInputStream(distream)); break;
 			}
 			stateSaveLoad(false, loadversion, null, distream);
 		}
