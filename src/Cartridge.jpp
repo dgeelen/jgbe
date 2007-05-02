@@ -245,7 +245,7 @@ public class Cartridge {
 				}
 				else if(index<0x4000)  { // 2000-3FFF - ROM Bank Number (Write Only)
 					int i=Math.max(1, value&0x1f);
-  					PRINTF("Change rombank bits 0-4: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i,value, CPU.PC);
+//   					PRINTF("Change rombank bits 0-4: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i,value, CPU.PC);
 					CurrentROMBank &= ~0x1f; // clear bits 0-4
 					CurrentROMBank |= i;     // set them with new value
 					CurrentROMBank %= (rom_mm_size>>2);
@@ -257,7 +257,7 @@ public class Cartridge {
  						i=(CurrentROMBank&0x1f)|((value&0x03)<<5);
 						/*j=(CurrentROMBank&0x1f)|((value&0x03)<<4);
 						k=(CurrentROMBank&0x0f)|((value&0x03)<<4);*/
-  						PRINTF("Change rombank bits 5-6: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i, value,CPU.PC);
+//   						PRINTF("Change rombank bits 5-6: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i, value,CPU.PC);
  						CurrentROMBank=i;
 						CurrentROMBank %= (rom_mm_size>>2);
 						//System.out.println("Selecting ROM bank"+CurrentROMBank);

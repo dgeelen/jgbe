@@ -82,8 +82,8 @@ public class VideoController {
 	private long ptick;
 	private long ftick;
 
-	private int scale = 2;
-	public int nscale = 2;
+	private int scale = 4;
+	public int nscale = 4;
 	private int cfskip = 0;
 	public int fskip = 1; // 1 is off
 
