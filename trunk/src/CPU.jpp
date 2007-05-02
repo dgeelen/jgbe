@@ -234,10 +234,10 @@ check for badness = $afa
 			int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
 			int dst = (((IOP[0x53]<<8)|IOP[0x54]) & 0x1ff0) | 0x8000;
 			int len = 16;
-			
+
 			for (int i = 0; i < len; ++i)
 				VC.write(dst++, read(src++));
-			
+
 			IOP[0x51] = src >> 8;
 			IOP[0x52] = src & 0xF0;
 			IOP[0x53] = 0x1F & (dst >> 8);
@@ -943,12 +943,14 @@ static int togglestart=1;
 			if ((KeyStatus&i) != 0) return;
 			KeyStatus |= i;
 			keyBounce=1000; //times to bounce the key
+			PRINTLN("PRESS "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
 		public static final void releaseButton(int i) {
 			if ((KeyStatus&i) == 0) return;
 			KeyStatus&=~i;
 			keyBounce=1000; //times to bounce the key
+			PRINTLN("RELEA "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
 		static final protected int execute() {
