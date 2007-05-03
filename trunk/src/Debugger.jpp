@@ -12,7 +12,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.io.*;
 
-public class Debugger implements ActionListener, ItemListener, KeyListener, AdjustmentListener { //GUI
+public class Debugger implements ActionListener, ItemListener, KeyListener, MouseListener, AdjustmentListener { //GUI
 	public static boolean RIGHT_TO_LEFT = false;
 	private static final int aaarg=650;
 	public JTable regs1;
@@ -52,7 +52,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 		runner = new DebugRunner(this);
 		createAndShowGUI();
 		update();
-	}
+}
 
 	public class DebugRunner implements Runnable, CPURunner {
 		private volatile int threadStatus = 0;
@@ -235,6 +235,19 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 // 			System.out.println("row "+row+"="+this.Colors[row]);
 			if((this.Colors!=null)) setBackground(this.Colors[row]);
 			else setBackground(Color.WHITE);
+
+			if((table==regs1)||(table==regs2)||(table==hwregs)) {
+				String s = (String)table.getValueAt(row, column);
+				int i= s.indexOf('$');
+				if( i>-1) {
+					s=s.substring(i);
+					i=parser.StrToInt(s);
+					setToolTipText(""+i);
+				} else setToolTipText("");
+			}
+			else {
+				setToolTipText("");
+			}
 			setFont(MonoFont);
 			return this;
 		}
@@ -260,6 +273,22 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 		}
 	}
 
+	public void mouseExited(MouseEvent e) {
+		PRINTLN("MOUSE EXIT");
+	}
+	public void mouseEntered(MouseEvent e) {
+		PRINTLN("MOUSE ENTER");
+	}
+
+	public void mouseReleased(MouseEvent e) {
+		PRINTLN("MOUSE RELEASE");
+	}
+	public void mousePressed(MouseEvent e) {
+		PRINTLN("MOUSE PRESSED");
+	}
+	public void mouseClicked(MouseEvent e) {
+		PRINTLN("MOUSE CLICKED");
+	}
 
 	public void adjustmentValueChanged(AdjustmentEvent e) {
 		memaddr = e.getValue();
@@ -376,6 +405,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 20));
 		contentPane.add( scroll, BorderLayout.LINE_END );
+
+
+/*		regs1.addMouseListener(this);
+		regs2.addMouseListener(this);
+		mem.addMouseListener(this);*/
+
 	}
 
 	synchronized public void update() {
@@ -534,10 +569,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Adju
 	private void updateRegisters() { //TODO: Dit moet makkelijker kunnen ...
 		TableColumnModel m = regs1.getColumnModel();
 		TableColumn c;
-		DefaultTableCellRenderer normal=new DefaultTableCellRenderer();
-		Color[] colors = new Color[1];
-		colors[0]=UpdateColor;
-		MyCellRenderer colored = new MyCellRenderer(colors);
+//  		DefaultTableCellRenderer normal=new DefaultTableCellRenderer();
+		Color[] colorsa = new Color[1];
+		Color[] colorsb = new Color[1];
+		colorsa[0]=UpdateColor;
+		colorsb[0]=Color.WHITE;
+		MyCellRenderer colored = new MyCellRenderer(colorsa);
+		MyCellRenderer normal = new MyCellRenderer(colorsb);
 
 		regs1.setValueAt(STRFORMAT("A=$%02x",gui.cpu.A), 0,0);
 		c = m.getColumn(0);
