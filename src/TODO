@@ -1,0 +1,3 @@
+ - Make color selector for palettes
+ - Fix 'If' for scale 4x
+ - Fix keyrepeat (for linux and MacOS and solaris and BSD and ... everything except wind00ze)
