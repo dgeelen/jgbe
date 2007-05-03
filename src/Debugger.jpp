@@ -795,6 +795,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					else if(l.equalsIgnoreCase("bpm")){ //break on memory access
 						bpm = v;
 					}
+					else if(l.equalsIgnoreCase("w")) { //break on memory change only
+						runner.setWatchPoint(v);
+					}
 					else if(l.equalsIgnoreCase("w0")){
 						watches[0] = v;
 						update();
@@ -823,11 +826,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
 					runner.resume();
 				}
-			}
-			if(s.charAt(0)=='w') {
-				String ss = s.substring( s.lastIndexOf(" ") + 1);
-				if( ss.charAt(0)=='$' )
-					runner.setWatchPoint(Integer.parseInt( ss.substring(1), 16 ));
 			}
 			if(s.charAt(0)=='i') {
 				String ss = s.substring( s.lastIndexOf(" ") + 1);
