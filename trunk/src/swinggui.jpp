@@ -72,6 +72,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemScale1x;
 		JMenuItem menuitemScale2x;
 		JMenuItem menuitemScale3x;
+		JMenuItem menuitemScale4x;
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
@@ -187,15 +188,19 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemScale1x = new JMenuItem( "Scale 1x", KeyEvent.VK_1 );
 			menuitemScale2x = new JMenuItem( "Scale 2x", KeyEvent.VK_2 );
 			menuitemScale3x = new JMenuItem( "Scale 3x", KeyEvent.VK_3 );
+			menuitemScale4x = new JMenuItem( "Scale 4x", KeyEvent.VK_4 );
 			menuitemScale1x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_1, ActionEvent.CTRL_MASK ) );
 			menuitemScale2x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_2, ActionEvent.CTRL_MASK ) );
 			menuitemScale3x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_3, ActionEvent.CTRL_MASK ) );
+			menuitemScale4x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_4, ActionEvent.CTRL_MASK ) );
 			menuitemScale1x.addActionListener( this );
 			menuitemScale2x.addActionListener( this );
 			menuitemScale3x.addActionListener( this );
+			menuitemScale4x.addActionListener( this );
 			menuScaling.add( menuitemScale1x );
 			menuScaling.add( menuitemScale2x );
 			menuScaling.add( menuitemScale3x );
+			menuScaling.add( menuitemScale4x );
 			menuSettings.add( menuScaling) ;
 
 			menuFrameSkip = new JMenu( "Frame Skipping");
@@ -386,6 +391,13 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 			}
+			else if (e.getSource().equals( menuitemScale4x )) {
+				addOSDLine("Set scaling: Scale4x");
+				VC.nscale = 4;
+ 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
+				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
+				frame.pack();
+			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
 				++VC.fskip;
 				addOSDLine("Increased frameskip: "+VC.fskip);
@@ -517,9 +529,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cpu.VC.setGrayShades(c);
 			}
 			else if(e.getSource().equals( menuitemColorSchemeBlackAndWhite )) {
-				int[][] c={ {0xFF, 0xFF, 0xFF},	// WHITE
-										{0x80, 0x80, 0x80},  // LIGHTGRAY
-										{0x40, 0x40, 0x40},  // DARKGRAY
+				int[][] c={ {0xf8, 0xf8, 0xf8},	// WHITE
+										{0xa8, 0xa8, 0xa8},  // LIGHTGRAY
+										{0x60, 0x60, 0x60},  // DARKGRAY
 										{0x00, 0x00, 0x00}}; // BLACK
 				cpu.VC.setGrayShades(c);
 			}
