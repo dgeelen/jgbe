@@ -46,6 +46,10 @@ run: all
 debug: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound
 
+rcrun: all
+	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  org.apache.bcel.util.JavaWrapper swinggui -lastcart -nosound
+#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  org.apache.bcel.util.JavaWrapper TestSuite ~/gbroms/Turtles\ 3.zip
+
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge
 

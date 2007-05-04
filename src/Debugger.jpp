@@ -827,6 +827,14 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					runner.resume();
 				}
 			}
+#ifdef ENABLE_RECOMPILER
+			if(s.equals("rc")) {
+				runner.suspend();
+				if (CPU.PC < 0x4000) {
+					CPU.rccache[CPU.PC] = CPURecompiler.Recompile(CPU.PC);
+				}
+			}
+#endif
 			if(s.charAt(0)=='i') {
 				String ss = s.substring( s.lastIndexOf(" ") + 1);
 				if( ss.charAt(0)=='$' )
