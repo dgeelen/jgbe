@@ -3,6 +3,7 @@
 
 //#define USE_JAVA_MOBILE
 //#define USE_JAVA_142
+//#define ENABLE_RECOMPILER
 
 #ifdef USE_JAVA_MOBILE
 	#define USE_JAVA_142

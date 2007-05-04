@@ -45,7 +45,7 @@ public class CPU
 		static private int TIMAcntdwn = 0;
 		static private int VBLANKcntdwn = 0;
 
-		protected static int PC=0;         ///< Program counter
+		public    static int PC=0;         ///< Program counter
 		protected static int SP=0;         ///< Stack Pointer
 		protected static int IE=0;         ///< Interrupt Enable (allowed interrupts)
 		protected static boolean IME=true; ///< Interrupt Master Enable
@@ -964,6 +964,15 @@ static int togglestart=1;
 				//return 12; // 12 cycles for this?
  				return 4;/* FIXME(?) For break on interrupt */
 			}
+
+#ifdef ENABLE_RECOMPILER
+			if ((PC < 0x4000) && (rccache[PC] != null)) {
+				PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
+				return rccache[PC].execute();
+				//rccache[PC] = CPURecompiler.Recompile(PC);
+			}
+#endif
+
 			--keyBounceWaitNext;
 			if(keyBounceWaitNext == 0) {//wait some instructions
 				keyBounceWaitNext=1000;
@@ -1147,6 +1156,10 @@ static int togglestart=1;
 		static long lastns = 0;
 		static long lastuf = 0;
 		static int samplesLeft = 0;
+
+#ifdef ENABLE_RECOMPILER
+		static CPURunBlock[] rccache =  new CPURunBlock[0x4000];
+#endif
 
 		static final public int nextinstruction() {
 			//PRINTF("execing stuff PC=0x%04x VBLANKcntdwn=%05d, mode=%d\n",PC, VBLANKcntdwn, R_STAT&3);

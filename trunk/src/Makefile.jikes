@@ -5,7 +5,7 @@ PPFLAGS = -DUSE_JAVA_142
 
 RTJAR = $(shell ./findrtjar.sh)
 
-CLASSPATH = .:$(RTJAR)
+CLASSPATH = ../../bcel-5.2/bcel-5.2.jar:.:$(RTJAR)
 
 JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -O -d $(CLASSDIR) -nowarn -classpath $(CLASSPATH)
 

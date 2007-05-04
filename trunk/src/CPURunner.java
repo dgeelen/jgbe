@@ -1,5 +1,3 @@
-#include "Global.inc"
-
 interface CPURunner {
 	public void suspend();
 	public void resume();
