@@ -97,6 +97,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenu menuOther;
 		JMenuItem menuitemCheats;
 		JMenuItem menuitemToggleCheats;
+		JMenuItem menuitemScaleBuilder;
   	JMenuItem[] menuItems;
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
@@ -286,8 +287,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemToggleCheats=new JMenuItem("Toggle cheats on/off", KeyEvent.VK_T);
 			menuitemToggleCheats.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_BACK_SLASH, ActionEvent.CTRL_MASK ));
 			menuitemToggleCheats.addActionListener(this);
+			menuitemScaleBuilder=new JMenuItem("Built Scale", KeyEvent.VK_S);
+			menuitemScaleBuilder.addActionListener(this);
 			menuOther.add(menuitemCheats);
 			menuOther.add(menuitemToggleCheats);
+			menuOther.add(menuitemScaleBuilder);
 			mainMenuBar.add( menuOther) ;
 
 
@@ -435,8 +439,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				addOSDLine(cpu.AC.S4.muted==0 ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
 			}
 			else if (e.getSource().equals( menuitemToggleCheats)) {
-			cheatcodes.ToggleCheats(cart);
-			addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
+				cheatcodes.ToggleCheats(cart);
+				addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
+			}
+			else if (e.getSource().equals( menuitemScaleBuilder)) {
+				ScaleBuilder sb = new ScaleBuilder(frame);
+				//sb.showOpenDialog();
 			}
 			else if (e.getSource().equals( menuitemCheats)) {
 				pauseEmulation();
