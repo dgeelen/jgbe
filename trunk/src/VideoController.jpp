@@ -40,6 +40,11 @@ public class VideoController {
 	protected int LCDC=0;
 	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
 
+	protected int curBGY;
+	protected int curWNDY;
+
+	protected int[][][] Scalerx4 = new int[0x100][4][4];
+
 // 	protected int GRAYSHADES[][] = {
 // 	                                 {0xFF, 0xFF, 0xFF},   // WHITE
 // 	                                 {0xD3, 0xD3, 0xE3},   // LIGHTGRAY
@@ -438,22 +443,27 @@ public class VideoController {
 				for (int x = 0; x < 160; ++x) {
 					int xn = (x==0  )?0  :x-1;
 					int xp = (x==159)?159:x+1;
-					BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
-					BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
-					BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
-					BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
-					BLIT_PIX_WI(ti2, EQ(B, D) ? B : E);
-					BLIT_PIX_WI(ti2, E);
-					BLIT_PIX_WI(ti2, E);
-					BLIT_PIX_WI(ti2, EQ(B, F) ? B : E);
-					BLIT_PIX_WI(ti3, EQ(H, D) ? H : E);
-					BLIT_PIX_WI(ti3, E);
-					BLIT_PIX_WI(ti3, E);
-					BLIT_PIX_WI(ti3, EQ(H, F) ? H : E);
-					BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
-					BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
-					BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
-					BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
+// 					if() {
+						BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
+						BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
+						BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
+						BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
+						BLIT_PIX_WI(ti2, EQ(B, D) ? B : E);
+						BLIT_PIX_WI(ti2, E);
+						BLIT_PIX_WI(ti2, E);
+						BLIT_PIX_WI(ti2, EQ(B, F) ? B : E);
+						BLIT_PIX_WI(ti3, EQ(H, D) ? H : E);
+						BLIT_PIX_WI(ti3, E);
+						BLIT_PIX_WI(ti3, E);
+						BLIT_PIX_WI(ti3, EQ(H, F) ? H : E);
+						BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
+						BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
+						BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
+						BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
+// 					}
+// 					else {
+//
+// 					}
 				}
 				ti1 += 160*4*3;
 				ti2 += 160*4*3;
@@ -465,6 +475,9 @@ public class VideoController {
 		//source.newPixels();
 		curDrawImg ^= 1;
 		if (listener != null) listener.updateUI();
+		curBGY = 0;
+		curWNDY = 0;
+
 #undef A
 #undef B
 #undef C
@@ -827,6 +840,7 @@ public class VideoController {
 		int cnt = windX;
 		if (cnt == 0) return;
 
+
 		bgY     = (SCY+LY)&0xFF;
 		bgTileY = bgY >> 3;
 		bgOffsY = bgY & 7;
@@ -888,7 +902,7 @@ public class VideoController {
 		int cnt = 160-curX;
 		if (cnt == 0)
 			return;
-		bgY     = LY - WY;
+		bgY     = curWNDY++;
 		bgTileY = bgY >> 3;
 		bgOffsY = bgY & 7;
 
