@@ -1,0 +1,97 @@
+#include "Global.inc"
+
+#ifdef ENABLE_RECOMPILER
+
+import org.apache.bcel.*;
+import org.apache.bcel.generic.*;
+import org.apache.bcel.classfile.*;
+import org.apache.bcel.util.*;
+
+public class CPURecompiler {
+	private static final String[] interfaces = { "CPURunBlock" };
+	
+ public static Object createProxy(String pack, String class_name) {
+    try {
+      Class cl = Class.forName(pack + "$$BCEL$$" + class_name);
+      return cl.newInstance();
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+
+    return null;
+  }
+	
+	public static CPURunBlock Recompile(int PC) {
+		java.lang.ClassLoader loader = CPURecompiler.class.getClassLoader();
+
+		PRINTLN(loader.getClass().toString());
+		
+ClassGen cg = new ClassGen("foo", "java.lang.Object", "", Constants.ACC_PUBLIC,
+				 new String[] {"CPURunBlock"});
+
+      // That's important, otherwise newInstance() won't work
+      cg.addEmptyConstructor(Constants.ACC_PUBLIC);
+
+      InstructionList    il      = new InstructionList();
+      ConstantPoolGen    cp      = cg.getConstantPool();
+      InstructionFactory factory = new InstructionFactory(cg);
+
+			int pcref = cp.addFieldref("CPU", "PC",
+				   Type.INT.getSignature());
+
+      MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT,
+null, null, "execute", "foo", il, cp);
+
+			
+			/*      int out     = cp.addFieldref("java.lang.System", "out",
+				   "Ljava/io/PrintStream;");
+      int println = cp.addMethodref("java.io.PrintStream", "println",
+				  "(Ljava/lang/Object;)V");
+
+      // System.out.println("actionPerformed:" + event);
+      il.append(new GETSTATIC(out));
+      il.append(factory.createNew("java.lang.StringBuffer"));
+      il.append(InstructionConstants.DUP);
+      il.append(new PUSH(cp, "actionPerformed:"));
+      il.append(factory.createInvoke("java.lang.StringBuffer", "<init>", Type.VOID,
+				     new Type[] {Type.STRING}, Constants.INVOKESPECIAL));
+
+		  il.append(new INVOKEVIRTUAL(println));*/
+      
+			il.append(new PUSH(cp, PC+1));
+		  il.append(new PUTSTATIC(pcref));
+
+			il.append(new PUSH(cp, 1));
+      il.append(InstructionConstants.IRETURN);
+
+      mg.stripAttributes(true);
+      mg.setMaxStack();
+      mg.setMaxLocals();
+      cg.addMethod(mg.getMethod());
+
+    byte[] bytes = cg.getJavaClass().getBytes();
+
+      System.out.println("Uncompressed class: " + bytes.length);
+			String s ="";
+			try {
+      s = Utility.encode(bytes, true);
+			} catch (Exception E) {
+				
+			}
+      System.out.println("Encoded class: " + s.length());
+
+      PRINTLN("Creating proxy ... ");
+      return (CPURunBlock)createProxy("foo.bar.", s);
+	}
+
+	public static void main( String[] args ) {
+		CPURunBlock testblock = Recompile(0);
+		PRINTLN(testblock.execute());
+		for (int i = 0; i < 100; ++i)
+			CPU.PC = 12;
+		for (int i = 100; --i > 0;)
+			CPU.PC = 12;
+	}
+}
+
+#endif//ENABLE_RECOMPILER
