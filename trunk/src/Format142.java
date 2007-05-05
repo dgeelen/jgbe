@@ -11,5 +11,4 @@ class Format142 {
 		s = strformat(s, iarr);
 		System.out.print(s);
 	}
-
 }
