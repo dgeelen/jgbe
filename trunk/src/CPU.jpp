@@ -3,6 +3,9 @@
 #include "SaveLoad.inc"
 #include "CPU.inc"
 
+#define protected public
+#define private public
+
 import java.io.*;
 import java.util.zip.*;
 public class CPU
@@ -85,6 +88,7 @@ public class CPU
 			VC = new VideoController(this, 160, 144);
 			AC = new AudioController(this);
 			cartridge = null;
+			//CPU.rccache[0x2cbb] = CPURecompiler.Recompile(0x2cbb);
 		}
 
 		public static final void loadCartridge(Cartridge acartridge) {
@@ -943,14 +947,14 @@ static int togglestart=1;
 			if ((KeyStatus&i) != 0) return;
 			KeyStatus |= i;
 			keyBounce=1000; //times to bounce the key
-			PRINTLN("PRESS "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
+			//PRINTLN("PRESS "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
 		public static final void releaseButton(int i) {
 			if ((KeyStatus&i) == 0) return;
 			KeyStatus&=~i;
 			keyBounce=1000; //times to bounce the key
-			PRINTLN("RELEA "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
+			//PRINTLN("RELEA "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
 		static final protected int execute() {
@@ -965,12 +969,21 @@ static int togglestart=1;
  				return 4;/* FIXME(?) For break on interrupt */
 			}
 
+			if (halted) return 4;
+
 #ifdef ENABLE_RECOMPILER
 			if ((PC < 0x4000) && (rccache[PC] != null)) {
-				PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
+				//PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
 				return rccache[PC].execute();
 				//rccache[PC] = CPURecompiler.Recompile(PC);
 			}
+			/*if (PC < 0x4000) {
+				++rccnt[PC];
+				if (rccnt[PC] > 0xfff) {
+					rccnt[PC] = 0;
+					PRINTF("PC=0x%02x\n",PC);
+				}
+			}*/
 #endif
 
 			--keyBounceWaitNext;
@@ -982,7 +995,6 @@ static int togglestart=1;
 					--keyBounce;
 				}
 			}
-			if (halted) return 4;
 			int op = FETCH;
 			cycles = Tables.cycles[op];
 
@@ -1159,6 +1171,7 @@ static int togglestart=1;
 
 #ifdef ENABLE_RECOMPILER
 		static CPURunBlock[] rccache =  new CPURunBlock[0x4000];
+		static int[] rccnt =  new int[0x4000];
 #endif
 
 		static final public int nextinstruction() {

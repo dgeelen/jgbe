@@ -36,8 +36,14 @@ ClassGen cg = new ClassGen("foo", "java.lang.Object", "", Constants.ACC_PUBLIC,
       ConstantPoolGen    cp      = cg.getConstantPool();
       InstructionFactory factory = new InstructionFactory(cg);
 
-			int pcref = cp.addFieldref("CPU", "PC",
-				   Type.INT.getSignature());
+			int pcref = cp.addFieldref("CPU", "PC", Type.INT.getSignature());
+			int href = cp.addFieldref("CPU", "H", Type.INT.getSignature());
+			int lref = cp.addFieldref("CPU", "L", Type.INT.getSignature());
+			int aref = cp.addFieldref("CPU", "A", Type.INT.getSignature());
+			int fref = cp.addFieldref("CPU", "F", Type.INT.getSignature());
+
+      int memread = cp.addMethodref("CPU", "read",
+			 Type.getMethodSignature(Type.INT, new Type[] { Type.INT }));
 
       MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT,
 null, null, "execute", "foo", il, cp);
@@ -57,23 +63,64 @@ null, null, "execute", "foo", il, cp);
 				     new Type[] {Type.STRING}, Constants.INVOKESPECIAL));
 
 		  il.append(new INVOKEVIRTUAL(println));*/
-      
-			il.append(new PUSH(cp, PC+1));
-		  il.append(new PUTSTATIC(pcref));
 
-			il.append(new PUSH(cp, 1));
-      il.append(InstructionConstants.IRETURN);
+			il.append(new PUSH(cp, 0xc590));
+			il.append(new INVOKESTATIC(memread));
+
+			//il.append(new ISTORE(0));
+			il.append(InstructionConstants.DUP);
+
+			il.append(new PUSH(cp, 0xc5));
+			il.append(new PUTSTATIC(href));
+			
+			il.append(new PUSH(cp, 0x40));
+			il.append(new PUTSTATIC(lref));
+
+			//il.append(new ILOAD(0));
+			il.append(new PUTSTATIC(aref));
+
+			//il.append(new ILOAD(0));
+			il.append(new PUSH(cp, 0xc540));
+			il.append(new INVOKESTATIC(memread));
+
+			IF_ICMPGE tif = new IF_ICMPGE(null);
+			il.append(tif);
+
+			il.append(new PUSH(cp, 0x2cc6));
+			il.append(new PUTSTATIC(pcref));
+
+			il.append(new PUSH(cp, CPU.CF_Mask));
+			il.append(new PUTSTATIC(fref));
+
+			il.append(new PUSH(cp, 12));
+			il.append(InstructionConstants.IRETURN);
+
+			InstructionHandle target =
+				il.append(new PUSH(cp, 0x2cc4));
+			il.append(new PUTSTATIC(pcref));
+
+			il.append(new PUSH(cp, 0));
+			il.append(new PUTSTATIC(fref));
+
+			il.append(new PUSH(cp, 11));
+			il.append(InstructionConstants.IRETURN);
+
+			tif.setTarget(target);
 
       mg.stripAttributes(true);
       mg.setMaxStack();
       mg.setMaxLocals();
       cg.addMethod(mg.getMethod());
 
+
     byte[] bytes = cg.getJavaClass().getBytes();
+
+		
 
       System.out.println("Uncompressed class: " + bytes.length);
 			String s ="";
 			try {
+			cg.getJavaClass().dump("/tmp/tclass.class");
       s = Utility.encode(bytes, true);
 			} catch (Exception E) {
 				
@@ -87,10 +134,20 @@ null, null, "execute", "foo", il, cp);
 	public static void main( String[] args ) {
 		CPURunBlock testblock = Recompile(0);
 		PRINTLN(testblock.execute());
-		for (int i = 0; i < 100; ++i)
-			CPU.PC = 12;
-		for (int i = 100; --i > 0;)
-			CPU.PC = 12;
+		int t1 = CPU.read(0xc590);
+		CPU.H = 0xc5;
+		CPU.L = 0x40;
+		CPU.A = t1;
+		//CPU.F = t2 ? 1 : 0;
+		if (t1 < CPU.read(0xc540)) {
+			CPU.F = CPU.CF_Mask;
+			CPU.PC = 0x2cc6;
+		}
+		else
+		{
+			CPU.F = 0;
+			CPU.PC = 0x2cc4;
+		}
 	}
 }
 
