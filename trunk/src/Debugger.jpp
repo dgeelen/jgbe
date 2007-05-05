@@ -831,7 +831,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			if(s.equals("rc")) {
 				runner.suspend();
 				if (CPU.PC < 0x4000) {
-					CPU.rccache[CPU.PC] = CPURecompiler.Recompile(CPU.PC);
+					CPU.rccache[CPU.PC] = CPURecompiler.doRecompile(CPU.PC);
 				}
 			}
 #endif
