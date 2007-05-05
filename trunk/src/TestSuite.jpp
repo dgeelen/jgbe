@@ -32,7 +32,7 @@ public class TestSuite
 		String s = deasm.simple_disasm(0x100);
 		if (s.indexOf("**MISSING    INSTRUCTION**") > -1)
 			return 0;
-		PRINTF("%-40s",s);
+		//PRINTF("%-40s",s);
 		int cycles = 4194304;
 		long ct1 = System.currentTimeMillis();
 		for (; cycles > 0;) {
@@ -42,7 +42,7 @@ public class TestSuite
 			//cpu.cycles();
 		}
 		long ct2 = System.currentTimeMillis();
-		PRINTF("%5dms\n",ct2-ct1);
+		PRINTF("%5dms\n",(int)(ct2-ct1));
 		return ct2-ct1;
 	}
 
