@@ -46,7 +46,7 @@ public class CPU
 
 		static private int DIVcntdwn = 0;
 		static private int TIMAcntdwn = 0;
-		static private int VBLANKcntdwn = 0;
+		static private int LCDCcntdwn = 0;
 
 		public    static int PC=0;         ///< Program counter
 		protected static int SP=0;         ///< Stack Pointer
@@ -125,7 +125,7 @@ public class CPU
 			SL_BOOL(speedswitch);
 			SL_INT(DIVcntdwn);
 			SL_INT(TIMAcntdwn);
-			SL_INT(VBLANKcntdwn);
+			SL_INT(LCDCcntdwn);
 			SL_UINT16(PC);
 			SL_UINT16(SP);
 			SL_UINT8(IE);
@@ -252,41 +252,40 @@ check for badness = $afa
 			return 0;
 		}
 
-#define C VBLANKcntdwn
 #define R_LCDC VC.LCDC
 #define R_STAT VC.STAT
 #define R_LY VC.LY
-		static final  private void lcdc_trans() {
+		static final private void lcdc_trans() {
 			if (0==(R_LCDC & 0x80))
 			{
-				ASSERT(C <= 0);
+				ASSERT(LCDCcntdwn <= 0);
 				switch (R_STAT & 3)
 				{
 				case 0:
 				case 1:
 					VC.stat_change(2);
-					C += 40;
+					LCDCcntdwn += 40*2;
 					break;
 				case 2:
 					VC.stat_change(3);
-					C += 86;
+					LCDCcntdwn += 86*2;
 					break;
 				case 3:
 					VC.stat_change(0);
-					C += 102 - hblank_dma();
+					LCDCcntdwn += 102*2 - hblank_dma();
 					break;
 				}
 				return;
 			}
-			ASSERT(C <= 0);
-			while (C <= 0)
+			ASSERT(LCDCcntdwn <= 0);
+			while (LCDCcntdwn <= 0)
 			{
 				switch ((R_STAT & 3))
 				{
 				case 1:
 					if (0==(hw_ilines & IF_VBLANK))
 					{
-						C += 218;
+						LCDCcntdwn += 218*2;
 						hw_interrupt(IF_VBLANK, IF_VBLANK);
 						break;
 					}
@@ -294,17 +293,17 @@ check for badness = $afa
 					{
 						//lcd_begin();
 						VC.stat_change(2);
-						C += 40;
+						LCDCcntdwn += 40*2;
 						break;
 					}
 					else if (R_LY < 152)
-						C += 228;
+						LCDCcntdwn += 228*2;
 					else if (R_LY == 152)
-						C += 28;
+						LCDCcntdwn += 28*2;
 					else
 					{
 						R_LY = -1;
-						C += 200;
+						LCDCcntdwn += 200*2;
 					}
 					++R_LY;
 					VC.stat_trigger();
@@ -313,11 +312,11 @@ check for badness = $afa
 					if (R_LY < 144)
 						VC.renderScanLine();
 					VC.stat_change(3);
-					C += 86;
+					LCDCcntdwn += 86*2;
 					break;
 				case 3:
 					VC.stat_change(0);
-					C += 102 - hblank_dma();
+					LCDCcntdwn += 102*2 - hblank_dma();
 					break;
 				case 0:
 					if (++R_LY >= 144)
@@ -325,20 +324,20 @@ check for badness = $afa
 						if (halted)
 						{
 							hw_interrupt(IF_VBLANK, IF_VBLANK);
-							C += 228;
+							LCDCcntdwn += 228*2;
 						}
-						else C += 10;
+						else LCDCcntdwn += 10*2;
 						VC.stat_change(1);
 						break;
 					}
 					VC.stat_change(2);
-					C += 40;
+					LCDCcntdwn += 40*2;
 					break;
 				}
 				//ASSERT(C > 0);
 			}
 		}
-#undef C
+
 		static final private void refreshMemMap() {
 			if (BIOS_enabled)
 				rMemMap[0x0] = null;
@@ -849,7 +848,7 @@ static int togglestart=1;
 			speedswitch = false;
 			DIVcntdwn = 0;
 			TIMAcntdwn = 0;
-			VBLANKcntdwn = 0;
+			LCDCcntdwn = 0;
 			IE=0;         ///< Interrupt Enable (allowed interrupts)
 			IME=true; ///< Interrupt Master Enable
 			halted=false;
@@ -1175,14 +1174,13 @@ static int togglestart=1;
 #endif
 
 		static final public int nextinstruction() {
-			//PRINTF("execing stuff PC=0x%04x VBLANKcntdwn=%05d, mode=%d\n",PC, VBLANKcntdwn, R_STAT&3);
 			int res = 4*execute();
-			last_memory_access=last_memory_access_internal;
 			SP &= 0xffff;
 			PC &= 0xffff;
 			++TotalInstrCount;
 			TotalCycleCount += res;
 			lastException = ((res!=0) ? 0 : 1);
+			last_memory_access=last_memory_access_internal;
 			if (res > 0) {
 				//clockfreq = 4194304hz
 				DIVcntdwn -= res;
@@ -1208,11 +1206,11 @@ static int togglestart=1;
 				}
 
 				if (doublespeed) {
-					VBLANKcntdwn -= res>>2; // more instrs per vblank int
+					LCDCcntdwn -= res>>1; // more instrs per vblank int
 					AC.render(res>>1); //render enough sound bytes for res Cycles
 				}
 			 	else {
-					VBLANKcntdwn -= res>>1;
+					LCDCcntdwn -= res;
 					AC.render(res); //render enough sound bytes for res Cycles
 				}
 
@@ -1222,42 +1220,8 @@ static int togglestart=1;
 				Mode 2  2_____2_____2_____2_____2_____2___________________2____
 				Mode 3  _33____33____33____33____33____33__________________3___
 */
-				if (VBLANKcntdwn < 0)
+				if (LCDCcntdwn < 0)
 					lcdc_trans();
-				/*{
-					VBLANKcntdwn += 456;   // 4194304/9198
-					++VC.LY;
-					if (VC.LY >= 154)
-						VC.LY = 0;
-				}
-
-				int mode = 2;
-				if (VBLANKcntdwn < 376) mode = 3;
-				if (VBLANKcntdwn < 204) mode = 0;
-				if (VC.LY >= 144)       mode = 1;
-
-				if (mode != vcmode) {
-					vcmode = mode;
-					VC.modeChanged(mode);
-// 				PRINTF("\n");
-				}*/
-				/*
-				for(int i=0; i<res; ++i)
-					PRINTF("%d",mode);*/
-				// [0 <= VBLANKcntdwn < 456]
-				// [0..204)  [204..376)  [376..456)
-				// mode 0    mode 3      mode 2
-				// when LY>144 then mode 1
-
-				// HBlank - HBlank = 456
-				// VBlank - VBlank = 70224
-				// [0 ................................................................................. 70224]
-				// [                                                                  4560 - 1111111111111111] // mode 1 - 4560cycles
-				// [                                                                                         ] // mode 2 - 80  cycles
-				// [                                                                                         ] // mode 3 - 172 cycles
-				// [                                                                                         ] // mode 0 - 204 cycles
-				// 80+172+204=456
-
 			}
 
 			return res;
