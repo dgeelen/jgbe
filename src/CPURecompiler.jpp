@@ -5,50 +5,41 @@
 import org.apache.bcel.*;
 import org.apache.bcel.generic.*;
 import org.apache.bcel.classfile.*;
-import org.apache.bcel.util.*;
+
+class ByteClassLoader extends ClassLoader {
+	public Class byteClass(String name, byte[] b) {
+		return defineClass(name, b, 0, b.length);
+	}
+}
 
 public class CPURecompiler {
-	private static final String[] interfaces = { "CPURunBlock" };
-	
- public static Object createProxy(String pack, String class_name) {
-    try {
-      Class cl = Class.forName(pack + "$$BCEL$$" + class_name);
-      return cl.newInstance();
-    } catch(Exception e) {
-      e.printStackTrace();
-    }
-
-    return null;
-  }
+	private static final ByteClassLoader loader = new ByteClassLoader();
 	
 	public static CPURunBlock Recompile(int PC) {
-		java.lang.ClassLoader loader = CPURecompiler.class.getClassLoader();
-
 		PRINTLN(loader.getClass().toString());
-		
-ClassGen cg = new ClassGen("foo", "java.lang.Object", "", Constants.ACC_PUBLIC,
-				 new String[] {"CPURunBlock"});
 
-      // That's important, otherwise newInstance() won't work
-      cg.addEmptyConstructor(Constants.ACC_PUBLIC);
+		ClassGen cg = new ClassGen("blockclass"+PC,
+		                           "java.lang.Object", "", Constants.ACC_PUBLIC,
+		                           new String[] {"CPURunBlock"});
 
-      InstructionList    il      = new InstructionList();
-      ConstantPoolGen    cp      = cg.getConstantPool();
-      InstructionFactory factory = new InstructionFactory(cg);
+		// That's important, otherwise newInstance() won't work
+		cg.addEmptyConstructor(Constants.ACC_PUBLIC);
 
-			int pcref = cp.addFieldref("CPU", "PC", Type.INT.getSignature());
-			int href = cp.addFieldref("CPU", "H", Type.INT.getSignature());
-			int lref = cp.addFieldref("CPU", "L", Type.INT.getSignature());
-			int aref = cp.addFieldref("CPU", "A", Type.INT.getSignature());
-			int fref = cp.addFieldref("CPU", "F", Type.INT.getSignature());
+		InstructionList    il      = new InstructionList();
+		ConstantPoolGen    cp      = cg.getConstantPool();
+		InstructionFactory factory = new InstructionFactory(cg);
 
-      int memread = cp.addMethodref("CPU", "read",
-			 Type.getMethodSignature(Type.INT, new Type[] { Type.INT }));
+		int pcref = cp.addFieldref("CPU", "PC", Type.INT.getSignature());
+		int href = cp.addFieldref("CPU", "H", Type.INT.getSignature());
+		int lref = cp.addFieldref("CPU", "L", Type.INT.getSignature());
+		int aref = cp.addFieldref("CPU", "A", Type.INT.getSignature());
+		int fref = cp.addFieldref("CPU", "F", Type.INT.getSignature());
 
-      MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT,
-null, null, "execute", "foo", il, cp);
+		int memread = cp.addMethodref("CPU", "read",
+		 Type.getMethodSignature(Type.INT, new Type[] { Type.INT }));
 
-			
+		MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT, null, null, "execute", "foo", il, cp);
+
 			/*      int out     = cp.addFieldref("java.lang.System", "out",
 				   "Ljava/io/PrintStream;");
       int println = cp.addMethodref("java.io.PrintStream", "println",
@@ -64,77 +55,70 @@ null, null, "execute", "foo", il, cp);
 
 		  il.append(new INVOKEVIRTUAL(println));*/
 
-			il.append(new PUSH(cp, 0xc590));
-			il.append(new INVOKESTATIC(memread));
+		il.append(new PUSH(cp, 0xc590));
+		il.append(new INVOKESTATIC(memread));
 
-			//il.append(new ISTORE(0));
-			il.append(InstructionConstants.DUP);
+		//il.append(new ISTORE(0));
+		il.append(InstructionConstants.DUP);
 
-			il.append(new PUSH(cp, 0xc5));
-			il.append(new PUTSTATIC(href));
-			
-			il.append(new PUSH(cp, 0x40));
-			il.append(new PUTSTATIC(lref));
+		il.append(new PUSH(cp, 0xc5));
+		il.append(new PUTSTATIC(href));
 
-			//il.append(new ILOAD(0));
-			il.append(new PUTSTATIC(aref));
+		il.append(new PUSH(cp, 0x40));
+		il.append(new PUTSTATIC(lref));
 
-			//il.append(new ILOAD(0));
-			il.append(new PUSH(cp, 0xc540));
-			il.append(new INVOKESTATIC(memread));
+		//il.append(new ILOAD(0));
+		il.append(new PUTSTATIC(aref));
 
-			IF_ICMPGE tif = new IF_ICMPGE(null);
-			il.append(tif);
+		//il.append(new ILOAD(0));
+		il.append(new PUSH(cp, 0xc540));
+		il.append(new INVOKESTATIC(memread));
 
-			il.append(new PUSH(cp, 0x2cc6));
-			il.append(new PUTSTATIC(pcref));
+		IF_ICMPGE tif = new IF_ICMPGE(null);
+		il.append(tif);
 
-			il.append(new PUSH(cp, CPU.CF_Mask));
-			il.append(new PUTSTATIC(fref));
+		il.append(new PUSH(cp, 0x2cc6));
+		il.append(new PUTSTATIC(pcref));
 
-			il.append(new PUSH(cp, 12));
-			il.append(InstructionConstants.IRETURN);
+		il.append(new PUSH(cp, CPU.CF_Mask));
+		il.append(new PUTSTATIC(fref));
 
-			InstructionHandle target =
-				il.append(new PUSH(cp, 0x2cc4));
-			il.append(new PUTSTATIC(pcref));
+		il.append(new PUSH(cp, 12));
+		il.append(InstructionConstants.IRETURN);
 
-			il.append(new PUSH(cp, 0));
-			il.append(new PUTSTATIC(fref));
+		InstructionHandle target =
+			il.append(new PUSH(cp, 0x2cc4));
+		il.append(new PUTSTATIC(pcref));
 
-			il.append(new PUSH(cp, 11));
-			il.append(InstructionConstants.IRETURN);
+		il.append(new PUSH(cp, 0));
+		il.append(new PUTSTATIC(fref));
 
-			tif.setTarget(target);
+		il.append(new PUSH(cp, 11));
+		il.append(InstructionConstants.IRETURN);
 
-      mg.stripAttributes(true);
-      mg.setMaxStack();
-      mg.setMaxLocals();
-      cg.addMethod(mg.getMethod());
+		tif.setTarget(target);
+
+		mg.stripAttributes(true);
+		mg.setMaxStack();
+		mg.setMaxLocals();
+		cg.addMethod(mg.getMethod());
 
 
-    byte[] bytes = cg.getJavaClass().getBytes();
+		byte[] bytes = cg.getJavaClass().getBytes();
 
-		
-
-      System.out.println("Uncompressed class: " + bytes.length);
-			String s ="";
-			try {
+		try {
 			cg.getJavaClass().dump("/tmp/tclass.class");
-      s = Utility.encode(bytes, true);
-			} catch (Exception E) {
-				
-			}
-      System.out.println("Encoded class: " + s.length());
-
-      PRINTLN("Creating proxy ... ");
-      return (CPURunBlock)createProxy("foo.bar.", s);
+			return (CPURunBlock)(loader.byteClass("blockclass"+PC, bytes).newInstance());
+		}
+		catch (Exception e) {
+			return null;
+		}
 	}
 
 	public static void main( String[] args ) {
 		CPURunBlock testblock = Recompile(0);
 		PRINTLN(testblock.execute());
-		int t1 = CPU.read(0xc590);
+		/*int t1 = CPU.read(0xc590);
 		CPU.H = 0xc5;
 		CPU.L = 0x40;
 		CPU.A = t1;
@@ -147,7 +131,7 @@ null, null, "execute", "foo", il, cp);
 		{
 			CPU.F = 0;
 			CPU.PC = 0x2cc4;
-		}
+		}*/
 	}
 }
 
