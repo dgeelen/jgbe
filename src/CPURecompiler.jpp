@@ -2,6 +2,8 @@
 
 #ifdef ENABLE_RECOMPILER
 
+import java.util.Vector;
+
 import org.apache.bcel.*;
 import org.apache.bcel.generic.*;
 import org.apache.bcel.classfile.*;
@@ -12,6 +14,9 @@ public class CPURecompiler {
 	 *  instance of this class
 	 */
 	private static CPURecompiler recompiler = null;
+
+	// include classes we use for code/data representation
+	#include "recompiler/ClassDefs.inc"
 
 	/** Dynamic recompilation for dummies: */
 	// Step 1: Decompile the GB asm code to intermediate representation
@@ -28,7 +33,17 @@ public class CPURecompiler {
 	}
 
 	private CPURunBlock Recompile(int PC) {
-		return Assemble();
+		VECTOR(SimpleAssign) imr1;
+		imr1 = Decompile(PC);
+		FOREACH(SimpleAssign, sa, imr1) {
+			PRINTLN(sa.asString());
+		}
+		PRINTF("Decompiled block @ PC=0x%02x of size %d\n", PC, imr1.size());
+		//return null;
+		if (imr1.size() > 1)
+			return Assemble(imr1);
+		else
+			return null;
 	}
 
 	public static void main( String[] args ) {
