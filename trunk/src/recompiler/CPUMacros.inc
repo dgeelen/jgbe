@@ -1,3 +1,19 @@
+#define ASS_V_E(x, y) \
+	result.add( \
+		new SimpleAssign( \
+			x, \
+			y \
+		) \
+	)
+
+#define ASS_S_E(x, y) \
+	result.add( \
+		new SimpleAssign( \
+			new SimpleVariable(#x), \
+			y \
+		) \
+	)
+
 #define ASS_S_I(x, y) \
 	result.add( \
 		new SimpleAssign( \
@@ -13,6 +29,49 @@
 			new SimpleVariable(#y) \
 		) \
 	)
+
+#define ASS_S_M2(x, y, z) \
+	result.add( \
+		new SimpleAssign( \
+			new SimpleVariable(#x), \
+			new MemoryVariable(y, z) \
+		) \
+	)
+
+#define ASS_M2_S(x, y, z) \
+	result.add( \
+		new SimpleAssign( \
+			new MemoryVariable(x, y), \
+			new SimpleVariable(#z) \
+		) \
+	)
+
+#define ASS_S_M1(x, y) \
+	result.add( \
+		new SimpleAssign( \
+			new SimpleVariable(#x), \
+			new MemoryVariable(y) \
+		) \
+	)
+
+#define ASS_M1_S(x, y) \
+	result.add( \
+		new SimpleAssign( \
+			new MemoryVariable(x), \
+			new SimpleVariable(#y) \
+		) \
+	)
+
+#define ECONST(x) new ConstantExpression(x)
+#define EREG(x) new SimpleVariable(#x)
+#define EMEM(x) new MemoryVariable(x)
+#define EMEM2(x,y) new MemoryVariable(x, y)
+
+#define EMEMR(x) new MemoryVariable(EREG(x))
+
+#define EIMM16 ECONST(IMM16)
+#define EIMM8 ECONST(IMM8)
+
 
 #undef READ_F
 #undef READ_V
@@ -41,8 +100,8 @@
 #undef DO_LD_RX
 #define DO_LD_RX(x, y) { }
 
-#undef CASE_LD_RHL
-#define CASE_LD_RHL(r)
+#undef DO_LD_RHL
+#define DO_LD_RHL(r) ASS_S_M2(r, new SimpleVariable("H"), new SimpleVariable("L"))
 
 #undef DO_LD_RI
 #define DO_LD_RI(r, i) { ASS_S_I(r, i); }
@@ -50,6 +109,41 @@
 #undef DO_LD_RR
 #define DO_LD_RR(r1, r2) { ASS_S_V(r1, r2); }
 
-#undef PUSH
+#define DO_XOR_E(e) { \
+	ASS_S_E(A, new FunctionXOR(EREG(A), e)); \
+	ASS_S_E(F, new FunctionCALCZF(EREG(A))); \
+}
+#define DO_OR_E(e) { \
+	ASS_S_E(A, new FunctionOR(EREG(A), e)); \
+	ASS_S_E(F, new FunctionCALCZF(EREG(A))); \
+}
+#define DO_AND_E(e) { \
+	ASS_S_E(A, new FunctionAND(EREG(A), e)); \
+	ASS_S_E(F, new FunctionCALCZF(EREG(A))); \
+}
 
+#undef CASES_ALU_OP
+#define CASES_ALU_OP(base, imm, op) \
+	case (imm)   : DO_ ## op ## _E(EIMM8); break; \
+	case (base)  : DO_ ## op ## _E(EREG(B)); break; \
+	case (base)+1: DO_ ## op ## _E(EREG(C)); break; \
+	case (base)+2: DO_ ## op ## _E(EREG(D)); break; \
+	case (base)+3: DO_ ## op ## _E(EREG(E)); break; \
+	case (base)+4: DO_ ## op ## _E(EREG(H)); break; \
+	case (base)+5: DO_ ## op ## _E(EREG(L)); break; \
+	case (base)+6: DO_ ## op ## _E(new MemoryVariable(EREG(H), EREG(L))); break; \
+	case (base)+7: DO_ ## op ## _E(EREG(A)); break; \
 
+#define DO_PUSH2(e1, e2) { \
+	ASS_V_E(EREG(SP), new FunctionDEC(EREG(SP), ECONST(1))); \
+	ASS_V_E(EMEMR(SP), e1); \
+	ASS_V_E(EREG(SP), new FunctionDEC(EREG(SP), ECONST(1))); \
+	ASS_V_E(EMEMR(SP), e2); \
+}
+
+#define DO_POP2(v1, v2) { \
+	ASS_V_E(v2, EMEMR(SP)); \
+	ASS_V_E(EREG(SP), new FunctionINC(EREG(SP), ECONST(1))); \
+	ASS_V_E(v1, EMEMR(SP)); \
+	ASS_V_E(EREG(SP), new FunctionINC(EREG(SP), ECONST(1))); \
+}

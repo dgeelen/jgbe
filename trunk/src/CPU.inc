@@ -105,17 +105,17 @@
 #define IMM16 (FETCH|(FETCH<<8))
 #define POP (READ_V(SP++)|(READ_V(SP++)<<8))
 
-#define PUSH(val) { \
+#define DO_PUSH(val) { \
 	SP=(SP-1)&0xffff; WRITE_F(SP, (val)>>8); \
 	SP=(SP-1)&0xffff; WRITE_F(SP, (val)&0xff); \
 }
 
-#define PUSH_V(val) { \
+#define DO_PUSH_V(val) { \
 	SP=(SP-1)&0xffff; WRITE_F(SP, (t_w16=val)>>8); \
 	SP=(SP-1)&0xffff; WRITE_F(SP, (t_w16)&0xff); \
 }
 
-#define PUSH_OLD(val) \
+#define DO_PUSH_OLD(val) \
 { \
    SP=(SP-1)&0xffff; \
    write( SP, ( (val)>>8 )&0xff ); \
@@ -128,7 +128,7 @@
 #define DO_LD_RX(r, val) { r = val; }
 #define DO_JP_NN { PC = IMM16; }
 #define DO_JR_D { PC += 1+((READ_F(PC))^0x80)-0x80; }
-#define DO_CALL_NN { PUSH(PC+2); DO_JP_NN; }
+#define DO_CALL_NN { DO_PUSH(PC+2); DO_JP_NN; }
 #define DO_RET { PC = POP; }
 
 #define SKIP_JR { --cycles; ++PC; }
@@ -279,8 +279,11 @@ F = FN \
 #define CASES_LD_16(r) \
 	CASE_LD_16_RI(r) \
 
+#define DO_LD_RHL(r) \
+	{ r = READ_V(R16RHL); }
+
 #define CASE_LD_RHL(r) \
-	case (0x46+(RNUM(r)<<3)): r = READ_V(R16RHL); break;
+	case (0x46+(RNUM(r)<<3)): DO_LD_RHL(r); break;
 
 #define CASES_LD_RX(r) \
 	CASE_LD_RR(r, B) \
@@ -428,7 +431,7 @@ F = FN \
 #define CHECK_INTS \
 	(IME && ((IOP[0x0f]&IE)!=0))
 
-#define PRE_INT ( DI, PUSH(PC) )
+#define PRE_INT ( DI, DO_PUSH(PC) )
 #define THROW_INT(n) ( (IF &= ~(1<<(n))), (PC = 0x40+((n)<<3)) )
 
 #endif//CPU_INC

@@ -34,9 +34,6 @@
 			sa.doAssemble(il, cp);
 		}
 
-		il.append(new PUSH(cp, 11));
-		il.append(InstructionConstants.IRETURN);
-
 		mg.stripAttributes(true);
 		mg.setMaxStack();
 		mg.setMaxLocals();
@@ -46,7 +43,7 @@
 		byte[] bytes = cg.getJavaClass().getBytes();
 
 		try {
-			//cg.getJavaClass().dump("/tmp/tclass.class");
+			cg.getJavaClass().dump("/tmp/tclass.class");
 			return (CPURunBlock)(loader.byteClass(classname, bytes).newInstance());
 		}
 		catch (Exception e) {
@@ -79,8 +76,7 @@
 		int aref = cp.addFieldref("CPU", "A", Type.INT.getSignature());
 		int fref = cp.addFieldref("CPU", "F", Type.INT.getSignature());
 
-		int memread = cp.addMethodref("CPU", "read",
-		 Type.getMethodSignature(Type.INT, new Type[] { Type.INT }));
+		int memread = cp.addMethodref("CPU", "read", Type.getMethodSignature(Type.INT, new Type[] { Type.INT }));
 
 		MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT, null, null, "execute", "foo", il, cp);
 
