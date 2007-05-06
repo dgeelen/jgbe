@@ -9,7 +9,52 @@
 	private ByteClassLoader loader = new ByteClassLoader();
 
 	/** id counter to ensure classname uniqueness */
-	private static long blockidcounter = 0;
+	public static long blockidcounter = 0;
+
+	/** test for testing */
+	private CPURunBlock Assemble(VECTOR(SimpleAssign) assigns) { // TODO args...
+		//PRINTLN("Creating class 'block_" + blockidcounter +"'");
+
+		String classname = "block_" + (blockidcounter++);
+
+		ClassGen cg = new ClassGen(classname,
+		                           "java.lang.Object", "", Constants.ACC_PUBLIC,
+		                           new String[] {"CPURunBlock"});
+
+		// That's important, otherwise newInstance() won't work
+		cg.addEmptyConstructor(Constants.ACC_PUBLIC);
+
+		InstructionList    il      = new InstructionList();
+		ConstantPoolGen    cp      = cg.getConstantPool();
+		InstructionFactory factory = new InstructionFactory(cg);
+
+		MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT, null, null, "execute", "foo", il, cp);
+
+		FOREACH(SimpleAssign, sa, assigns) {
+			sa.doAssemble(il, cp);
+		}
+
+		il.append(new PUSH(cp, 11));
+		il.append(InstructionConstants.IRETURN);
+
+		mg.stripAttributes(true);
+		mg.setMaxStack();
+		mg.setMaxLocals();
+		cg.addMethod(mg.getMethod());
+
+
+		byte[] bytes = cg.getJavaClass().getBytes();
+
+		try {
+			//cg.getJavaClass().dump("/tmp/tclass.class");
+			return (CPURunBlock)(loader.byteClass(classname, bytes).newInstance());
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			PRINTLN("exception instantiation recompiled block");
+			return null;
+		}
+	}
 
 	/** stub which assembles for block at PC=$2cbb in Bionic Commando */
 	private CPURunBlock Assemble() { // TODO args...
@@ -95,6 +140,7 @@
 			return (CPURunBlock)(loader.byteClass(classname, bytes).newInstance());
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 			PRINTLN("exception instantiation recompiled block");
 			return null;
 		}

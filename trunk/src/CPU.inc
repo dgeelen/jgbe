@@ -259,20 +259,22 @@ F = FN \
 	CASES_INCDEC16_R(SP) \
 
 
+#define DO_LD_RR DO_LD_RX
+#define DO_LD_RI DO_LD_RX
 
 #define CASE_LD_RR(r1, r2) \
-	case (0x40+(RNUM(r1)<<3)+(RNUM(r2))): DO_LD_RX(r1, r2); break;
+	case (0x40+(RNUM(r1)<<3)+(RNUM(r2))): DO_LD_RR(r1, r2); break;
 
 #define CASE_LD_RI(r) \
-	case (0x06+(RNUM(r)<<3)): DO_LD_RX(r, IMM8); break;
+	case (0x06+(RNUM(r)<<3)): DO_LD_RI(r, IMM8); break;
 
-#define CASE_LD_16_RI_BC { C = IMM8; B = IMM8; }
-#define CASE_LD_16_RI_DE { E = IMM8; D = IMM8; }
-#define CASE_LD_16_RI_HL { L = IMM8; H = IMM8; }
-#define CASE_LD_16_RI_SP { SP = IMM16; }
+#define DO_LD_16_RI_BC { C = IMM8; B = IMM8; }
+#define DO_LD_16_RI_DE { E = IMM8; D = IMM8; }
+#define DO_LD_16_RI_HL { L = IMM8; H = IMM8; }
+#define DO_LD_16_RI_SP { SP = IMM16; }
 
 #define CASE_LD_16_RI(r) \
-	case (0x01+(RNUM(r)<<4)): CASE_LD_16_RI_ ## r ; break;
+	case (0x01+(RNUM(r)<<4)): DO_LD_16_RI_ ## r ; break;
 
 #define CASES_LD_16(r) \
 	CASE_LD_16_RI(r) \
