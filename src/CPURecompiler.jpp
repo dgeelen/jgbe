@@ -32,15 +32,20 @@ public class CPURecompiler {
 		return recompiler.Recompile(PC);
 	}
 
+	static int testing = 0;
+
 	private CPURunBlock Recompile(int PC) {
 		VECTOR(SimpleAssign) imr1;
 		imr1 = Decompile(PC);
-		FOREACH(SimpleAssign, sa, imr1) {
-			PRINTLN(sa.asString());
-		}
-		PRINTF("Decompiled block @ PC=0x%02x of size %d\n", PC, imr1.size());
 		//return null;
-		if (imr1.size() > 1)
+		if (imr1.size() > testing) {
+			testing = imr1.size();
+			PRINTF("Decompiled block @ PC=0x%02x of size %d\n", PC, imr1.size());
+			FOREACH(SimpleAssign, sa, imr1) {
+				PRINTLN(sa.asString());
+			}
+		}
+		if (imr1.size() > 2)
 			return Assemble(imr1);
 		else
 			return null;
@@ -63,6 +68,11 @@ public class CPURecompiler {
 			CPU.F = 0;
 			CPU.PC = 0x2cc4;
 		}*/
+		int a = 1;
+		int b = 2;
+		int c = (a << 8) | b;
+		int d = (c == 0)? 12 : 0;
+		CPU.PC = CPU.read(c);
 	}
 }
 

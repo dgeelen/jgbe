@@ -47,10 +47,13 @@ debug: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound
 
 rcrun: all
-#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  org.apache.bcel.util.JavaWrapper swinggui -lastcart -nosound -nodebug
-#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  org.apache.bcel.util.JavaWrapper swinggui -lastcart -nosound
-#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  org.apache.bcel.util.JavaWrapper CPURecompiler
-	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  org.apache.bcel.util.JavaWrapper TestSuite ~/gbroms/Turtles\ 3.zip
+#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  swinggui -lastcart -nosound -nodebug
+	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  swinggui -lastcart -nosound
+#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  CPURecompiler
+#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  TestSuite ~/gbroms/Turtles\ 3.zip
+
+tester: all
+	cd $(CLASSDIR) && java TestSuite ~/gbroms/Turtles\ 3.zip
 
 rndCartridge: rndCartridge.cpp
 	g++ -O3 rndCartridge.cpp -o rndCartridge
@@ -58,7 +61,7 @@ rndCartridge: rndCartridge.cpp
 %.java: %.jpp
 	@echo "[jpp  -> java ] $*"
 	@cat Autogen.txt > $@
-	@gcc -MD -E $(PPFLAGS) -x c $< | grep -v "^#" | sed "s:cycles\;[ 	]*case:cycles\;\\n	case:g" >> $@
+	@gcc -MD -E $(PPFLAGS) -x c $< | grep -v "^#" | sed "s:\;[ 	]*case:\;\\n	case:g" >> $@
 	@sed -i "s=\.o:=\.java:=g" $*.d
 # next line from http://make.paulandlesley.org/autodep.html
 	@cp $*.d $*.dd; \

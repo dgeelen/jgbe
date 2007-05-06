@@ -93,7 +93,11 @@ public class CPU
 
 		public static final void loadCartridge(Cartridge acartridge) {
 			cartridge = acartridge;
+
 			reset();
+
+			//for (int i = 0; i < 0x4000; ++i)
+			//	rccache[i] = CPURecompiler.doRecompile(i);
 		}
 
 		public static boolean canRun() {
@@ -581,7 +585,28 @@ static int togglestart=1;
 			return b;
 		}
 
-		static final public void write(int index, int value) {
+		// has arguments swapped for recompiler use (stack order and stuff)
+		static final protected void write_fast1(int value, int index) {
+			last_memory_access_internal=index;
+			int mm[]=wMemMap[index>>12];
+			if (mm!=null) {
+				mm[index&0x0FFF] = value;
+				return;
+			}
+			write_slow(index, value);
+		}
+
+		static final protected void write(int index, int value) {
+			last_memory_access_internal=index;
+			int mm[]=wMemMap[index>>12];
+			if (mm!=null) {
+				mm[index&0x0FFF] = value;
+				return;
+			}
+			write_slow(index, value);
+		}
+
+		static final public void write_slow(int index, int value) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -916,7 +941,7 @@ static int togglestart=1;
 //  			PRINTF("INTERRUPT: PC=$%04x, interrupt=$%02x, LY=%d\n",PC,i,VC.LY);
 			IME = false;
 
-			PUSH_OLD(PC);
+			DO_PUSH_OLD(PC);
 			PC = i;
 		}
 
@@ -976,11 +1001,15 @@ static int togglestart=1;
 				return rccache[PC].execute();
 				//rccache[PC] = CPURecompiler.Recompile(PC);
 			}
-			/*if (PC < 0x4000) {
+			/*else if ((PC < 0x4000) && (CPURecompiler.blockidcounter < 100)) {
 				++rccnt[PC];
-				if (rccnt[PC] > 0xfff) {
-					rccnt[PC] = 0;
-					PRINTF("PC=0x%02x\n",PC);
+				if (rccnt[PC] > 0xff) {
+					rccnt[PC] = -0xffffff;
+					rccache[PC] = CPURecompiler.doRecompile(PC);
+					if (rccache[PC] != null) {
+						for (int i = 0; i < 0x4000; ++i)
+							rccnt[i] = MIN(0, rccnt[i]);
+					}
 				}
 			}*/
 #endif
@@ -1044,16 +1073,16 @@ static int togglestart=1;
 				case 0x74: WRITE_V(R16RHL, H); break;               // LD   (HL), H
 				case 0x75: WRITE_V(R16RHL, L); break;               // LD   (HL), L
 				case 0x77: WRITE_V(R16RHL, A); break;               // LD   (HL), A
-				case 0x76: halted = true;	/*System.out.println("CPU HALTED");*/ break;                    // HALT
+				case 0x76: halted = true; break;                    // HALT
 				case 0xd9: IME = true; DO_RET; break;               // RETI
-				case 0xc1: R16WBC_V(POP); break;                    // PUSH BC
-				case 0xd1: R16WDE_V(POP); break;                    // PUSH DE
-				case 0xe1: R16WHL_V(POP); break;                    // PUSH HL
-				case 0xf1: R16WAF_V(POP); break;                    // PUSH AF
-				case 0xc5: PUSH_V(R16RBC); break;                   // PUSH BC
-				case 0xd5: PUSH_V(R16RDE); break;                   // PUSH DE
-				case 0xe5: PUSH_V(R16RHL); break;                   // PUSH HL
-				case 0xf5: PUSH_V(R16RAF); break;                   // PUSH AF
+				case 0xc1: R16WBC_V(POP); break;                    // POP  BC
+				case 0xd1: R16WDE_V(POP); break;                    // POP  DE
+				case 0xe1: R16WHL_V(POP); break;                    // POP  HL
+				case 0xf1: R16WAF_V(POP); break;                    // POP  AF
+				case 0xc5: DO_PUSH_V(R16RBC); break;                // PUSH BC
+				case 0xd5: DO_PUSH_V(R16RDE); break;                // PUSH DE
+				case 0xe5: DO_PUSH_V(R16RHL); break;                // PUSH HL
+				case 0xf5: DO_PUSH_V(R16RAF); break;                // PUSH AF
 				case 0x09: DO_ADD_HL(B, C); break;                  // ADD  HL  , BC
 				case 0x19: DO_ADD_HL(D, E); break;                  // ADD  HL  , DE
 				case 0x29: DO_ADD_HL(H, L); break;                  // ADD  HL  , HL
@@ -1065,14 +1094,14 @@ static int togglestart=1;
 				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RL
 				case 0x0f: DO_SHOP_R(RRC, A); F &= FC; break;       // RRA
 				case 0x1f: DO_SHOP_R(RR, A); F &= FC; break;        // RR
-				case 0xc7: PUSH(PC); PC = 0x00; break;              // RST  &0
-				case 0xcf: PUSH(PC); PC = 0x08; break;              // RST  &8
-				case 0xd7: PUSH(PC); PC = 0x10; break;              // RST  &10
-				case 0xdf: PUSH(PC); PC = 0x18; break;              // RST  &18
-				case 0xe7: PUSH(PC); PC = 0x20; break;              // RST  &20
-				case 0xef: PUSH(PC); PC = 0x28; break;              // RST  &28
-				case 0xf7: PUSH(PC); PC = 0x30; break;              // RST  &30
-				case 0xff: PUSH(PC); PC = 0x38; break;              // RST  &38
+				case 0xc7: DO_PUSH(PC); PC = 0x00; break;           // RST  &0
+				case 0xcf: DO_PUSH(PC); PC = 0x08; break;           // RST  &8
+				case 0xd7: DO_PUSH(PC); PC = 0x10; break;           // RST  &10
+				case 0xdf: DO_PUSH(PC); PC = 0x18; break;           // RST  &18
+				case 0xe7: DO_PUSH(PC); PC = 0x20; break;           // RST  &20
+				case 0xef: DO_PUSH(PC); PC = 0x28; break;           // RST  &28
+				case 0xf7: DO_PUSH(PC); PC = 0x30; break;           // RST  &30
+				case 0xff: DO_PUSH(PC); PC = 0x38; break;           // RST  &38
 				case 0x37: F &= FZ; F |= FC; break;                 // SCF
 				case 0x3f: F &= (FZ|FC); F ^= FC; break;            // CCF
 				case 0x08: {                                        // LD   (nn), SP
