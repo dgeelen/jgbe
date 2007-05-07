@@ -79,88 +79,61 @@ class FunctionCALCZF extends FunctionExpression {
 	}
 }
 
+class BinaryFunction extends FunctionExpression {
+	private String fname;
+	private Instruction instr;
+	public String funcName() { return fname; };
+	public BinaryFunction(String afname, Instruction ainstr, Expression expr1, Expression expr2) {
+		super(new Expression[] { expr1, expr2 } );
+		fname = afname;
+		instr = ainstr;
+	}
+	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
+		args[0].doAssembleValue(il, cp);
+		args[1].doAssembleValue(il, cp);
+		il.append(instr);
+	}
+}
 
-class FunctionAND extends FunctionExpression {
-	public String funcName() { return "and"; };
+class FunctionAND extends BinaryFunction {
 	public FunctionAND(Expression expr1, Expression expr2) {
-		super(new Expression[] { expr1, expr2 } );
-	}
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		args[0].doAssembleValue(il, cp);
-		args[1].doAssembleValue(il, cp);
-		il.append(InstructionConstants.IAND);
+		super("and", InstructionConstants.IAND, expr1, expr2);
 	}
 }
 
-class FunctionDEC extends FunctionExpression {
-	public String funcName() { return "dec"; };
-	public FunctionDEC(Expression expr1, Expression expr2) {
-		super(new Expression[] { expr1, expr2 } );
-	}
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		args[0].doAssembleValue(il, cp);
-		args[1].doAssembleValue(il, cp);
-		il.append(InstructionConstants.ISUB);
-	}
-}
-
-class FunctionINC extends FunctionExpression {
-	public String funcName() { return "inc"; };
-	public FunctionINC(Expression expr1, Expression expr2) {
-		super(new Expression[] { expr1, expr2 } );
-	}
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		args[0].doAssembleValue(il, cp);
-		args[1].doAssembleValue(il, cp);
-		il.append(InstructionConstants.IADD);
-	}
-}
-
-class FunctionOR extends FunctionExpression {
-	public String funcName() { return "or"; };
+class FunctionOR extends BinaryFunction {
 	public FunctionOR(Expression expr1, Expression expr2) {
-		super(new Expression[] { expr1, expr2 } );
-	}
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		args[0].doAssembleValue(il, cp);
-		args[1].doAssembleValue(il, cp);
-		il.append(InstructionConstants.IOR);
+		super("or", InstructionConstants.IOR, expr1, expr2);
 	}
 }
 
-class FunctionXOR extends FunctionExpression {
-	public String funcName() { return "xor"; };
+class FunctionXOR extends BinaryFunction {
 	public FunctionXOR(Expression expr1, Expression expr2) {
-		super(new Expression[] { expr1, expr2 } );
-	}
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		args[0].doAssembleValue(il, cp);
-		args[1].doAssembleValue(il, cp);
-		il.append(InstructionConstants.IXOR);
+		super("xor", InstructionConstants.IXOR, expr1, expr2);
 	}
 }
 
-class FunctionSHL extends FunctionExpression {
-	public String funcName() { return "shl"; };
+class FunctionDEC extends BinaryFunction {
+	public FunctionDEC(Expression expr1, Expression expr2) {
+		super("dec", InstructionConstants.ISUB, expr1, expr2);
+	}
+}
+
+class FunctionINC extends BinaryFunction {
+	public FunctionINC(Expression expr1, Expression expr2) {
+		super("inc", InstructionConstants.IADD, expr1, expr2);
+	}
+}
+
+class FunctionSHL extends BinaryFunction {
 	public FunctionSHL(Expression expr1, Expression expr2) {
-		super(new Expression[] { expr1, expr2 } );
-	}
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		args[0].doAssembleValue(il, cp);
-		args[1].doAssembleValue(il, cp);
-		il.append(InstructionConstants.ISHL);
+		super("shl", InstructionConstants.ISHL, expr1, expr2);
 	}
 }
 
-class FunctionSHR extends FunctionExpression {
-	public String funcName() { return "shr"; };
+class FunctionSHR extends BinaryFunction {
 	public FunctionSHR(Expression expr1, Expression expr2) {
-		super(new Expression[] { expr1, expr2 } );
-	}
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		args[0].doAssembleValue(il, cp);
-		args[1].doAssembleValue(il, cp);
-		il.append(InstructionConstants.ISHR);
+		super("shr", InstructionConstants.ISHR, expr1, expr2);
 	}
 }
 
