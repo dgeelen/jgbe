@@ -1,3 +1,5 @@
+ - Fix line in pac-in-time
+ - Fix Super Mario Land 1 - World 4-1 upside down plant bug (savestate 4)
  - Make mouse-over eval for Debugger   [DONE]
  - Make scanlines
  - Fix batman intro logo
