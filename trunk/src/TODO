@@ -1,10 +1,12 @@
+ - add optimasations to recompiler
+ - make recompiler cache for rombanks besides 0
  - Fix line in pac-in-time
- - Fix Super Mario Land 1 - World 4-1 upside down plant bug (savestate 4)
- - Make mouse-over eval for Debugger   [DONE]
+ - [DONE] Fix Super Mario Land 1 - World 4-1 upside down plant bug (savestate 4)
+ - [DONE] Make mouse-over eval for Debugger
  - Make scanlines
  - Fix batman intro logo
  - Add interframe blending
  - Hire 'clean-up-crew'
  - Make color selector for palettes
  - Fix 'If' for scale 4x
- - Fix keyrepeat (for linux and MacOS and solaris and BSD and ... everything except wind00ze)
+ - Fix keyrepeat (for linux and MacOS and solaris and BSD and ... everything except wind00ze) (actually, probably only for linux....)
