@@ -1,11 +1,11 @@
 #VM_DEST:=-target 1.4.2
 #VM_SOURCE:=-source 1.4
 
-PPFLAGS = -DUSE_JAVA_142
+PPFLAGS := $(PPFLAGS) -DUSE_JAVA_142
 
 RTJAR = $(shell ./findrtjar.sh)
 
-CLASSPATH = ../../bcel-5.2/bcel-5.2.jar:.:$(RTJAR)
+CLASSPATH += $(CLASSPATH):$(RTJAR)
 
 JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -O -d $(CLASSDIR) -nowarn -classpath $(CLASSPATH)
 
