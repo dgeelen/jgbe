@@ -62,6 +62,14 @@
 		) \
 	)
 
+#define ASS_M2_E(x, y, z) \
+	result.add( \
+		new SimpleAssign( \
+			new MemoryVariable(x, y), \
+			z \
+		) \
+	)
+
 #define ECONST(x) new ConstantExpression(x)
 #define EREG(x) new SimpleVariable(#x)
 #define EMEM(x) new MemoryVariable(x)

@@ -29,6 +29,19 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			case 0xe5: DO_PUSH2(EREG(H), EREG(L)); break;           // PUSH HL
 			case 0xf5: DO_PUSH2(EREG(A), EREG(F)); break;           // PUSH AF
 
+			case 0x02: ASS_M2_S(EREG(B), EREG(C), A); break;        // LD   (BC), A
+			case 0x0a: ASS_S_M2(A, EREG(B), EREG(C)); break;        // LD   A   , (BC)
+			case 0x12: ASS_M2_S(EREG(D), EREG(C), E); break;        // LD   (BC), A
+			case 0x1a: ASS_S_M2(A, EREG(D), EREG(E)); break;        // LD   A   , (BC)
+			case 0x70: ASS_M2_S(EREG(H), EREG(L), B); break;        // LD   (HL), B
+			case 0x71: ASS_M2_S(EREG(H), EREG(L), C); break;        // LD   (HL), C
+			case 0x72: ASS_M2_S(EREG(H), EREG(L), D); break;        // LD   (HL), D
+			case 0x73: ASS_M2_S(EREG(H), EREG(L), E); break;        // LD   (HL), E
+			case 0x74: ASS_M2_S(EREG(H), EREG(L), H); break;        // LD   (HL), H
+			case 0x75: ASS_M2_S(EREG(H), EREG(L), L); break;        // LD   (HL), L
+			case 0x77: ASS_M2_S(EREG(H), EREG(L), A); break;        // LD   (HL), A
+			case 0x36: ASS_M2_E(EREG(H), EREG(L), EIMM8); break;    // LD   (HL), n
+
 			case 0xcd: {                                            // CALL (nn)
 				DO_PUSH2(ECONST((PC+2)>>8), ECONST((PC+2)&0xff));
 				DO_JP_NN;
