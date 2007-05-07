@@ -813,7 +813,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				s="-";
 			}
 			if(s.equals("s")) {
-				//System.out.println("SingleStep");
 				gui.cpu.nextinstruction();
 				update();
 			}
