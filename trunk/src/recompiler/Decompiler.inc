@@ -7,6 +7,7 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 	boolean done = false;
 	int max = 100;
 	int cycles = 0;
+	int SPC = PC;
 	while (!done) {
 		int opcode = FETCH;
 		cycles += Tables.cycles[opcode]; /*CYCLE*/
@@ -22,8 +23,8 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 
 			case 0x02: ASS_M2_S(EREG(B), EREG(C), A); break;        // LD   (BC), A
 			case 0x0a: ASS_S_M2(A, EREG(B), EREG(C)); break;        // LD   A   , (BC)
-			case 0x12: ASS_M2_S(EREG(D), EREG(C), E); break;        // LD   (BC), A
-			case 0x1a: ASS_S_M2(A, EREG(D), EREG(E)); break;        // LD   A   , (BC)
+			case 0x12: ASS_M2_S(EREG(D), EREG(E), A); break;        // LD   (DE), A
+			case 0x1a: ASS_S_M2(A, EREG(D), EREG(E)); break;        // LD   A   , (DE)
 			case 0x70: ASS_M2_S(EREG(H), EREG(L), B); break;        // LD   (HL), B
 			case 0x71: ASS_M2_S(EREG(H), EREG(L), C); break;        // LD   (HL), C
 			case 0x72: ASS_M2_S(EREG(H), EREG(L), D); break;        // LD   (HL), D
@@ -68,7 +69,8 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			}
 		}
 
-		if (PC > 0x4000) done = true;
+		if ((PC & ~0x3fff) != (SPC & ~0x3fff)) done = true;
+		//if (!done && (PC > 0x4000)) ASSERT(false);
 		if (cycles > max) done = true;
 	}
 	ASS_S_I(PC, PC);
