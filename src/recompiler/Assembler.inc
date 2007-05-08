@@ -34,6 +34,9 @@
 			sa.doAssemble(il, cp);
 		}
 
+		int rn = removeNOPs(il);
+		//PRINTLN("NOPs removed: " + rn);
+
 		mg.stripAttributes(true);
 		mg.setMaxStack();
 		mg.setMaxLocals();
