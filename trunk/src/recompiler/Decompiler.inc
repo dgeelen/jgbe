@@ -20,15 +20,6 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			case 0xe2: ASS_M2_S(ECONST(0xff), EREG(C), A); break;   // LDH  (C) , A
 			case 0xf2: ASS_S_M2(A, ECONST(0xff), EREG(C)); break;   // LDH  A   , (C)
 
-			case 0xc1: DO_POP2(EREG(B), EREG(C)); break;            // POP  BC
-			case 0xd1: DO_POP2(EREG(D), EREG(E)); break;            // POP  DE
-			case 0xe1: DO_POP2(EREG(H), EREG(L)); break;            // POP  HL
-			case 0xf1: DO_POP2(EREG(A), EREG(F)); break;            // POP  AF
-			case 0xc5: DO_PUSH2(EREG(B), EREG(C)); break;           // PUSH BC
-			case 0xd5: DO_PUSH2(EREG(D), EREG(E)); break;           // PUSH DE
-			case 0xe5: DO_PUSH2(EREG(H), EREG(L)); break;           // PUSH HL
-			case 0xf5: DO_PUSH2(EREG(A), EREG(F)); break;           // PUSH AF
-
 			case 0x02: ASS_M2_S(EREG(B), EREG(C), A); break;        // LD   (BC), A
 			case 0x0a: ASS_S_M2(A, EREG(B), EREG(C)); break;        // LD   A   , (BC)
 			case 0x12: ASS_M2_S(EREG(D), EREG(C), E); break;        // LD   (BC), A
@@ -41,6 +32,15 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			case 0x75: ASS_M2_S(EREG(H), EREG(L), L); break;        // LD   (HL), L
 			case 0x77: ASS_M2_S(EREG(H), EREG(L), A); break;        // LD   (HL), A
 			case 0x36: ASS_M2_E(EREG(H), EREG(L), EIMM8); break;    // LD   (HL), n
+
+			case 0xc1: DO_POP2(EREG(B), EREG(C)); break;            // POP  BC
+			case 0xd1: DO_POP2(EREG(D), EREG(E)); break;            // POP  DE
+			case 0xe1: DO_POP2(EREG(H), EREG(L)); break;            // POP  HL
+			case 0xf1: DO_POP2(EREG(A), EREG(F)); break;            // POP  AF
+			case 0xc5: DO_PUSH2(EREG(B), EREG(C)); break;           // PUSH BC
+			case 0xd5: DO_PUSH2(EREG(D), EREG(E)); break;           // PUSH DE
+			case 0xe5: DO_PUSH2(EREG(H), EREG(L)); break;           // PUSH HL
+			case 0xf5: DO_PUSH2(EREG(A), EREG(F)); break;           // PUSH AF
 
 			case 0xcd: {                                            // CALL (nn)
 				DO_PUSH2(ECONST((PC+2)>>8), ECONST((PC+2)&0xff));

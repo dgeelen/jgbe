@@ -3,10 +3,12 @@
 #ifdef ENABLE_RECOMPILER
 
 import java.util.Vector;
+import java.util.Iterator;
 
 import org.apache.bcel.*;
 import org.apache.bcel.generic.*;
 import org.apache.bcel.classfile.*;
+import org.apache.bcel.util.InstructionFinder;
 
 public class CPURecompiler {
 	/** 'Singleton' design cause i'm too lazy
@@ -15,17 +17,17 @@ public class CPURecompiler {
 	 */
 	private static CPURecompiler recompiler = null;
 
-	// include classes we use for code/data representation
-	#include "recompiler/ClassDefs.inc"
-
 	/** Dynamic recompilation for dummies: */
 	// Step 1: Decompile the GB asm code to intermediate representation
-	#include "recompiler/Decompiler.inc"
 	// Step 2: Perform optimisations on the intermediate representation
-	#include "recompiler/Optimiser.inc"
 	// Step 3: Assemble the intermediate representation into java bytecode
-	#include "recompiler/Assembler.inc"
+	// Step 4: Perform optimisations on the java bytecode
 
+	// include classes we use for code/data representation
+	#include "recompiler/ClassDefs.inc"
+	#include "recompiler/Decompiler.inc"
+	#include "recompiler/Optimiser.inc"
+	#include "recompiler/Assembler.inc"
 
 	public static CPURunBlock doRecompile(int PC) {
 		if (recompiler == null) recompiler = new CPURecompiler();
