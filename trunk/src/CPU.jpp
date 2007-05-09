@@ -3,6 +3,8 @@
 #include "SaveLoad.inc"
 #include "CPU.inc"
 
+
+
 #define protected public
 #define private public
 
@@ -10,6 +12,9 @@ import java.io.*;
 import java.util.zip.*;
 public class CPU
 {
+static class DummyCPURunBlock implements CPURunBlock {
+	public int execute() { ASSERT(false); return 0;};
+}
 		static private CPU singleton = null;
 		protected static final int CARRY8b    = 512;
 		protected static final int CARRY8b_SHR = 5;
@@ -97,7 +102,7 @@ public class CPU
 			reset();
 
 			//for (int i = 0; i < 0x4000; ++i)
-			//	rccache[i] = CPURecompiler.doRecompile(i);
+			//	rccachea[0][i] = CPURecompiler.doRecompile(i);
 		}
 
 		public static boolean canRun() {
@@ -351,6 +356,8 @@ check for badness = $afa
 			rMemMap[0x1] = cartridge.MM_ROM[1];
 			rMemMap[0x2] = cartridge.MM_ROM[2];
 			rMemMap[0x3] = cartridge.MM_ROM[3];
+
+			rccachex = rccachea[cartridge.CurrentROMBank];
 
 			// cartridge ROM switchable bank (read only, write has special functions)
 			rMemMap[0x4] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|0];
@@ -996,11 +1003,37 @@ static int togglestart=1;
 			if (halted) return 4;
 
 #ifdef ENABLE_RECOMPILER
-			if ((PC < 0x4000) && (rccache[PC] != null)) {
-				//PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
-				return rccache[PC].execute();
-				//rccache[PC] = CPURecompiler.Recompile(PC);
+			if (PC < 0x4000) {
+				if (rccache0[PC] == null) {
+					PRINTF("recompiling @ PC=$%02x\n", PC);
+					rccache0[PC] = CPURecompiler.doRecompile(PC);
+					if (rccache0[PC]==null)
+						rccache0[PC] = dummyrc;
+				}
+				// else
+				if (rccache0[PC] != dummyrc)
+				{
+					//PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
+					return rccache0[PC].execute();
+					//rccache[PC] = CPURecompiler.Recompile(PC);
+				}
 			}
+			else if (PC < 0x8000) {
+				if (rccachex[PC-0x4000] == null) {
+					PRINTF("recompiling @ PC=$%02x\n", PC);
+					rccachex[PC-0x4000] = CPURecompiler.doRecompile(PC);
+					if (rccachex[PC-0x4000]==null)
+						rccachex[PC-0x4000] = dummyrc;
+				}
+				// else
+				if (rccachex[PC-0x4000] != dummyrc)
+				{
+					//PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
+					return rccachex[PC-0x4000].execute();
+					//rccache[PC] = CPURecompiler.Recompile(PC);
+				}
+			}
+
 			/*else if ((PC < 0x4000) && (CPURecompiler.blockidcounter < 100)) {
 				++rccnt[PC];
 				if (rccnt[PC] > 0xff) {
@@ -1198,7 +1231,11 @@ static int togglestart=1;
 		static int samplesLeft = 0;
 
 #ifdef ENABLE_RECOMPILER
-		static CPURunBlock[] rccache =  new CPURunBlock[0x4000];
+
+		static CPURunBlock dummyrc = new DummyCPURunBlock();
+		static CPURunBlock[][] rccachea =  new CPURunBlock[0xff][0x4000];
+		static CPURunBlock[] rccache0 =  rccachea[0];
+		static CPURunBlock[] rccachex =  new CPURunBlock[0x4000];
 		static int[] rccnt =  new int[0x4000];
 #endif
 
