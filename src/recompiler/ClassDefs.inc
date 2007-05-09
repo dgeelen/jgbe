@@ -21,17 +21,6 @@ class SimpleVariable extends Variable {
 	};
 }
 
-class ReturnVariable extends Variable {
-	public ReturnVariable() { };
-	public String asString() { return "return"; };
-	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
-		ASSERT(false);
-	};
-	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
-		il.append(InstructionConstants.IRETURN);
-	};
-}
-
 class MemoryVariable extends Variable {
 	private Expression addr;
 	public MemoryVariable(Expression ahaddr, Expression aladdr) {
@@ -49,6 +38,17 @@ class MemoryVariable extends Variable {
 	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
 		addr.doAssembleValue(il, cp);
 		il.append(new INVOKESTATIC(REF_WRITE));
+	};
+}
+
+class ReturnVariable extends Variable {
+	public ReturnVariable() { };
+	public String asString() { return "return"; };
+	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
+		ASSERT(false);
+	};
+	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
+		il.append(InstructionConstants.IRETURN);
 	};
 }
 

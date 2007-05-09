@@ -19,7 +19,7 @@
 
 		ClassGen cg = new ClassGen(classname,
 		                           "java.lang.Object", "", Constants.ACC_PUBLIC,
-		                           new String[] {"CPURunBlock"});
+		                           new String[] {"CPURunBlock"} );
 
 		// That's important, otherwise newInstance() won't work
 		cg.addEmptyConstructor(Constants.ACC_PUBLIC);
@@ -28,7 +28,8 @@
 		ConstantPoolGen    cp      = cg.getConstantPool();
 		InstructionFactory factory = new InstructionFactory(cg);
 
-		MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT, null, null, "execute", "foo", il, cp);
+		MethodGen mg = new MethodGen(Constants.ACC_PUBLIC|Constants.ACC_FINAL, Type.INT,
+		                             null, null, "execute", "foo", il, cp);
 
 		FOREACH(SimpleAssign, sa, assigns) {
 			sa.doAssemble(il, cp);
@@ -40,8 +41,7 @@
 		mg.stripAttributes(true);
 		mg.setMaxStack();
 		mg.setMaxLocals();
-		cg.addMethod(mg.getMethod());
-
+		cg.addMethod(mg.getMethod()); 
 
 		byte[] bytes = cg.getJavaClass().getBytes();
 
