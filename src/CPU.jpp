@@ -357,7 +357,9 @@ check for badness = $afa
 			rMemMap[0x2] = cartridge.MM_ROM[2];
 			rMemMap[0x3] = cartridge.MM_ROM[3];
 
+#ifdef ENABLE_RECOMPILER
 			rccachex = rccachea[cartridge.CurrentROMBank];
+#endif
 
 			// cartridge ROM switchable bank (read only, write has special functions)
 			rMemMap[0x4] = cartridge.MM_ROM[(cartridge.CurrentROMBank<<2)|0];
