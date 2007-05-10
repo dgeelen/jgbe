@@ -1007,7 +1007,7 @@ static int togglestart=1;
 #ifdef ENABLE_RECOMPILER
 			if (PC < 0x4000) {
 				if (rccache0[PC] == null) {
-					PRINTF("recompiling @ PC=$%02x\n", PC);
+// 					PRINTF("recompiling @ PC=$%02x\n", PC);
 					rccache0[PC] = CPURecompiler.doRecompile(PC);
 					if (rccache0[PC]==null)
 						rccache0[PC] = dummyrc;
@@ -1022,7 +1022,7 @@ static int togglestart=1;
 			}
 			else if (PC < 0x8000) {
 				if (rccachex[PC-0x4000] == null) {
-					PRINTF("recompiling @ PC=$%02x\n", PC);
+// 					PRINTF("recompiling @ PC=$%02x\n", PC);
 					rccachex[PC-0x4000] = CPURecompiler.doRecompile(PC);
 					if (rccachex[PC-0x4000]==null)
 						rccachex[PC-0x4000] = dummyrc;
