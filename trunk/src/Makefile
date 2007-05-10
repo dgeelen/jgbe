@@ -49,12 +49,6 @@ run: all
 debug: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound
 
-rcrun: all
-#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  swinggui -lastcart -nosound -nodebug
-	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  swinggui -lastcart -nosound
-#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  CPURecompiler
-#	cd $(CLASSDIR) && java -classpath ../../../bcel-5.2/bcel-5.2.jar:.  TestSuite ~/gbroms/Turtles\ 3.zip
-
 tester: all
 	cd $(CLASSDIR) && java TestSuite ~/gbroms/Turtles\ 3.zip
 
