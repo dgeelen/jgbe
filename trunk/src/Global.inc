@@ -3,7 +3,7 @@
 
 //#define USE_JAVA_MOBILE
 //#define USE_JAVA_142
-#define ENABLE_RECOMPILER
+//#define ENABLE_RECOMPILER
 
 #define LINK_CABLE_TCP_PORT 0x4321
 
@@ -76,6 +76,7 @@
 #endif
 
 #define PRINTLN(x) System.out.println(x)
+#define PRINT(x) System.out.print(x)
 
 /* first one nearly 10% faster! (sometimes :-p)*/
 #define MAX(a,b) ((a)<(b)?(b):(a))

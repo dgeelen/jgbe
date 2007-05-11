@@ -675,17 +675,27 @@ static int togglestart=1;
 						IOP[0x01]=value;
 						break;
 					case 0xff02: // SC - Serial Transfer Control (R/W)
-						IOP[0x02]=value;
-						if ((value&(1<<7))!=0) {
-							// transfer! (we do it instantly...)
-							if ((value&(1<<0))!=0) {
-								// internal clock, this 'works' without other GB
-								IOP[0x01] = 0xFF; // 'works'
-								IOP[0x02] &= ~(1<<7); // 'transfer' finished
-								triggerInterrupt(3);
+						if(LinkCableStatus==0) {
+							IOP[0x02]=value;
+							if ((value&(1<<7))!=0) {
+								// transfer! (we do it instantly...)
+								if ((value&(1<<0))!=0) {
+									// internal clock, this 'works' without other GB
+									IOP[0x01] = 0xFF; // 'works'
+									IOP[0x02] &= ~(1<<7); // 'transfer' finished
+									triggerInterrupt(3);
+								}
+								else {
+									// external clock, nothing will happen
+								}
 							}
-							else {
-								// external clock, nothing will happen
+						}
+						else { //server/client mode
+							if ((value&(1<<7))!=0) {
+//								// transfer! (we do it instantly...)
+								IOP[0x02]=value;
+								LinkCableThread.resume();
+								Thread.yield();
 							}
 						}
 						break;
