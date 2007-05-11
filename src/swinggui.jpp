@@ -99,6 +99,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemToggleCheats;
 		JMenuItem menuitemScaleBuilder;
   	JMenuItem[] menuItems;
+  	JMenu menuLink;
+  	JMenuItem menuitemLinkServe;
+  	JMenuItem menuitemLinkClient;
+  	JMenuItem menuitemLinkSever;
+
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
 
@@ -294,6 +299,17 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuOther.add(menuitemScaleBuilder);
 			mainMenuBar.add( menuOther) ;
 
+	  	menuLink=new JMenu("Link");
+			menuitemLinkServe = new JMenuItem("Start Link Server", KeyEvent.VK_S);
+			menuitemLinkClient = new JMenuItem("Start Link Client", KeyEvent.VK_C);
+			menuitemLinkSever = new JMenuItem("Stop Link", KeyEvent.VK_L);
+			menuitemLinkServe.addActionListener(this);
+			menuitemLinkClient.addActionListener(this);
+			menuitemLinkSever.addActionListener(this);
+			menuLink.add(menuitemLinkServe);
+			menuLink.add(menuitemLinkClient);
+			menuLink.add(menuitemLinkSever);
+			mainMenuBar.add( menuLink ) ;
 
 			return mainMenuBar;
 		}
@@ -481,6 +497,15 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					if (CPU.canRun())
 						if(cpuRunner!=null) cpuRunner.resume();
 				}
+			}
+			else if(e.getSource().equals( menuitemLinkServe )) {
+				CPU.serveLink();
+			}
+			else if(e.getSource().equals( menuitemLinkSever )) {
+				CPU.severLink();
+			}
+			else if(e.getSource().equals( menuitemLinkClient )) {
+				CPU.clientLink("localhost");
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;

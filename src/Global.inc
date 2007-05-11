@@ -3,7 +3,9 @@
 
 //#define USE_JAVA_MOBILE
 //#define USE_JAVA_142
-//#define ENABLE_RECOMPILER
+#define ENABLE_RECOMPILER
+
+#define LINK_CABLE_TCP_PORT 0x4321
 
 #ifdef USE_JAVA_MOBILE
 	#define USE_JAVA_142
