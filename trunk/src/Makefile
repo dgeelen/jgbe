@@ -49,6 +49,9 @@ run: all
 debug: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound
 
+link: all
+	cd $(CLASSDIR) && $(AOSS) java swinggui -nosound -nodebug
+
 tester: all
 	cd $(CLASSDIR) && java TestSuite ~/gbroms/Turtles\ 3.zip
 
