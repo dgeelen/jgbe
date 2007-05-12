@@ -672,32 +672,11 @@ static int togglestart=1;
 						IOP[index&0xff]=value;
 						break;
 					case 0xff01: // SB - Serial transfer data (R/W)
-						IOP[0x01]=value;
+						IOP[0x01] = value;
 						break;
 					case 0xff02: // SC - Serial Transfer Control (R/W)
-						if(LinkCableStatus==0) {
-							IOP[0x02]=value;
-							if ((value&(1<<7))!=0) {
-								// transfer! (we do it instantly...)
-								if ((value&(1<<0))!=0) {
-									// internal clock, this 'works' without other GB
-									IOP[0x01] = 0xFF; // 'works'
-									IOP[0x02] &= ~(1<<7); // 'transfer' finished
-									triggerInterrupt(3);
-								}
-								else {
-									// external clock, nothing will happen
-								}
-							}
-						}
-						else { //server/client mode
-							if ((value&(1<<7))!=0) {
-//								// transfer! (we do it instantly...)
-								IOP[0x02]=value;
-								LinkCableThread.resume();
-								Thread.yield();
-							}
-						}
+						IOP[0x02] = value;
+						LINKreq = true;
 						break;
 					case 0xff04: // DIV
 						IOP[0x04] = 0;
@@ -1300,6 +1279,56 @@ static int togglestart=1;
 */
 				if (LCDCcntdwn < 0)
 					lcdc_trans();
+			}
+
+			if (LinkCableStatus != 0) {
+				LINKcntdwn -= res;
+				if (LINKcntdwn < 0) {
+					LINKcntdwn += 4096*10; // == 4194304/1024 (normal speed 8k bits/sec is 1k bytes/sec)
+					// * 10 tetris hax to get more 'reasonable' speeds...
+					int lstatus = IOP[0x02] | (IOP[0x01] << 8);
+					int rstatus = -1;
+					try {
+						LinkCableOut.writeInt(lstatus);
+						LinkCableOut.flush();
+						rstatus = LinkCableIn.readInt();
+					}
+					catch (IOException e) {
+						PRINTLN("Link exception");
+					}
+
+					int bstatus = (rstatus & 0xff) | ((lstatus & 0xff) << 8);
+					bstatus &= 0x8181; // mask out ext/int clk and start transfer bits
+					                   // dont yet care about clockspeed...,
+					switch (bstatus) {
+						case 0x8080: case 0x8001: case 0x8000: {
+							// waiting for external clock that isnt there...
+							// PRINTLN("waiting for external clock that isnt there...");
+						}; break;
+						case 0x8101: case 0x8100: {
+							// internal clock timeout
+							// PRINTLN("internal clock timeout");
+							IOP[0x01] = 0xff;
+							IOP[0x02] &= ~0x80;
+							triggerInterrupt(3);
+						}; break;
+						case 0x8181: {
+							// 2 internal clocks! conflict! panic! aargh!
+							PRINTLN("Link: clock conflict");
+						}; break;
+						case 0x8180:   // local clock, swap bytes
+						case 0x8081: { // remote clock, swap bytes
+							PRINTF("Link: swapping $%04x: $%02x <-> $%02x\n",bstatus,IOP[0x01] , rstatus >> 8);
+							IOP[0x01] = rstatus >> 8;
+							IOP[0x02] &= ~0x80;
+							triggerInterrupt(3);
+						}; break;
+						default: {
+							// no (local) transfer requested
+							//PRINTF("Link: no swapping $%04x\n",bstatus);
+						}
+					}
+				}
 			}
 
 			return res;
