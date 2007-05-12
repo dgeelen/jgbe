@@ -144,6 +144,7 @@ public static final  void serveLink() {
 				LinkCablesrvr = new ServerSocket(LINK_CABLE_TCP_PORT);
 				LinkCablesktOut = LinkCablesrvr.accept();
 				PRINTLN("Connection established");
+				LinkCablesktOut.setTcpNoDelay(true);
 				LinkCableIn = new DataInputStream(LinkCablesktOut.getInputStream());
 				LinkCableOut = new DataOutputStream(LinkCablesktOut.getOutputStream());
 		}
@@ -160,6 +161,7 @@ public static final void clientLink(String target) {
 	if(LinkCableStatus==0) {
 		try {
 				LinkCablesktIn = new Socket(target, LINK_CABLE_TCP_PORT);
+				LinkCablesktIn.setTcpNoDelay(true);
 				LinkCableIn = new DataInputStream(LinkCablesktIn.getInputStream());
 				LinkCableOut = new DataOutputStream(LinkCablesktIn.getOutputStream());
 		}

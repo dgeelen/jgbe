@@ -1284,8 +1284,8 @@ static int togglestart=1;
 			if (LinkCableStatus != 0) {
 				LINKcntdwn -= res;
 				if (LINKcntdwn < 0) {
-					LINKcntdwn += 4096*10; // == 4194304/1024 (normal speed 8k bits/sec is 1k bytes/sec)
-					// * 10 tetris hax to get more 'reasonable' speeds...
+					LINKcntdwn += 4096; // == 4194304/1024 (normal speed 8k bits/sec is 1k bytes/sec)
+					//LINKcntdwn += 4096*9; // * 10 tetris hax to get more 'reasonable' speeds...
 					int lstatus = IOP[0x02] | (IOP[0x01] << 8);
 					int rstatus = -1;
 					try {
