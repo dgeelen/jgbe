@@ -70,6 +70,14 @@
 		) \
 	)
 
+#define ASS_M1_E(x, y) \
+	result.add( \
+		new SimpleAssign( \
+			new MemoryVariable(x), \
+			y \
+		) \
+	)
+
 #define ECONST(x) new ConstantExpression(x)
 #define EREG(x) new SimpleVariable(#x)
 #define EMEM(x) new MemoryVariable(x)
@@ -148,6 +156,8 @@
 	ASS_V_E(EREG(SP), new FunctionDEC(EREG(SP), ECONST(1))); \
 	ASS_V_E(EMEMR(SP), e2); \
 }
+
+#define DO_PUSH16(v) DO_PUSH2(ECONST((v)>>8), ECONST((v)&0xff))
 
 #define DO_POP2(v1, v2) { \
 	ASS_V_E(v2, EMEMR(SP)); \
