@@ -34,6 +34,15 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			case 0x77: ASS_M2_S(EREG(H), EREG(L), A); break;        // LD   (HL), A
 			case 0x36: ASS_M2_E(EREG(H), EREG(L), EIMM8); break;    // LD   (HL), n
 
+			case 0xf9: ASS_S_E(SP, new FunctionOR(new FunctionSHL(EREG(H), new ConstantExpression(8)), EREG(L)));
+			break;                                                  // LD   SP  , HL
+
+			case 0x08: {                                            // LD   (nn), SP
+					int t_acc = IMM16;
+					ASS_M1_E(ECONST(t_acc), new FunctionSHR(EREG(SP), ECONST(8)));
+					ASS_M1_E(ECONST((t_acc+1)&0xffff), new FunctionAND(EREG(SP), ECONST(0xff)));
+			}; break;
+
 			case 0xc1: DO_POP2(EREG(B), EREG(C)); break;            // POP  BC
 			case 0xd1: DO_POP2(EREG(D), EREG(E)); break;            // POP  DE
 			case 0xe1: DO_POP2(EREG(H), EREG(L)); break;            // POP  HL
@@ -43,11 +52,17 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			case 0xe5: DO_PUSH2(EREG(H), EREG(L)); break;           // PUSH HL
 			case 0xf5: DO_PUSH2(EREG(A), EREG(F)); break;           // PUSH AF
 
-			case 0xcd: {                                            // CALL (nn)
-				DO_PUSH2(ECONST((PC+2)>>8), ECONST((PC+2)&0xff));
-				DO_JP_NN;
-			}; break;
+			case 0xcd: DO_PUSH16(PC+2); DO_JP_NN; break;            // CALL (nn)
 			//case 0xc9: DO_RET; break;                               // RET
+
+			case 0xc7: DO_PUSH16(PC); PC = 0x00; break;             // RST  &0
+			case 0xcf: DO_PUSH16(PC); PC = 0x08; break;             // RST  &8
+			case 0xd7: DO_PUSH16(PC); PC = 0x10; break;             // RST  &10
+			case 0xdf: DO_PUSH16(PC); PC = 0x18; break;             // RST  &18
+			case 0xe7: DO_PUSH16(PC); PC = 0x20; break;             // RST  &20
+			case 0xef: DO_PUSH16(PC); PC = 0x28; break;             // RST  &28
+			case 0xf7: DO_PUSH16(PC); PC = 0x30; break;             // RST  &30
+			case 0xff: DO_PUSH16(PC); PC = 0x38; break;             // RST  &38
 
 			case 0xc3: DO_JP_NN; break;                             // JP   (nn)
 			case 0x18: DO_JR_D; break;                              // JR   (d)
