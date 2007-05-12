@@ -1,3 +1,6 @@
+static private int LINKcntdwn = 0;
+static private boolean LINKreq = false;
+
 static class SendReceiveThread implements CPURunner, Runnable {
 	private volatile int threadStatus = 0;
 	private Thread srthread;
@@ -147,7 +150,7 @@ public static final  void serveLink() {
 		catch(Exception e) {
 				PRINTLN("WARNING: Error starting LinkCableServer");
 		}
-		LinkCableThread = new SendReceiveThread();
+		//LinkCableThread = new SendReceiveThread();
 		LinkCableStatus=1;
 	}
 	else PRINTLN("WARNING: Can't serve while not offline");
@@ -163,7 +166,7 @@ public static final void clientLink(String target) {
 		catch(Exception e) {
 				PRINTLN("WARNING: Error starting LinkCableClient");
 		}
-		LinkCableThread = new SendReceiveThread();
+		//LinkCableThread = new SendReceiveThread();
 		LinkCableStatus=2;
 	}
 	else PRINTLN("WARNING: Can't serve while not offline");
