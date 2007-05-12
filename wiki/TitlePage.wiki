@@ -1,8 +1,10 @@
-= Introduction = JGBE - the Java GameBoy Emulator
+=Introduction=
 
 This is the main page!
 
-= Details =
+=Details=
 
 ...
+
+
 
