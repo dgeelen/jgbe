@@ -4,6 +4,7 @@ static private int LINKdelay = 0; // do not change, use setDelay() instead
 static private int LINKcntdwn = 0;
 static private int[] LINKbuf = new int[8];
 static private int LINKind = 0;
+static private int LINKtimeout = 0;
 
 static void setDelay(int ndelay) throws IOException {
 	for (int i = 0; i < LINKdelay; ++i)
