@@ -505,7 +505,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				CPU.severLink();
 			}
 			else if(e.getSource().equals( menuitemLinkClient )) {
-				CPU.clientLink("localhost");
+				CPU.clientLink("s040390");
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;
