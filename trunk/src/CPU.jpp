@@ -265,6 +265,12 @@ check for badness = $afa
 #define R_STAT VC.STAT
 #define R_LY VC.LY
 		static final private void lcdc_trans() {
+			/** TODO: put this logic inside VideoController? */
+			/* Mode 0  ___000___000___000___000___000___000________________000
+			 * Mode 1  ____________________________________11111111111111_____
+			 * Mode 2  2_____2_____2_____2_____2_____2___________________2____
+			 * Mode 3  _33____33____33____33____33____33__________________3___
+			 */
 			if (0==(R_LCDC & 0x80))
 			{
 				ASSERT(LCDCcntdwn <= 0);
@@ -672,11 +678,8 @@ static int togglestart=1;
 						IOP[index&0xff]=value;
 						break;
 					case 0xff01: // SB - Serial transfer data (R/W)
-						IOP[0x01] = value;
-						break;
 					case 0xff02: // SC - Serial Transfer Control (R/W)
-						IOP[0x02] = value;
-						LINKreq = true;
+						IOP[index&0xff] = value;
 						break;
 					case 0xff04: // DIV
 						IOP[0x04] = 0;
@@ -1271,12 +1274,6 @@ static int togglestart=1;
 					AC.render(res); //render enough sound bytes for res Cycles
 				}
 
-				/** TODO: put this logic inside VideoController */
-/*			Mode 0  ___000___000___000___000___000___000________________000
-				Mode 1  ____________________________________11111111111111_____
-				Mode 2  2_____2_____2_____2_____2_____2___________________2____
-				Mode 3  _33____33____33____33____33____33__________________3___
-*/
 				if (LCDCcntdwn < 0)
 					lcdc_trans();
 			}
@@ -1284,14 +1281,21 @@ static int togglestart=1;
 			if (LinkCableStatus != 0) {
 				LINKcntdwn -= res;
 				if (LINKcntdwn < 0) {
-					LINKcntdwn += 4096; // == 4194304/1024 (normal speed 8k bits/sec is 1k bytes/sec)
+					LINKcntdwn += (4096 / LINKmulti);
+					// == 4194304/(1024*LINKmulti) (normal speed 8k bits/sec is 1k bytes/sec)
 					//LINKcntdwn += 4096*9; // * 10 tetris hax to get more 'reasonable' speeds...
-					int lstatus = IOP[0x02] | (IOP[0x01] << 8);
-					int rstatus = -1;
 					try {
+						int lstatus = IOP[0x02] | (IOP[0x01] << 8);
+						int rstatus = -1;
+
+						LINKbuf[LINKind++] = lstatus;
+
 						LinkCableOut.writeInt(lstatus);
 						LinkCableOut.flush();
 						rstatus = LinkCableIn.readInt();
+
+						if (LINKind > LINKdelay) LINKind = 0;
+						lstatus = LINKbuf[LINKind];
 
 						int bstatus = (rstatus & 0xff) | ((lstatus & 0xff) << 8);
 						bstatus &= 0x8181; // mask out ext/int clk and start transfer bits

@@ -1,5 +1,18 @@
+static private int LINKmulti = 1;
+static private int LINKdelay = 0; // do not change, use setDelay() instead
+
 static private int LINKcntdwn = 0;
-static private boolean LINKreq = false;
+static private int[] LINKbuf = new int[8];
+static private int LINKind = 0;
+
+static void setDelay(int ndelay) throws IOException {
+	for (int i = 0; i < LINKdelay; ++i)
+		LinkCableIn.readInt();
+	LINKdelay = ndelay;
+	for (int i = 0; i < LINKdelay; ++i)
+		LinkCableOut.writeInt(0);
+	LINKmulti = LINKdelay + 1;
+}
 
 static class SendReceiveThread implements CPURunner, Runnable {
 	private volatile int threadStatus = 0;
@@ -141,12 +154,13 @@ public static final void severLink() {
 public static final  void serveLink() {
 	if(LinkCableStatus==0) {
 		try {
-				LinkCablesrvr = new ServerSocket(LINK_CABLE_TCP_PORT);
-				LinkCablesktOut = LinkCablesrvr.accept();
-				PRINTLN("Connection established");
-				LinkCablesktOut.setTcpNoDelay(true);
-				LinkCableIn = new DataInputStream(LinkCablesktOut.getInputStream());
-				LinkCableOut = new DataOutputStream(LinkCablesktOut.getOutputStream());
+			LinkCablesrvr = new ServerSocket(LINK_CABLE_TCP_PORT);
+			LinkCablesktOut = LinkCablesrvr.accept();
+			PRINTLN("Connection established");
+			LinkCablesktOut.setTcpNoDelay(true);
+			LinkCableIn = new DataInputStream(LinkCablesktOut.getInputStream());
+			LinkCableOut = new DataOutputStream(LinkCablesktOut.getOutputStream());
+			setDelay(0);
 		}
 		catch(Exception e) {
 				PRINTLN("WARNING: Error starting LinkCableServer");
@@ -160,10 +174,11 @@ public static final  void serveLink() {
 public static final void clientLink(String target) {
 	if(LinkCableStatus==0) {
 		try {
-				LinkCablesktIn = new Socket(target, LINK_CABLE_TCP_PORT);
-				LinkCablesktIn.setTcpNoDelay(true);
-				LinkCableIn = new DataInputStream(LinkCablesktIn.getInputStream());
-				LinkCableOut = new DataOutputStream(LinkCablesktIn.getOutputStream());
+			LinkCablesktIn = new Socket(target, LINK_CABLE_TCP_PORT);
+			LinkCablesktIn.setTcpNoDelay(true);
+			LinkCableIn = new DataInputStream(LinkCablesktIn.getInputStream());
+			LinkCableOut = new DataOutputStream(LinkCablesktIn.getOutputStream());
+			setDelay(0);
 		}
 		catch(Exception e) {
 				PRINTLN("WARNING: Error starting LinkCableClient");
