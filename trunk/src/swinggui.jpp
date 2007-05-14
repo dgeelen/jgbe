@@ -349,7 +349,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			frame.setJMenuBar( createJMenuBar() );
 			addComponentsToPane( frame.getContentPane() );
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			Image image = toolkit.getImage("icon.gif");
+			URL imgurl = getClass().getResource("icon.gif");
+			Image image = toolkit.getImage(imgurl);
 			frame.setIconImage(image);
 
 			frame.addComponentListener(this);

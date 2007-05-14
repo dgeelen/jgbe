@@ -13,22 +13,17 @@ public class Disassembler
       this.cpu=cpu;
       this.opcode=new String[512];
       BufferedReader reader;
-      try {
-        FileInputStream fistream = new FileInputStream(file_name);
-        reader = new BufferedReader(new InputStreamReader(fistream));
-        try {
-          for(int i=0; i < 512 ; ++i) {
-            opcode[i]=reader.readLine();
-            //System.out.println(opcode[i]);
-          }
-        }
-        catch (IOException ioe) {
-          System.out.println("ERROR while reading " + file_name + "!");
-        }
-      }
-      catch (FileNotFoundException fnfe) {
-        System.out.println("ERROR while loading file " + file_name + "!");
-      }
+			InputStream fistream = getClass().getResourceAsStream(file_name);
+			reader = new BufferedReader(new InputStreamReader(fistream));
+			try {
+				for(int i=0; i < 512 ; ++i) {
+					opcode[i]=reader.readLine();
+					//System.out.println(opcode[i]);
+				}
+			}
+			catch (IOException ioe) {
+				System.out.println("ERROR while reading " + file_name + "!");
+			}
     }
 
     // Opcode: opcode to disassemble
