@@ -70,6 +70,14 @@ rndCartridge: rndCartridge.cpp
 	  rm -f $*.dd
 	@mv $*.d $(DEPSDIR)/
 
+jarrun: jar
+	cd jar && java -jar jgbe.jar -lastcart
+
+jar: all
+	cd classes && jar cmf ../MANIFEST.MF.in jgbe.jar *.class icon.gif instrs.txt
+	mkdir -p jar
+	cp classes/jgbe.jar jar
+
 clean:
 	rm -f $(CLASSDIR)/*.class
 	rm -f $(DEPSDIR)/*.d
