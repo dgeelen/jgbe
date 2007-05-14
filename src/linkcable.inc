@@ -59,44 +59,28 @@ public static final void severLink() {
 	}
 }
 
-public static final  void serveLink() {
+public static final void serveLink() throws IOException {
 	if(LinkCableStatus==0) {
-		try {
-			LinkCablesrvr = new ServerSocket(LINK_CABLE_TCP_PORT);
-			LinkCablesktOut = LinkCablesrvr.accept();
-			PRINTLN("Connection established");
-			LinkCablesktOut.setTcpNoDelay(true);
-			LinkCableIn = new DataInputStream(LinkCablesktOut.getInputStream());
-			LinkCableOut = new DataOutputStream(LinkCablesktOut.getOutputStream());
-			LinkCableStatus=1;
-			setDelay(0);
-		}
-		catch(Exception e) {
-				PRINTLN("WARNING: Error starting LinkCableServer");
-				e.toString();
-				e.printStackTrace();
-		}
-		//LinkCableThread = new SendReceiveThread();
+		LinkCablesrvr = new ServerSocket(LINK_CABLE_TCP_PORT);
+		LinkCablesktOut = LinkCablesrvr.accept();
+		PRINTLN("Connection established");
+		LinkCablesktOut.setTcpNoDelay(true);
+		LinkCableIn = new DataInputStream(LinkCablesktOut.getInputStream());
+		LinkCableOut = new DataOutputStream(LinkCablesktOut.getOutputStream());
+		LinkCableStatus=1;
+		setDelay(0);
 	}
-	else PRINTLN("WARNING: Can't serve while not offline");
+	else throw new IOException("WARNING: Can't serve while not offline");
 }
 
-public static final void clientLink(String target) {
+public static final void clientLink(String target)  throws IOException {
 	if(LinkCableStatus==0) {
-		try {
-			LinkCablesktIn = new Socket(target, LINK_CABLE_TCP_PORT);
-			LinkCablesktIn.setTcpNoDelay(true);
-			LinkCableIn = new DataInputStream(LinkCablesktIn.getInputStream());
-			LinkCableOut = new DataOutputStream(LinkCablesktIn.getOutputStream());
-			LinkCableStatus=2;
-			setDelay(0);
-		}
-		catch(Exception e) {
-				PRINTLN("WARNING: Error starting LinkCableClient");
-				e.toString();
-				e.printStackTrace();
-		}
-		//LinkCableThread = new SendReceiveThread();
+		LinkCablesktIn = new Socket(target, LINK_CABLE_TCP_PORT);
+		LinkCablesktIn.setTcpNoDelay(true);
+		LinkCableIn = new DataInputStream(LinkCablesktIn.getInputStream());
+		LinkCableOut = new DataOutputStream(LinkCablesktIn.getOutputStream());
+		LinkCableStatus=2;
+		setDelay(0);
 	}
-	else PRINTLN("WARNING: Can't client while not offline");
+	else throw new IOException("WARNING: Can't client while not offline");
 }

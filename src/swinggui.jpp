@@ -499,14 +499,23 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				}
 			}
 			else if(e.getSource().equals( menuitemLinkServe )) {
-				CPU.serveLink();
+				try {
+					CPU.serveLink();
+				}
+				catch (IOException ioe) {
+					JOptionPane.showMessageDialog(frame, "Failed: " + ioe.getMessage(), "Error!", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 			else if(e.getSource().equals( menuitemLinkSever )) {
 				CPU.severLink();
 			}
 			else if(e.getSource().equals( menuitemLinkClient )) {
-
-				CPU.clientLink((String)JOptionPane.showInputDialog(frame, (Object)"Enter host address", "Link setup", JOptionPane.QUESTION_MESSAGE, null, null, "locahost"));
+				try {
+					CPU.clientLink((String)JOptionPane.showInputDialog(frame, (Object)"Enter host address", "Link setup", JOptionPane.QUESTION_MESSAGE, null, null, "localhost"));
+				}
+				catch (IOException ioe) {
+					JOptionPane.showMessageDialog(frame, "Failed: " + ioe.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;
