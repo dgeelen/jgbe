@@ -99,6 +99,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemToggleCheats;
 		JMenuItem menuitemScaleBuilder;
   	JMenuItem[] menuItems;
+  	JMenuItem[] menuitemsColorSelector;
   	JMenu menuLink;
   	JMenuItem menuitemLinkServe;
   	JMenuItem menuitemLinkClient;
@@ -106,6 +107,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
+
+		JMenuItem menuitemColor;
+		protected ColorSelector cs;
 
 		public void updateCartName(String fname) {
 			int slashPos = fname.lastIndexOf(File.separator);
@@ -163,6 +167,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			JMenu menuFrameSkip;
 			JMenu menuState;
 			JMenu menuSound;
+			JMenu menuColor;
 			mainMenuBar = new JMenuBar();
 
 			menuFile = new JMenu( "File" );
@@ -299,7 +304,13 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuOther.add(menuitemScaleBuilder);
 			mainMenuBar.add( menuOther) ;
 
+			menuColor = new JMenu( "Colors" );
 	  	menuLink=new JMenu("Link");
+			menuitemColor = new JMenuItem ( "Change Colors" );
+			menuitemColor.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_C, ActionEvent.CTRL_MASK ) );
+			menuitemColor.addActionListener( this );
+			menuColor.add( menuitemColor );
+			mainMenuBar.add( menuColor );
 			menuitemLinkServe = new JMenuItem("Start Link Server", KeyEvent.VK_S);
 			menuitemLinkClient = new JMenuItem("Start Link Client", KeyEvent.VK_C);
 			menuitemLinkSever = new JMenuItem("Stop Link", KeyEvent.VK_L);
@@ -349,8 +360,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			frame.setJMenuBar( createJMenuBar() );
 			addComponentsToPane( frame.getContentPane() );
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			URL imgurl = getClass().getResource("icon.gif");
-			Image image = toolkit.getImage(imgurl);
+			Image image = toolkit.getImage("icon.gif");
 			frame.setIconImage(image);
 
 			frame.addComponentListener(this);
@@ -460,7 +470,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
 			}
 			else if (e.getSource().equals( menuitemScaleBuilder)) {
-				ScaleBuilder sb = new ScaleBuilder(frame);
+				//ScaleBuilder sb = new ScaleBuilder(frame);
 				//sb.showOpenDialog();
 			}
 			else if (e.getSource().equals( menuitemCheats)) {
@@ -469,6 +479,22 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cheatcodes.applyCheatCodes(cart);
 				pauseEmulation();
 				addOSDLine("ZOMG CHEATER!!!!");
+			}
+			else if (e.getSource().equals( menuitemColor )) {
+
+				if ( !cpu.isCGB() ) {
+					cs.setDefault( VC.getGrayShade(0),
+					 	             VC.getGrayShade(1),
+					 	             VC.getGrayShade(2));
+					cs.setVisible( true );
+				}
+				else {
+					JOptionPane.showMessageDialog(frame,
+                                        "You are not allowed to change colors",
+                                        "color error",
+					                              JOptionPane.ERROR_MESSAGE);
+				}
+
 			}
 			else if(e.getSource().equals( menuitemOpenROM )) {
 				JFileChooser fc;
@@ -500,23 +526,13 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				}
 			}
 			else if(e.getSource().equals( menuitemLinkServe )) {
-				try {
-					CPU.serveLink();
-				}
-				catch (IOException ioe) {
-					JOptionPane.showMessageDialog(frame, "Failed: " + ioe.getMessage(), "Error!", JOptionPane.ERROR_MESSAGE);
-				}
+				CPU.serveLink();
 			}
 			else if(e.getSource().equals( menuitemLinkSever )) {
 				CPU.severLink();
 			}
 			else if(e.getSource().equals( menuitemLinkClient )) {
-				try {
-					CPU.clientLink((String)JOptionPane.showInputDialog(frame, (Object)"Enter host address", "Link setup", JOptionPane.QUESTION_MESSAGE, null, null, "localhost"));
-				}
-				catch (IOException ioe) {
-					JOptionPane.showMessageDialog(frame, "Failed: " + ioe.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-				}
+				CPU.clientLink("localhost");
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;
@@ -794,6 +810,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			gui.cpu = new CPU();
 			gui.VC = gui.cpu.VC;
+			gui.cs = new ColorSelector( gui.VC );
 
 			gui.createAndShowGUI();
 			cheatcodes = new CheatCodeEditor(frame, curcartname);
