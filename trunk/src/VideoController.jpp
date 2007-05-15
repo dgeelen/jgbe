@@ -110,6 +110,10 @@ public class VideoController {
 		updateMonoColData(2);
 	}
 
+	public int[][] getGrayShade(int i) {
+		return GrayColors[i];
+	}
+
 	public void reset() {
 		this.isCGB = cpu.isCGB();
 		CurrentVRAMBank=0;
