@@ -9,6 +9,8 @@ import java.net.*;
 import java.io.*;
 import java.awt.image.BufferedImage;
 
+#include "keyConfigDialog.inc"
+
 class SimpleCPURunner implements CPURunner, Runnable {
 	private volatile int threadStatus = 0;
 	private Thread cpurunthread;
@@ -63,6 +65,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		protected CPU cpu;
 		private int fps;
 		private int selectedState = 0;
+		private int[][] playerKeyCodes = new int[2][8];
 		VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
 		int osdTime = 0;
@@ -82,6 +85,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemSoundDisable;
 		JMenuItem menuitemSoundToggle;
 		JMenuItem[] menuitemSelectState;
+		JMenuItem[] menuItems; //Savestates?
 		JMenuItem menuitemSeparator;
 		JMenuItem menuitemPause;
 		JMenuItem menuitemReset;
@@ -89,6 +93,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemColorSchemeOriginalGameboy;
 		JMenuItem menuitemColorSchemeBlackAndWhite;
 		JMenuItem menuitemColorSchemeGreys;
+		JMenuItem menuitemColorSchemeCustom;
 		JMenu menuSoundChannels;
 		JMenuItem menuitemSoundChannel1;
 		JMenuItem menuitemSoundChannel2;
@@ -97,18 +102,21 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenu menuOther;
 		JMenuItem menuitemCheats;
 		JMenuItem menuitemToggleCheats;
+#undef SCALEBUILDER
+#ifdef SCALEBUILDER
 		JMenuItem menuitemScaleBuilder;
-  	JMenuItem[] menuItems;
-  	JMenuItem[] menuitemsColorSelector;
-  	JMenu menuLink;
-  	JMenuItem menuitemLinkServe;
-  	JMenuItem menuitemLinkClient;
-  	JMenuItem menuitemLinkSever;
+#endif
+		JMenu menuLink;
+		JMenuItem menuitemLinkServe;
+		JMenuItem menuitemLinkClient;
+		JMenuItem menuitemLinkSever;
+		JMenu menuitemConfigKeys;
+		JMenuItem menuitemConfigKeyPlayer1;
+		JMenuItem menuitemConfigKeyPlayer2;
 
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
 
-		JMenuItem menuitemColor;
 		protected ColorSelector cs;
 
 		public void updateCartName(String fname) {
@@ -229,15 +237,19 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemColorSchemeOriginalGameboy = new JMenuItem("GameBoy LCD", KeyEvent.VK_L);
 			menuitemColorSchemeBlackAndWhite = new JMenuItem("Black and White", KeyEvent.VK_B);
 			menuitemColorSchemeGreys = new JMenuItem("Graytones", KeyEvent.VK_G);
+			menuitemColorSchemeCustom = new JMenuItem("Custom", KeyEvent.VK_C);
 			menuitemColorSchemeOriginalGameboy.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_0, ActionEvent.CTRL_MASK));
 			menuitemColorSchemeBlackAndWhite.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_9, ActionEvent.CTRL_MASK));
 			menuitemColorSchemeGreys.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_8, ActionEvent.CTRL_MASK));
+			menuitemColorSchemeCustom.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_7, ActionEvent.CTRL_MASK));
 			menuColorScheme.add(menuitemColorSchemeOriginalGameboy);
 			menuColorScheme.add(menuitemColorSchemeBlackAndWhite);
 			menuColorScheme.add(menuitemColorSchemeGreys);
+			menuColorScheme.add(menuitemColorSchemeCustom);
 			menuitemColorSchemeOriginalGameboy.addActionListener(this);
 			menuitemColorSchemeBlackAndWhite.addActionListener(this);
 			menuitemColorSchemeGreys.addActionListener(this);
+			menuitemColorSchemeCustom.addActionListener(this);
 			menuSettings.add(menuColorScheme);
 
 			menuState = new JMenu("State");
@@ -297,20 +309,15 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemToggleCheats=new JMenuItem("Toggle cheats on/off", KeyEvent.VK_T);
 			menuitemToggleCheats.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_BACK_SLASH, ActionEvent.CTRL_MASK ));
 			menuitemToggleCheats.addActionListener(this);
+#ifdef SCALEBUILDER
 			menuitemScaleBuilder=new JMenuItem("Built Scale", KeyEvent.VK_S);
 			menuitemScaleBuilder.addActionListener(this);
+			menuOther.add(menuitemScaleBuilder);
+#endif
 			menuOther.add(menuitemCheats);
 			menuOther.add(menuitemToggleCheats);
-			menuOther.add(menuitemScaleBuilder);
 			mainMenuBar.add( menuOther) ;
-
-			menuColor = new JMenu( "Colors" );
 	  	menuLink=new JMenu("Link");
-			menuitemColor = new JMenuItem ( "Change Colors" );
-			menuitemColor.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_C, ActionEvent.CTRL_MASK ) );
-			menuitemColor.addActionListener( this );
-			menuColor.add( menuitemColor );
-			mainMenuBar.add( menuColor );
 			menuitemLinkServe = new JMenuItem("Start Link Server", KeyEvent.VK_S);
 			menuitemLinkClient = new JMenuItem("Start Link Client", KeyEvent.VK_C);
 			menuitemLinkSever = new JMenuItem("Stop Link", KeyEvent.VK_L);
@@ -321,7 +328,14 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuLink.add(menuitemLinkClient);
 			menuLink.add(menuitemLinkSever);
 			mainMenuBar.add( menuLink ) ;
-
+			menuitemConfigKeys = new JMenu("Config keys");
+			menuitemConfigKeyPlayer1 = new JMenuItem("Player 1",KeyEvent.VK_1);
+			menuitemConfigKeyPlayer1.addActionListener(this);
+			menuitemConfigKeyPlayer2 = new JMenuItem("Player 2",KeyEvent.VK_2);
+			menuitemConfigKeyPlayer2.addActionListener(this);
+			menuitemConfigKeys.add(menuitemConfigKeyPlayer1);
+			menuitemConfigKeys.add(menuitemConfigKeyPlayer2);
+			menuOther.add(menuitemConfigKeys);
 			return mainMenuBar;
 		}
 
@@ -469,10 +483,20 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cheatcodes.ToggleCheats(cart);
 				addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
 			}
+			else if (e.getSource().equals( menuitemConfigKeyPlayer1)) {
+				keyConfigDialog k=new keyConfigDialog(frame);
+				playerKeyCodes[0] = k.getKeyCodes();
+			}
+			else if (e.getSource().equals( menuitemConfigKeyPlayer2)) {
+				keyConfigDialog k=new keyConfigDialog(frame);
+				playerKeyCodes[1] = k.getKeyCodes();
+			}
+#ifdef SCALEBUILDER
 			else if (e.getSource().equals( menuitemScaleBuilder)) {
 				ScaleBuilder sb = new ScaleBuilder(frame);
 				//sb.showOpenDialog();
 			}
+#endif
 			else if (e.getSource().equals( menuitemCheats)) {
 				pauseEmulation();
 				cheatcodes.editCodes();
@@ -480,7 +504,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				pauseEmulation();
 				addOSDLine("ZOMG CHEATER!!!!");
 			}
-			else if (e.getSource().equals( menuitemColor )) {
+			else if (e.getSource().equals( menuitemColorSchemeCustom )) {
 
 				if ( !cpu.isCGB() ) {
 					cs.setDefault( VC.getGrayShade(0),
@@ -786,11 +810,68 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			makeRcFilesMenuItems();
 		}
+
+		private void saveKeyBinds() {
+			DataOutputStream distream=null;
+			try {
+				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
+				FileOutputStream fistream = new FileOutputStream(path+"keys.conf");
+				distream = new DataOutputStream(fistream);
+				for(int player=0; player<2; ++player) {
+					for(int i=0; i<8; ++i) {
+						distream.writeInt(playerKeyCodes[player][i]);
+					}
+				}
+			}
+			catch(IOException e) { //File not found or error reading it
+					JOptionPane.showMessageDialog(frame,
+                                        "Could not save keybinds!",
+                                        "Error",
+					                              JOptionPane.ERROR_MESSAGE);
+			}
+			finally {
+				try {
+					distream.close();
+				}
+				catch(Exception e) {
+				}
+			}
+		}
+
+		private void loadKeyBinds() {
+			DataInputStream distream=null;
+			try {
+				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
+				FileInputStream fistream = new FileInputStream(path+"keys.conf");
+				distream = new DataInputStream(fistream);
+				for(int player=0; player<2; ++player) {
+					for(int i=0; i<8; ++i) {
+						playerKeyCodes[player][i] = distream.readInt();
+					}
+				}
+			}
+			catch(IOException e) { //File not found or error reading it
+					JOptionPane.showMessageDialog(frame,
+                                        "Keys need to be configured",
+                                        "Warning",
+					                              JOptionPane.WARNING_MESSAGE);
+			}
+			finally {
+				try {
+					distream.close();
+				}
+				catch(Exception e) {
+				}
+			}
+		}
+
+
 		static Cartridge cart = null;
 		public static void main( String[] args ) {
 			final swinggui gui=new swinggui();
 
 			gui.loadRCFiles();
+			gui.loadKeyBinds();
 
 			boolean sound=true, debug=true;
 			String romfile="", logfile="";
