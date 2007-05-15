@@ -2,6 +2,14 @@
 import java.io.*;
 import java.util.zip.*;
 public final class FHandler {
+	public static String EnsureExists(String relpath) throws IOException {
+		String name = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
+		File dir=new File(name+relpath);
+		if(!dir.exists()) if(!dir.mkdirs()) PRINTLN("failed to create path to "+relpath);
+		return name+relpath;
+	}
+
+
 	public static DataInputStream getDataInputStream(String fname) throws IOException {
  			int dotPos=0;
     	int dp = fname.indexOf(".");

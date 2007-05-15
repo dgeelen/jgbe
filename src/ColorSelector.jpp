@@ -34,6 +34,7 @@ public class ColorSelector extends JFrame
 		addMouseListener (this);
 
 		initSelectPanel();
+		setPreferredSize(new Dimension(480, 240));
 		add(pnlSelect, BorderLayout.WEST);
 		initColorPanel();
 		add(pnlColor, BorderLayout.CENTER);
