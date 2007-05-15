@@ -3,11 +3,13 @@
 
 PPFLAGS := $(PPFLAGS) -DUSE_JAVA_142
 
-RTJAR = $(shell ./findrtjar.sh)
+ifeq ($(RTJAR),)
+  RTJAR = $(shell ./findrtjar.sh "$(RTJARPATH)")
+endif
 
 CLASSPATH := $(CLASSPATH):$(RTJAR)
 
-JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -O -d $(CLASSDIR) -nowarn -classpath $(CLASSPATH)
+JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -O -d $(CLASSDIR) -nowarn -classpath "$(CLASSPATH)"
 
 #swinggui.class first class file to compile to speed up building
 CLASSFILES:=$(CLASSDIR)/swinggui.class $(CLASSFILES)

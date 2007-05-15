@@ -7,7 +7,9 @@ AJAVAFILES:=$(shell ls *.java) $(GJAVAFILES)
 AJAVAFILES:=$(shell echo $(AJAVAFILES) | sort | uniq)
 CLASSFILES:=$(AJAVAFILES:%.java=$(CLASSDIR)/%.class)
 
-CLASSPATH:=.
+ifeq ($(CLASSPATH),)
+	CLASSPATH:=.
+endif
 
 AOSS:=$(shell which aoss 2> /dev/null)
 
