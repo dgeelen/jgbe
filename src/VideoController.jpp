@@ -180,6 +180,8 @@ public class VideoController {
 		SL_UINT8(OBPI);
 		SL_ARR(UINT8, OBPD, 8*4*2);
 
+		SL_IF_VERSION(8, -1) SL_UINT8(curWNDY);
+
 		if (SL_LOAD) {
 			for(int i=0; i<1024; ++i) {
 				patdirty[i]=true;
@@ -808,7 +810,7 @@ public class VideoController {
 		}
 	}
 
-	private int lbgTileY = -1;
+	//private int lbgTileY = -1;
 
 	final private void calcBGTileBuf() {
 		/*	not really 100% correct...
@@ -884,6 +886,7 @@ public class VideoController {
 
 		for (int i = 0; i < cnt; ++i) {
 			int tile = VRAM[tileMap++];
+			//PRINTF("attrMap=0x%04x, tilemap=0x%04x, WindowTileMap=0x%04x, bgTileY=0x%04x\n", attrMap, tileMap, WindowTileMap, bgTileY);
 			int attr = VRAM[attrMap++];
 			if (TileData == 0x0800) {
 				tile ^= 0x80;

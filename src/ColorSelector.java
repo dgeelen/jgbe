@@ -72,7 +72,7 @@ public class ColorSelector extends JFrame
 	}
 
 	public void mouseClicked (MouseEvent e) {
-		System.out.printf("(%d, %d)\n", e.getX(), e.getY());
+// 		System.out.printf("(%d, %d)\n", e.getX(), e.getY());
 	}
 
 	public void stateChanged(ChangeEvent e) {
