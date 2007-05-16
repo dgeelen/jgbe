@@ -486,7 +486,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if (e.getSource().equals( menuitemConfigKeyPlayer1)) {
 				keyConfigDialog k=new keyConfigDialog(frame);
+				pauseEmulation();
 				playerKeyCodes[0] = k.getKeyCodes();
+				pauseEmulation();
 			}
 			else if (e.getSource().equals( menuitemConfigKeyPlayer2)) {
 				keyConfigDialog k=new keyConfigDialog(frame);
