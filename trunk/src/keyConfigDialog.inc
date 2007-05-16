@@ -18,6 +18,18 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		}
 	}
 
+	VECTOR(JTextField) editboxes = new VECTOR(JTextField)();
+	JTextField tbox;
+
+	#define INPUTBOX(x) panel.add(new JLabel(x));\
+	                    tbox = new JTextField();\
+	                    editboxes.add(tbox);\
+	                    panel.add(tbox);\
+	                    tbox = new JTextField();\
+	                    editboxes.add(tbox);\
+	                    panel.add(tbox)
+// 	                    tbox.setMaximumHeight(12);
+
 	int[] keyCodes;
 	int nextKey;
 	public keyConfigDialog(JFrame o) {
@@ -34,24 +46,72 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		keyCodes=new int[8];
 		nextKey=0;
 
-		DA = new DrawingArea();
-		DA.setFont(fnt);
-		DA.txt = "Press the 'spacebar' to begin calibration";
-// 		DA.addKeyListener(this);
-		scroll  = new JScrollPane(DA);
+		JPanel panel =new JPanel();
+		GridLayout gl = new GridLayout(0,3);		panel.setLayout(gl);
+
+ 		scroll = new JScrollPane(new JLabel("Input:"));
+ 		panel.add(scroll);
+		scroll = new JScrollPane(new JLabel("Player 1:"));
+ 		panel.add(scroll);
+		scroll = new JScrollPane(new JLabel("Player 2:"));
+ 		panel.add(scroll);
+		INPUTBOX("DPAD left");
+		INPUTBOX("DPAD right");
+		INPUTBOX("DPAD up");
+		INPUTBOX("DPAD down");
+		INPUTBOX("A");
+		INPUTBOX("B");
+		INPUTBOX("Start");
+		INPUTBOX("Select");
+ 		scroll = new JScrollPane(new JLabel("Shortcuts:"));
+ 		panel.add(scroll);
+		scroll = new JScrollPane(new JLabel("Player 1:"));
+ 		panel.add(scroll);
+		scroll = new JScrollPane(new JLabel("Player 2:"));
+ 		panel.add(scroll);
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+		INPUTBOX("Button 1");
+		INPUTBOX("Button 2");
+
+// 		gl.setRows(editboxes.size());
+		scroll  = new JScrollPane(panel);
 		scroll.setPreferredSize(new Dimension(480, 240));
 		dialog.add(scroll,BorderLayout.CENTER);
+
+/*		dialog.setMaximumSize(new Dimension(480, 10*editboxes.size()));
+		scroll.setMaximumSize(new Dimension(480, 10*editboxes.size()));
+		ybox.setMaximumSize(new Dimension(480, 10*editboxes.size()));*/
+// 		scroll  = new JScrollPane(DA);
+// 		scroll.setPreferredSize(new Dimension(480, 240));
+// 		dialog.add(scroll,BorderLayout.CENTER);
+
 
 		dialog.addComponentListener(this);
 		dialog.addKeyListener(this);
 		dialog.setLocationRelativeTo(null);
-		dialog.setResizable(false);
+		dialog.setResizable(true);
 		dialog.pack();
 		Dimension d = owner.getSize();
 		Point     p = new Point();
 		p.setLocation((owner.getLocation().getX()+(d.getWidth()/2)) - (dialog.getWidth()/2), (owner.getLocation().getY()+d.getHeight()/2)-(dialog.getHeight()/2));
 		dialog.setLocation(p);
-
 	}
 
 	public int[] getKeyCodes() {
