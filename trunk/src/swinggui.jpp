@@ -330,6 +330,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			mainMenuBar.add( menuLink ) ;
 			menuitemConfigKeys = new JMenu("Config keys");
 			menuitemConfigKeyPlayer1 = new JMenuItem("Player 1",KeyEvent.VK_1);
+			menuitemConfigKeyPlayer1.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_COMMA, ActionEvent.CTRL_MASK ));
 			menuitemConfigKeyPlayer1.addActionListener(this);
 			menuitemConfigKeyPlayer2 = new JMenuItem("Player 2",KeyEvent.VK_2);
 			menuitemConfigKeyPlayer2.addActionListener(this);
