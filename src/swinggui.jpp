@@ -394,18 +394,18 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public void componentMoved(ComponentEvent e) {}
 		public void componentShown(ComponentEvent e) {}
 		public void componentResized(ComponentEvent e) {}
+
 		public void pauseEmulation() {
-			// 0 means suspended
-			// 1 means suspend->running requested
-			// 2 means running
-			// 3 means running->suspended requested
-			if(!cpuRunner.isRunning()) {
-				cpuRunner.resume();
-				addOSDLine("Unpaused gameboy");
-			}
-			else {
+			if(cpuRunner!=null) {
 				cpuRunner.suspend();
 				addOSDLine("Paused gameboy");
+			}
+		}
+
+		public void resumeEmulation() {
+			if(cpuRunner!=null) {
+				cpuRunner.resume();
+				addOSDLine("Unpaused gameboy");
 			}
 		}
 
@@ -489,7 +489,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				keyConfigDialog k=new keyConfigDialog(frame);
 				pauseEmulation();
 				playerKeyCodes[0] = k.getKeyCodes();
-				pauseEmulation();
+				resumeEmulation();
 			}
 			else if (e.getSource().equals( menuitemConfigKeyPlayer2)) {
 				keyConfigDialog k=new keyConfigDialog(frame);
@@ -505,7 +505,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				pauseEmulation();
 				cheatcodes.editCodes();
 				cheatcodes.applyCheatCodes(cart);
-				pauseEmulation();
+				resumeEmulation();
 				addOSDLine("ZOMG CHEATER!!!!");
 			}
 			else if (e.getSource().equals( menuitemColorSchemeCustom )) {
@@ -611,7 +611,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cpuRunner.resume();
 			}
 			else if(e.getSource().equals( menuitemPause )) {
-				pauseEmulation();
+				if(cpuRunner.isRunning())
+					pauseEmulation();
+				else
+					resumeEmulation();
 			}
 			else if(e.getSource().equals( menuitemReset )) {
 				cpuRunner.suspend();
@@ -861,10 +864,16 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				}
 			}
 			catch(IOException e) { //File not found or error reading it
-					JOptionPane.showMessageDialog(frame,
-                                        "Keys need to be configured",
-                                        "Warning",
-					                              JOptionPane.WARNING_MESSAGE);
+				pauseEmulation();
+				JOptionPane.showMessageDialog(frame,
+																			"Keys need to be configured",
+																			"Warning",
+																			JOptionPane.WARNING_MESSAGE);
+				keyConfigDialog k=new keyConfigDialog(frame);
+				pauseEmulation();
+				playerKeyCodes[0] = k.getKeyCodes();
+				System.exit(0);
+				resumeEmulation();
 			}
 			finally {
 				try {
@@ -881,7 +890,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			final swinggui gui=new swinggui();
 
 			gui.loadRCFiles();
-			gui.loadKeyBinds();
 
 			boolean sound=true, debug=true;
 			String romfile="", logfile="";
@@ -914,6 +922,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			gui.cs = new ColorSelector( gui.VC );
 
 			gui.createAndShowGUI();
+			gui.loadKeyBinds();
 			cheatcodes = new CheatCodeEditor(frame, curcartname);
 			cheatcodes.applyCheatCodes(cart);
 			gui.cpu.VC.addListener(gui.grfx);
