@@ -1,6 +1,9 @@
 #ifndef GLOBAL_INC
 #define GLOBAL_INC
 
+#define JGBE_VERSION 0.4.2
+#define JGBE_VERSION_STRING "0.4.2"
+
 //#define USE_JAVA_MOBILE
 //#define USE_JAVA_142
 //#define ENABLE_RECOMPILER
