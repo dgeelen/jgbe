@@ -66,7 +66,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		protected CPU cpu;
 		private int fps;
 		private int selectedState = 0;
-		private int[][] playerKeyCodes = new int[2][8];
+		private int[] keyMap = new int[16]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
 		VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
 		int osdTime = 0;
@@ -486,14 +486,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
 			}
 			else if (e.getSource().equals( menuitemConfigKeyPlayer1)) {
-				keyConfigDialog k=new keyConfigDialog(frame);
+				keyConfigDialog k=new keyConfigDialog(frame, keyMap);
 				pauseEmulation();
-				playerKeyCodes[0] = k.getKeyCodes();
+				k.getKeyCodes();
+				saveKeyBinds();
 				resumeEmulation();
-			}
-			else if (e.getSource().equals( menuitemConfigKeyPlayer2)) {
-				keyConfigDialog k=new keyConfigDialog(frame);
-				playerKeyCodes[1] = k.getKeyCodes();
 			}
 #ifdef SCALEBUILDER
 			else if (e.getSource().equals( menuitemScaleBuilder)) {
@@ -698,64 +695,78 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		public void keyReleased(KeyEvent e) {
-			switch(e.getKeyCode()){
-				case KeyEvent.VK_Z:
-					cpu.releaseButton(BUTTON_A);
+			int keyCode = e.getKeyCode();
+			int keyModifiers = e.getModifiers();
+			int keyState = keyCode | (keyModifiers << 8);
+			int keyMapIndex=-1;
+			for(int i=0; i<16; ++i) {
+				if(keyMap[i]==keyState) {
+					keyMapIndex=i;
 					break;
-				case KeyEvent.VK_X:
-					cpu.releaseButton(BUTTON_B);
-					break;
-				case KeyEvent.VK_MINUS:
-					cpu.releaseButton(BUTTON_SELECT);
-					break;
-				case KeyEvent.VK_EQUALS:
-					cpu.releaseButton(BUTTON_START);
-					break;
-				case KeyEvent.VK_RIGHT:
-					cpu.releaseButton(BUTTON_RIGHT);
-					break;
-				case KeyEvent.VK_LEFT:
-					cpu.releaseButton(BUTTON_LEFT);
-					break;
-				case KeyEvent.VK_UP:
+				}
+			}
+			switch(keyMapIndex) {
+				case 0:
 					cpu.releaseButton(BUTTON_UP);
 					break;
-				case KeyEvent.VK_DOWN:
+				case 1:
 					cpu.releaseButton(BUTTON_DOWN);
 					break;
-				default:
-					//System.out.println("keyPressed");
+				case 2:
+					cpu.releaseButton(BUTTON_LEFT);
+					break;
+				case 3:
+					cpu.releaseButton(BUTTON_RIGHT);
+					break;
+				case 4:
+					cpu.releaseButton(BUTTON_A);
+					break;
+				case 5:
+					cpu.releaseButton(BUTTON_B);
+					break;
+				case 6:
+					cpu.releaseButton(BUTTON_START);
+					break;
+				case 7:
+					cpu.releaseButton(BUTTON_SELECT);
 					break;
 			}
 		}
 		public void keyPressed(KeyEvent e) {
-			switch(e.getKeyCode()){
-				case KeyEvent.VK_Z:
-					cpu.pressButton(BUTTON_A);
+			int keyCode = e.getKeyCode();
+			int keyModifiers = e.getModifiers();
+			int keyState = keyCode | (keyModifiers << 8);
+			int keyMapIndex=-1;
+			for(int i=0; i<16; ++i) {
+				if(keyMap[i]==keyState) {
+					keyMapIndex=i;
 					break;
-				case KeyEvent.VK_X:
-					cpu.pressButton(BUTTON_B);
-					break;
-				case KeyEvent.VK_MINUS:
-					cpu.pressButton(BUTTON_SELECT);
-					break;
-				case KeyEvent.VK_EQUALS:
-					cpu.pressButton(BUTTON_START);
-					break;
-				case KeyEvent.VK_RIGHT:
-					cpu.pressButton(BUTTON_RIGHT);
-					break;
-				case KeyEvent.VK_LEFT:
-					cpu.pressButton(BUTTON_LEFT);
-					break;
-				case KeyEvent.VK_UP:
+				}
+			}
+			switch(keyMapIndex) {
+				case 0:
 					cpu.pressButton(BUTTON_UP);
 					break;
-				case KeyEvent.VK_DOWN:
+				case 1:
 					cpu.pressButton(BUTTON_DOWN);
 					break;
-				default:
-					//System.out.println("keyReleased" + e.getKeyCode());
+				case 2:
+					cpu.pressButton(BUTTON_LEFT);
+					break;
+				case 3:
+					cpu.pressButton(BUTTON_RIGHT);
+					break;
+				case 4:
+					cpu.pressButton(BUTTON_A);
+					break;
+				case 5:
+					cpu.pressButton(BUTTON_B);
+					break;
+				case 6:
+					cpu.pressButton(BUTTON_START);
+					break;
+				case 7:
+					cpu.pressButton(BUTTON_SELECT);
 					break;
 			}
 		}
@@ -830,10 +841,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
 				FileOutputStream fistream = new FileOutputStream(path+"keys.conf");
 				distream = new DataOutputStream(fistream);
-				for(int player=0; player<2; ++player) {
-					for(int i=0; i<8; ++i) {
-						distream.writeInt(playerKeyCodes[player][i]);
-					}
+				for(int i=0; i<8; ++i) {
+					distream.writeInt(keyMap[i]);
 				}
 			}
 			catch(IOException e) { //File not found or error reading it
@@ -857,10 +866,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
 				FileInputStream fistream = new FileInputStream(path+"keys.conf");
 				distream = new DataInputStream(fistream);
-				for(int player=0; player<2; ++player) {
-					for(int i=0; i<8; ++i) {
-						playerKeyCodes[player][i] = distream.readInt();
-					}
+				for(int i=0; i<8; ++i) {
+						keyMap[i] = distream.readInt();
 				}
 			}
 			catch(IOException e) { //File not found or error reading it
@@ -869,9 +876,13 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 																			"Keys need to be configured",
 																			"Warning",
 																			JOptionPane.WARNING_MESSAGE);
-				keyConfigDialog k=new keyConfigDialog(frame);
+				keyConfigDialog k=new keyConfigDialog(frame,keyMap);
 				pauseEmulation();
-				playerKeyCodes[0] = k.getKeyCodes();
+				k.getKeyCodes();
+				saveKeyBinds();
+				for(int km=0; km<16; ++km) {
+					PRINTLN("keyMap["+km+"]="+keyMap[km]);
+				}
 				System.exit(0);
 				resumeEmulation();
 			}
