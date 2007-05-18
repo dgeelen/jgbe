@@ -15,10 +15,10 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 	                    tbox.addKeyListener(this);\
 	                    tbox.addActionListener(this)
 
-	int[] keyCodes;
-	int nextKey;
-	public keyConfigDialog(JFrame o) {
+	int[] keyMap;
+	public keyConfigDialog(JFrame o, int[] km) {
 		owner = o;
+		keyMap= km;
 		JScrollPane scroll;
 		dialog= new JDialog(owner, "Key Bindings", true);
 		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
@@ -28,17 +28,14 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 			}
 		});
 
-		keyCodes=new int[8];
-		nextKey=0;
-
 		JTabbedPane tabPane = new JTabbedPane();
 		JPanel player1Keys = new JPanel();
 			GridLayout player1KeysGL = new GridLayout(8,2);
 			player1Keys.setLayout(player1KeysGL);
-			INPUTBOX(player1Keys, "Left");
-			INPUTBOX(player1Keys, "Right");
 			INPUTBOX(player1Keys, "Up");
 			INPUTBOX(player1Keys, "Down");
+			INPUTBOX(player1Keys, "Left");
+			INPUTBOX(player1Keys, "Right");
 			INPUTBOX(player1Keys, "A");
 			INPUTBOX(player1Keys, "B");
 			INPUTBOX(player1Keys, "Start");
@@ -46,10 +43,10 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		JPanel player2Keys = new JPanel();
 			GridLayout player2KeysGL = new GridLayout(8,2);
 			player2Keys.setLayout(player2KeysGL);
-			INPUTBOX(player2Keys, "Left");
-			INPUTBOX(player2Keys, "Right");
 			INPUTBOX(player2Keys, "Up");
 			INPUTBOX(player2Keys, "Down");
+			INPUTBOX(player2Keys, "Left");
+			INPUTBOX(player2Keys, "Right");
 			INPUTBOX(player2Keys, "A");
 			INPUTBOX(player2Keys, "B");
 			INPUTBOX(player2Keys, "Start");
@@ -62,6 +59,14 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		scroll = new JScrollPane(tabPane);
 		scroll.setPreferredSize(new Dimension(480,320));
 		dialog.add(scroll);
+
+		//Fill all TextFields with text
+		FOREACH(JTextField, tf, editboxes) {
+			int keyCode = keyMap[foreach]&0xff;
+			int keyModifiers = keyMap[foreach]>>8;
+			tf.setText(KeyEvent.getKeyText(keyCode) + (keyModifiers>0 ? "+"+KeyEvent.getKeyModifiersText(keyModifiers) : ""));
+		}
+
 
 		dialog.addComponentListener(this);
 		dialog.addKeyListener(this);
@@ -97,16 +102,14 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		PRINTLN("KeyTyped: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
 		int keyCode = e.getKeyCode();
 		int keyModifiers = e.getModifiers();
-		int KeyState = keyCode | (keyModifiers << 8);
-		int bla=0;
+		int keyState = keyCode | (keyModifiers << 8);
 		if((keyCode != KeyEvent.VK_ALT) && (keyCode != KeyEvent.VK_CONTROL) && (keyCode != KeyEvent.VK_SHIFT)) {
 			FOREACH(JTextField, tf, editboxes) {
 				if(tf.hasFocus()) {
-					PRINTLN("Textfield "+bla+" has focus");
 					tf.setText(KeyEvent.getKeyText(keyCode) + (keyModifiers>0 ? "+"+KeyEvent.getKeyModifiersText(keyModifiers) : ""));
 					((JTextField)editboxes.elementAt(Math.min(foreach+1, editboxes.size()))).requestFocus();
+					keyMap[foreach] = keyState;
 				}
-				++bla;
 			}
 		}
 		else {
