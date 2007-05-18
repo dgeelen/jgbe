@@ -367,7 +367,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		private void createAndShowGUI() {
 			//JFrame.setDefaultLookAndFeelDecorated( true );
 
-			frame = new JFrame( "JGameBoy Emulator V0.42" );
+			frame = new JFrame( "JGameBoy Emulator V"+JGBE_VERSION_STRING );
 			frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 // 			frame.setBounds( 60,60,100,100 );
 
@@ -665,7 +665,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					}
 				}
 				//System.out.println("timer!");
-				frame.setTitle("" + fps + " - fixme - JGameBoy Emulator V0.42");
+				double emuspeed = ((int)(fps/0.006))/100.0;
+				frame.setTitle("JGBE V"+JGBE_VERSION_STRING+" - "+fps+" fps / "+emuspeed+"%");
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
