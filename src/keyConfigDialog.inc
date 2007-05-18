@@ -107,6 +107,9 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 			tf.setText((keyModifiers>0 ? KeyEvent.getKeyModifiersText(keyModifiers)+"+" : "") + KeyEvent.getKeyText(keyCode));
 		}
 
+		for(int i=0; i<256; ++i) {
+			keysup[i]=true;
+		}
 
 		dialog.addComponentListener(this);
 		dialog.addKeyListener(this);
@@ -138,12 +141,15 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 	public void actionPerformed( ActionEvent e ) {}
 
 	public void keyTyped(KeyEvent e) {}
+	boolean[] keysup = new boolean[256];
+	boolean canChooseNextKey = true;
 	public void keyReleased(KeyEvent e) {
-// 		PRINTLN("KeyTyped: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
+//  		PRINTLN("KeyReleased: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
 		int keyCode = e.getKeyCode();
 		int keyModifiers = e.getModifiers();
 		int keyState = keyCode | (keyModifiers << 8);
-		if((keyCode != KeyEvent.VK_ALT) && (keyCode != KeyEvent.VK_CONTROL) && (keyCode != KeyEvent.VK_SHIFT)) {
+
+		if(canChooseNextKey) {
 			FOREACH(JTextField, tf, editboxes) {
 				if(tf.hasFocus()) {
 					tf.setText((keyModifiers>0 ? KeyEvent.getKeyModifiersText(keyModifiers)+"+" : "") + KeyEvent.getKeyText(keyCode));
@@ -152,11 +158,21 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 				}
 			}
 		}
-		else {
-// 			PRINTLN("Key is one of CTRL, ALT or SHIFT");
+		keysup[keyCode]=true;
+		canChooseNextKey=true;
+		for(int i=0; i<256; ++i) {
+			canChooseNextKey = keysup[i] && canChooseNextKey;
 		}
+// 		PRINTLN("canChooseNextKey="+canChooseNextKey);
 	}
-	public void keyPressed(KeyEvent e) {}
+	public void keyPressed(KeyEvent e) {
+/*		int keyCode = e.getKeyCode();
+		int keyModifiers = e.getModifiers();
+		int keyState = keyCode | (keyModifiers << 8);
+		PRINTLN("keyCode: "+keyCode+" modifiers: "+keyModifiers+" keyState: "+keyState);*/
+// 		PRINTLN("KeyPressed: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
+		keysup[e.getKeyCode()] = false;
+	}
 }
 #endif
 
