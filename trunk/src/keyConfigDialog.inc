@@ -14,7 +14,9 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 	                    c.add(tbox);\
 	                    tbox.addKeyListener(this);\
 	                    tbox.addActionListener(this)
-
+	#define DUMMY(c) tlabel=new JLabel("");\
+	                 c.add(tlabel);\
+	                 c.add(tlabel)
 	int[] keyMap;
 	public keyConfigDialog(JFrame o, int[] km) {
 		owner = o;
@@ -27,7 +29,7 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 					dialog.setVisible(false);
 			}
 		});
-
+		JPanel ppp; //*** DO NOT TOUCH, WILL EXPLODE ***
 		JTabbedPane tabPane = new JTabbedPane();
 		JPanel player1Keys = new JPanel();
 			GridLayout player1KeysGL = new GridLayout(8,2);
@@ -40,6 +42,12 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 			INPUTBOX(player1Keys, "B");
 			INPUTBOX(player1Keys, "Start");
 			INPUTBOX(player1Keys, "Select");
+			ppp=new JPanel();
+			ppp.setLayout(new BorderLayout());
+			ppp.add(player1Keys, BorderLayout.NORTH);
+ 			ppp.add(new JPanel(), BorderLayout.SOUTH);
+ 			tabPane.add("Player 1", ppp);
+
 		JPanel player2Keys = new JPanel();
 			GridLayout player2KeysGL = new GridLayout(8,2);
 			player2Keys.setLayout(player2KeysGL);
@@ -51,11 +59,43 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 			INPUTBOX(player2Keys, "B");
 			INPUTBOX(player2Keys, "Start");
 			INPUTBOX(player2Keys, "Select");
+			ppp=new JPanel();
+			ppp.setLayout(new BorderLayout());
+			ppp.add(player2Keys, BorderLayout.NORTH);
+ 			ppp.add(new JPanel(), BorderLayout.SOUTH);
+ 			tabPane.add("Player 2", ppp);
+
 		JPanel shortCuts = new JPanel();
-		shortCuts.add(new JLabel("- TODO -"));
-		tabPane.add("Player 1", player1Keys);
-		tabPane.add("Player 2", player2Keys);
-		tabPane.add("Shortcuts", shortCuts);
+			GridLayout shortCutsGL = new GridLayout(24,2);
+			shortCuts.setLayout(shortCutsGL);
+			INPUTBOX(shortCuts, "Configure Keybinds");
+			INPUTBOX(shortCuts, "Open ROM");
+			INPUTBOX(shortCuts, "Pause");
+			INPUTBOX(shortCuts, "Reset Gameboy");
+			INPUTBOX(shortCuts, "Exit Emulator");
+			INPUTBOX(shortCuts, "Scale 1x");
+			INPUTBOX(shortCuts, "Scale 2x");
+			INPUTBOX(shortCuts, "Scale 3x");
+			INPUTBOX(shortCuts, "Scale 4x");
+			INPUTBOX(shortCuts, "Increase FrameSkip");
+			INPUTBOX(shortCuts, "Decrease FrameSkip");
+			INPUTBOX(shortCuts, "Original Colors");
+			INPUTBOX(shortCuts, "Black and White Colors");
+			INPUTBOX(shortCuts, "Greyscale Colors");
+			INPUTBOX(shortCuts, "Custom Colors");
+			INPUTBOX(shortCuts, "Save state");
+			INPUTBOX(shortCuts, "Load state");
+			INPUTBOX(shortCuts, "Toggle Sound on/off");
+			INPUTBOX(shortCuts, "Toggle Soundchannel 1 on/off");
+			INPUTBOX(shortCuts, "Toggle Soundchannel 2 on/off");
+			INPUTBOX(shortCuts, "Toggle Soundchannel 3 on/off");
+			INPUTBOX(shortCuts, "Toggle Soundchannel 4 on/off");
+			INPUTBOX(shortCuts, "Open Cheat Code Editor");
+			INPUTBOX(shortCuts, "Toggle Cheats on/off");
+			scroll = new JScrollPane(shortCuts);
+			scroll.setPreferredSize(new Dimension(10,10) );
+			tabPane.add("Shortcuts", scroll);
+
 		scroll = new JScrollPane(tabPane);
 		scroll.setPreferredSize(new Dimension(480,320));
 		dialog.add(scroll);
@@ -64,7 +104,7 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		FOREACH(JTextField, tf, editboxes) {
 			int keyCode = keyMap[foreach]&0xff;
 			int keyModifiers = keyMap[foreach]>>8;
-			tf.setText(KeyEvent.getKeyText(keyCode) + (keyModifiers>0 ? "+"+KeyEvent.getKeyModifiersText(keyModifiers) : ""));
+			tf.setText((keyModifiers>0 ? KeyEvent.getKeyModifiersText(keyModifiers)+"+" : "") + KeyEvent.getKeyText(keyCode));
 		}
 
 
@@ -99,21 +139,21 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 
 	public void keyTyped(KeyEvent e) {}
 	public void keyReleased(KeyEvent e) {
-		PRINTLN("KeyTyped: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
+// 		PRINTLN("KeyTyped: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
 		int keyCode = e.getKeyCode();
 		int keyModifiers = e.getModifiers();
 		int keyState = keyCode | (keyModifiers << 8);
 		if((keyCode != KeyEvent.VK_ALT) && (keyCode != KeyEvent.VK_CONTROL) && (keyCode != KeyEvent.VK_SHIFT)) {
 			FOREACH(JTextField, tf, editboxes) {
 				if(tf.hasFocus()) {
-					tf.setText(KeyEvent.getKeyText(keyCode) + (keyModifiers>0 ? "+"+KeyEvent.getKeyModifiersText(keyModifiers) : ""));
-					((JTextField)editboxes.elementAt(Math.min(foreach+1, editboxes.size()))).requestFocus();
+					tf.setText((keyModifiers>0 ? KeyEvent.getKeyModifiersText(keyModifiers)+"+" : "") + KeyEvent.getKeyText(keyCode));
+					((JTextField)editboxes.elementAt(Math.min(foreach+1, editboxes.size()-1))).requestFocus();
 					keyMap[foreach] = keyState;
 				}
 			}
 		}
 		else {
-			PRINTLN("Key is one of CTRL, ALT or SHIFT");
+// 			PRINTLN("Key is one of CTRL, ALT or SHIFT");
 		}
 	}
 	public void keyPressed(KeyEvent e) {}
