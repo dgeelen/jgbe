@@ -5,6 +5,7 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Vector;
+// import java.util.*;
 import java.net.*;
 import java.io.*;
 import java.awt.image.BufferedImage;
@@ -639,7 +640,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 										{0x3f, 0x3f, 0x3f}}; // BLACK
 				cpu.VC.setGrayShades(c);
 			}
-			else {
+			else { //timer?
 				for (int i = 0; i < 10; ++i) {
 					if (e.getSource().equals(menuitemSelectState[i])) {
 						selectedState = i;
@@ -665,13 +666,18 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					}
 				}
 				//System.out.println("timer!");
-				double emuspeed = ((int)(fps/0.006))/100.0;
-				frame.setTitle("JGBE V"+JGBE_VERSION_STRING+" - "+fps+" fps / "+emuspeed+"%");
+				long ctime = System.currentTimeMillis();
+				long timeLapse =  ctime - FPSTimeMillis;
+				FPSTimeMillis = ctime;
+				double afps=fps/(timeLapse/1000.0);
+				double emuspeed = ((int)(afps/(4194304.0/702240000.0)))/100.0;
+				frame.setTitle("JGBE V"+JGBE_VERSION_STRING+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"%");
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
 //STOP DOING THIS !! 			if(dbgr != null) dbgr.update();
 		}
+		long FPSTimeMillis = System.currentTimeMillis();
 
 		public void itemStateChanged( ItemEvent e ) {
 			JMenuItem source = ( JMenuItem )( e.getSource() );
