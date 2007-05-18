@@ -945,7 +945,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			gui.loadRCFiles();
 
-			boolean sound=true, debug=true;
+			boolean sound=true, debug=false, nolastcart=false;
 			String romfile="", logfile="";
 			for (int i = 0; i < args.length; ++i) {
 				if (args[i].charAt(0)!='-')
@@ -954,11 +954,14 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					logfile = args[++i];
 				if (args[i].equals("-nosound"))
 					sound = false;
-				if (args[i].equals("-nodebug"))
-					debug = false;
-				if ((args[i].equals("-lastcart")) && (gui.rcFiles.size() > 0))
-					romfile = (String)gui.rcFiles.elementAt(0);
+				if (args[i].equals("-debug"))
+					debug = true;
+				if ((args[i].equals("-nolastcart"))) //TODO: FIXME: Invert this (current behavious is a work-around)
+					nolastcart=true;
 			}
+			if((!nolastcart) && (gui.rcFiles.size() > 0))
+				romfile = (String)gui.rcFiles.elementAt(0);
+
 			if (!romfile.equals("")) {
 				cart = new Cartridge(romfile);
 				if(cart.getError()!=null) {
