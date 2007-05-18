@@ -66,7 +66,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		protected CPU cpu;
 		private int fps;
 		private int selectedState = 0;
-		private int[] keyMap = new int[16]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
+		private int[] keyMap = new int[16+24]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
 		VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
 		int osdTime = 0;
@@ -111,9 +111,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemLinkServe;
 		JMenuItem menuitemLinkClient;
 		JMenuItem menuitemLinkSever;
-		JMenu menuitemConfigKeys;
-		JMenuItem menuitemConfigKeyPlayer1;
-		JMenuItem menuitemConfigKeyPlayer2;
+		JMenuItem menuitemConfigKeys;
 
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
@@ -187,20 +185,16 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			mainMenuBar.add( menuSettings );
 
 			menuitemOpenROM = new JMenuItem("Open ROM", KeyEvent.VK_O);
-			menuitemOpenROM.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, ActionEvent.CTRL_MASK ) );
 			menuitemOpenROM.addActionListener( this );
 			menuFile.add(menuitemOpenROM);
 			menuitemPause=new JMenuItem("Pause", KeyEvent.VK_P);
-			menuitemPause.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_P, ActionEvent.CTRL_MASK) );
 			menuitemPause.addActionListener(this);
 			menuFile.add(menuitemPause);
 			menuitemReset=new JMenuItem("Reset", KeyEvent.VK_R);
-			menuitemReset.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_R, ActionEvent.CTRL_MASK) );
 			menuitemReset.addActionListener(this);
 			menuFile.add(menuitemReset);
 
 			menuitemExit = new JMenuItem( "Exit", KeyEvent.VK_X );
-			menuitemExit.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_Q, ActionEvent.CTRL_MASK) );
 			menuitemExit.addActionListener( this );
 			menuFile.add( menuitemExit );
 
@@ -209,10 +203,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemScale2x = new JMenuItem( "Scale 2x", KeyEvent.VK_2 );
 			menuitemScale3x = new JMenuItem( "Scale 3x", KeyEvent.VK_3 );
 			menuitemScale4x = new JMenuItem( "Scale 4x", KeyEvent.VK_4 );
-			menuitemScale1x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_1, ActionEvent.CTRL_MASK ) );
-			menuitemScale2x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_2, ActionEvent.CTRL_MASK ) );
-			menuitemScale3x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_3, ActionEvent.CTRL_MASK ) );
-			menuitemScale4x.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_4, ActionEvent.CTRL_MASK ) );
 			menuitemScale1x.addActionListener( this );
 			menuitemScale2x.addActionListener( this );
 			menuitemScale3x.addActionListener( this );
@@ -226,8 +216,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuFrameSkip = new JMenu( "Frame Skipping");
 			menuitemIncFrameSkip = new JMenuItem( "Increase Frame Skip", KeyEvent.VK_I );
 			menuitemDecFrameSkip = new JMenuItem( "Decrease Frame Skip", KeyEvent.VK_D );
-			menuitemIncFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_CLOSE_BRACKET, ActionEvent.CTRL_MASK ) );
-			menuitemDecFrameSkip.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_OPEN_BRACKET, ActionEvent.CTRL_MASK ) );
 			menuitemIncFrameSkip.addActionListener( this );
 			menuitemDecFrameSkip.addActionListener( this );
 			menuFrameSkip.add( menuitemIncFrameSkip );
@@ -239,10 +227,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemColorSchemeBlackAndWhite = new JMenuItem("Black and White", KeyEvent.VK_B);
 			menuitemColorSchemeGreys = new JMenuItem("Graytones", KeyEvent.VK_G);
 			menuitemColorSchemeCustom = new JMenuItem("Custom", KeyEvent.VK_C);
-			menuitemColorSchemeOriginalGameboy.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_0, ActionEvent.CTRL_MASK));
-			menuitemColorSchemeBlackAndWhite.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_9, ActionEvent.CTRL_MASK));
-			menuitemColorSchemeGreys.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_8, ActionEvent.CTRL_MASK));
-			menuitemColorSchemeCustom.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_7, ActionEvent.CTRL_MASK));
 			menuColorScheme.add(menuitemColorSchemeOriginalGameboy);
 			menuColorScheme.add(menuitemColorSchemeBlackAndWhite);
 			menuColorScheme.add(menuitemColorSchemeGreys);
@@ -256,8 +240,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuState = new JMenu("State");
 			menuitemSaveState = new JMenuItem( "Save State", KeyEvent.VK_S );
 			menuitemLoadState = new JMenuItem( "Load State", KeyEvent.VK_L );
-			menuitemSaveState.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, ActionEvent.CTRL_MASK ) );
-			menuitemLoadState.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_L, ActionEvent.CTRL_MASK ) );
+
 			menuitemSaveState.addActionListener( this );
 			menuitemLoadState.addActionListener( this );
 			menuState.add( menuitemSaveState );
@@ -276,7 +259,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemSoundEnable = new JMenuItem( "Enable Sound", KeyEvent.VK_E );
 			menuitemSoundDisable = new JMenuItem( "Disable Sound", KeyEvent.VK_D );
 			menuitemSoundToggle = new JMenuItem( "Toggle Sound", KeyEvent.VK_T );
-			menuitemSoundToggle.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_A, ActionEvent.CTRL_MASK ) );
+
 			menuitemSoundEnable.addActionListener( this );
 			menuitemSoundDisable.addActionListener( this );
 			menuitemSoundToggle.addActionListener( this );
@@ -288,10 +271,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemSoundChannel2=new JMenuItem( "Toggle channel 2", KeyEvent.VK_2 );
 			menuitemSoundChannel3=new JMenuItem( "Toggle channel 3", KeyEvent.VK_3 );
 			menuitemSoundChannel4=new JMenuItem( "Toggle channel 4", KeyEvent.VK_4 );
-			menuitemSoundChannel1.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_1, ActionEvent.ALT_MASK ));
-			menuitemSoundChannel2.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_2, ActionEvent.ALT_MASK ));
-			menuitemSoundChannel3.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_3, ActionEvent.ALT_MASK ));
-			menuitemSoundChannel4.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_4, ActionEvent.ALT_MASK ));
+
 			menuitemSoundChannel1.addActionListener(this);
 			menuitemSoundChannel2.addActionListener(this);
 			menuitemSoundChannel3.addActionListener(this);
@@ -304,11 +284,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			mainMenuBar.add( menuSound) ;
 			menuOther=new JMenu("Other");
 			menuitemCheats = new JMenuItem("Edit cheats", KeyEvent.VK_C);
-			menuitemCheats.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_BACK_QUOTE, ActionEvent.CTRL_MASK ));
 			menuitemCheats.addActionListener(this);
 			menuOther.add(menuitemCheats);
 			menuitemToggleCheats=new JMenuItem("Toggle cheats on/off", KeyEvent.VK_T);
-			menuitemToggleCheats.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_BACK_SLASH, ActionEvent.CTRL_MASK ));
 			menuitemToggleCheats.addActionListener(this);
 #ifdef SCALEBUILDER
 			menuitemScaleBuilder=new JMenuItem("Built Scale", KeyEvent.VK_S);
@@ -329,18 +307,40 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuLink.add(menuitemLinkClient);
 			menuLink.add(menuitemLinkSever);
 			mainMenuBar.add( menuLink ) ;
-			menuitemConfigKeys = new JMenu("Config keys");
-			menuitemConfigKeyPlayer1 = new JMenuItem("Player 1",KeyEvent.VK_1);
-			menuitemConfigKeyPlayer1.setAccelerator(KeyStroke.getKeyStroke( KeyEvent.VK_COMMA, ActionEvent.CTRL_MASK ));
-			menuitemConfigKeyPlayer1.addActionListener(this);
-			menuitemConfigKeyPlayer2 = new JMenuItem("Player 2",KeyEvent.VK_2);
-			menuitemConfigKeyPlayer2.addActionListener(this);
-			menuitemConfigKeys.add(menuitemConfigKeyPlayer1);
-			menuitemConfigKeys.add(menuitemConfigKeyPlayer2);
+			menuitemConfigKeys = new JMenuItem("Config keys",KeyEvent.VK_1);
+			menuitemConfigKeys.addActionListener(this);
 			menuOther.add(menuitemConfigKeys);
 			return mainMenuBar;
 		}
 
+		private void applyAccelerators() {
+			int keyMapIndex=16; // Accelerators start at 16
+			#define NEXT_KEYSTROKE_FROM_KEYMAP KeyStroke.getKeyStroke( keyMap[keyMapIndex]&0xff, keyMap[keyMapIndex++]>>8 )
+			menuitemConfigKeys.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemOpenROM.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemPause.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemReset.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemExit.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemScale1x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemScale2x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemScale3x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemScale4x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemIncFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemDecFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemeOriginalGameboy.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemeBlackAndWhite.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemeGreys.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemeCustom.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemSaveState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemLoadState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemSoundToggle.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemSoundChannel1.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemSoundChannel2.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemSoundChannel3.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemSoundChannel4.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemToggleCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+		}
 		public void addComponentsToPane( Container contentPane ) {
 //      Use BorderLayout. Default empty constructor with no horizontal and vertical
 //      gaps
@@ -485,11 +485,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				cheatcodes.ToggleCheats(cart);
 				addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
 			}
-			else if (e.getSource().equals( menuitemConfigKeyPlayer1)) {
+			else if (e.getSource().equals( menuitemConfigKeys )) {
 				keyConfigDialog k=new keyConfigDialog(frame, keyMap);
 				pauseEmulation();
 				k.getKeyCodes();
 				saveKeyBinds();
+				applyAccelerators();
 				resumeEmulation();
 			}
 #ifdef SCALEBUILDER
@@ -841,7 +842,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
 				FileOutputStream fistream = new FileOutputStream(path+"keys.conf");
 				distream = new DataOutputStream(fistream);
-				for(int i=0; i<8; ++i) {
+				for(int i=0; i<16+24; ++i) {
 					distream.writeInt(keyMap[i]);
 				}
 			}
@@ -866,7 +867,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
 				FileInputStream fistream = new FileInputStream(path+"keys.conf");
 				distream = new DataInputStream(fistream);
-				for(int i=0; i<8; ++i) {
+				for(int i=0; i<16+24; ++i) {
 						keyMap[i] = distream.readInt();
 				}
 			}
@@ -876,18 +877,17 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 																			"Keys need to be configured",
 																			"Warning",
 																			JOptionPane.WARNING_MESSAGE);
-				keyConfigDialog k=new keyConfigDialog(frame,keyMap);
 				pauseEmulation();
+				generateDefaultKeyBinds();
+				keyConfigDialog k=new keyConfigDialog(frame,keyMap);
 				k.getKeyCodes();
 				saveKeyBinds();
-				for(int km=0; km<16; ++km) {
-					PRINTLN("keyMap["+km+"]="+keyMap[km]);
-				}
-				System.exit(0);
+				applyAccelerators();
 				resumeEmulation();
 			}
 			finally {
 				try {
+					applyAccelerators();
 					distream.close();
 				}
 				catch(Exception e) {
@@ -895,6 +895,49 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 		}
 
+		private void generateDefaultKeyBinds() {
+			//Magix
+			keyMap[0]=38;
+			keyMap[1]=40;
+			keyMap[2]=37;
+			keyMap[3]=39;
+			keyMap[4]=90;
+			keyMap[5]=88;
+			keyMap[6]=45;
+			keyMap[7]=61;
+			keyMap[8]=73;
+			keyMap[9]=75;
+			keyMap[10]=74;
+			keyMap[11]=76;
+			keyMap[12]=91;
+			keyMap[13]=93;
+			keyMap[14]=222;
+			keyMap[15]=59;
+			keyMap[16]=556;
+			keyMap[17]=591;
+			keyMap[18]=19;
+			keyMap[19]=594;
+			keyMap[20]=593;
+			keyMap[21]=561;
+			keyMap[22]=562;
+			keyMap[23]=563;
+			keyMap[24]=564;
+			keyMap[25]=605;
+			keyMap[26]=603;
+			keyMap[27]=560;
+			keyMap[28]=569;
+			keyMap[29]=568;
+			keyMap[30]=567;
+			keyMap[31]=595;
+			keyMap[32]=588;
+			keyMap[33]=577;
+			keyMap[34]=2097;
+			keyMap[35]=2098;
+			keyMap[36]=2099;
+			keyMap[37]=2100;
+			keyMap[38]=704;
+			keyMap[39]=604;
+		}
 
 		static Cartridge cart = null;
 		public static void main( String[] args ) {
