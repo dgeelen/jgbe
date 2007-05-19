@@ -80,9 +80,19 @@ jar: all
 	mkdir -p jar
 	cp classes/jgbe.jar jar
 
+jarzip: all
+	mkdir -p classes/META-INF
+	cp MANIFEST.MF.in classes/META-INF/MANIFEST.MF
+	cd classes && zip -r jgbe.zip META-INF *.class icon.gif instrs.txt VeraMono.ttf
+	mkdir -p jar
+	cp classes/jgbe.zip jar/jgbe.jar
+	
+
 clean:
 	rm -f $(CLASSDIR)/*.class
 	rm -f $(DEPSDIR)/*.d
+	rm -f jar/jgbe.jar
+	rm -f classes/jgbe.zip
 	touch $(JPPFILES)
 
 cleaner: clean
