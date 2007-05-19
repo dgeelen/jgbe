@@ -2,8 +2,6 @@
 public class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
 	private JDialog dialog;
 	private JFrame owner;
-	private Font fnt=new Font("Bitstream Vera Sans Mono",0, 24);
-
 	VECTOR(JTextField) editboxes = new VECTOR(JTextField)();
 	JTextField tbox;
 	JLabel tlabel;
@@ -14,10 +12,10 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 	                    c.add(tbox);\
 	                    tbox.addKeyListener(this);\
 	                    tbox.addActionListener(this)
-	#define DUMMY(c) tlabel=new JLabel("");\
-	                 c.add(tlabel);\
-	                 c.add(tlabel)
 	int[] keyMap;
+	boolean[] keysup = new boolean[256];
+	boolean canChooseNextKey = true;
+
 	public keyConfigDialog(JFrame o, int[] km) {
 		owner = o;
 		keyMap= km;
@@ -133,18 +131,7 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		return null;
 	}
 
-	public void componentHidden(ComponentEvent e) {}
-	public void componentMoved(ComponentEvent e) {}
-	public void componentShown(ComponentEvent e) {}
-	public void componentResized(ComponentEvent e) {}
-
-	public void actionPerformed( ActionEvent e ) {}
-
-	public void keyTyped(KeyEvent e) {}
-	boolean[] keysup = new boolean[256];
-	boolean canChooseNextKey = true;
 	public void keyReleased(KeyEvent e) {
-//  		PRINTLN("KeyReleased: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
 		int keyCode = e.getKeyCode();
 		int keyModifiers = e.getModifiers();
 		int keyState = keyCode | (keyModifiers << 8);
@@ -163,16 +150,18 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		for(int i=0; i<256; ++i) {
 			canChooseNextKey = keysup[i] && canChooseNextKey;
 		}
-// 		PRINTLN("canChooseNextKey="+canChooseNextKey);
 	}
+
 	public void keyPressed(KeyEvent e) {
-/*		int keyCode = e.getKeyCode();
-		int keyModifiers = e.getModifiers();
-		int keyState = keyCode | (keyModifiers << 8);
-		PRINTLN("keyCode: "+keyCode+" modifiers: "+keyModifiers+" keyState: "+keyState);*/
-// 		PRINTLN("KeyPressed: "+e.getKeyCode()+" Modifiers:"+e.getModifiers());
 		keysup[e.getKeyCode()] = false;
 	}
+
+	public void keyTyped(KeyEvent e) {}
+	public void componentHidden(ComponentEvent e) {}
+	public void componentMoved(ComponentEvent e) {}
+	public void componentShown(ComponentEvent e) {}
+	public void componentResized(ComponentEvent e) {}
+	public void actionPerformed( ActionEvent e ) {}
 }
 #endif
 

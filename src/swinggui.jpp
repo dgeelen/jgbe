@@ -404,17 +404,17 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		public void componentShown(ComponentEvent e) {}
 		public void componentResized(ComponentEvent e) {}
 
-		public void pauseEmulation() {
+		public void pauseEmulation(boolean verbose) {
 			if(cpuRunner!=null) {
 				cpuRunner.suspend();
-				addOSDLine("Paused gameboy");
+				if(verbose) addOSDLine("Paused gameboy");
 			}
 		}
 
-		public void resumeEmulation() {
+		public void resumeEmulation(boolean verbose) {
 			if((cpuRunner!=null)&&(cart!=null)) {
 				cpuRunner.resume();
-				addOSDLine("Unpaused gameboy");
+				if(verbose) addOSDLine("Unpaused gameboy");
 			}
 		}
 
@@ -496,11 +496,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if (e.getSource().equals( menuitemConfigKeys )) {
 				keyConfigDialog k=new keyConfigDialog(frame, keyMap);
-				pauseEmulation();
+				pauseEmulation(false);
 				k.getKeyCodes();
 				saveKeyBinds();
 				applyAccelerators();
-				resumeEmulation();
+				resumeEmulation(false);
 			}
 #ifdef SCALEBUILDER
 			else if (e.getSource().equals( menuitemScaleBuilder)) {
@@ -509,10 +509,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 #endif
 			else if (e.getSource().equals( menuitemCheats)) {
-				pauseEmulation();
+				pauseEmulation(false);
 				cheatcodes.editCodes();
 				cheatcodes.applyCheatCodes(cart);
-				resumeEmulation();
+				resumeEmulation(false);
 				addOSDLine("ZOMG CHEATER!!!!");
 			}
 			else if (e.getSource().equals( menuitemColorSchemeCustom )) {
@@ -548,7 +548,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				if(selFile != null) {
 					System.out.println(selFile.getAbsolutePath());
 
-					pauseEmulation();
+					pauseEmulation(false);
 					cart=new Cartridge(selFile.getAbsolutePath());
 					CPU.loadCartridge(cart);
 					updateCartName(selFile.getAbsolutePath());
@@ -557,7 +557,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					addOSDLine("loaded Rom: " + curcartname);
 
 					if (CPU.canRun())
-						resumeEmulation();
+						resumeEmulation(false);
 				}
 			}
 			else if(e.getSource().equals( menuitemLinkServe )) {
@@ -581,7 +581,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;
-				pauseEmulation();
+				pauseEmulation(false);
 				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 				File jgbedir=new File(stname);
 				if(!jgbedir.exists()) if(!jgbedir.mkdir()) PRINTF("failed!\n");
@@ -600,11 +600,11 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						System.out.println("Error saving state! ");
 					};
 				}
-				resumeEmulation();
+				resumeEmulation(false);
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
 				if (!CPU.canRun()) return;
-				pauseEmulation();
+				pauseEmulation(false);
 				String stname = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"savestates"+File.separator + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
 				try {
@@ -615,18 +615,18 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				catch (java.io.IOException ioe) {
 					System.out.println("Error loading state! " + ioe.getMessage());
 				};
-				resumeEmulation();
+				resumeEmulation(false);
 			}
 			else if(e.getSource().equals( menuitemPause )) {
 				if(cpuRunner.isRunning())
-					pauseEmulation();
+					pauseEmulation(true);
 				else
-					resumeEmulation();
+					resumeEmulation(true);
 			}
 			else if(e.getSource().equals( menuitemReset )) {
-				pauseEmulation();
+				pauseEmulation(false);
 				cpu.reset();
-				resumeEmulation();
+				resumeEmulation(false);
 				addOSDLine("Reset gameboy");
 			}
 			else if(e.getSource().equals( menuitemColorSchemeOriginalGameboy )) {
@@ -667,7 +667,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						if (e.getSource().equals(menuItems[i])) {
 							//System.out.println(menuItems[i].getText());
 
-						pauseEmulation();
+						pauseEmulation(false);
 						cart=new Cartridge((String)rcFiles.elementAt(i));
 						CPU.loadCartridge(cart);
 						updateCartName((String)rcFiles.elementAt(i));
@@ -676,7 +676,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						addOSDLine("loaded Rom: " + curcartname);
 
 						if (CPU.canRun())
-							resumeEmulation();
+							resumeEmulation(false);
 					}
 				}
 				//System.out.println("timer!");
@@ -857,18 +857,16 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				}
 			}
 			catch(IOException e) { //File not found or error reading it
-				pauseEmulation();
+				pauseEmulation(false);
 				JOptionPane.showMessageDialog(frame,
 																			"Keys need to be configured",
 																			"Warning",
 																			JOptionPane.WARNING_MESSAGE);
-				pauseEmulation();
 				generateDefaultKeyBinds();
 				keyConfigDialog k=new keyConfigDialog(frame,keyMap);
 				k.getKeyCodes();
 				saveKeyBinds();
-				applyAccelerators();
-				resumeEmulation();
+				resumeEmulation(false);
 			}
 			finally {
 				try {
@@ -888,8 +886,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			keyMap[3]=39;
 			keyMap[4]=90;
 			keyMap[5]=88;
-			keyMap[6]=45;
-			keyMap[7]=61;
+			keyMap[6]=61;
+			keyMap[7]=45;
 			keyMap[8]=73;
 			keyMap[9]=75;
 			keyMap[10]=74;
@@ -986,7 +984,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			else {
 				gui.cpuRunner = new SimpleCPURunner();
 				if (CPU.canRun())
-					gui.resumeEmulation();
+					gui.resumeEmulation(false);
 			}
 
 			gui.makeRcFilesMenuItems();

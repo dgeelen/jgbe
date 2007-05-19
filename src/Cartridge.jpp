@@ -336,17 +336,17 @@ public class Cartridge {
 						System.out.println("Error: not using memmap!");
 					}
 				}
-				if(((index>=0x8000)&&(index<0xa000)) || ((index>0xc000))) System.out.println("WARNING: Cartridge.write(): Unsupported address for write");
+				if(((index>=0x8000)&&(index<0xa000)) || ((index>0xc000))) PRINTF("WARNING: Cartridge.write(): Unsupported address for write ($%04x)\n",index);
 				break;
 			case 4:
 				// MBC4
+				PRINTLN("WARNING: Cartridge.write(): TODO: Implement MBC4");
 				break;
 			case 5:
 				// MBC5
 				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
-					if(value==0x0a) ram_enabled = true;
-					else if(value==0x00) ram_enabled = false;
-					else PRINTF("WARNING: Ram enabled state UNDEFINED ($%02x)\n", value);
+					if ((value&0x0f) == 0x0A) ram_enabled = true; // 0x0Ah enable
+					else ram_enabled = false;
 				}
 				if((index>=0x2000)&&(index<0x3000)) {//2000-3FFF - ROM Bank Number (Write Only)
 					CurrentROMBank &= 0x100;
@@ -363,8 +363,10 @@ public class Cartridge {
 				if((index>=0xa000) && (index<0xc000)){
 					System.out.println("Error: not using memmap!");
 				}
-				if(((index>=0x6000)&&(index<0xa000)) || ((index>0xc000))) System.out.println("WARNING: Cartridge.write(): Unsupported address for write");
+				if(((index>=0x6000)&&(index<0xa000)) || ((index>0xc000))) PRINTF("WARNING: Cartridge.write(): Unsupported address for write ($%04x)\n",index);
 				break;
+			default:
+				PRINTLN("ERROR: Cartridge.write(): Cartridge memory bank controller type #"+ MBC +" is not implemented");
 		}
 	}
 }
