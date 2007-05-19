@@ -66,7 +66,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		protected CPU cpu;
 		private int fps;
 		private int selectedState = 0;
-		private int[] keyMap = new int[16+24]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
+		private int[] keyMap = new int[16+nrOfShortCuts]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
 		VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
 		int osdTime = 0;
@@ -103,6 +103,12 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenu menuOther;
 		JMenuItem menuitemCheats;
 		JMenuItem menuitemToggleCheats;
+		JMenu menuEmuSpeed;
+		JMenuItem menuitemEmuSpeedPlus;
+		JMenuItem menuitemEmuSpeedMinus;
+		JMenuItem menuitemEmuSpeedMul;
+		JMenuItem menuitemEmuSpeedDiv;
+		JMenuItem menuitemEmuSpeedNormal;
 #undef SCALEBUILDER
 #ifdef SCALEBUILDER
 		JMenuItem menuitemScaleBuilder;
@@ -317,6 +323,23 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemToggleRemoteKeys.addActionListener(this);
 			menuOther.add(menuitemToggleRemoteKeys);
 
+			menuEmuSpeed = new JMenu("Emulation Speed");
+			menuitemEmuSpeedPlus  = new JMenuItem("+25%", KeyEvent.VK_PLUS);
+			menuitemEmuSpeedMinus = new JMenuItem("-25%", KeyEvent.VK_MINUS);
+			menuitemEmuSpeedMul  = new JMenuItem("*125%", KeyEvent.VK_OPEN_BRACKET);
+ 			menuitemEmuSpeedDiv = new JMenuItem("*75%", KeyEvent.VK_CLOSE_BRACKET);
+			menuitemEmuSpeedNormal= new JMenuItem("100%", KeyEvent.VK_EQUALS);
+			menuitemEmuSpeedPlus.addActionListener(this);
+			menuitemEmuSpeedMinus.addActionListener(this);
+			menuitemEmuSpeedMul.addActionListener(this);
+			menuitemEmuSpeedDiv.addActionListener(this);
+			menuitemEmuSpeedNormal.addActionListener(this);
+			menuEmuSpeed.add(menuitemEmuSpeedPlus);
+			menuEmuSpeed.add(menuitemEmuSpeedMinus);
+			menuEmuSpeed.add(menuitemEmuSpeedMul);
+			menuEmuSpeed.add(menuitemEmuSpeedDiv);
+			menuEmuSpeed.add(menuitemEmuSpeedNormal);
+			menuOther.add(menuEmuSpeed ) ;
 			mainMenuBar.add( menuOther) ;
 
 			return mainMenuBar;
@@ -349,6 +372,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuitemSoundChannel4.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemToggleCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEmuSpeedPlus.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEmuSpeedMinus.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEmuSpeedMul.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEmuSpeedDiv.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);			menuitemEmuSpeedNormal.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 		}
 		public void addComponentsToPane( Container contentPane ) {
 //      Use BorderLayout. Default empty constructor with no horizontal and vertical
@@ -629,6 +656,34 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				resumeEmulation(false);
 				addOSDLine("Reset gameboy");
 			}
+			else if(e.getSource().equals( menuitemEmuSpeedPlus )) {
+				double cs = CPU.AC.currentEmulationSpeed;
+				double ns = 0.25 + cs;
+				CPU.AC.setSpeed(ns);
+				addOSDLine("EmuSpeed: "+(int)(ns*100.0)+"."+(int)( (ns*100.0-(int)(ns*100.0)) )+"%");
+			}
+			else if(e.getSource().equals( menuitemEmuSpeedMinus )) {
+				double cs = CPU.AC.currentEmulationSpeed;
+				double ns = Math.max(cs-0.25,0);
+				CPU.AC.setSpeed(ns);
+				addOSDLine("EmuSpeed: "+(int)(ns*100.0)+"."+(int)( (ns*100.0-(int)(ns*100.0)) )+"%");
+			}
+			else if(e.getSource().equals( menuitemEmuSpeedMul )) {
+				double cs = CPU.AC.currentEmulationSpeed;
+				double ns = 1.25 * cs;
+				CPU.AC.setSpeed(ns);
+				addOSDLine("EmuSpeed: "+(int)(ns*100.0)+"."+(int)( (ns*100.0-(int)(ns*100.0)) )+"%");
+			}
+			else if(e.getSource().equals( menuitemEmuSpeedDiv )) {
+				double cs = CPU.AC.currentEmulationSpeed;
+				double ns = 0.75 * cs;
+				CPU.AC.setSpeed(ns);
+				addOSDLine("EmuSpeed: "+(int)(ns*100.0)+"."+(int)( (ns*100.0-(int)(ns*100.0)) )+"%");
+			}
+			else if(e.getSource().equals( menuitemEmuSpeedNormal )) {
+				CPU.AC.setSpeed(1.0);
+				addOSDLine("EmuSpeed: 100%");
+			}
 			else if(e.getSource().equals( menuitemColorSchemeOriginalGameboy )) {
 				int[][] c={ {0xa0, 0xe0, 0x20},	// WHITE
 										{0x70, 0xb0, 0x40},  // LIGHTGRAY
@@ -680,10 +735,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					}
 				}
 				//System.out.println("timer!");
-				long ctime = System.currentTimeMillis();
+				long ctime = System.nanoTime();
 				long timeLapse =  ctime - FPSTimeMillis;
 				FPSTimeMillis = ctime;
-				double afps=fps/(timeLapse/1000.0);
+				double afps=fps/(timeLapse/1000000000.0);
 				double emuspeed = ((int)(afps/(4194304.0/702240000.0)))/100.0;
 				frame.setTitle("JGBE V"+JGBE_VERSION_STRING+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"%");
 				//cpu.AC.srendered = 0;
@@ -691,7 +746,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 //STOP DOING THIS !! 			if(dbgr != null) dbgr.update();
 		}
-		long FPSTimeMillis = System.currentTimeMillis();
+		long FPSTimeMillis = System.nanoTime();
 
 		public void itemStateChanged( ItemEvent e ) {
 			JMenuItem source = ( JMenuItem )( e.getSource() );
@@ -821,14 +876,19 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			makeRcFilesMenuItems();
 		}
 
+		#define PRINT_KEY_DEFAULT PRINTLN((keyMap[i]>>8>0 ? \
+		                                  KeyEvent.getKeyModifiersText(keyMap[i]>>8)+"+" : "") +\
+		                                  KeyEvent.getKeyText(keyMap[i]&0xff))
 		private void saveKeyBinds() {
 			DataOutputStream distream=null;
 			try {
 				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
 				FileOutputStream fistream = new FileOutputStream(path+"keys.conf");
 				distream = new DataOutputStream(fistream);
-				for(int i=0; i<16+24; ++i) {
+				for(int i=0; i<16+nrOfShortCuts; ++i) {
 					distream.writeInt(keyMap[i]);
+ 					PRINTF("keyMap[%d]=%d; // ",i,keyMap[i],);
+ 					PRINT_KEY_DEFAULT;
 				}
 			}
 			catch(IOException e) { //File not found or error reading it
@@ -852,7 +912,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
 				FileInputStream fistream = new FileInputStream(path+"keys.conf");
 				distream = new DataInputStream(fistream);
-				for(int i=0; i<16+24; ++i) {
+				for(int i=0; i<16+nrOfShortCuts; ++i) {
 						keyMap[i] = distream.readInt();
 				}
 			}
@@ -880,46 +940,51 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 		private void generateDefaultKeyBinds() {
 			//Magix
-			keyMap[0]=38;
-			keyMap[1]=40;
-			keyMap[2]=37;
-			keyMap[3]=39;
-			keyMap[4]=90;
-			keyMap[5]=88;
-			keyMap[6]=61;
-			keyMap[7]=45;
-			keyMap[8]=73;
-			keyMap[9]=75;
-			keyMap[10]=74;
-			keyMap[11]=76;
-			keyMap[12]=91;
-			keyMap[13]=93;
-			keyMap[14]=222;
-			keyMap[15]=59;
-			keyMap[16]=556;
-			keyMap[17]=591;
-			keyMap[18]=19;
-			keyMap[19]=594;
-			keyMap[20]=593;
-			keyMap[21]=561;
-			keyMap[22]=562;
-			keyMap[23]=563;
-			keyMap[24]=564;
-			keyMap[25]=605;
-			keyMap[26]=603;
-			keyMap[27]=560;
-			keyMap[28]=569;
-			keyMap[29]=568;
-			keyMap[30]=567;
-			keyMap[31]=595;
-			keyMap[32]=588;
-			keyMap[33]=577;
-			keyMap[34]=2097;
-			keyMap[35]=2098;
-			keyMap[36]=2099;
-			keyMap[37]=2100;
-			keyMap[38]=704;
-			keyMap[39]=604;
+			keyMap[0]=38; // Up
+			keyMap[1]=40; // Down
+			keyMap[2]=37; // Left
+			keyMap[3]=39; // Right
+			keyMap[4]=90; // Z
+			keyMap[5]=88; // X
+			keyMap[6]=61; // Equals
+			keyMap[7]=45; // Minus
+			keyMap[8]=73; // I
+			keyMap[9]=75; // K
+			keyMap[10]=74; // J
+			keyMap[11]=76; // L
+			keyMap[12]=91; // Open Bracket
+			keyMap[13]=93; // Close Bracket
+			keyMap[14]=222; // Quote
+			keyMap[15]=59; // Semicolon
+			keyMap[16]=556; // Ctrl+Comma
+			keyMap[17]=591; // Ctrl+O
+			keyMap[18]=19; // Pause
+			keyMap[19]=594; // Ctrl+R
+			keyMap[20]=593; // Ctrl+Q
+			keyMap[21]=561; // Ctrl+1
+			keyMap[22]=562; // Ctrl+2
+			keyMap[23]=563; // Ctrl+3
+			keyMap[24]=564; // Ctrl+4
+			keyMap[25]=605; // Ctrl+Close Bracket
+			keyMap[26]=603; // Ctrl+Open Bracket
+			keyMap[27]=560; // Ctrl+0
+			keyMap[28]=569; // Ctrl+9
+			keyMap[29]=568; // Ctrl+8
+			keyMap[30]=567; // Ctrl+7
+			keyMap[31]=595; // Ctrl+S
+			keyMap[32]=588; // Ctrl+L
+			keyMap[33]=577; // Ctrl+A
+			keyMap[34]=2097; // Alt+1
+			keyMap[35]=2098; // Alt+2
+			keyMap[36]=2099; // Alt+3
+			keyMap[37]=2100; // Alt+4
+			keyMap[38]=704; // Ctrl+Back Quote
+			keyMap[39]=604; // Ctrl+Back Slash
+			keyMap[40]=829; // Ctrl+Shift+Equals
+			keyMap[41]=557; // Ctrl+Minus
+			keyMap[42]=861; // Ctrl+Shift+Close Bracket
+			keyMap[43]=859; // Ctrl+Shift+Open Bracket
+			keyMap[44]=573; // Ctrl+Equals
 		}
 
 		static Cartridge cart = null;

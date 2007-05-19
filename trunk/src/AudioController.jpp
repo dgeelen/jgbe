@@ -677,6 +677,8 @@ public class AudioController {
 	private boolean SweepTimerTick; // 128hz
 	private int RATE;
 	public int CRATE;
+	protected double currentEmulationSpeed=1.0;
+
 	public class SoundRegister {
 		int muted=1;
 		int on;
@@ -774,8 +776,12 @@ public class AudioController {
 		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
 		SweepTimerTick=false;
 		RATE = (1<<21) / sampleRate;
-		CRATE = (4194304 / sampleRate);
-		//4194304 == (1<<23)
+		setSpeed(1.0);
+	}
+
+	public void setSpeed(double emulationSpeed) {
+		currentEmulationSpeed = emulationSpeed;
+		CRATE = (int)((4194304.0 / (double)sampleRate)*emulationSpeed); //4194304 == (1<<23)
 	}
 
 	SAVELOAD_FUNCTION	{
@@ -1099,10 +1105,7 @@ public class AudioController {
 	static byte bla=0;
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
 		cyclesLeftToRender+=nrCycles;
-		int i=cyclesLeftToRender;
-		//cyclesLeftToRender>>=1;
 		sound_mix();
-		//cyclesLeftToRender<<=1;
 	}
 
 	public int read(int index) {
