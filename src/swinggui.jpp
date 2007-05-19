@@ -446,7 +446,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		public void resumeEmulation(boolean verbose) {
-			if (cpuRunner!=null) {
+			if((cpuRunner!=null)&&(cart!=null)) {
 				cpuRunner.resume();
 				if(verbose) addOSDLine("Unpaused gameboy");
 			}
@@ -784,7 +784,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			int keyState = keyCode | (keyModifiers << 8);
 
 			for(int i=0; i<8; ++i) {
-				if(keyMap[i]==keyState) {
+				if((keyMap[i]&0xff)==keyCode) { //Check just the keycode, modifiers don't matter for release
 					cpu.releaseButton(keyMasks[i]);
 					return;
 				}
