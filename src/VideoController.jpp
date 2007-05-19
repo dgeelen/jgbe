@@ -115,7 +115,6 @@ public class VideoController {
 	}
 
 	public void reset() {
-		this.isCGB = cpu.isCGB();
 		CurrentVRAMBank=0;
 		LY=0;
 		LYC=0;

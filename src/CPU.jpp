@@ -853,7 +853,8 @@ static int togglestart=1;
  			cartridge.CurrentROMBank=1;
 			refreshMemMap();
 
-			PC = 0x100;
+			PC = BIOS_enabled?0x00:0x100;
+			VC.isCGB = BIOS_enabled?false:isCGB();
 
 			//AF=$01B0
 			A=VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
