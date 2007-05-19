@@ -1,4 +1,5 @@
 #ifndef USE_JAVA_MOBILE
+#define nrOfShortCuts 29
 public class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
 	private JDialog dialog;
 	private JFrame owner;
@@ -64,7 +65,7 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
  			tabPane.add("Player 2", ppp);
 
 		JPanel shortCuts = new JPanel();
-			GridLayout shortCutsGL = new GridLayout(24,2);
+			GridLayout shortCutsGL = new GridLayout(nrOfShortCuts,2);
 			shortCuts.setLayout(shortCutsGL);
 			INPUTBOX(shortCuts, "Configure Keybinds");
 			INPUTBOX(shortCuts, "Open ROM");
@@ -90,6 +91,11 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 			INPUTBOX(shortCuts, "Toggle Soundchannel 4 on/off");
 			INPUTBOX(shortCuts, "Open Cheat Code Editor");
 			INPUTBOX(shortCuts, "Toggle Cheats on/off");
+			INPUTBOX(shortCuts, "Emulation speed +25%");
+			INPUTBOX(shortCuts, "Emulation speed -25%");
+			INPUTBOX(shortCuts, "Emulation speed *125%");
+			INPUTBOX(shortCuts, "Emulation speed *75%");
+			INPUTBOX(shortCuts, "Emulation speed 100%");
 			scroll = new JScrollPane(shortCuts);
 			scroll.setPreferredSize(new Dimension(10,10) );
 			tabPane.add("Shortcuts", scroll);
