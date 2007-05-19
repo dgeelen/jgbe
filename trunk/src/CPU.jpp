@@ -60,8 +60,10 @@ static class DummyCPURunBlock implements CPURunBlock {
 		protected static boolean halted=false;
 		protected static int hw_ilines=0;  ///< gnuboy magix
 		//IO
- 		static public int KeyStatus=0; //bitmask, low 4=direction, upper 4=start,select,a,b, inverted from GameBoy POV
-		private static int keyBounce=0;
+		static public int KeyStatus=0; //bitmask, low 4=direction, upper 4=start,select,a,b, inverted from GameBoy POV
+		static public int RemoteKeyStatus=0;
+		static public boolean useRemoteKeys = false;
+		private static int keyBounce = 0;
 		private static int keyBounceWaitNext=0x3f;
 
 		static boolean BIOS_enabled = false;
@@ -998,6 +1000,14 @@ static int togglestart=1;
 			//PRINTLN("RELEA "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
+		public static final void pressRemoteButton(int i) {
+			RemoteKeyStatus |= i;
+		}
+
+		public static final void releaseRemoteButton(int i) {
+			RemoteKeyStatus &= ~i;
+		}
+
 		static final protected int execute() {
 // 			if(last_memory_access_internal==0xff00) System.out.println("ASDASDASDSADDSA");
 			int cycles;
@@ -1306,9 +1316,19 @@ static int togglestart=1;
 
 						LINKbuf[LINKind++] = lstatus;
 
+						lstatus |= RemoteKeyStatus << 16;
+
 						LinkCableOut.writeInt(lstatus);
 						LinkCableOut.flush();
 						rstatus = LinkCableIn.readInt();
+
+						if (useRemoteKeys) {
+							int rkeys = (rstatus >> 16) & 0xff;
+							if (KeyStatus != rkeys) {
+								KeyStatus = rkeys;
+								keyBounce = 1000; //times to bounce the key
+							}
+						}
 
 						if (LINKind > LINKdelay) LINKind = 0;
 						lstatus = LINKbuf[LINKind];
@@ -1338,7 +1358,7 @@ static int togglestart=1;
 							case 0x8180:   // local clock, swap bytes
 							case 0x8081: { // remote clock, swap bytes
 								//PRINTF("Link: swapping $%04x: $%02x <-> $%02x\n",bstatus,IOP[0x01] , rstatus >> 8);
-								IOP[0x01] = rstatus >> 8;
+								IOP[0x01] = (rstatus >> 8) & 0xff;
 								IOP[0x02] &= ~0x80;
 								triggerInterrupt(3);
 								LINKtimeout = 0;

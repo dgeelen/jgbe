@@ -112,6 +112,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemLinkClient;
 		JMenuItem menuitemLinkSever;
 		JMenuItem menuitemConfigKeys;
+		JMenuItem menuitemToggleRemoteKeys;
 
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
@@ -295,7 +296,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 #endif
 			menuOther.add(menuitemCheats);
 			menuOther.add(menuitemToggleCheats);
-			mainMenuBar.add( menuOther) ;
+
 	  	menuLink=new JMenu("Link");
 			menuitemLinkServe = new JMenuItem("Start Link Server", KeyEvent.VK_S);
 			menuitemLinkClient = new JMenuItem("Start Link Client", KeyEvent.VK_C);
@@ -307,9 +308,17 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuLink.add(menuitemLinkClient);
 			menuLink.add(menuitemLinkSever);
 			mainMenuBar.add( menuLink ) ;
+
 			menuitemConfigKeys = new JMenuItem("Config keys",KeyEvent.VK_1);
 			menuitemConfigKeys.addActionListener(this);
 			menuOther.add(menuitemConfigKeys);
+
+			menuitemToggleRemoteKeys = new JMenuItem("Use Remote Keys", KeyEvent.VK_R);
+			menuitemToggleRemoteKeys.addActionListener(this);
+			menuOther.add(menuitemToggleRemoteKeys);
+
+			mainMenuBar.add( menuOther) ;
+
 			return mainMenuBar;
 		}
 
@@ -641,6 +650,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 										{0x3f, 0x3f, 0x3f}}; // BLACK
 				cpu.VC.setGrayShades(c);
 			}
+			else if(e.getSource().equals( menuitemToggleRemoteKeys )) {
+				cpu.useRemoteKeys = !cpu.useRemoteKeys;
+				addOSDLine("Remote Keys: "+(cpu.useRemoteKeys?"Enabled":"Disabled"));
+			}
 			else { //timer?
 				for (int i = 0; i < 10; ++i) {
 					if (e.getSource().equals(menuitemSelectState[i])) {
@@ -695,80 +708,52 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			//System.out.println("keyTyped");
 		}
 
+		static final int[] keyMasks = {
+			BUTTON_UP,
+			BUTTON_DOWN,
+			BUTTON_LEFT,
+			BUTTON_RIGHT,
+			BUTTON_A,
+			BUTTON_B,
+			BUTTON_START,
+			BUTTON_SELECT,
+		};
+
 		public void keyReleased(KeyEvent e) {
 			int keyCode = e.getKeyCode();
 			int keyModifiers = e.getModifiers();
 			int keyState = keyCode | (keyModifiers << 8);
-			int keyMapIndex=-1;
-			for(int i=0; i<16; ++i) {
+
+			for(int i=0; i<8; ++i) {
 				if(keyMap[i]==keyState) {
-					keyMapIndex=i;
-					break;
+					cpu.releaseButton(keyMasks[i]);
+					return;
 				}
 			}
-			switch(keyMapIndex) {
-				case 0:
-					cpu.releaseButton(BUTTON_UP);
-					break;
-				case 1:
-					cpu.releaseButton(BUTTON_DOWN);
-					break;
-				case 2:
-					cpu.releaseButton(BUTTON_LEFT);
-					break;
-				case 3:
-					cpu.releaseButton(BUTTON_RIGHT);
-					break;
-				case 4:
-					cpu.releaseButton(BUTTON_A);
-					break;
-				case 5:
-					cpu.releaseButton(BUTTON_B);
-					break;
-				case 6:
-					cpu.releaseButton(BUTTON_START);
-					break;
-				case 7:
-					cpu.releaseButton(BUTTON_SELECT);
-					break;
+			for(int i=8; i<16; ++i) {
+				if(keyMap[i]==keyState) {
+					cpu.releaseRemoteButton(keyMasks[i&7]);
+					return;
+				}
 			}
 		}
+
 		public void keyPressed(KeyEvent e) {
 			int keyCode = e.getKeyCode();
 			int keyModifiers = e.getModifiers();
 			int keyState = keyCode | (keyModifiers << 8);
-			int keyMapIndex=-1;
-			for(int i=0; i<16; ++i) {
+
+			for(int i=0; i<8; ++i) {
 				if(keyMap[i]==keyState) {
-					keyMapIndex=i;
-					break;
+					cpu.pressButton(keyMasks[i]);
+					return;
 				}
 			}
-			switch(keyMapIndex) {
-				case 0:
-					cpu.pressButton(BUTTON_UP);
-					break;
-				case 1:
-					cpu.pressButton(BUTTON_DOWN);
-					break;
-				case 2:
-					cpu.pressButton(BUTTON_LEFT);
-					break;
-				case 3:
-					cpu.pressButton(BUTTON_RIGHT);
-					break;
-				case 4:
-					cpu.pressButton(BUTTON_A);
-					break;
-				case 5:
-					cpu.pressButton(BUTTON_B);
-					break;
-				case 6:
-					cpu.pressButton(BUTTON_START);
-					break;
-				case 7:
-					cpu.pressButton(BUTTON_SELECT);
-					break;
+			for(int i=8; i<16; ++i) {
+				if(keyMap[i]==keyState) {
+					cpu.pressRemoteButton(keyMasks[i&7]);
+					return;
+				}
 			}
 		}
 
