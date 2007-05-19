@@ -40,19 +40,19 @@ gcj: clean
 preprocess: $(GJAVAFILES)
 
 fun: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nodebug
-
-silence: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nodebug -nosound
-
-run: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart
 
-debug: all
+silence: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound
 
+run: all
+	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -debug
+
+debug: all
+	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound -debug
+
 link: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -nosound -nodebug
+	cd $(CLASSDIR) && $(AOSS) java swinggui -nosound
 
 tester: all
 	cd $(CLASSDIR) && java TestSuite ~/gbroms/Turtles\ 3.zip

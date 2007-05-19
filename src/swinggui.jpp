@@ -27,7 +27,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	}
 
 	synchronized public void resume() {
-		while (threadStatus != 2) {
+		if (threadStatus != 2) {
 			threadStatus = 1;
 			while (threadStatus == 1) { YIELD; };
 		}
@@ -51,7 +51,14 @@ class SimpleCPURunner implements CPURunner, Runnable {
 			if (threadStatus == 1) threadStatus = 2;
 			// running
 			while ((threadStatus == 2) && (CPU.nextinstruction()!=0)) {};
-			if (threadStatus == 2) threadStatus = 3; // CPU returned exception
+
+			if (threadStatus == 2) { // CPU returned exception
+				threadStatus = 3;
+				JOptionPane.showMessageDialog(null,
+				                              "Encountered an invalid instruction, perhaps ROM is broken?",
+				                              "Invalid Instruction",
+				                              JOptionPane.INFORMATION_MESSAGE);
+			}
 			// running -> suspended
 			if (threadStatus == 3) threadStatus = 0;
 			// suspended
@@ -439,6 +446,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		public void resumeEmulation(boolean verbose) {
+			PRINTLN("RESUMING CPU");
 			if((cpuRunner!=null)&&(cart!=null)) {
 				cpuRunner.resume();
 				if(verbose) addOSDLine("Unpaused gameboy");
@@ -887,8 +895,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				distream = new DataOutputStream(fistream);
 				for(int i=0; i<16+nrOfShortCuts; ++i) {
 					distream.writeInt(keyMap[i]);
- 					PRINTF("keyMap[%d]=%d; // ",i,keyMap[i],);
- 					PRINT_KEY_DEFAULT;
+//  					PRINT_KEY_DEFAULT;
 				}
 			}
 			catch(IOException e) { //File not found or error reading it
