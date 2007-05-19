@@ -52,7 +52,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		runner = new DebugRunner(this);
 		createAndShowGUI();
 		update();
-}
+	}
 
 	public class DebugRunner implements Runnable, CPURunner {
 		private volatile int threadStatus = 0;
@@ -76,6 +76,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		}
 
 		synchronized public void resume() {
+			if (!CPU.canRun()) return;
 			if (threadStatus != 2) {
 				threadStatus = 1;
 				while (threadStatus == 1) { YIELD; };
@@ -414,7 +415,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	}
 
 	synchronized public void update() {
-		if (!runner.isRunning()) {
+		if (!runner.isRunning() && CPU.canRun()) {
 			updateRegisters();
 			updateHWRegs();
 			updateMemory();

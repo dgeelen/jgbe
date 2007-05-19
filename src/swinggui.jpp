@@ -27,6 +27,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	}
 
 	synchronized public void resume() {
+		if (!CPU.canRun()) return;
 		if (threadStatus != 2) {
 			threadStatus = 1;
 			while (threadStatus == 1) { YIELD; };
@@ -116,7 +117,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		JMenuItem menuitemEmuSpeedMul;
 		JMenuItem menuitemEmuSpeedDiv;
 		JMenuItem menuitemEmuSpeedNormal;
-#undef SCALEBUILDER
 #ifdef SCALEBUILDER
 		JMenuItem menuitemScaleBuilder;
 #endif
@@ -167,7 +167,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					}
 				}
 				++fps;
-    	}
+			}
 		}
 
 		public void addOSDLine(String line) {
@@ -310,7 +310,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			menuOther.add(menuitemCheats);
 			menuOther.add(menuitemToggleCheats);
 
-	  	menuLink=new JMenu("Link");
+			menuLink=new JMenu("Link");
 			menuitemLinkServe = new JMenuItem("Start Link Server", KeyEvent.VK_S);
 			menuitemLinkClient = new JMenuItem("Start Link Client", KeyEvent.VK_C);
 			menuitemLinkSever = new JMenuItem("Stop Link", KeyEvent.VK_L);
@@ -446,8 +446,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		public void resumeEmulation(boolean verbose) {
-			PRINTLN("RESUMING CPU");
-			if((cpuRunner!=null)&&(cart!=null)) {
+			if (cpuRunner!=null) {
 				cpuRunner.resume();
 				if(verbose) addOSDLine("Unpaused gameboy");
 			}
@@ -591,8 +590,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					cheatcodes.applyCheatCodes(cart);
 					addOSDLine("loaded Rom: " + curcartname);
 
-					if (CPU.canRun())
-						resumeEmulation(false);
+					resumeEmulation(false);
 				}
 			}
 			else if(e.getSource().equals( menuitemLinkServe )) {
@@ -738,8 +736,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 						cheatcodes.applyCheatCodes(cart);
 						addOSDLine("loaded Rom: " + curcartname);
 
-						if (CPU.canRun())
-							resumeEmulation(false);
+						resumeEmulation(false);
 					}
 				}
 				//System.out.println("timer!");
@@ -752,7 +749,6 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
-//STOP DOING THIS !! 			if(dbgr != null) dbgr.update();
 		}
 		long FPSTimeMillis = System.nanoTime();
 
@@ -1000,7 +996,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			gui.loadRCFiles();
 
-			boolean sound=true, debug=false, nolastcart=false;
+			boolean sound=true, debug=false, lastcart=false;
 			String romfile="", logfile="";
 			for (int i = 0; i < args.length; ++i) {
 				if (args[i].charAt(0)!='-')
@@ -1011,10 +1007,10 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 					sound = false;
 				if (args[i].equals("-debug"))
 					debug = true;
-				if ((args[i].equals("-nolastcart"))) //TODO: FIXME: Invert this (current behavious is a work-around)
-					nolastcart=true;
+				if ((args[i].equals("-lastcart"))) //TODO: FIXME: Invert this (current behavious is a work-around)
+					lastcart=true;
 			}
-			if((!nolastcart) && (gui.rcFiles.size() > 0))
+			if(lastcart && (gui.rcFiles.size() > 0))
 				romfile = (String)gui.rcFiles.elementAt(0);
 
 			if (!romfile.equals("")) {
@@ -1048,6 +1044,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			if (cart != null)
 				gui.cpu.loadCartridge(cart);
 
+			gui.makeRcFilesMenuItems();
+
 			/*DEBUGGER*/
 			if (debug) {
 				Debugger dbgr = new Debugger(gui, logfile); //The GUI to which this debugger belongs
@@ -1055,11 +1053,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			}
 			else {
 				gui.cpuRunner = new SimpleCPURunner();
-				if (CPU.canRun())
-					gui.resumeEmulation(false);
+				gui.resumeEmulation(false);
 			}
-
-			gui.makeRcFilesMenuItems();
 		}
 	}
 #endif
