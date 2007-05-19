@@ -1,7 +1,12 @@
 #include "Global.inc"
 import java.io.*;
 import java.util.zip.*;
+import java.awt.Font;
+
 public final class FHandler {
+	// workaround for getResourceAsStream not working in static methods
+	private static FHandler fhinstance = new FHandler();
+
 	public static String EnsureExists(String relpath) throws IOException {
 		String name = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
 		File dir=new File(name+relpath);
@@ -79,6 +84,40 @@ public final class FHandler {
 		else {
 			System.out.println("FHandler opening zipfile not supported!");
 			return null;
+		}
+	}
+
+	/** @brief creates a buffered input stream from a resource file
+	 *  it searches for the file in the root of the jar file if the
+	 *  application is started from a jar file, else it will look
+	 *  in the current directory
+	 *  @arg filename Name of the file to get a stream of
+	 *  @return the BufferedInputStream of that file
+	 */
+	public static final BufferedInputStream getResourceStream(String filename) throws IOException {
+		Class clazz = fhinstance.getClass(); // workaround...
+		InputStream fistream = clazz.getResourceAsStream(filename);
+		BufferedInputStream bistream = new BufferedInputStream(fistream);
+		return bistream;
+	}
+	
+	/** returns the Bitstream Vera Sans Mono Font, normal style, size 12
+	 *  first look for VeraMono.ttf in the current dir/jar file
+	 *  then ask the system for the "Bitstream Vera Sans Mono" font
+	 *  @return the Font
+	 */
+	public static final Font getVeraMonoFont() {
+		try {
+			InputStream bistream = getResourceStream("VeraMono.ttf");
+			Font base = Font.createFont(Font.TRUETYPE_FONT, bistream);
+			PRINTLN("font success");
+			bistream.close();
+			return base.deriveFont(0, 12);
+		}
+		catch (Exception e) {
+			PRINTLN("font fail");
+			e.printStackTrace();
+			return new Font("Bitstream Vera Sans Mono",0, 12);
 		}
 	}
 

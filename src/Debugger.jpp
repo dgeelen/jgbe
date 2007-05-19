@@ -30,7 +30,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	private Color UpdateColor = new Color(255,200,200);
 	public DebugRunner runner;
 	swinggui gui;
-	private Font MonoFont=new Font("Bitstream Vera Sans Mono",0, 12);
+	private Font MonoFont= FHandler.getVeraMonoFont();
 	private RDParser parser;
 	private int[] oldRegVal;
 	private Writer logwriter;
