@@ -376,9 +376,14 @@ check for badness = $afa
 			// 0x9 //       not in 0xFFF chunks (and VC doesnt want it that way)
 
 			// cartridge RAM (can be switchable)
-			rMemMap[0xA] = wMemMap[0xA] = cartridge.MM_RAM[(cartridge.CurrentRAMBank<<1)|0];
-			rMemMap[0xB] = wMemMap[0xB] = cartridge.MM_RAM[(cartridge.CurrentRAMBank<<1)|1];
-
+			if(cartridge.MBC!=2) { //MBC2 should not have any RAM (except built in 512x4bits)
+				rMemMap[0xA] = wMemMap[0xA] = cartridge.MM_RAM[(cartridge.CurrentRAMBank<<1)|0];
+				rMemMap[0xB] = wMemMap[0xB] = cartridge.MM_RAM[(cartridge.CurrentRAMBank<<1)|1];
+			}
+			else { //force reading through Cartridge
+				rMemMap[0xA] = wMemMap[0xA] = null;
+				rMemMap[0xB] = wMemMap[0xB] = null;
+			}
 			// WRAM, bank 0 and a switchable bank
 			rMemMap[0xC] = wMemMap[0xC] = WRAM[0];
 			rMemMap[0xD] = wMemMap[0xD] = WRAM[CurrentWRAMBank];
