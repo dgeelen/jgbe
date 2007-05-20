@@ -23,7 +23,7 @@ public class Cartridge {
 	private String  file_name;
 	private String  err_msg;            // message in case of an error
 
-	private int MBC;                    // The MBC used in the cartridge
+	protected int MBC;                    // The MBC used in the cartridge
 
 	private boolean ram_enabled = false;// Whether RAM is enabled to read and write
 	private boolean RTCRegisterEnabled=false;
@@ -46,7 +46,7 @@ public class Cartridge {
 			loadFromFile();
 		}
 		catch (java.io.IOException e) {
-			System.out.println("error loading cartridge from file!: " + e.getMessage());
+			PRINTLN("error loading cartridge from file!: " + e.getMessage());
 			err_msg = e.getMessage();
 		}
 #ifdef USE_JAVA_MOBILE
@@ -104,14 +104,14 @@ public class Cartridge {
 		 */
 		MM_ROM[0] = new int[MEMMAP_SIZE]; // init first memmap chunk
 		DataInputStream distream = FHandler.getDataInputStream(file_name);
-// 		System.out.println("cartridge got distream="+distream);
+// 		PRINTLN("cartridge got distream="+distream);
 		// load first memmap chunk into memory
 		PRINTFREEMEM("cartridge");
 		for(int i = 0; i < MEMMAP_SIZE; ++i)
 			MM_ROM[0][i] = distream.readUnsignedByte();
 
 		// Detect MBC type
-			PRINTF("Cartridge MBC type:");
+		PRINTF("Cartridge MBC type: 0x%02x - ",MM_ROM[0][0x0147]);
 		switch(MM_ROM[0][0x0147]) {
 			case 0x00: MBC=0; PRINTF("ROM ONLY"); break;
 			case 0x01: MBC=1; PRINTF("MBC1"); break;
@@ -142,52 +142,54 @@ public class Cartridge {
 			case 0xfd: MBC=-5; PRINTF("BANDAI TAMA5"); break;
 			case 0xfe: MBC=-42; PRINTF("HuC3"); break;
 			case 0xff: MBC=-99; PRINTF("HuC1+RAM+BATTERY"); break;
-			default:  MBC=-666; System.out.println("*UNKNOWN*"); throw new java.io.IOException("unknow MBC type");
+			default:  MBC=-666; PRINTLN("*UNKNOWN*"); throw new java.io.IOException("unknown MBC type");
 		}
-		System.out.println(" (MBC"+MBC+")");
+		PRINTLN(" (MBC"+MBC+")");
 		if(MM_ROM[0][0x0143] == 0 ) { //regular gameboy game
-			System.out.println("Cartridge appears to be a GameBoy game");
+			PRINTLN("Cartridge appears to be a GameBoy game");
 		}
 		else {
-			System.out.println("Cartridge could be a ColorGameBoy game");
+			PRINTLN("Cartridge could be a ColorGameBoy game");
 		}
 
 		// Determine ROM size (need 4 memmap entries per bank)
 		rom_mm_size = 0;
 		switch(MM_ROM[0][0x0148])	{
-			case 0x00: rom_mm_size =   2 << 2; System.out.println("ROM size = 32KByte (no ROM banking)"); break;
-			case 0x01: rom_mm_size =   4 << 2; System.out.println("ROM size = 64KByte (4 banks)"); break;
-			case 0x02: rom_mm_size =   8 << 2; System.out.println("ROM size = 128KByte (8 banks)"); break;
-			case 0x03: rom_mm_size =  16 << 2; System.out.println("ROM size = 256KByte (16 banks)"); break;
-			case 0x04: rom_mm_size =  32 << 2; System.out.println("ROM size = 512KByte (32 banks)"); break;
-			case 0x05: rom_mm_size =  64 << 2; System.out.println("ROM size = 1MByte (64 banks) - only 63 banks used by MBC1"); break;
-			case 0x06: rom_mm_size = 128 << 2; System.out.println("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
-			case 0x07: rom_mm_size = 256 << 2; System.out.println("ROM size = 4MByte (256 banks)"); break;
-			case 0x08: rom_mm_size = 512 << 2; System.out.println("ROM size = 8MByte (512 banks)"); break;
-			case 0x52: rom_mm_size =  72 << 2; System.out.println("ROM size = 1.1MByte (72 banks)"); break;
-			case 0x53: rom_mm_size =  80 << 2; System.out.println("ROM size = 1.2MByte (80 banks)"); break;
-			case 0x54: rom_mm_size =  96 << 2; System.out.println("ROM size = 1.5MByte (96 banks)"); break;
+			case 0x00: rom_mm_size =   2 << 2; PRINTLN("ROM size = 32KByte (no ROM banking)"); break;
+			case 0x01: rom_mm_size =   4 << 2; PRINTLN("ROM size = 64KByte (4 banks)"); break;
+			case 0x02: rom_mm_size =   8 << 2; PRINTLN("ROM size = 128KByte (8 banks)"); break;
+			case 0x03: rom_mm_size =  16 << 2; PRINTLN("ROM size = 256KByte (16 banks)"); break;
+			case 0x04: rom_mm_size =  32 << 2; PRINTLN("ROM size = 512KByte (32 banks)"); break;
+			case 0x05: rom_mm_size =  64 << 2; PRINTLN("ROM size = 1MByte (64 banks) - only 63 banks used by MBC1"); break;
+			case 0x06: rom_mm_size = 128 << 2; PRINTLN("ROM size = 2MByte (128 banks) - only 125 banks used by MBC1"); break;
+			case 0x07: rom_mm_size = 256 << 2; PRINTLN("ROM size = 4MByte (256 banks)"); break;
+			case 0x08: rom_mm_size = 512 << 2; PRINTLN("ROM size = 8MByte (512 banks)"); break;
+			case 0x52: rom_mm_size =  72 << 2; PRINTLN("ROM size = 1.1MByte (72 banks)"); break;
+			case 0x53: rom_mm_size =  80 << 2; PRINTLN("ROM size = 1.2MByte (80 banks)"); break;
+			case 0x54: rom_mm_size =  96 << 2; PRINTLN("ROM size = 1.5MByte (96 banks)"); break;
 		} // switch(header[0x0148])
 
 		// Determine RAM size (1 memmap entry per 4 KBytes (round up)
 		ram_mm_size = 0;
 		switch(MM_ROM[0][0x0149]) {
-			case 0x00: ram_mm_size =  0; System.out.println("Card has no RAM"); break;
-			case 0x01: ram_mm_size =  1; System.out.println("Card has 2KBytes of RAM"); break;
-			case 0x02: ram_mm_size =  2; System.out.println("Card has 8Kbytes of RAM"); break;
-			case 0x03: ram_mm_size =  8; System.out.println("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
-			case 0x04: ram_mm_size = 32; System.out.println("Card has 128 KBytes of RAM (16 banks of 8KBytes each)"); break;
+			case 0x00: ram_mm_size =  0; PRINTLN("Card has no RAM"); break;
+			case 0x01: ram_mm_size =  1; PRINTLN("Card has 2KBytes of RAM"); break;
+			case 0x02: ram_mm_size =  2; PRINTLN("Card has 8Kbytes of RAM"); break;
+			case 0x03: ram_mm_size =  8; PRINTLN("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
+			case 0x04: ram_mm_size = 32; PRINTLN("Card has 128 KBytes of RAM (16 banks of 8KBytes each)"); break;
 		} // switch(header[0x0149])
+
+		if((MBC==2)&&(ram_mm_size==0)) ram_mm_size=1; // MBC2 has 512x4bits RAM builtin
 
 		String title="";
 		for(int i=0; i<16; ++i) {
 			if(MM_ROM[0][0x0134+i]==0) break;
 			title+=(char)MM_ROM[0][0x0134+i];
 		}
-		System.out.println("ROM Name appears to be `"+title+"'");
+		PRINTLN("ROM Name appears to be `"+title+"'");
 
 		// load entire ROM into memory
-		System.out.println("Trying to load "+(rom_mm_size>>2)+" banks of ROM");
+		PRINTLN("Trying to load "+(rom_mm_size>>2)+" banks of ROM");
 		PRINTF("loading");
 		for (int i = 1; i < rom_mm_size; ++i) {
 			PRINTFREEMEM("cartidge");
@@ -216,6 +218,10 @@ public class Cartridge {
 	public int read(int index) {
 		switch(MBC) {
 			case 1:
+			case 2:
+				if((ram_enabled)&&(index>=0xa000)&&(index<0xa200)) {
+					return MM_RAM[0][index&0xfff]&0xf;
+				}
 			case 3:
 				//MBC3 TODO: RTC CRAP
 				PRINTF("Error: not using memmap, or reading from cartridge with a noncartridge address $%04x\n", index);
@@ -226,10 +232,10 @@ public class Cartridge {
 				return 0xff;
 			case 5:
 				// MBC5
-				System.out.println("Error: not using memmap, or reading from cartridge with a non cartridge address!");
+				PRINTLN("Error: not using memmap, or reading from cartridge with a non cartridge address!");
 				return 0xff;
 			default:
-				System.out.println("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
+				PRINTLN("Error: Cartridge memory bank controller type #"+ MBC +" is not implemented!");
 				return 0xff;
 		}
 	}
@@ -241,7 +247,7 @@ public class Cartridge {
 				if ((index>=0x0000) && (index <0x2000)) { // RAM Enable
 					if ((value&0x0f) == 0x0A) ram_enabled = true; // 0x0Ah enable
 					else ram_enabled = false;
-// 					System.out.println("Setting ram_enabled="+ram_enabled);
+// 					PRINTLN("Setting ram_enabled="+ram_enabled);
 				}
 				else if(index<0x4000)  { // 2000-3FFF - ROM Bank Number (Write Only)
 					int i=Math.max(1, value&0x1f);
@@ -249,7 +255,7 @@ public class Cartridge {
 					CurrentROMBank &= ~0x1f; // clear bits 0-4
 					CurrentROMBank |= i;     // set them with new value
 					CurrentROMBank %= (rom_mm_size>>2);
-					//System.out.println("Selecting ROM bank"+CurrentROMBank);
+					//PRINTLN("Selecting ROM bank"+CurrentROMBank);
 				}
 				else if(index<0x6000) { // 4000-5FFF - RAM Bank Number - or - Upper Bits of ROM Bank Number (Write Only)
 					if(RomRamModeSelect==0) { //Select ROM
@@ -260,7 +266,7 @@ public class Cartridge {
 //   						PRINTF("Change rombank bits 5-6: from %d to %d, value=%02x, PC=$%04x\n",CurrentROMBank, i, value,CPU.PC);
  						CurrentROMBank=i;
 						CurrentROMBank %= (rom_mm_size>>2);
-						//System.out.println("Selecting ROM bank"+CurrentROMBank);
+						//PRINTLN("Selecting ROM bank"+CurrentROMBank);
 					}
 					else { // Select RAM
 						//not neccessary to take max(1, n) because there is only 1 slot where the rambanks may be mapped
@@ -290,7 +296,7 @@ public class Cartridge {
 				// 0000-1FFF - RAM Enable (Write Only)
 				// 2000-3FFF - ROM Bank Number (Write Only)
 				if ((0xA0000 <= index) && (index <= 0xA1FF))	{
-						System.out.println("TODO: write to internal cartridge RAM.");
+					PRINTLN("TODO: write to internal cartridge RAM.");
 				}
 				else if ((0x0000 <= index) && (index <= 0x1FFF)) {
 					if ((index & 1 << 4) == 0) {
@@ -299,11 +305,8 @@ public class Cartridge {
 					}
 				}
 				else if ((0x2000 <= index) && (index <= 0x3FFFF))	{
-					if ((index & 1 << 4) == (1 << 4))	{
-						// Enable set ROM bank nr
-						value = (value == 0)?1:value;
-						CurrentROMBank = value & 0x0F;
-					}
+					value&=0xf;
+					CurrentROMBank = MAX(value,1);
 				}
 				break;
 			case 3:
@@ -326,22 +329,22 @@ public class Cartridge {
 					}
 				}
 				if((index>=0x6000)&&(index<0x8000)) { //6000-7FFF - Latch Clock Data (Write Only)
-					System.out.println("TODO: Cartridge.write(): Latch Clock Data!");
+					PRINTLN("TODO: Cartridge.write(): Latch Clock Data!");
 				}
 				if((index>=0xa000) && (index<0xc000)){
 					if(RTCRegisterEnabled) {
-						System.out.println("TODO: Cartridge.write(): writing to RAM in RTC mode");
+						PRINTLN("TODO: Cartridge.write(): writing to RAM in RTC mode");
 					}
 					else {
-						System.out.println("Error: not using memmap!");
+						PRINTLN("Error: not using memmap!");
 					}
 				}
 				if(((index>=0x8000)&&(index<0xa000)) || ((index>0xc000))) PRINTF("WARNING: Cartridge.write(): Unsupported address for write ($%04x)\n",index);
 				break;
-			case 4:
+/*			case 4:
 				// MBC4
 				PRINTLN("WARNING: Cartridge.write(): TODO: Implement MBC4");
-				break;
+				break;*/
 			case 5:
 				// MBC5
 				if((index>=0)&&(index<0x2000)) { //0000-1FFF - RAM and Timer Enable (Write Only)
@@ -361,7 +364,7 @@ public class Cartridge {
 						CurrentRAMBank= value;
 				}
 				if((index>=0xa000) && (index<0xc000)){
-					System.out.println("Error: not using memmap!");
+					PRINTLN("Error: not using memmap!");
 				}
 				if(((index>=0x6000)&&(index<0xa000)) || ((index>0xc000))) PRINTF("WARNING: Cartridge.write(): Unsupported address for write ($%04x)\n",index);
 				break;
