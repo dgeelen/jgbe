@@ -7,6 +7,6 @@
  - Fix batman intro logo
  - Add interframe blending
  - Hire 'clean-up-crew'
- - Make color selector for palettes
+ - [DONE]Make color selector for palettes
  - Fix 'If' for scale 4x
  - Fix keyrepeat (for linux and MacOS and solaris and BSD and ... everything except wind00ze) (actually, probably only for linux....)
