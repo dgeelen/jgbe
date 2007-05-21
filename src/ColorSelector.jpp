@@ -3,6 +3,8 @@ import javax.swing.event.*;
 import java.awt.event.*;
 import java.awt.*;
 
+#include "global.inc"
+
 public class ColorSelector extends JFrame
   implements MouseListener, ChangeListener, ActionListener {
 
@@ -12,16 +14,14 @@ public class ColorSelector extends JFrame
 	private JPanel pnlSelect = new JPanel();
 	private JPanel pnlTest   = new JPanel();
 
-	private String[] optionStr = {"foreground ", "background 1.", "background 2."};
+	private String[] optionStr = {"background ", "sprites 1.", "sprites 2."};
 	private ButtonGroup group = new ButtonGroup();
 	private JRadioButton[] buttons = new JRadioButton[12];
 
 	private String[] colorStr = {"Red", "Green", "Blue"};
 	private JSlider[] sliders = new JSlider[3];
 
-	private int[][] foreground  = new int[4][3];
-	private int[][] background1 = new int[4][3];
-	private int[][] background2 = new int[4][3];
+	private int[][][] colors = new int[3][4][3];
 
 	private VideoController vc;
 
@@ -76,190 +76,58 @@ public class ColorSelector extends JFrame
 // 		System.out.printf("(%d, %d)\n", e.getX(), e.getY());
 	}
 
+	boolean hack=false;
+
 	public void stateChanged(ChangeEvent e) {
+		if (hack) return;
 		int r = sliders[0].getValue();
 		int g = sliders[1].getValue();
 		int b = sliders[2].getValue();
 
-		if ( buttons[0].isSelected() ) {
-			foreground[0][0] = r;
-			foreground[0][1] = g;
-			foreground[0][2] = b;
-		}
-		else if ( buttons[1].isSelected() ) {
-			foreground[1][0] = r;
-			foreground[1][1] = g;
-			foreground[1][2] = b;
-		}
-		else if ( buttons[2].isSelected() ) {
-			foreground[2][0] = r;
-			foreground[2][1] = g;
-			foreground[2][2] = b;
-		}
-		else if ( buttons[3].isSelected() )  {
-			foreground[3][0] = r;
-			foreground[3][1] = g;
-			foreground[3][2] = b;
-		}
-		else if ( buttons[4].isSelected() ) {
-			background1[0][0] = r;
-			background1[0][1] = g;
-			background1[0][2] = b;
-		}
-		else if ( buttons[5].isSelected() ) {
-			background1[1][0] = r;
-			background1[1][1] = g;
-			background1[1][2] = b;
-		}
-		else if ( buttons[6].isSelected() ) {
-			background1[2][0] = r;
-			background1[2][1] = g;
-			background1[2][2] = b;
-		}
-		else if ( buttons[7].isSelected() ) {
-			background1[3][0] = r;
-			background1[3][1] = g;
-			background1[3][2] = b;
-		}
-		else if ( buttons[8].isSelected() ) {
-			background2[0][0] = r;
-			background2[0][1] = g;
-			background2[0][2] = b;
-		}
-		else if ( buttons[9].isSelected() ) {
-			background2[1][0] = r;
-			background2[1][1] = g;
-			background2[1][2] = b;
-		}
-		else if ( buttons[10].isSelected() ) {
-			background2[2][0] = r;
-			background2[2][1] = g;
-			background2[2][2] = b;
-		}
-		else if ( buttons[11].isSelected() ) {
-			background2[3][0] = r;
-			background2[3][1] = g;
-			background2[3][2] = b;
+		int selected = 0;
+
+		for (int i = 0; i < 12; ++i) {
+			if ( buttons[i].isSelected() ) {
+			  colors[i/4][i%4][0] = r;
+				colors[i/4][i%4][1] = g;
+			  colors[i/4][i%4][2] = b;
+			}
 		}
 
-		vc.setGrayShades( foreground, background1, background2 );
+		vc.setGrayShades( colors[0], colors[1], colors[2] );
 
 		setTestColor(r, g, b);
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		if ( e.getSource().equals( buttons[0] ) ) {
-			setTestColor( foreground[0][0], foreground[0][1], foreground[0][2] );
-			sliders[0].setValue(foreground[0][0]);
-			sliders[1].setValue(foreground[0][1]);
-			sliders[2].setValue(foreground[0][2]);
+		hack = true;
+		for (int i = 0; i < 12; ++i) {
+			if ( e.getSource().equals( buttons[i] ) ) {
+				setTestColor( colors[i/4][i%4][0], colors[i/4][i%4][1], colors[i/4][i%4][2] );
+				sliders[0].setValue(colors[i/4][i%4][0]);
+				sliders[1].setValue(colors[i/4][i%4][1]);
+				sliders[2].setValue(colors[i/4][i%4][2]);
+			}
 		}
-		else if ( e.getSource().equals( buttons[1] ) ) {
-			setTestColor( foreground[1][0], foreground[1][1], foreground[1][2] );
-			sliders[0].setValue(foreground[1][0]);
-			sliders[1].setValue(foreground[1][1]);
-			sliders[2].setValue(foreground[1][2]);
-		}
-		else if ( e.getSource().equals( buttons[2] ) ) {
-			setTestColor( foreground[2][0], foreground[2][1], foreground[2][2] );
-			sliders[0].setValue(foreground[2][0]);
-			sliders[1].setValue(foreground[2][1]);
-			sliders[2].setValue(foreground[2][2]);
-		}
-		else if ( e.getSource().equals( buttons[3] ) ) {
-			setTestColor( foreground[3][0], foreground[3][1], foreground[3][2] );
-			sliders[0].setValue(foreground[3][0]);
-			sliders[1].setValue(foreground[3][1]);
-			sliders[2].setValue(foreground[3][2]);
-		}
-		else if ( e.getSource().equals( buttons[4] ) ) {
-			setTestColor( background1[0][0], background1[0][1], background1[0][2] );
-		}
-		else if ( e.getSource().equals( buttons[5] ) ) {
-			setTestColor( background1[1][0], background1[1][1], background1[1][2] );
-		}
-		else if ( e.getSource().equals( buttons[6] ) ) {
-			setTestColor( background1[2][0], background1[2][1], background1[2][2] );
-		}
-		else if ( e.getSource().equals( buttons[7] ) ) {
-			setTestColor( background1[3][0], background1[3][1], background1[3][2] );
-		}
-		else if ( e.getSource().equals( buttons[8] ) ) {
-			setTestColor( background2[0][0], background2[0][1], background2[0][2] );
-		}
-		else if ( e.getSource().equals( buttons[9] ) ) {
-			setTestColor( background2[1][0], background2[1][1], background2[1][2] );
-		}
-		else if ( e.getSource().equals( buttons[10] ) ) {
-			setTestColor( background2[2][0], background2[2][1], background2[2][2] );
-		}
-		else if ( e.getSource().equals( buttons[11] ) ) {
-			setTestColor( background2[3][0], background2[3][1], background2[3][2] );
-		}
+		hack = false;
 	}
 
 	public void setDefault(int[][] fore, int[][] back1, int[][] back2) {
-		foreground  = fore;
-		background1 = back1;
-		background2 = back2;
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				colors[0][i][j] = fore[i][j];
+				colors[1][i][j] = back1[i][j];
+				colors[2][i][j] = back2[i][j];
+			}
+		}
 
-		if ( buttons[0].isSelected() ) {
-			sliders[0].setValue(fore[0][0]);
-			sliders[1].setValue(fore[0][1]);
-			sliders[2].setValue(fore[0][2]);
+		hack = true;
+		for (int i = 0; i < 12; ++i) {
+			sliders[0].setValue(colors[i/4][i%4][0]);
+			sliders[1].setValue(colors[i/4][i%4][1]);
+			sliders[2].setValue(colors[i/4][i%4][2]);
 		}
-		else if ( buttons[1].isSelected() ) {
-			sliders[0].setValue(fore[1][0]);
-			sliders[1].setValue(fore[1][1]);
-			sliders[2].setValue(fore[1][2]);
-		}
-		else if ( buttons[2].isSelected() ) {
-			sliders[0].setValue(fore[2][0]);
-			sliders[1].setValue(fore[2][1]);
-			sliders[2].setValue(fore[2][2]);
-		}
-		else if ( buttons[3].isSelected() )  {
-		}
-		else if ( buttons[4].isSelected() ) {
-			sliders[0].setValue(back1[0][0]);
-			sliders[1].setValue(back1[0][1]);
-			sliders[2].setValue(back1[0][2]);
-		}
-		else if ( buttons[5].isSelected() ) {
-			sliders[0].setValue(back1[1][0]);
-			sliders[1].setValue(back1[1][1]);
-			sliders[2].setValue(back1[1][2]);
-		}
-		else if ( buttons[6].isSelected() ) {
-			sliders[0].setValue(back1[2][0]);
-			sliders[1].setValue(back1[2][1]);
-			sliders[2].setValue(back1[2][2]);
-		}
-		else if ( buttons[7].isSelected() ) {
-			sliders[0].setValue(back1[3][0]);
-			sliders[1].setValue(back1[3][1]);
-			sliders[2].setValue(back1[3][2]);
-		}
-		else if ( buttons[8].isSelected() ) {
-			sliders[0].setValue(back2[0][0]);
-			sliders[1].setValue(back2[0][1]);
-			sliders[2].setValue(back2[0][2]);
-		}
-		else if ( buttons[9].isSelected() ) {
-			sliders[0].setValue(back2[1][0]);
-			sliders[1].setValue(back2[1][1]);
-			sliders[2].setValue(back2[1][2]);
-		}
-		else if ( buttons[10].isSelected() ) {
-			sliders[0].setValue(back2[2][0]);
-			sliders[1].setValue(back2[2][1]);
-			sliders[2].setValue(back2[2][2]);
-		}
-		else if ( buttons[11].isSelected() ) {
-			sliders[0].setValue(back2[3][0]);
-			sliders[1].setValue(back2[3][1]);
-			sliders[2].setValue(back2[3][2]);
-		}
+		hack = false;
 	}
 
 	public void mousePressed (MouseEvent e) {}
