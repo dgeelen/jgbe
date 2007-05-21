@@ -1,6 +1,6 @@
 #ifndef USE_JAVA_MOBILE
 #define nrOfShortCuts 29
-public class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
+class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
 	private JDialog dialog;
 	private JFrame owner;
 	VECTOR(JTextField) editboxes = new VECTOR(JTextField)();
@@ -105,10 +105,12 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		dialog.add(scroll);
 
 		//Fill all TextFields with text
+		int j = 0;
 		FOREACH(JTextField, tf, editboxes) {
-			int keyCode = keyMap[foreach]&0xff;
-			int keyModifiers = keyMap[foreach]>>8;
+			int keyCode = keyMap[j]&0xff;
+			int keyModifiers = keyMap[j]>>8;
 			tf.setText((keyModifiers>0 ? KeyEvent.getKeyModifiersText(keyModifiers)+"+" : "") + KeyEvent.getKeyText(keyCode));
+			++j;
 		}
 
 		for(int i=0; i<256; ++i) {
@@ -141,14 +143,16 @@ public class keyConfigDialog implements ComponentListener, ActionListener, KeyLi
 		int keyCode = e.getKeyCode();
 		int keyModifiers = e.getModifiers();
 		int keyState = keyCode | (keyModifiers << 8);
+		int j=0;
 
 		if(canChooseNextKey) {
 			FOREACH(JTextField, tf, editboxes) {
 				if(tf.hasFocus()) {
 					tf.setText((keyModifiers>0 ? KeyEvent.getKeyModifiersText(keyModifiers)+"+" : "") + KeyEvent.getKeyText(keyCode));
-					((JTextField)editboxes.elementAt(Math.min(foreach+1, editboxes.size()-1))).requestFocus();
-					keyMap[foreach] = keyState;
+					((JTextField)editboxes.elementAt(Math.min(j+1, editboxes.size()-1))).requestFocus();
+					keyMap[j] = keyState;
 				}
+				++j;
 			}
 		}
 		keysup[keyCode]=true;
