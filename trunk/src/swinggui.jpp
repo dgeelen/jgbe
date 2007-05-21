@@ -696,6 +696,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 										{0x40, 0x70, 0x32},  // DARKGRAY
 										{0x10, 0x50, 0x26}}; // BLACK
 				cpu.VC.setGrayShades(c);
+				cs.setDefault(c,c,c);
 			}
 			else if(e.getSource().equals( menuitemColorSchemeBlackAndWhite )) {
 				int[][] c={ {0xf8, 0xf8, 0xf8},	// WHITE
@@ -703,6 +704,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 										{0x60, 0x60, 0x60},  // DARKGRAY
 										{0x00, 0x00, 0x00}}; // BLACK
 				cpu.VC.setGrayShades(c);
+				cs.setDefault(c,c,c);
 			}
 			else if(e.getSource().equals( menuitemColorSchemeGreys )) {
 				int[][] c={ {0xc5, 0xc5, 0xc5},	// WHITE
@@ -710,6 +712,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 										{0x61, 0x61, 0x61},  // DARKGRAY
 										{0x3f, 0x3f, 0x3f}}; // BLACK
 				cpu.VC.setGrayShades(c);
+				cs.setDefault(c,c,c);
 			}
 			else if(e.getSource().equals( menuitemToggleRemoteKeys )) {
 				cpu.useRemoteKeys = !cpu.useRemoteKeys;
