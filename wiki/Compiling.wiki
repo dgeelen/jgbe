@@ -1,14 +1,33 @@
 #summary Instructions on how to compile from source
 #labels Phase-Deploy
 
-= Introduction =
+= Obtaining the source =
 
-Add your content here.
+You can get the latest development sources from svn:
+- svn checkout http://jgbe.googlecode.com/svn/trunk/ jgbe
 
+Or you can download a source release from the following url:
+todo.link.to.latest.source.release
 
-= Details =
+= .jpp Files, wtf do i do with those? =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+We didnt like java, and at one point we decided to use the
+C preprocessor to get macro-powers.
+To generate the .java files from the .jpp files, you need gcc. 
+When compiling by using our Makefile, this is done automagically.
+Our source releases also include the .java files so you can compile
+those with your favourite java compiler without having to bother
+with preprocessors.
+
+= Makefile =
+
+Targets:
+jikes     - configures makefile to use jikes as compiler
+javac     - configures makefile to use javac as compiler
+gcj       - configures makefile to use gcj as compiler
+
+Compiling with jikes should work under cygwin.
+
+= Other compilers =
+
+The main class is swinggui, so compile that if you use another compiler.
