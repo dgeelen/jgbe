@@ -34,6 +34,6 @@ gcj       - configures makefile to use gcj as compiler
 
 Compiling with jikes should work under cygwin.
 
-= Other compilers =
+= Other info =
 
 The main class is swinggui, so compile that if you use another compiler.
