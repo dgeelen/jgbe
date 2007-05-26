@@ -16,14 +16,14 @@ public final class FHandler {
 
 
 	public static DataInputStream getDataInputStream(String fname) throws IOException {
- 			int dotPos=0;
-    	int dp = fname.indexOf(".");
-    	while(dp>=0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
-    		dotPos=dp;
-    		dp=fname.indexOf(".",dp+1);
-    	}
-    	String fext = fname.substring(dotPos);
-			if ( !fext.equals(".zip") ) {
+		int dotPos=0;
+		int dp = fname.indexOf(".");
+		while(dp>=0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
+			dotPos=dp;
+			dp=fname.indexOf(".",dp+1);
+		}
+		String fext = fname.substring(dotPos);
+		if ( !fext.equals(".zip") ) {
 			// plain files
 #ifndef USE_JAVA_MOBILE
 			FileInputStream fistream = new FileInputStream(fname);
@@ -59,14 +59,14 @@ public final class FHandler {
 	}
 
 	public static DataOutputStream getDataOutputStream(String fname) throws IOException {
- 			int dotPos=0;
-    	int dp = fname.indexOf(".");
-    	while(dp>0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
-    		dotPos=dp;
-    		dp=fname.indexOf(".",dp+1);
-    	}
-    	String fext = fname.substring(dotPos);
-			if ( !fext.equals(".zip") ) {
+		int dotPos=0;
+		int dp = fname.indexOf(".");
+		while(dp>0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
+			dotPos=dp;
+			dp=fname.indexOf(".",dp+1);
+		}
+		String fext = fname.substring(dotPos);
+		if ( !fext.equals(".zip") ) {
 			// plain files
 #ifndef USE_JAVA_MOBILE
 			FileOutputStream fostream = new FileOutputStream(fname);
