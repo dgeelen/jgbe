@@ -9,6 +9,8 @@ This is the main page!
 
 The project has a mailing list at http://groups.google.com/group/jgbe ( 	jgbe@googlegroups.com).
 
+You can send any questions regarding this project there.
+
 =Details=
 
 ...
