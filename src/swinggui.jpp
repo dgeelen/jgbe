@@ -419,7 +419,8 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			frame.setJMenuBar( createJMenuBar() );
 			addComponentsToPane( frame.getContentPane() );
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			Image image = toolkit.getImage("icon.gif");
+			URL imgurl = getClass().getResource("icon.gif");
+			Image image = toolkit.getImage(imgurl);
 			frame.setIconImage(image);
 
 			frame.addComponentListener(this);
@@ -925,9 +926,9 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 			catch(IOException e) { //File not found or error reading it
 				pauseEmulation(false);
 				JOptionPane.showMessageDialog(frame,
-																			"Keys need to be configured",
-																			"Warning",
-																			JOptionPane.WARNING_MESSAGE);
+					"Keys need to be configured",
+					"Warning",
+					JOptionPane.WARNING_MESSAGE);
 				generateDefaultKeyBinds();
 				keyConfigDialog k=new keyConfigDialog(frame,keyMap);
 				k.getKeyCodes();
