@@ -243,7 +243,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				if( i>-1) {
 					s=s.substring(i);
 					i=parser.StrToInt(s);
-					setToolTipText(""+i);
+					setToolTipText(STRFORMAT("%dd  %04xh  %08db",i,i,parser.StrToInt(Integer.toBinaryString(i))));
 				} else setToolTipText("");
 			}
 			else {
