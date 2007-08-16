@@ -243,7 +243,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				if( i>-1) {
 					s=s.substring(i);
 					i=parser.StrToInt(s);
-					setToolTipText(STRFORMAT("%dd  %04xh  %08db",i,i,parser.StrToInt(Integer.toBinaryString(i))));
+					String brep = Integer.toBinaryString(i);
+					while(brep.length() < ((regs2 == table) ? 16 : 8 )) brep="0"+brep;
+					setToolTipText(STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i));
 				} else setToolTipText("");
 			}
 			else {
@@ -620,6 +622,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 		m = regs2.getColumnModel();
 		regs2.setValueAt(STRFORMAT("PC=$%04x",gui.cpu.PC), 0,0);
+		c = m.getColumn(0);
+		c.setCellRenderer( normal );
 		oldRegVal[8]=gui.cpu.PC;
 
 		regs2.setValueAt(STRFORMAT("SP=$%04x",gui.cpu.SP), 0,1);
