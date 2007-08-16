@@ -11,6 +11,8 @@ ifeq ($(CLASSPATH),)
 	CLASSPATH:=.
 endif
 
+CLASSPATH:=$(CLASSPATH):/usr/share/bcel/lib/bcel.jar
+
 AOSS:=$(shell which aoss 2> /dev/null)
 
 -include Makefile.config
