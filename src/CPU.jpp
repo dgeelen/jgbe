@@ -277,6 +277,7 @@ check for badness = $afa
 				{
 				case 0:
 				case 1:
+					++R_LY; //FIXME: WRONG!!!!
 					VC.stat_change(2);
 					LCDCcntdwn += 40*2;
 					break;
