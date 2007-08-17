@@ -408,8 +408,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 20));
 		contentPane.add( scroll, BorderLayout.LINE_END );
-
-
 /*		regs1.addMouseListener(this);
 		regs2.addMouseListener(this);
 		mem.addMouseListener(this);*/
@@ -712,6 +710,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		frame.setLocation(00, 0);
 		frame.setSize(new Dimension(520,720));
 		frame.setVisible( true );
+		cmds.requestFocus();
 		//frame.addKeyListener(this); TODO: Shortcut keys
 	}
 
