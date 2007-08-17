@@ -448,7 +448,7 @@ public class VideoController {
 				for (int x = 0; x < 160; ++x) {
 					int xn = (x==0  )?0  :x-1;
 					int xp = (x==159)?159:x+1;
-// 					if() {
+/*	Reference, this one works * /
 						BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
 						BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
 						BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
@@ -456,7 +456,7 @@ public class VideoController {
 						BLIT_PIX_WI(ti2, EQ(B, D) ? B : E);
 						BLIT_PIX_WI(ti2, E);
 						BLIT_PIX_WI(ti2, E);
-						BLIT_PIX_WI(ti2, EQ(B, F) ? B : E);
+						BLIT_PIX_WI(ti2, EQ(B, F) ? B : E); 
 						BLIT_PIX_WI(ti3, EQ(H, D) ? H : E);
 						BLIT_PIX_WI(ti3, E);
 						BLIT_PIX_WI(ti3, E);
@@ -465,10 +465,48 @@ public class VideoController {
 						BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
 						BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
 						BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
-// 					}
-// 					else {
-//
-// 					}
+
+/*/// However, this one should be a bit faster (However, my short test only gives a small increase of ~3fps)
+					if (EQ(B, D)) {
+							BLIT_PIX_WI(ti1, B);
+							BLIT_PIX_WI(ti1, B);
+							BLIT_PIX_WI(ti2, B);
+					} else {
+							BLIT_PIX_WI(ti1, E);
+							BLIT_PIX_WI(ti1, E);
+							BLIT_PIX_WI(ti2, E);
+					}
+					BLIT_PIX_WI(ti2, E);
+					BLIT_PIX_WI(ti2, E); 
+					if (EQ(B, F)) {
+						BLIT_PIX_WI(ti1, B);
+						BLIT_PIX_WI(ti1, B);
+						BLIT_PIX_WI(ti2, B); 
+					} else {
+						BLIT_PIX_WI(ti1, E);
+						BLIT_PIX_WI(ti1, E);
+						BLIT_PIX_WI(ti2, E);
+					}
+					if (EQ(H, D)) {
+							BLIT_PIX_WI(ti3, H);
+							BLIT_PIX_WI(ti4, H);
+							BLIT_PIX_WI(ti4, H);
+					} else {
+							BLIT_PIX_WI(ti3, E);
+							BLIT_PIX_WI(ti4, E);
+							BLIT_PIX_WI(ti4, E);
+					}
+					BLIT_PIX_WI(ti3, E);
+					BLIT_PIX_WI(ti3, E);
+					if (EQ(H, F)) {
+						BLIT_PIX_WI(ti3, H);
+						BLIT_PIX_WI(ti4, H);
+						BLIT_PIX_WI(ti4, H);
+					} else {
+						BLIT_PIX_WI(ti3, E);
+						BLIT_PIX_WI(ti4, E);
+						BLIT_PIX_WI(ti4, E);
+					} /* */
 				}
 				ti1 += 160*4*3;
 				ti2 += 160*4*3;
