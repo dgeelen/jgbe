@@ -6,6 +6,7 @@ GJAVAFILES:=$(JPPFILES:.jpp=.java)
 AJAVAFILES:=$(shell ls *.java) $(GJAVAFILES)
 AJAVAFILES:=$(shell echo $(AJAVAFILES) | sort | uniq)
 CLASSFILES:=$(AJAVAFILES:%.java=$(CLASSDIR)/%.class)
+BOOTROM   :=$(shell find -iname boot.rom | head -1)
 
 ifeq ($(CLASSPATH),)
 	CLASSPATH:=.
@@ -78,7 +79,7 @@ jarrun: jar
 	cd jar && java -jar jgbe.jar -lastcart
 
 jar: all
-	cd classes && jar cmf ../MANIFEST.MF.in jgbe.jar *.class icon.gif instrs.txt VeraMono.ttf
+	cd classes && jar cmf ../MANIFEST.MF.in jgbe.jar *.class icon.gif instrs.txt VeraMono.ttf $(BOOTROM)
 	mkdir -p jar
 	cp classes/jgbe.jar jar
 

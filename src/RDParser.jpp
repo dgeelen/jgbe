@@ -128,7 +128,7 @@ public class RDParser {
 		int n=0;
 		int i=0;
 		String s="";
-		System.out.println(ident+"symNumber: base="+Base);
+// 		System.out.println(ident+"symNumber: base="+Base);
 		switch(Base) {
 			case 16:
 				++i; //skip '$'
@@ -166,7 +166,7 @@ public class RDParser {
 
 	private int P(String ident) {
 		flup f=checkVariable();
-		System.out.println(ident+"P() Next()="+((char)Next())+" f="+f);
+// 		System.out.println(ident+"P() Next()="+((char)Next())+" f="+f);
 		if(isOperator[Next()]&&(!isBinary[Next()])) {
 			int op=Next();
 			Consume();
@@ -180,9 +180,9 @@ public class RDParser {
 		}
 		else if(Next()=='(') {
 			Consume();
-			System.out.println(ident+"parsing '(' next="+((char)Next()));
+// 			System.out.println(ident+"parsing '(' next="+((char)Next()));
 			int t=Expr(0, ident+"  ");
-			System.out.println(ident+"expecting ')', t="+t+" next="+((char)Next()));
+// 			System.out.println(ident+"expecting ')', t="+t+" next="+((char)Next()));
 			if(Expect(')'))
 				return t;
 			else
@@ -197,7 +197,7 @@ public class RDParser {
 			return t;
 		}
 		else if(f!=null) {
-			System.out.println(ident+"Found a variable : "+f.s+" value="+f.i);
+// 			System.out.println(ident+"Found a variable : "+f.s+" value="+f.i);
 			parsingPosition+=f.s.length();
 			return f.i;
 		}
@@ -209,47 +209,47 @@ public class RDParser {
 	}
 
 	private int Expr(int p, String ident) {
-		System.out.println(ident+"Expr("+p+") Next()="+((char)Next()));
+// 		System.out.println(ident+"Expr("+p+") Next()="+((char)Next()));
 		int t1=P(ident+"  ");
-		System.out.println(ident+"t1="+t1);
+// 		System.out.println(ident+"t1="+t1);
 		while((Next()!=-1) &&isBinary[Next()] && presedence[Next()]>=p ) {
 			int op = Next();
-			System.out.println(ident+"Expr while Next()="+((char)Next())+" isleftass="+isLeftAssociative[op]);
+// 			System.out.println(ident+"Expr while Next()="+((char)Next())+" isleftass="+isLeftAssociative[op]);
 			Consume();
 			int t2=0;
 			if(isLeftAssociative[op])
 				t2=Expr(presedence[op]+1, ident+"  ");
 			else
 				t2=Expr(presedence[op], ident+"  ");
-			System.out.println(ident+"t2="+t2);
-			System.out.println(ident+"op="+((char)op));
+// 			System.out.println(ident+"t2="+t2);
+// 			System.out.println(ident+"op="+((char)op));
 			switch(op) {
 				case '+':
-					System.out.println(ident+"t1="+t1+" t2="+t2+" t1+t2="+(t1+t2));
+// 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1+t2="+(t1+t2));
 					t1= t1+t2;
 					break;
 				case '-':
-					System.out.println(ident+"t1="+t1+" t2="+t2+" t1-t2="+(t1-t2));
+// 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1-t2="+(t1-t2));
 					t1= t1-t2;
 					break;
 				case '*':
-					System.out.println(ident+"t1="+t1+" t2="+t2+" t1*t2="+(t1*t2));
+// 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1*t2="+(t1*t2));
 					t1= t1*t2;
 					break;
 				case '/':
-					System.out.println(ident+"t1="+t1+" t2="+t2+" t1/t2="+(t1/t2));
+// 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1/t2="+(t1/t2));
 					t1= t1/t2;
 					break;
 				case '^':
-					System.out.println(ident+"t1="+t1+" t2="+t2+" t1^t2="+(int)Math.round(Math.pow(t1, t2)));
+// 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1^t2="+(int)Math.round(Math.pow(t1, t2)));
 					t1= (int)Math.round(Math.pow(t1, t2));
 					break;
 				case '&':
-					System.out.println(ident+"t1="+t1+" t2="+t2+" t1&t2="+(t1&t2));
+// 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1&t2="+(t1&t2));
 					t1= t1&t2;
 					break;
 				case '|':
-					System.out.println(ident+"t1="+t1+" t2="+t2+" t1|t2="+(t1|t2));
+// 					System.out.println(ident+"t1="+t1+" t2="+t2+" t1|t2="+(t1|t2));
 					t1= t1|t2;
 					break;
 				default:
@@ -272,7 +272,7 @@ public class RDParser {
 					}
 				else {++i;}
 			}
-			System.out.println(input);
+// 			System.out.println(input);
 			parsingPosition=0;
 			parseError=false;
 			int r=Expr(0, "");
