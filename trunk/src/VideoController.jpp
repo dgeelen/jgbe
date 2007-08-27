@@ -37,7 +37,7 @@ public class VideoController {
 	protected int SCY=0;
 	protected int WX=0;
 	protected int WY=0;
-	protected int LCDC=0;
+	protected int LCDC=0x80; //init with screen on?
 	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
 
 	protected int curBGY;

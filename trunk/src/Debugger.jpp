@@ -266,7 +266,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					int index = (row)*8 + (column-2) + memaddr;
 					int i=memaddr; memaddr=index; prepareParser(); memaddr=i; //HAXHAXHAXHAXHAXHAX
 					int value = parser.Evaluate(((String)mem.getValueAt(row, column)).trim());
-					PRINTF("index=$%04x, value=$%02x\n", index , value);
+// 					PRINTF("index=$%04x, value=$%02x\n", index , value);
 					gui.cpu.write(index, value);
 					update(); //System.out.println("update EditMemTableModelListener");
 	/*				mem.setColumnSelectionInterval(column + 1, column + 1);
@@ -670,34 +670,33 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	}
 
 	public void prepareParser(){
-					parser.removeVariables();
-				parser.addVariable("A", oldRegVal[0]);
-				parser.addVariable("B", oldRegVal[1]);
-				parser.addVariable("C", oldRegVal[2]);
-				parser.addVariable("D", oldRegVal[3]);
-				parser.addVariable("E", oldRegVal[4]);
-				parser.addVariable("F", oldRegVal[5]);
-				parser.addVariable("H", oldRegVal[6]);
-				parser.addVariable("L", oldRegVal[7]);
-				parser.addVariable("PC", oldRegVal[8]);
-				parser.addVariable("SP", oldRegVal[9]);
-				parser.addVariable("HL", oldRegVal[7]|(oldRegVal[6]<<8));
-				parser.addVariable("M", memaddr);
-				parser.addVariable("a", oldRegVal[0]);
-				parser.addVariable("b", oldRegVal[1]);
-				parser.addVariable("c", oldRegVal[2]);
-				parser.addVariable("d", oldRegVal[3]);
-				parser.addVariable("e", oldRegVal[4]);
-				parser.addVariable("f", oldRegVal[5]);
-				parser.addVariable("h", oldRegVal[6]);
-				parser.addVariable("l", oldRegVal[7]);
-				parser.addVariable("pc", oldRegVal[8]);
-				parser.addVariable("sp", oldRegVal[9]);
-				parser.addVariable("hl", oldRegVal[7]|(oldRegVal[6]<<8));
-				parser.addVariable("m", memaddr);
-				parser.addVariable("M", memaddr);
-				parser.addVariable("q", gui.cpu.read(memaddr));
-				parser.addVariable("Q", gui.cpu.read(memaddr));
+		parser.removeVariables();
+		parser.addVariable("A", oldRegVal[0]);
+		parser.addVariable("B", oldRegVal[1]);
+		parser.addVariable("C", oldRegVal[2]);
+		parser.addVariable("D", oldRegVal[3]);
+		parser.addVariable("E", oldRegVal[4]);
+		parser.addVariable("F", oldRegVal[5]);
+		parser.addVariable("H", oldRegVal[6]);
+		parser.addVariable("L", oldRegVal[7]);
+		parser.addVariable("PC", oldRegVal[8]);
+		parser.addVariable("SP", oldRegVal[9]);
+		parser.addVariable("HL", oldRegVal[7]|(oldRegVal[6]<<8));
+		parser.addVariable("M", memaddr);
+		parser.addVariable("Q", gui.cpu.read(memaddr));
+		parser.addVariable("a", oldRegVal[0]);
+		parser.addVariable("b", oldRegVal[1]);
+		parser.addVariable("c", oldRegVal[2]);
+		parser.addVariable("d", oldRegVal[3]);
+		parser.addVariable("e", oldRegVal[4]);
+		parser.addVariable("f", oldRegVal[5]);
+		parser.addVariable("h", oldRegVal[6]);
+		parser.addVariable("l", oldRegVal[7]);
+		parser.addVariable("pc", oldRegVal[8]);
+		parser.addVariable("sp", oldRegVal[9]);
+		parser.addVariable("hl", oldRegVal[7]|(oldRegVal[6]<<8));
+		parser.addVariable("m", memaddr);
+		parser.addVariable("q", gui.cpu.read(memaddr));
 	}
 
 	private void createAndShowGUI() {
@@ -796,6 +795,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						runner.setBreakPoint(v);
 						runner.resume();
 					}
+					else if(l.equalsIgnoreCase("r")){ //run until PC=$XXXX
+						runner.suspend();
+						runner.setBreakPoint(v);
+						runner.resume();
+					}
 					else if(l.equalsIgnoreCase("bpm")){ //break on memory access
 						bpm = v;
 					}
@@ -852,6 +856,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				runner.resume();
 			}
 			if(s.charAt(0)=='g') {
+				runner.setBreakPoint(-1);
 				runner.resume();
 			}
 			if(s.charAt(0)=='b') {
@@ -867,21 +872,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					}
 					runner.suspend();
 				}
-			}
-			if(s.charAt(0)=='r') {
-				try {
-					if (!runner.isRunning()) {
-						String ss = s.substring( s.lastIndexOf(" ") + 1);
-						if( ss.charAt(0)=='$' ) {
-							runner.setBreakPoint(Integer.parseInt( ss.substring(1), 16 ));
-							runner.resume();
-						}
-					}
-				}
-				catch ( NumberFormatException ee ) {
-						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
-				}
-				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
 			}
 			if(s.charAt(0)=='c') {
 				try {
