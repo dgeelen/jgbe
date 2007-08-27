@@ -43,9 +43,9 @@ gcj: clean
 preprocess: $(GJAVAFILES)
 
 applet: jar
-	keytool -delete -alias signFiles -keystore jgbestore -keypass kpi135 -storepass ab987c
+	keytool -delete -alias signFiles -keystore jgbestore -keypass kpi135 -storepass ab987c || true
 	keytool -genkey -alias signFiles -keystore jgbestore -keypass kpi135 -dname "cn=JGBE" -storepass ab987c
-	jarsigner -keystore jgbestore -storepass ab987c -keypass kpi135 -signedjar jar/SJGBE.jar jar/JGBE.jar signFiles
+	jarsigner -keystore jgbestore -storepass ab987c -keypass kpi135 -signedjar jar/sjgbe.jar jar/jgbe.jar signFiles
 
 fun: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart
