@@ -42,6 +42,11 @@ gcj: clean
 # common targets
 preprocess: $(GJAVAFILES)
 
+applet: jar
+	keytool -delete -alias signFiles -keystore jgbestore -keypass kpi135 -storepass ab987c
+	keytool -genkey -alias signFiles -keystore jgbestore -keypass kpi135 -dname "cn=JGBE" -storepass ab987c
+	jarsigner -keystore jgbestore -storepass ab987c -keypass kpi135 -signedjar jar/SJGBE.jar jar/JGBE.jar signFiles
+
 fun: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart
 

@@ -67,7 +67,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	}
 }
 
-public class swinggui implements ActionListener, ItemListener, KeyListener, ComponentListener {
+public class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
 		protected VideoController VC;
@@ -995,9 +995,13 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 		}
 
 		static Cartridge cart = null;
-		public static void main( String[] args ) {
-			final swinggui gui=new swinggui();
+//		public static void main( String[] args ) {
+		public void init() {
+			PRINTF("init\n");
 
+		}
+
+		public static void starter(swinggui gui, String[] args) {
 			gui.loadRCFiles();
 
 			boolean sound=true, debug=false, lastcart=false;
@@ -1050,7 +1054,7 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 
 			gui.makeRcFilesMenuItems();
 
-			/*DEBUGGER*/
+			//DEBUGGER
 			if (debug) {
 				Debugger dbgr = new Debugger(gui, logfile); //The GUI to which this debugger belongs
 				gui.cpuRunner = dbgr.runner;
@@ -1060,5 +1064,20 @@ public class swinggui implements ActionListener, ItemListener, KeyListener, Comp
 				gui.resumeEmulation(false);
 			}
 		}
+
+		public void start() {
+
+			final swinggui gui=this;
+			String[] args = {"--nodebug"};
+
+			starter(gui, args);
+
+		}
+
+		public static void main(String[] args) {
+			final swinggui gui=new swinggui();
+			starter(gui, args);
+		}
+
 	}
 #endif
