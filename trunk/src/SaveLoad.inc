@@ -32,7 +32,7 @@
 #define SL_INT SL_INT32
 #define SL_INT32(var) {\
 	if (SL_SAVE) \
-		dostream.writeInt(var); \
+		dostream.writeInt((int)var); \
 	else \
 		var = distream.readInt(); \
 }
@@ -40,9 +40,9 @@
 #define SL_LONG SL_INT64
 #define SL_INT64(var) {\
 	if (SL_SAVE) \
-		dostream.writeLongInt(var); \
+		dostream.writeLong(var); \
 	else \
-		var = distream.readLongInt(); \
+		var = distream.readLong(); \
 }
 
 #define SL_BOOL(var) {\
