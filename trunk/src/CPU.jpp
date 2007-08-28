@@ -48,7 +48,7 @@ static class DummyCPURunBlock implements CPURunBlock {
 
 		static private int DIVcntdwn = 0;
 		static private int TIMAcntdwn = 0;
-		static private int LCDCcntdwn = 0;
+		static private int LCDCcntdwn = 40; //gnuboy says 40
 
 		public    static int PC=0;         ///< Program counter
 		protected static int SP=0;         ///< Stack Pointer
@@ -388,6 +388,7 @@ check for badness = $afa
 				rMemMap[0xA] = wMemMap[0xA] = null;
 				rMemMap[0xB] = wMemMap[0xB] = null;
 			}
+			
 			// WRAM, bank 0 and a switchable bank
 			rMemMap[0xC] = wMemMap[0xC] = WRAM[0];
 			rMemMap[0xD] = wMemMap[0xD] = WRAM[CurrentWRAMBank];
@@ -746,18 +747,15 @@ static int togglestart=1;
 						//PRINTF("Setting LYC=%d ($%02x)\n",value,value);
 						break;
 					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
-// 						System.out.println("WARNING: CPU.write(): TODO: Untimed DMA Transfer");
+						//NOTE: CPU may only access HRAM during this DMA,
+						//      so there is no need to do special timing
 						last_memory_access=last_memory_access_internal;
-						for(int i=0; i<0xa0; ++i){ //TODO : This takes TIME and needs TIMING
+						for(int i=0; i<0xa0; ++i){
 							write(0xfe00|i, read(i+(value<<8)));
 						}
 						last_memory_access_internal=last_memory_access;
-/*						VC.STAT|=2; //MODE2 or 3
-						int cnt=0;
-						while(cnt<160) { //Timing :D
-						  cnt+=nextinstruction();
-						}
-						VC.STAT&=~2;*/
+						//cycles += 50;
+// 						LCDCcntdwn-=2*160; //FIXME: This for SML2           ***HAXHAXHAX***
 						} break;
 					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
 					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
