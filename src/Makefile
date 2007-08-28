@@ -116,7 +116,7 @@ version:
 	if [ "$${OLDVER}" == "$${NEWVER}" ] ; then \
 		true; \
 	else \
-		@echo [version] updating...; \
+		echo [version] updating...; \
 		echo $${NEWVER} > svnrev.inc; \
 	fi \
 	)
