@@ -31,7 +31,7 @@ echo $TD
 
 testdir "$TD"
 
-TD=`find /cygdrive/c/Program\ Files/Java/ -name rt.jar | sort | tail -n 1 | sed s:/rt\.jar$::`
+TD=`find /cygdrive/c/Program\ Files/Java/ -name rt.jar 2> /dev/null | sort | tail -n 1 | sed s:/rt\.jar$::`
 
 testdir "$TD"
 
