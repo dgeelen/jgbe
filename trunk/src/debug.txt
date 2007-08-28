@@ -1,0 +1,49 @@
+/****************************************************************************************************/
+Tetris MP:
+check link $02f8 ->(indirect jump) $0479
+
+
+/****************************************************************************************************/
+Demotronic demo:
+
+
+$00ab: $cd $c2 $27  CALL $27c2
+
+$28b0: $cd $f0 $4f  CALL $4ff0
+
+
+/****************************************************************************************************/
+SML2:
+Breakage tracing, starting at PC=$45dd
+PC=41F4 = right after fade-out
+	then after a few (2 orso) loops of the main loop ($0264 - $029c) something goes wrong
+	in the call to $2089 at $028a (4th call after return from $41f4)
+
+	'fix':
+	break $52e0, twice (counted from the savestate in the issue)
+	when entering $52e0, the VBlank interrupt will execute
+	enter the interrupt, but instead of executing $0154, execute $0153 (an iret)
+	tada, mario stands at the gate
+	Seems like our timing might be off?
+
+	YES IT IS. Our timeless DMA is killing us :(
+
+$52e0: $fe $ff      CP   $ff
+$52e2: $28 $f9      JR   Z, $f9
+$52e4: $fe $2b      CP   $2b
+$52e6: $d0          RET  NC
+$52e7: $77          LD   [HL], A
+$52e8: $47          LD   B, A
+$52e9: $21 $44 $52  LD   HL, $5244
+$52ec: $e6 $3f      AND  $3f
+$52ee: $cd $98 $52  CALL $5298
+
+
+interrupt $40 => $0154
+
+
+
+
+
+
+
