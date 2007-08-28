@@ -245,9 +245,9 @@ public class Cartridge {
 			case 1:
 				// MBC1
 				if ((index>=0x0000) && (index <0x2000)) { // RAM Enable
+					ram_enabled = false;
 					if ((value&0x0f) == 0x0A) ram_enabled = true; // 0x0Ah enable
-					else ram_enabled = false;
-// 					PRINTLN("Setting ram_enabled="+ram_enabled);
+					PRINTF("Setting ram_enabled=%d value=$%02x value&$0a=$%02x PC=$%04x\n", ram_enabled?1:0, value, value&0x0a, CPU.PC);
 				}
 				else if(index<0x4000)  { // 2000-3FFF - ROM Bank Number (Write Only)
 					int i=Math.max(1, value&0x1f);
