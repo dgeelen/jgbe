@@ -40,7 +40,7 @@ gcj: clean
 	@echo "-include Makefile.gcj" > Makefile.inc
 
 # common targets
-preprocess: $(GJAVAFILES)
+preprocess: version $(GJAVAFILES)
 
 applet: jar
 	keytool -delete -alias signFiles -keystore jgbestore -keypass kpi135 -storepass ab987c || true
@@ -94,13 +94,13 @@ jarzip: all
 	cd classes && zip -r jgbe.zip META-INF *.class icon.gif instrs.txt VeraMono.ttf
 	mkdir -p jar
 	cp classes/jgbe.zip jar/jgbe.jar
-	
 
 clean:
 	rm -f $(CLASSDIR)/*.class
 	rm -f $(DEPSDIR)/*.d
 	rm -f jar/jgbe.jar
 	rm -f classes/jgbe.zip
+	rm -f svnrev.inc
 	touch $(JPPFILES)
 
 cleaner: clean
@@ -108,5 +108,17 @@ cleaner: clean
 	rm -f $(DEPSDIR)/*
 	rm -f $(GJAVAFILES)
 	rm -f Makefile.inc
+
+version:
+	@(\
+	OLDVER=`cat svnrev.inc || true`; \
+	NEWVER="#define JGBE_VERSION_STRING \"`svnversion`\""; \
+	if [ "$${OLDVER}" == "$${NEWVER}" ] ; then \
+		true; \
+	else \
+		@echo [version] updating...; \
+		echo $${NEWVER} > svnrev.inc; \
+	fi \
+	)
 
 -include $(JPPFILES:%.jpp=$(DEPSDIR)/%.d)
