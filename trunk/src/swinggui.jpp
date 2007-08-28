@@ -995,10 +995,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		}
 
 		static Cartridge cart = null;
-//		public static void main( String[] args ) {
-		public void init() {
-			PRINTF("init\n");
 
+		public void init() {
+			JLabel label = new JLabel("The emulator will be opened in a new window.");
+			getContentPane().add(label);
 		}
 
 		public static void starter(swinggui gui, String[] args) {
@@ -1068,7 +1068,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		public void start() {
 
 			final swinggui gui=this;
-			String[] args = {"--nodebug"};
+			String[] args = getParameter("params").split(" ");
 
 			starter(gui, args);
 
