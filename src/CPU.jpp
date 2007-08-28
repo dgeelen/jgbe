@@ -26,8 +26,8 @@ static class DummyCPURunBlock implements CPURunBlock {
 		protected static final int HC_Mask  = 1 << HC_Shift;
 		protected static final int CF_Mask  = 1 << CF_Shift;
 
-		static protected int TotalInstrCount = 0;
-		static protected int TotalCycleCount = 0;
+		static protected long TotalInstrCount = 0;
+		static protected long TotalCycleCount = 0;
 
 		protected static int B = 1;
 		protected static int C = 2;
@@ -149,8 +149,11 @@ static class DummyCPURunBlock implements CPURunBlock {
 			SL_IF_VERSION( 2, -1) SL_OBJ(AC);
 
 			SL_IF_VERSION( 3, -1) SL_UINT8(vcmode);
-			SL_IF_VERSION( 3, -1) SL_INT(TotalInstrCount);
-			SL_IF_VERSION( 3, -1) SL_INT(TotalCycleCount);
+
+			SL_IF_VERSION( 0,  8) SL_INT(TotalInstrCount);
+			SL_IF_VERSION( 0,  8) SL_INT(TotalCycleCount);
+			SL_IF_VERSION( 9, -1) SL_LONG(TotalInstrCount);
+			SL_IF_VERSION( 9, -1) SL_LONG(TotalCycleCount);
 
 			SL_IF_VERSION( 4, -1) SL_UINT8(hw_ilines);
 
@@ -904,7 +907,7 @@ static int togglestart=1;
 			hblank_dma_state = 0;
 		}
 
-		static final protected int cycles() {
+		static final protected long cycles() {
 			return TotalInstrCount;
 		}
 
