@@ -770,7 +770,7 @@ public class AudioController {
 #endif
 		IO = new int[0x30];
 		cyclesLeftToRender=0;
-  	S1=new SoundRegister();
+		S1=new SoundRegister();
 		S2=new SoundRegister();
 		S3=new SoundRegister();
 		S4=new SoundRegister();
