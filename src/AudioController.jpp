@@ -743,6 +743,7 @@ public class AudioController {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			MatchMixerInfo mixers[] = {
 				/** "rev50 [plughw:0,0]" (linux) works brilliantly but claims the audio hardware for itself */
+				new MatchMixerInfo("plughw:0,1"              , "", "", "", 1536),
 				new MatchMixerInfo("plughw:0,0"              , "", "", "", 1536),
 				/** "Primary Sound Driver" seems to work good under windows */
 				new MatchMixerInfo("Primary Sound Driver", "", "", "", 1536),
