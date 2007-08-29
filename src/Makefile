@@ -111,9 +111,9 @@ cleaner: clean
 
 version:
 	@(\
-	OLDVER=`cat svnrev.inc || true`; \
-	NEWVER="#define JGBE_VERSION_STRING \"`svnversion`\""; \
-	if [ "$${OLDVER}" == "$${NEWVER}" ] ; then \
+	OLDVER=`cat svnrev.inc 2> /dev/null || true`; \
+	NEWVER="#define JGBE_VERSION_STRING \"`sh svnversion.sh`\""; \
+	if [ "$${OLDVER}" = "$${NEWVER}" ] ; then \
 		true; \
 	else \
 		echo [version] updating...; \
