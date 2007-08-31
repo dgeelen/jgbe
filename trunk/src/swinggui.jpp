@@ -74,6 +74,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		protected VideoController VC;
 		protected CPU cpu;
 		private int fps;
+		private boolean isApplet;
 		private int selectedState = 0;
 		private int[] keyMap = new int[16+nrOfShortCuts]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
 		VECTOR(String) osdLines = new VECTOR(String)();
@@ -177,8 +178,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		}
 
 		public swinggui() {
+			isApplet = false;
 		}
-
 
 		private JMenu menuFile;
 
@@ -1067,12 +1068,15 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		}
 
 		public void start() {
+			try {
+				isApplet = true;
+				final swinggui gui=this;
+				String[] args = getParameter("params").split(" ");
 
-			final swinggui gui=this;
-			String[] args = getParameter("params").split(" ");
-
-			starter(gui, args);
-
+				starter(gui, args);
+			} catch (Exception e) {
+				// prevent browser crash on unchecked exception
+			}
 		}
 
 		public static void main(String[] args) {
