@@ -81,9 +81,9 @@ static class DummyCPURunBlock implements CPURunBlock {
 
 		public CPU() {
 			if (singleton != null) {
-				System.out.println("FATAL: trying to instantiate second instance of CPU singleton class");
-				int x[]=null;
-				x[0] = 0;
+				System.out.println("WARNING: trying to instantiate second instance of CPU singleton class");
+				//int x[]=null;
+				//x[0] = 0;
 			}
 			singleton = this;
 			#ifndef USE_JAVA_MOBILE
