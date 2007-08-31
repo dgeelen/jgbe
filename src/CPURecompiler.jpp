@@ -79,5 +79,8 @@ public class CPURecompiler {
 		CPU.PC = CPU.read(c);
 	}
 }
+#else
+
+public class CPURecompiler {}
 
 #endif//ENABLE_RECOMPILER
