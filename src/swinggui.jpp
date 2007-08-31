@@ -461,7 +461,15 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			           + " (an instance of " + getClassName( source ) + ")";
 				System.out.println(s);*/
 			if (e.getSource().equals( menuitemExit)) {
-				System.exit(0);
+				if (isApplet) {
+					try {
+						getAppletContext().showDocument(new URL("http://127.0.0.1"));
+					} catch ( MalformedURLException ex) {
+						//ex.printstacktrace();
+					}
+				} else {
+					System.exit(0);
+				}
 			}
 			else if (e.getSource().equals( menuitemScale1x )) {
 				addOSDLine("Set scaling: Scale1x");
