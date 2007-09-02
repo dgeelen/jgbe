@@ -151,8 +151,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			private static final long serialVersionUID = 1L; // prevent warning
 			VideoController VC;
 			public DrawingArea(VideoController vc) {
-			super();
-			VC=vc;
+				super();
+				VC=vc;
 			}
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
