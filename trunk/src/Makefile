@@ -59,6 +59,12 @@ run: all
 debug: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound -debug
 
+# get PerfAnal.jar at
+# http://java.sun.com/developer/technicalArticles/Programming/perfanal/PerfAnal.jar
+profile: all
+	cd $(CLASSDIR) && $(AOSS) java -agentlib:hprof=cpu=samples,depth=6,thread=y,interval=1 swinggui -lastcart -nosound
+	java -jar PerfAnal.jar $(CLASSDIR)/java.hprof.txt
+
 link: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -nosound
 
