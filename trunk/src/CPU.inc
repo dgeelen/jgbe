@@ -431,7 +431,4 @@ F = FN \
 #define CHECK_INTS \
 	(IME && ((IOP[0x0f]&IE)!=0))
 
-#define PRE_INT ( DI, DO_PUSH(PC) )
-#define THROW_INT(n) ( (IF &= ~(1<<(n))), (PC = 0x40+((n)<<3)) )
-
 #endif//CPU_INC
