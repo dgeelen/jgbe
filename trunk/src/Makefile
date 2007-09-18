@@ -59,6 +59,9 @@ run: all
 debug: all
 	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound -debug
 
+oglfun: all
+	cd $(CLASSDIR) && $(AOSS) java -Dsun.java2d.opengl=True swinggui -lastcart
+
 # get PerfAnal.jar at
 # http://java.sun.com/developer/technicalArticles/Programming/perfanal/PerfAnal.jar
 profile: all
