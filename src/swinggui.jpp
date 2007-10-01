@@ -422,9 +422,13 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			addComponentsToPane( frame.getContentPane() );
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
 			URL imgurl = getClass().getResource("icon.gif");
-			Image image = toolkit.getImage(imgurl);
-			frame.setIconImage(image);
-
+			if(imgurl!=null) {
+				Image image = toolkit.getImage(imgurl);
+				frame.setIconImage(image);
+			}
+			else {
+				PRINTLN("Can't load JGBE icon!");
+			}
 			frame.addComponentListener(this);
 
 			frame.setResizable(false);

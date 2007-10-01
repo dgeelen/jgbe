@@ -115,8 +115,8 @@ public final class FHandler {
 			return base.deriveFont(0, 12);
 		}
 		catch (Exception e) {
-			PRINTLN("font fail");
-			e.printStackTrace();
+			PRINTLN("Error while loading font, attempting fallback");
+// 			e.printStackTrace();
 			return new Font("Bitstream Vera Sans Mono",0, 12);
 		}
 	}

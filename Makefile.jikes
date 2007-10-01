@@ -9,13 +9,15 @@ endif
 
 CLASSPATH := $(CLASSPATH):$(RTJAR)
 
-JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -O -d $(CLASSDIR) -nowarn -classpath "$(CLASSPATH)"
+JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -O -d $(CLASSDIR) -nowarn -classpath "$(CLASSPATH)" -sourcepath "$(SRCPATH)"
 
 #swinggui.class first class file to compile to speed up building
 CLASSFILES:=$(CLASSDIR)/swinggui.class $(CLASSFILES)
 
 all: preprocess $(CLASSFILES)
 
-$(CLASSDIR)/%.class: %.java
+$(CLASSDIR)/%.class: $(SRCDIR)/%.java
+# %.class: %.java
+#	@echo "$* | $@ | $<"
 	@echo "[java -> class] $*"
 	@jikes $(JAVAC_OPTS) $<
