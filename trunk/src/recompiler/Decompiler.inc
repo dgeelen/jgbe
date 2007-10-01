@@ -53,6 +53,9 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 				ASS_V_E(EREG(A), F_OR(FSHL(EREG(A), ECONST(1)), ETMP(0)));
 			}; break;
 
+			case 0xf3: ASS_V_E(EVBOOL(IME), new ConstantBoolExpression(false)); break;                        // DI
+			case 0xfb: ASS_V_E(EVBOOL(IME), new ConstantBoolExpression(true)); break;                        // IE
+
 			case 0xc1: DO_POP2(EREG(B), EREG(C)); break;            // POP  BC
 			case 0xd1: DO_POP2(EREG(D), EREG(E)); break;            // POP  DE
 			case 0xe1: DO_POP2(EREG(H), EREG(L)); break;            // POP  HL
