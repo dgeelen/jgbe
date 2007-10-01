@@ -115,12 +115,14 @@ class FunctionAND extends BinaryFunction {
 		super("and", InstructionConstants.IAND, expr1, expr2);
 	}
 }
+#define FAND(x,y) (new FunctionAND((x),(y)))
 
 class FunctionOR extends BinaryFunction {
 	public FunctionOR(Expression expr1, Expression expr2) {
 		super("or", InstructionConstants.IOR, expr1, expr2);
 	}
 }
+#define F_OR(x,y) (new FunctionOR((x),(y)))
 
 class FunctionXOR extends BinaryFunction {
 	public FunctionXOR(Expression expr1, Expression expr2) {
@@ -145,12 +147,14 @@ class FunctionSHL extends BinaryFunction {
 		super("shl", InstructionConstants.ISHL, expr1, expr2);
 	}
 }
+#define FSHL(x,y) (new FunctionSHL((x),(y)))
 
 class FunctionSHR extends BinaryFunction {
 	public FunctionSHR(Expression expr1, Expression expr2) {
 		super("shr", InstructionConstants.ISHR, expr1, expr2);
 	}
 }
+#define FSHR(x,y) (new FunctionSHR((x),(y)))
 
 abstract class Expression {
 	abstract public String asString();
