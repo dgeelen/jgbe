@@ -1120,7 +1120,7 @@ public class AudioController {
 			return 0;
 		}
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
-			System.out.println("AudioController: Warning: read from unknown IO address, acting as normal RAM...");
+			//System.out.println("AudioController: Warning: read from unknown IO address, acting as normal RAM...");
 		}
 		sound_mix(); //???
 		return IO[i];
@@ -1137,7 +1137,7 @@ public class AudioController {
 			return;
 		}
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
-			System.out.println("AudioController: Warning: writing to unknown IO address, acting as normal RAM...");
+			//System.out.println("AudioController: Warning: writing to unknown IO address, acting as normal RAM...");
 			IO[i]=value;
 			return;
 		}
