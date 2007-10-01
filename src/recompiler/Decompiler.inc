@@ -47,8 +47,8 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 				//T = (F & FCmask) >> FCshift;
 				ASS_V_E( ETMP(0), FSHR(FAND(EREG(F), ECONST(CPU.CF_Mask)),ECONST(CPU.CF_Shift)));
 				//), 
-				//F = (A & 0x80) >> (8-FCshift)
-				ASS_V_E(EREG(A), FSHR(FAND(EREG(A), ECONST(0x80)), ECONST(8-CPU.CF_Shift)));
+				//F = (A & 0x80) >> (7-FCshift)
+				ASS_V_E(EREG(A), FSHR(FAND(EREG(A), ECONST(0x80)), ECONST(7-CPU.CF_Shift)));
 				//A <<= 1; //A |= T;
 				ASS_V_E(EREG(A), F_OR(FSHL(EREG(A), ECONST(1)), ETMP(0)));
 			}; break;
