@@ -6,26 +6,12 @@ public class Disassembler
 {
     private static Cartridge cart;
     private static CPU cpu;
-    private static String opcode[];
+		#include "opcodes.inc"
     private static final String file_name = "instrs.txt";
 		private static final char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
-    public Disassembler(CPU cpu) {
-      this.cpu=cpu;
-      this.opcode=new String[512];
-      BufferedReader reader;
-			InputStream fistream = getClass().getResourceAsStream(file_name);
-			reader = new BufferedReader(new InputStreamReader(fistream));
-			try {
-				for(int i=0; i < 512 ; ++i) {
-					opcode[i]=reader.readLine();
-					//System.out.println(opcode[i]);
-				}
-			}
-			catch (IOException ioe) {
-				System.out.println("ERROR while reading " + file_name + "!");
-			}
-    }
-
+		public Disassembler(CPU cpu) {
+			this.cpu=cpu;
+		}
     // Opcode: opcode to disassemble
     // BC:     whether opcode was after BC
     private static int regval(String reg) {
