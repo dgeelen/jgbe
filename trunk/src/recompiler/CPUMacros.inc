@@ -1,8 +1,8 @@
 #define ASS_V_E(x, y) \
 	result.add( \
 		new SimpleAssign( \
-			x, \
-			y \
+			(x), \
+			(y) \
 		) \
 	)
 
