@@ -44,12 +44,12 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 				ASS_M1_E(ECONST((t_acc+1)&0xffff), new FunctionAND(EREG(SP), ECONST(0xff)));
 			}; break;
 
-			case 0x07: {
+			case 0x07: {                                            // RLA
 				//T = (F & FCmask) >> FCshift;
 				ASS_V_E( ETMP(0), FSHR(FAND(EREG(F), ECONST(CPU.CF_Mask)),ECONST(CPU.CF_Shift)));
 				//), 
 				//F = (A & 0x80) >> (7-FCshift)
-				ASS_V_E(EREG(A), FSHR(FAND(EREG(A), ECONST(0x80)), ECONST(7-CPU.CF_Shift)));
+				ASS_V_E(EREG(F), FSHR(FAND(EREG(A), ECONST(0x80)), ECONST(7-CPU.CF_Shift)));
 				//A <<= 1; //A |= T;
 				ASS_V_E(EREG(A), F_OR(FSHL(EREG(A), ECONST(1)), ETMP(0)));
 			}; break;
