@@ -68,7 +68,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	}
 }
 
-public class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener {
+public class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener {
 		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
 		protected VideoController VC;
@@ -414,7 +414,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			//JFrame.setDefaultLookAndFeelDecorated( true );
 
 			frame = new JFrame( "JGameBoy Emulator V"+JGBE_VERSION_STRING );
-			frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+			frame.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
 // 			frame.setBounds( 60,60,100,100 );
 
 			//Set up the content pane and add swing components to it
@@ -430,6 +430,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				PRINTLN("Can't load JGBE icon!");
 			}
 			frame.addComponentListener(this);
+			frame.addWindowListener(this);
 
 			frame.setResizable(false);
 			frame.pack();
@@ -465,15 +466,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			           + " (an instance of " + getClassName( source ) + ")";
 				System.out.println(s);*/
 			if (e.getSource().equals( menuitemExit)) {
-				if (isApplet) {
-					try {
-						getAppletContext().showDocument(new URL("http://127.0.0.1"));
-					} catch ( MalformedURLException ex) {
-						//ex.printstacktrace();
-					}
-				} else {
-					System.exit(0);
-				}
+				windowClosed(null);
 			}
 			else if (e.getSource().equals( menuitemScale1x )) {
 				addOSDLine("Set scaling: Scale1x");
@@ -1094,6 +1087,26 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		public static void main(String[] args) {
 			final swinggui gui=new swinggui();
 			starter(gui, args);
+		}
+
+		public void windowActivated(WindowEvent e) {}
+		public void windowClosing(WindowEvent e) {
+			windowClosed(e);
+		}
+		public void windowDeactivated(WindowEvent e) {}
+		public void windowDeiconified(WindowEvent e) {}
+		public void windowIconified(WindowEvent e) {}
+		public void windowOpened(WindowEvent e) {}
+		public void windowClosed(WindowEvent e) {
+			if (isApplet) {
+				try {
+					getAppletContext().showDocument(new URL("http://code.google.com/p/jgbe/"));
+				} catch ( MalformedURLException ex) {
+					//ex.printstacktrace();
+				}
+			} else {
+				System.exit(0);
+			}
 		}
 
 	}
