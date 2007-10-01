@@ -56,6 +56,30 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			case 0xf3: ASS_V_E(EVBOOL(IME), new ConstantBoolExpression(false)); break;                        // DI
 			case 0xfb: ASS_V_E(EVBOOL(IME), new ConstantBoolExpression(true)); break;                        // IE
 
+			case 0x22: { //WRITE_V(R16RHL, A); DO_INC16(HL); break; // LDI  (HL), A
+				ASS_V_E(EMEM2(EREG(H),EREG(L)), EREG(A));
+				ASS_V_E(EREG(H), FAND(FSHR(FINC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(8)), ECONST(0xff)));
+				ASS_V_E(EREG(L), FAND(FINC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(0xff)));
+			}; break;
+			
+			case 0x2a: { //A = READ_V(R16RHL); DO_INC16(HL); break; // LDI  A   , (HL)
+				ASS_V_E(EREG(A), EMEM2(EREG(H),EREG(L)));
+				ASS_V_E(EREG(H), FAND(FSHR(FINC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(8)), ECONST(0xff)));
+				ASS_V_E(EREG(L), FAND(FINC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(0xff)));
+			}; break;
+
+			case 0x32: { //WRITE_V(R16RHL, A); DO_DEC16(HL); break; // LDD  (HL), A
+				ASS_V_E(EMEM2(EREG(H),EREG(L)), EREG(A));
+				ASS_V_E(EREG(H), FAND(FSHR(FDEC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(8)), ECONST(0xff)));
+				ASS_V_E(EREG(L), FAND(FDEC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(0xff)));
+			}; break;
+
+			case 0x3a: { //A = READ_V(R16RHL); DO_DEC16(HL); break; // LDD  A   , (HL)
+				ASS_V_E(EREG(A), EMEM2(EREG(H),EREG(L)));
+				ASS_V_E(EREG(H), FAND(FSHR(FDEC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(8)), ECONST(0xff)));
+				ASS_V_E(EREG(L), FAND(FDEC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(0xff)));
+			}; break;
+
 			case 0xc1: DO_POP2(EREG(B), EREG(C)); break;            // POP  BC
 			case 0xd1: DO_POP2(EREG(D), EREG(E)); break;            // POP  DE
 			case 0xe1: DO_POP2(EREG(H), EREG(L)); break;            // POP  HL
