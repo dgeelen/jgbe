@@ -21,7 +21,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	public JTable mem;
 	public boolean memiseditable=true;
 	public JTable instrs;
-	public JTextField cmds;
+	public JComboBox cmds;
 
 	private JScrollBar memScroller;
 
@@ -401,12 +401,14 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.LINE_END );
-		cmds = new JTextField();
+// 		cmds = new JTextField();
+		cmds = new JComboBox();
+		cmds.setEditable(true);
 		cmds.addActionListener(this);
 		cmds.setFont(MonoFont);
 		scroll = new JScrollPane(cmds);
 		scroll.setMaximumSize(new Dimension(aaarg, Integer.MAX_VALUE));
-		scroll.setPreferredSize(new Dimension(aaarg, 20));
+		scroll.setPreferredSize(new Dimension(aaarg, 23));//20
 		contentPane.add( scroll, BorderLayout.LINE_END );
 /*		regs1.addMouseListener(this);
 		regs2.addMouseListener(this);
@@ -713,12 +715,25 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		//frame.addKeyListener(this); TODO: Shortcut keys
 	}
 
+	// see http://java.sun.com/j2se/1.4.2/docs/api/javax/swing/JComboBox.html#addItem(java.lang.Object)
+	private Object makeObj(final String item)  {
+		return new Object() { public String toString() { return item; } };
+	}
+
 	public void actionPerformed( ActionEvent e ) {
-		JTextField f = ( JTextField )( e.getSource() );
-		if(f==cmds) {
+		JComboBox f = ( JComboBox )( e.getSource() );
+		if(f==cmds && e.getActionCommand().equals("comboBoxEdited") ) {
 			int i=0;
-			String s=cmds.getText().trim();
-			cmds.selectAll();
+			String s=cmds.getSelectedItem().toString();
+			cmds.insertItemAt(makeObj(s), 0);
+			cmds.setSelectedIndex(0);
+			cmds.getEditor().selectAll();
+// 			if(f.getItemCount()==2) {
+// 				int x[]=null;
+// 				x[0] = 0;
+// 			}
+			PRINTF(s+"\n");
+// 			cmds.selectAll();
 			i=s.indexOf("=");
 			if(i>-1) { //assignment
 				String l = s.substring(0,i).trim();
@@ -887,7 +902,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			}
 		}
 		else {
-			System.out.println( "Action event i an instance of " + getClassName( f ));
+// 			System.out.println( "Action event i an instance of " + getClassName( f ));
 		}
 	}
 
