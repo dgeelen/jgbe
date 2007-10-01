@@ -214,6 +214,18 @@ class ConstantExpression extends Expression {
 	};
 }
 
+class ConstantBoolExpression extends Expression {
+	private boolean value;
+	public ConstantBoolExpression(boolean avalue) {
+		value = avalue;
+	};
+	public boolean getValue() { return value; };
+	public String asString() { return "" + value; };
+	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
+		il.append(new PUSH(cp, value));
+	};
+}
+
 /** Assignment into which the GB asm is transformed into first */
 class SimpleAssign {
 	private Variable target;

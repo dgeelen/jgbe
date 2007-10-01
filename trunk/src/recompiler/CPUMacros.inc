@@ -80,6 +80,8 @@
 
 #define ECONST(x) new ConstantExpression(x)
 #define EREG(x) new SimpleVariable(#x)
+#define EVBOOL(x) new SimpleBoolVariable(#x)
+#define ECBOOL(x) new ConstantBoolExpression(x)
 #define EMEM(x) new MemoryVariable(x)
 #define EMEM2(x,y) new MemoryVariable(x, y)
 #define ETMP(x) new TemporaryVariable(x)
