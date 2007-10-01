@@ -110,6 +110,35 @@ class FunctionCALCZF extends FunctionExpression {
 	}
 }
 
+class FunctionIIF extends FunctionExpression {
+	public String funcName() { return "IIF"; };
+	public FunctionIIF(Expression expr0, Expression expr1, Expression expr2) {
+		super(new Expression[] { expr0, expr1, expr2 } );
+	};
+	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
+		args[0].doAssembleValue(il, cp);
+
+		IFNE ti1 = new IFNE(null);
+		il.append(ti1);
+
+		args[2].doAssembleValue(il, cp);
+
+		GOTO ti2 = new GOTO(null);
+		il.append(ti2);
+
+		InstructionHandle th1;
+		th1 = il.append(InstructionConstants.NOP);
+
+		args[1].doAssembleValue(il, cp);
+
+		InstructionHandle th2;
+		th2 = il.append(InstructionConstants.NOP);
+
+		ti1.setTarget(th1);
+		ti2.setTarget(th2);
+	}
+}
+
 class BinaryFunction extends FunctionExpression {
 	private String fname;
 	private Instruction instr;
