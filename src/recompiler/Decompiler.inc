@@ -38,9 +38,19 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			break;                                                  // LD   SP  , HL
 
 			case 0x08: {                                            // LD   (nn), SP
-					int t_acc = IMM16;
-					ASS_M1_E(ECONST(t_acc), new FunctionSHR(EREG(SP), ECONST(8)));
-					ASS_M1_E(ECONST((t_acc+1)&0xffff), new FunctionAND(EREG(SP), ECONST(0xff)));
+				int t_acc = IMM16;
+				ASS_M1_E(ECONST(t_acc), new FunctionSHR(EREG(SP), ECONST(8)));
+				ASS_M1_E(ECONST((t_acc+1)&0xffff), new FunctionAND(EREG(SP), ECONST(0xff)));
+			}; break;
+
+			case 0x07: {
+				//T = (F & FCmask) >> FCshift;
+				ASS_V_E( ETMP(0), FSHR(FAND(EREG(F), ECONST(CPU.CF_Mask)),ECONST(CPU.CF_Shift)));
+				//), 
+				//F = (A & 0x80) >> (8-FCshift)
+				ASS_V_E(EREG(A), FSHR(FAND(EREG(A), ECONST(0x80)), ECONST(8-CPU.CF_Shift)));
+				//A <<= 1; //A |= T;
+				ASS_V_E(EREG(A), F_OR(FSHL(EREG(A), ECONST(1)), ETMP(0)));
 			}; break;
 
 			case 0xc1: DO_POP2(EREG(B), EREG(C)); break;            // POP  BC
