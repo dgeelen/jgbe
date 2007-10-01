@@ -163,6 +163,9 @@
 	CASES_INCDEC8_R(H) \
 	CASES_INCDEC8_R(L) \
 	CASES_INCDEC8_R(A) \
+	CASES_INCDEC8_MEM
+
+#define CASES_INCDEC8_MEM \
 	case 0x34: { t_acc = READ_V(R16RHL); DO_INC8(t_acc); WRITE_V(R16RHL, t_acc); }; break; \
 	case 0x35: { t_acc = READ_V(R16RHL); DO_DEC8(t_acc); WRITE_V(R16RHL, t_acc); }; break; \
 

@@ -169,6 +169,9 @@
 	ASS_V_E(EREG(SP), new FunctionINC(EREG(SP), ECONST(1))); \
 }
 
+#undef CASES_INCDEC8_MEM
+#define CASES_INCDEC8_MEM
+
 #undef DO_INC8
 #define DO_INC8(r) { \
 	ASS_V_E(EREG(F), FAND(EREG(F), ECONST(CPU.CF_Mask))); \
@@ -177,11 +180,16 @@
 	ASS_V_E(EREG(F), F_OR( \
 	                 F_OR(EREG(F), new FunctionCALCZF(EREG(r))), /* ZF */ \
 	                 new FunctionIIF(FAND(EREG(r),ECONST(0x0f)),ECONST(0),ECONST(CPU.HC_Mask)) /* HC */ \
-	                 )) \
+	                 )); \
 }
 
 #undef DO_DEC8
 #define DO_DEC8(r) { \
+	ASS_V_E(EREG(F), F_OR(FAND(EREG(F), ECONST(CPU.CF_Mask)), ECONST(CPU.NF_Mask))); \
+	ASS_V_E(EREG(F), F_OR(EREG(F), new FunctionIIF(FAND(EREG(r),ECONST(0x0f)),ECONST(0),ECONST(CPU.HC_Mask)))); \
+	ASS_V_E(EREG(r), FAND(FDEC(EREG(r), ECONST(1)), ECONST(0xff))); \
+  /* F = F | fzero(A) | fHC(A&0fdvkre) */ \
+	ASS_V_E(EREG(F), F_OR(EREG(F), new FunctionCALCZF(EREG(r))) ); \
 }
 // 	r = (((r)-1)&0xff); \
 // 	F &= FC; \
