@@ -1,0 +1,12 @@
+.svn
+*~
+*.o
+*.java
+src/.deps
+*.class
+*.jar
+*.tmp
+src/.Global.dummy
+src/Makefile.config
+src/Makefile.inc
+src/svnrev.inc
