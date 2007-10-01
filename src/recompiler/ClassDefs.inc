@@ -151,12 +151,14 @@ class FunctionDEC extends BinaryFunction {
 		super("dec", InstructionConstants.ISUB, expr1, expr2);
 	}
 }
+#define FDEC(x,y) (new FunctionDEC((x),(y)))
 
 class FunctionINC extends BinaryFunction {
 	public FunctionINC(Expression expr1, Expression expr2) {
 		super("inc", InstructionConstants.IADD, expr1, expr2);
 	}
 }
+#define FINC(x,y) (new FunctionINC((x),(y)))
 
 class FunctionSHL extends BinaryFunction {
 	public FunctionSHL(Expression expr1, Expression expr2) {
