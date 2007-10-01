@@ -24,6 +24,8 @@ public class CPURecompiler {
 	// Step 4: Perform optimisations on the java bytecode
 
 	// include classes we use for code/data representation
+	#include "CPU.inc"
+	#include "recompiler/CPUMacros.inc"
 	#include "recompiler/ClassDefs.inc"
 	#include "recompiler/Decompiler.inc"
 	#include "recompiler/Optimiser.inc"
