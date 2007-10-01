@@ -1,4 +1,5 @@
 #define REF_REG(name) cp.addFieldref("CPU", name, Type.INT.getSignature())
+#define REF_CPUVAR_BOOL(name) cp.addFieldref("CPU", name, Type.BOOLEAN.getSignature())
 #define REF_READ cp.addMethodref("CPU", "read", Type.getMethodSignature(Type.INT, new Type[] { Type.INT }))
 #define REF_WRITE cp.addMethodref("CPU", "write_fast1", Type.getMethodSignature(Type.VOID, new Type[] { Type.INT , Type.INT }))
 
@@ -18,6 +19,21 @@ class SimpleVariable extends Variable {
 	};
 	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
 		il.append(new PUTSTATIC(REF_REG(name)));
+	};
+}
+
+class SimpleBoolVariable extends Variable {
+	private String name;
+	public SimpleBoolVariable(String aname) {
+		name = aname;
+	}
+	String getName() { return name; };
+	public String asString() { return name; };
+	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
+		il.append(new GETSTATIC(REF_CPUVAR_BOOL(name)));
+	};
+	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
+		il.append(new PUTSTATIC(REF_CPUVAR_BOOL(name)));
 	};
 }
 
