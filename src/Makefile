@@ -80,7 +80,9 @@ rndCartridge: rndCartridge.cpp
 %.java: %.jpp
 	@echo "[jpp  -> java ] $*"
 	@cat Autogen.txt > $@
-	@gcc -MD -E $(PPFLAGS) -x c $< | grep -v "^#" | sed "s:\;[ 	]*case:\;\\n	case:g" >> $@
+	@gcc -MD -E $(PPFLAGS) -x c $< >> $@ || (rm -f $@ && false)
+	@sed -i "s:^#.*$$::" $@
+	@sed -i "s:\;[ 	]*case:\;\\n	case:g" $@
 	@sed -i "s=\.o:=\.java:=g" $*.d
 # next line from http://make.paulandlesley.org/autodep.html
 	@cp $*.d $*.dd; \
