@@ -21,6 +21,21 @@ class SimpleVariable extends Variable {
 	};
 }
 
+class TemporaryVariable extends Variable {
+	private int number;
+	public TemporaryVariable(int n) {
+		number = n;
+	}
+	int getNumber() { return number; };
+	public String asString() { return "TEMP_"+number; };
+	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
+		il.append(new ILOAD(number));
+	};
+	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
+		il.append(new ISTORE(number));
+	};
+}
+
 class MemoryVariable extends Variable {
 	private Expression addr;
 	public MemoryVariable(Expression ahaddr, Expression aladdr) {
