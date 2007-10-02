@@ -6,7 +6,8 @@
 *.class
 *.jar
 *.tmp
-src/.Global.dummy
-src/Makefile.config
-src/Makefile.inc
-src/svnrev.inc
+Makefile.config
+Makefile.inc
+svnrev.inc
+classes/MANIFEST.MF.in
+jgbestore
