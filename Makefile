@@ -49,7 +49,7 @@ applet: $(JARDIR)/sjgbe.jar
  
 $(JARDIR)/sjgbe.jar: $(JARDIR)/jgbe.jar
 	@echo [signing] applet
-	@keytool -delete -alias signFiles -keystore jgbestore -keypass kpi135 -storepass ab987c || true
+	@keytool -delete -alias signFiles -keystore jgbestore -keypass kpi135 -storepass ab987c > /dev/null || true
 	@keytool -genkey -alias signFiles -keystore jgbestore -keypass kpi135 -dname "cn=JGBE" -storepass ab987c
 	@jarsigner -keystore jgbestore -storepass ab987c -keypass kpi135 -signedjar jar/sjgbe.jar jar/jgbe.jar signFiles > /dev/null
 
