@@ -43,10 +43,10 @@ gcj: clean
 	@echo "-include Makefile.gcj" > Makefile.inc
 
 # common targets
-preprocess: $(SRCDIR)/svnrev.inc $(GJAVAFILES)
+preprocess: version $(GJAVAFILES)
 
 applet: $(JARDIR)/sjgbe.jar
- 
+
 $(JARDIR)/sjgbe.jar: $(JARDIR)/jgbe.jar
 	@echo [signing] applet
 	@keytool -delete -alias signFiles -keystore jgbestore -keypass kpi135 -storepass ab987c > /dev/null || true
@@ -142,7 +142,8 @@ cleaner: clean
 	rm -f $(GJAVAFILES)
 	rm -f Makefile.inc
 
-$(SRCDIR)/svnrev.inc:
+$(SRCDIR)/svnrev.inc: version
+version:
 	@(\
 	OLDVER=`cat $(SRCDIR)/svnrev.inc 2> /dev/null || true`; \
 	NEWVER="#define JGBE_VERSION_STRING \"`sh svnversion.sh`\""; \
