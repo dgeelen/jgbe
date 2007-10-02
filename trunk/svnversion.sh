@@ -17,7 +17,6 @@ if [ "${GITHEAD}" != "" ]; then
 #echo $GITHEAD
 	done
 
-	echo $ISGIT
 	if [ \( "${SVNVER}" != "" \) -a \( "${GITHEAD}" != "${GITHEAD_ORIG}" \) ]; then
 		SVNVER=${SVNVER}G
 	fi
