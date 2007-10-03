@@ -112,7 +112,7 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 			case 0xc3: DO_JP_NN; break;                             // JP   (nn)
 			case 0x18: DO_JR_D; break;                              // JR   (d)
 
-			//CASES_INCDEC8
+			CASES_INCDEC8
 			CASES_LD_XX
 			//CASES_ALU_OP(0xb8, 0xfe, CP)                            // CP   x            x = r, imm8, (HL)
 			CASES_ALU_OP(0xa0, 0xe6, AND)                           // AND  x            x = r, imm8, (HL)
