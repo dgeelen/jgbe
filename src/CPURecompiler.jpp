@@ -51,6 +51,7 @@ public class CPURecompiler {
 		}
 		if (imr1.size() > 0x8) {
 			PRINTF("Decompiled block @ PC=0x%02x of size %d\n", PC, imr1.size());
+			Optimise(imr1);
 			return Assemble(imr1);
 		}
 		else
