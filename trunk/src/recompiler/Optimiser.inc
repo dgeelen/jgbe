@@ -36,3 +36,7 @@ private static final int removeNOPs(InstructionList il) {
 
 	return count;
 }
+
+private static final int Optimise(VECTOR(SimpleAssign) sal) {
+	return 0;
+}
