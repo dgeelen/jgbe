@@ -829,52 +829,43 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						watches[1] = v;
 						update();
 					}
+					else if (l.equalsIgnoreCase("i")) {
+						runner.setBreakInstr(v);
+					}
+					else if (l.equalsIgnoreCase("p")) {
+						runner.setRunFor(v);
+						runner.resume();
+					}
+					else if (l.equalsIgnoreCase("c")) {
+						if (!runner.isRunning()) {
+							runner.setInstrStop(v);
+						}
+					}
 					else {
 						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
 					}
 				}
 				s="-";
 			}
-			if(s.equals("s")) {
+			if(s.equalsIgnoreCase("s")) {
 				gui.cpu.nextinstruction();
 				update();
 			}
-			if(s.equals("reset")) {
+			if(s.equalsIgnoreCase("reset")) {
 				gui.cpu.reset();
 				update();
 			}
-			if(s.equals("so")) {
+			if(s.equalsIgnoreCase("so")) {
 				if (!runner.isRunning()) {
 					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
 					runner.resume();
 				}
 			}
-#ifdef ENABLE_RECOMPILER
-			if(s.equals("rc")) {
-				runner.suspend();
-				CPURecompiler.testing = 0;
-				if (CPU.PC < 0x4000) {
-					CPU.rccache0[CPU.PC] = CPURecompiler.doRecompile(CPU.PC);
-				}
-				else if (CPU.PC < 0x8000) {
-					CPU.rccachex[CPU.PC-0x4000] = CPURecompiler.doRecompile(CPU.PC);
-				}
-			}
-#endif
-			if(s.charAt(0)=='i') {
-				String ss = s.substring( s.lastIndexOf(" ") + 1);
-				if( ss.charAt(0)=='$' )
-					runner.setBreakInstr(Integer.parseInt( ss.substring(1), 16 ));
-			}
-			if(s.charAt(0)=='p') {
-				runner.setRunFor(parser.StrToInt(s.substring(1)));
-				runner.resume();
-			}
-			if(s.charAt(0)=='g') {
+			if (s.equalsIgnoreCase("g")) {
 				runner.setBreakPoint(-1);
 				runner.resume();
 			}
-			if(s.charAt(0)=='b') {
+			if (s.equalsIgnoreCase("b")) {
 				if (runner.isRunning()) {
 					if (logwriter != null) {
 						try {
@@ -888,18 +879,18 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					runner.suspend();
 				}
 			}
-			if(s.charAt(0)=='c') {
-				try {
-					if (!runner.isRunning()) {
-						String ss = s.substring( s.lastIndexOf(" ") + 1);
-						runner.setInstrStop(Integer.parseInt( ss.substring(0), 10 ));
-					}
+#ifdef ENABLE_RECOMPILER
+			if(s.equalsIgnoreCase("rc")) {
+				runner.suspend();
+				CPURecompiler.testing = 0;
+				if (CPU.PC < 0x4000) {
+					CPU.rccache0[CPU.PC] = CPURecompiler.doRecompile(CPU.PC);
 				}
-				catch ( NumberFormatException ee ) {
-						System.out.println( ee.getMessage() + " is not a valid format for an integer." );
+				else if (CPU.PC < 0x8000) {
+					CPU.rccachex[CPU.PC-0x4000] = CPURecompiler.doRecompile(CPU.PC);
 				}
-				//memaddr = Integer.valueOf(s.substring( s.lastIndexOf(" "))).intValue();
 			}
+#endif
 		}
 		else {
 // 			System.out.println( "Action event i an instance of " + getClassName( f ));
