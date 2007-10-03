@@ -38,5 +38,17 @@ private static final int removeNOPs(InstructionList il) {
 }
 
 private static final int Optimise(VECTOR(SimpleAssign) sal) {
+	// expand all expressions
+	// A = C + 2;
+	// B = A + 3;  -> B = (C + 2) + 3;
+	// D = C + 5;
+
+	// constant folding etc etc
+	// B = (C + 2) + 3; -> B = C + 5;
+
+	// common subexpression elimination
+	// B = C + 5;
+	// D = B
+
 	return 0;
 }
