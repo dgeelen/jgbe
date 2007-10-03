@@ -20,6 +20,11 @@ class SimpleVariable extends Variable {
 	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
 		il.append(new PUTSTATIC(REF_REG(name)));
 	};
+	public boolean equals(Object v) {
+		if (!(v instanceof SimpleVariable))
+			return false;
+		return name.equals(((SimpleVariable)v).name);
+	}
 }
 
 class SimpleBoolVariable extends Variable {
