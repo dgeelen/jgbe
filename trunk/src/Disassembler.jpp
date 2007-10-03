@@ -32,35 +32,39 @@ public class Disassembler
 		}
 
 		public static final int instructionLength(int PC) { //Teh CopyPaste crappyness :)
-			int instr=cpu.read(PC);
-			int i=-1;
-			int bytecount=1;
-			String op="";
-			if(instr==0xcb) {
-				instr=cpu.read(PC+1);
-				op = opcode[instr+0x100];
-				bytecount=2;
+			try {
+				int instr=cpu.read(PC);
+				int i=-1;
+				int bytecount=1;
+				String op="";
+				if(instr==0xcb) {
+					instr=cpu.read(PC+1);
+					op = opcode[instr+0x100];
+					bytecount=2;
+				}
+				else {
+					op = opcode[instr];
+				}
+				i=op.indexOf("IMM08");
+				if(i>-1) {
+					bytecount=2;
+				}
+				i=op.indexOf("IMM16");
+				if(i>-1) {
+					bytecount=3;
+				}
+				i=op.indexOf("[n]");
+				if(i>-1) { //specialcase
+					bytecount=2;
+				}
+				i=op.indexOf("dd");
+				if(i>-1) { //specialcase
+					bytecount=2;
+				}
+				return bytecount;
+			} catch (Exception e) {
+				return 1;
 			}
-			else {
-				op = opcode[instr];
-			}
-			i=op.indexOf("IMM08");
-			if(i>-1) {
-				bytecount=2;
-			}
-			i=op.indexOf("IMM16");
-			if(i>-1) {
-				bytecount=3;
-			}
-			i=op.indexOf("[n]");
-			if(i>-1) { //specialcase
-				bytecount=2;
-			}
-			i=op.indexOf("dd");
-			if(i>-1) { //specialcase
-				bytecount=2;
-			}
-			return bytecount;
 		}
 
 		public static final String disassemble(int PC) {
@@ -177,53 +181,58 @@ public class Disassembler
 		}
 
 		public static final String simple_disasm(int PC) {
-			int instr=cpu.read(PC);
-			int immediate=-1;
-			int bytecount=1;
-			int i;
-			String op="";
-			if(instr==0xcb) {
-				instr=cpu.read(PC+1);
-				op = opcode[instr+0x100];
-				bytecount=2;
-			}
-			else {
-				op = opcode[instr];
-			}
-			String s=op;
-			i=op.indexOf("IMM08");
-			if(i>-1) {
-				immediate = cpu.read(PC+1);
-				s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
-				bytecount=2;
-			}
-			i=op.indexOf("IMM16");
-			if(i>-1) {
-				immediate=(cpu.read(PC+2)<<8)|cpu.read(PC+1); //little endian
-				s=STRFORMAT(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
-				bytecount=3;
-			}
-			i=s.indexOf("[n]");
-			if(i>-1) { //specialcase
-				immediate=cpu.read(PC+1);
-				bytecount=2;
-				s=STRFORMAT(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
-			}
-			i=op.indexOf("dd");
-			if(i>-1) { //specialcase
-				immediate=cpu.read(PC+1);
-				bytecount=2;
-				s=STRFORMAT(s.substring(0,i)+"$%02x"+s.substring(i+2),immediate);
-			}
+			try {
+				int instr=cpu.read(PC);
+				int immediate=-1;
+				int bytecount=1;
+				int i;
+				String op="";
+				if(instr==0xcb) {
+					instr=cpu.read(PC+1);
+					op = opcode[instr+0x100];
+					bytecount=2;
+				}
+				else {
+					op = opcode[instr];
+				}
+				String s=op;
+				i=op.indexOf("IMM08");
+				if(i>-1) {
+					immediate = cpu.read(PC+1);
+					s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+					bytecount=2;
+				}
+				i=op.indexOf("IMM16");
+				if(i>-1) {
+					immediate=(cpu.read(PC+2)<<8)|cpu.read(PC+1); //little endian
+					s=STRFORMAT(op.substring(0,i)+"$%04x"+op.substring(i+5),immediate);
+					bytecount=3;
+				}
+				i=s.indexOf("[n]");
+				if(i>-1) { //specialcase
+					immediate=cpu.read(PC+1);
+					bytecount=2;
+					s=STRFORMAT(s.substring(0,i+1)+"$%02x"+s.substring(i+2),immediate);
+				}
+				i=op.indexOf("dd");
+				if(i>-1) { //specialcase
+					immediate=cpu.read(PC+1);
+					bytecount=2;
+					s=STRFORMAT(s.substring(0,i)+"$%02x"+s.substring(i+2),immediate);
+				}
 
-			String prefix=STRFORMAT("$%04x: ",PC);
-			for(i=0; i<bytecount;  ++i) {
-				prefix+=STRFORMAT("$%02x ", cpu.read(PC+i));
+				String prefix=STRFORMAT("$%04x: ",PC);
+				for(i=0; i<bytecount;  ++i) {
+					prefix+=STRFORMAT("$%02x ", cpu.read(PC+i));
+				}
+				for(; i<3; ++i) {
+					prefix+="    ";
+				}
+				return prefix + " " + s;
 			}
-			for(; i<3; ++i) {
-				prefix+=STRFORMAT("    ", cpu.read(PC+i));
+			catch (Exception e) {
+				return "";
 			}
-			return prefix + " " + s;
 		}
 
 
