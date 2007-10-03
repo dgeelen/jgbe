@@ -4,49 +4,49 @@ import java.io.*;
 
 public class Disassembler
 {
-    private static Cartridge cart;
-    private static CPU cpu;
+		private static Cartridge cart;
+		private static CPU cpu;
 		#include "opcodes.inc"
-    private static final String file_name = "instrs.txt";
+		private static final String file_name = "instrs.txt";
 		private static final char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
 		public Disassembler(CPU cpu) {
 			this.cpu=cpu;
 		}
-    // Opcode: opcode to disassemble
-    // BC:     whether opcode was after BC
-    private static int regval(String reg) {
-      if(reg.equalsIgnoreCase("A")) return cpu.A;
-      if(reg.equalsIgnoreCase("B")) return cpu.B;
-      if(reg.equalsIgnoreCase("C")) return cpu.C;
-      if(reg.equalsIgnoreCase("D")) return cpu.D;
-      if(reg.equalsIgnoreCase("E")) return cpu.E;
-      if(reg.equalsIgnoreCase("H")) return cpu.H;
-      if(reg.equalsIgnoreCase("L")) return cpu.L;
-      if(reg.equalsIgnoreCase("AF")) return 0x10000|((cpu.A<<8)|cpu.F);
-      if(reg.equalsIgnoreCase("BC")) return 0x10000|((cpu.B<<8)|cpu.C);
-      if(reg.equalsIgnoreCase("DE")) return 0x10000|((cpu.D<<8)|cpu.E);
-      if(reg.equalsIgnoreCase("HL")) return 0x10000|((cpu.H<<8)|cpu.L);
-      if(reg.equalsIgnoreCase("SP")) return 0x10000|(cpu.SP);
-      if(reg.equalsIgnoreCase("PC")) return 0x10000|(cpu.PC);
-      return -1;
-    }
+		// Opcode: opcode to disassemble
+		// BC:     whether opcode was after BC
+		private static int regval(String reg) {
+			if(reg.equalsIgnoreCase("A")) return cpu.A;
+			if(reg.equalsIgnoreCase("B")) return cpu.B;
+			if(reg.equalsIgnoreCase("C")) return cpu.C;
+			if(reg.equalsIgnoreCase("D")) return cpu.D;
+			if(reg.equalsIgnoreCase("E")) return cpu.E;
+			if(reg.equalsIgnoreCase("H")) return cpu.H;
+			if(reg.equalsIgnoreCase("L")) return cpu.L;
+			if(reg.equalsIgnoreCase("AF")) return 0x10000|((cpu.A<<8)|cpu.F);
+			if(reg.equalsIgnoreCase("BC")) return 0x10000|((cpu.B<<8)|cpu.C);
+			if(reg.equalsIgnoreCase("DE")) return 0x10000|((cpu.D<<8)|cpu.E);
+			if(reg.equalsIgnoreCase("HL")) return 0x10000|((cpu.H<<8)|cpu.L);
+			if(reg.equalsIgnoreCase("SP")) return 0x10000|(cpu.SP);
+			if(reg.equalsIgnoreCase("PC")) return 0x10000|(cpu.PC);
+			return -1;
+		}
 
-    public static final int instructionLength(int PC) { //Teh CopyPaste crappyness :)
-      int instr=cpu.read(PC);
-      int i=-1;
-      int bytecount=1;
-      String op="";
-      if(instr==0xcb) {
-	      instr=cpu.read(PC+1);
-        op = opcode[instr+0x100];
+		public static final int instructionLength(int PC) { //Teh CopyPaste crappyness :)
+			int instr=cpu.read(PC);
+			int i=-1;
+			int bytecount=1;
+			String op="";
+			if(instr==0xcb) {
+				instr=cpu.read(PC+1);
+				op = opcode[instr+0x100];
 				bytecount=2;
-      }
-      else {
-        op = opcode[instr];
-      }
-      i=op.indexOf("IMM08");
-      if(i>-1) {
-        bytecount=2;
+			}
+			else {
+				op = opcode[instr];
+			}
+			i=op.indexOf("IMM08");
+			if(i>-1) {
+				bytecount=2;
 			}
 			i=op.indexOf("IMM16");
 			if(i>-1) {
@@ -63,27 +63,27 @@ public class Disassembler
 			return bytecount;
 		}
 
-    public static final String disassemble(int PC) {
-      int instr=cpu.read(PC);
-      int immediate=-1;
-      int i=-1;
-      int j=-1;
-      int bytecount=1;
-      String op="";
-      if(instr==0xcb) {
-	      instr=cpu.read(PC+1);
-        op = opcode[instr+0x100];
+		public static final String disassemble(int PC) {
+			int instr=cpu.read(PC);
+			int immediate=-1;
+			int i=-1;
+			int j=-1;
+			int bytecount=1;
+			String op="";
+			if(instr==0xcb) {
+				instr=cpu.read(PC+1);
+				op = opcode[instr+0x100];
 				bytecount=2;
-      }
-      else {
-        op = opcode[instr];
-      }
+			}
+			else {
+				op = opcode[instr];
+			}
 			String s=op;
-      i=op.indexOf("IMM08");
-      if(i>-1) {
-        immediate= cpu.read(PC+1);
-        s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
-        bytecount=2;
+			i=op.indexOf("IMM08");
+			if(i>-1) {
+				immediate= cpu.read(PC+1);
+				s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+				bytecount=2;
 			}
 			i=op.indexOf("IMM16");
 			if(i>-1) {
@@ -171,31 +171,31 @@ public class Disassembler
 				prefix+=STRFORMAT("$%02x ", cpu.read(PC+i));
 			}
 			for(i=0; i<3-bytecount; ++i){
-			  prefix+=STRFORMAT("    ", cpu.read(PC+i));
+				prefix+=STRFORMAT("    ", cpu.read(PC+i));
 			}
-      return prefix + s + (new String(whitespace, 0, 18 - s.length())) + "// "+op ;
-    }
+			return prefix + s + (new String(whitespace, 0, 18 - s.length())) + "// "+op ;
+		}
 
-    public static final String simple_disasm(int PC) {
-      int instr=cpu.read(PC);
-      int immediate=-1;
-      int bytecount=1;
+		public static final String simple_disasm(int PC) {
+			int instr=cpu.read(PC);
+			int immediate=-1;
+			int bytecount=1;
 			int i;
-      String op="";
-      if(instr==0xcb) {
-	      instr=cpu.read(PC+1);
-        op = opcode[instr+0x100];
+			String op="";
+			if(instr==0xcb) {
+				instr=cpu.read(PC+1);
+				op = opcode[instr+0x100];
 				bytecount=2;
-      }
-      else {
-        op = opcode[instr];
-      }
+			}
+			else {
+				op = opcode[instr];
+			}
 			String s=op;
-      i=op.indexOf("IMM08");
-      if(i>-1) {
-        immediate = cpu.read(PC+1);
-        s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
-        bytecount=2;
+			i=op.indexOf("IMM08");
+			if(i>-1) {
+				immediate = cpu.read(PC+1);
+				s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
+				bytecount=2;
 			}
 			i=op.indexOf("IMM16");
 			if(i>-1) {
@@ -221,19 +221,19 @@ public class Disassembler
 				prefix+=STRFORMAT("$%02x ", cpu.read(PC+i));
 			}
 			for(; i<3; ++i) {
-			  prefix+=STRFORMAT("    ", cpu.read(PC+i));
+				prefix+=STRFORMAT("    ", cpu.read(PC+i));
 			}
-      return prefix + " " + s;
-    }
+			return prefix + " " + s;
+		}
 
 
-    public static void main(String[] args)
-    {
-        System.out.println(Disassembler.disassemble(0));
-        System.out.println(Disassembler.disassemble(0));
-        System.out.println(Disassembler.disassemble(255));
-        System.out.println(Disassembler.disassemble(255));
-    }
+		public static void main(String[] args)
+		{
+				System.out.println(Disassembler.disassemble(0));
+				System.out.println(Disassembler.disassemble(0));
+				System.out.println(Disassembler.disassemble(255));
+				System.out.println(Disassembler.disassemble(255));
+		}
 }
 #else
 public class Disassembler {} //DUMMY FOR 1.4.2
