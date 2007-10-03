@@ -43,6 +43,48 @@ private static final int Optimise(VECTOR(SimpleAssign) sal) {
 	// B = A + 3;  -> B = (C + 2) + 3;
 	// D = C + 5;
 
+
+	PRINTLN("\n\n------Optimise----\n");
+
+	VECTOR(SimpleAssign) known = new VECTOR(SimpleAssign)();
+
+	FOREACH(SimpleAssign, sa, sal) {
+
+		//sa.value.expandvars(known);
+
+
+		boolean b = true;
+		for (int kn = 0; b && kn < known.size(); ++kn ) {
+			SimpleAssign k = (SimpleAssign)known.elementAt(kn);
+			//PRINTF(sa.target.asString() + " ?= " + k.target.asString() + "\n");
+			if (sa.target.equals(k.target)) {
+				known.setElementAt(sa, kn);
+				b = false;
+			}
+		}
+		if (b)
+			known.add(sa);
+		PRINTLN("-");
+		for (int kn = 0; kn < known.size(); ++kn ) {
+			SimpleAssign k = (SimpleAssign)known.elementAt(kn);
+			PRINTF(k.asString() + "\n");
+		}
+
+	}
+
+	
+
+// A = 3
+// B = A
+// A = 5
+// C = A
+// A = 7
+// 
+// B = 3
+// C = 5
+// A = 7
+
+
 	// constant folding etc etc
 	// B = (C + 2) + 3; -> B = C + 5;
 
