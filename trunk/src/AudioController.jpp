@@ -597,6 +597,7 @@ public class AudioController {
 		private Pattern pat_vendor;
 		private Pattern pat_description;
 		private Pattern pat_version;
+		private String description;
 		public int buffersize;
 		public MatchMixerInfo(String name, String vendor, String description, String version, int size) {
 			pat_name        = Pattern.compile(name);
@@ -604,6 +605,10 @@ public class AudioController {
 			pat_description = Pattern.compile(description);
 			pat_version     = Pattern.compile(version);
 			buffersize      = size;
+			this.description= new String(name +
+			                      (vendor.equals("")?"":"("+vendor+")")+
+			                      (description.equals("")?"":"\n\t\t"+description)+
+			                      (version.equals("")?"":" (V"+version+")"));
 		}
 		public boolean Match(Mixer.Info mixinfo) {
 			Matcher matcher;
@@ -618,11 +623,12 @@ public class AudioController {
 			if (!matcher.find()) return false;
 			return true;
 		}
+		public String toString() {
+			return description;
+		}
 	}
 
-	private static SourceDataLine trygetSourceDataLine(MatchMixerInfo tMixer,
-							AudioFormat audioFormat)
-	{
+	private static SourceDataLine trygetSourceDataLine(MatchMixerInfo tMixer, AudioFormat audioFormat) {
 		SourceDataLine rline = null;
 		try {
 			if (tMixer != null) {
@@ -668,6 +674,7 @@ public class AudioController {
 	private SourceDataLine audioSource;
 #endif
 	private byte audioBuffer[];
+	private byte audioMutedBuffer[];
 	public int audioBufferIndex;
 	private int IO[];
 	private int WAVE[] = new int[16];
@@ -767,22 +774,30 @@ public class AudioController {
 	}
 
 	public AudioController(CPU cpu) {
-					Mixer.Info[]	asInfo = AudioSystem.getMixerInfo();
-					for (int i = 0; i < asInfo.length; i++)
-  					System.out.println(asInfo[i].getName());
-
-
+		Mixer.Info[]	asInfo = AudioSystem.getMixerInfo();
+		PRINTLN("Available AudioDevices on this system:");
+		for (int i = 0; i < asInfo.length; i++)
+			PRINTLN("  -->  "+asInfo[i].getName());
+		PRINTLN("(You may need to add one of these to "+__FILE__+")");
+		
 		this.cpu=cpu;
-		audioBuffer = new byte[sampleRate]; //allocate enough buffer for 1 second
+		//#define BUFFER_SIZE (2*1024*10) /*works okayish on windows*/
+		#define BUFFER_SIZE 1024          /*Linux is just a lot better*/
+		audioBuffer = new byte[BUFFER_SIZE]; //allocate enough buffer for 1 second
+		audioMutedBuffer = new byte[BUFFER_SIZE]; //allocate enough buffer for 1 second
+		for(int i=0; i<audioMutedBuffer.length; ++i) audioMutedBuffer[i]=0;
 #ifndef JMGBE
 		try {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			MatchMixerInfo mixers[] = {
 				/** "rev50 [plughw:0,0]" (linux) works brilliantly but claims the audio hardware for itself */
-				new MatchMixerInfo("plughw:0,1"              , "", "", "", 1536),
-				new MatchMixerInfo("plughw:0,0"              , "", "", "", 1536),
+				new MatchMixerInfo("plughw:0,1"              , "", "", "", BUFFER_SIZE),
+				new MatchMixerInfo("plughw:0,0"              , "", "", "", BUFFER_SIZE),
 				/** "Primary Sound Driver" seems to work good under windows */
-				new MatchMixerInfo("Primary Sound Driver", "", "", "", 1536),
+				new MatchMixerInfo("Primary Sound Driver", "", "", "", BUFFER_SIZE),
+				/** FIXME: These should be selectable from a menu in the GUI rather than hardcoded... **/
+				new MatchMixerInfo("Primair geluidsstuurprogramma", "", "", "", BUFFER_SIZE),
+				//new MatchMixerInfo("C-Media Wave Device", "", "", "", 1536), //mireille
 				//"Alsa DataLine Mixer (hw:0)", // can't get this to work... :-(
 				//"Java Sound Audio Engine", // piece of crap...
 				null }; // tries default, crappy buffer setting... lags...
@@ -790,13 +805,14 @@ public class AudioController {
 			int i = 0;
 			while ((audioSource==null) && (i < mixers.length)) {
 				try {
-					System.out.println("Trying to get mixers["+i+"]: "+mixers[i]);
 					audioSource = trygetSourceDataLine(mixers[i++], myAudioFormat);
 				}
 				catch (Exception E) {
 					audioSource = null;
 				}
 			}
+			--i;
+			PRINTLN("Using Audiodevice `"+(mixers[i]==null?"Java Sound Engine":mixers[i].toString())+"'");
 			audioSource.start();
 		}
 		catch (Exception e) {
@@ -1099,14 +1115,17 @@ public class AudioController {
 
 			//TODO: Assume Stereo
 			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
-			if (audioBufferIndex == 22050) audioBufferIndex-=2;
+			audioBufferIndex %= audioBuffer.length;
 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
 
-			if (audioBufferIndex >= 64) {
+			if (audioBufferIndex >= WRITE_OUT_COUNT_FIXME) { //WriteOut every n samples (1<<5 for linux, at least 1<<7 for windows)
 #ifndef JMGBE
-			if (!isMuted)
-				audioSource.write(audioBuffer, 0, audioBufferIndex);
+			if(audioSource!=null)
+				if (!isMuted)
+					audioSource.write(audioBuffer, 0, audioBufferIndex);
+				else
+					audioSource.write(audioMutedBuffer, 0, audioBufferIndex);
 #endif
 				audioBufferIndex = 0;
 			}
