@@ -103,10 +103,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JMenuItem menuitemPause;
 		JMenuItem menuitemReset;
 		JMenu menuColorScheme;
-		JMenuItem menuitemColorSchemeOriginalGameboy;
-		JMenuItem menuitemColorSchemeBlackAndWhite;
-		JMenuItem menuitemColorSchemeGreys;
-		JMenuItem menuitemColorSchemeCustom;
+		JCheckBoxMenuItem menuitemColorSchemeOriginalGameboy;
+		JCheckBoxMenuItem menuitemColorSchemeBlackAndWhite;
+		JCheckBoxMenuItem menuitemColorSchemeGreys;
+		JCheckBoxMenuItem menuitemColorSchemeCustom;
 		JMenu menuSoundChannels;
 		JCheckBoxMenuItem menuitemSoundChannel1;
 		JCheckBoxMenuItem menuitemSoundChannel2;
