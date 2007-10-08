@@ -1191,10 +1191,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			gui.loadConfig();
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
-			
+			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
 			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
 			gui.loadKeyBinds();
-			cheatcodes = new CheatCodeEditor(frame, curcartname);
+			
 			cheatcodes.applyCheatCodes(cart);
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
