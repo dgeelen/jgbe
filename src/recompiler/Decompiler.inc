@@ -66,7 +66,17 @@ private VECTOR(SimpleAssign) Decompile(int PC) {
 
 			case 0x22: { //WRITE_V(R16RHL, A); DO_INC16(HL); break; // LDI  (HL), A
 				ASS_V_E(EMEM2(EREG(H),EREG(L)), EREG(A));
+				// H := ( ( ( ( H << 8 ) | L ) + 1 ) >> 8) & 0xff;
 				ASS_V_E(EREG(H), FAND(FSHR(FINC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(8)), ECONST(0xff)));
+				// L := ( ( ( H << 8 ) | L ) + 1 ) & 0xff
+				
+				// H := ( ( ( ( H << 8 ) | L ) + 1 ) >> 8) & 0xff;
+				// L := (L + 1) & 0xff
+				
+				// T := (L + 1)
+				// H := (H + (T >> 8) ) & 0xff
+				// L := T & 0xff
+				
 				ASS_V_E(EREG(L), FAND(FINC(F_OR(FSHL(EREG(H), ECONST(8)), EREG(L)), ECONST(1)), ECONST(0xff)));
 			}; break;
 			

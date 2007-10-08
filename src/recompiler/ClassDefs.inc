@@ -3,14 +3,30 @@
 #define REF_READ cp.addMethodref("CPU", "read", Type.getMethodSignature(Type.INT, new Type[] { Type.INT }))
 #define REF_WRITE cp.addMethodref("CPU", "write_fast1", Type.getMethodSignature(Type.VOID, new Type[] { Type.INT , Type.INT }))
 
+#define SAList VECTOR(SimpleAssign)
+
 abstract class Variable extends Expression {
 	abstract public void doAssembleStore(InstructionList il, ConstantPoolGen cp);
+	public Expression expandVars(SAList sal, Int ret) {
+		FOREACH(SimpleAssign, sa, sal) {
+			if (equals(sa.target)) {
+				++ret.value;
+				return sa.value;
+			}
+		}
+		return this;
+	}
 }
+
 
 class SimpleVariable extends Variable {
 	private String name;
+	private int bitmask;
 	public SimpleVariable(String aname) {
 		name = aname;
+		bitmask = 0xff;
+		if (name.equals("PC")) bitmask = 0xffff;
+		if (name.equals("SP")) bitmask = 0xffff;
 	}
 	String getName() { return name; };
 	public String asString() { return name; };
@@ -24,6 +40,9 @@ class SimpleVariable extends Variable {
 		if (!(v instanceof SimpleVariable))
 			return false;
 		return name.equals(((SimpleVariable)v).name);
+	}
+	public int bitMask() {
+		return bitmask;
 	}
 }
 
@@ -40,6 +59,14 @@ class SimpleBoolVariable extends Variable {
 	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
 		il.append(new PUTSTATIC(REF_CPUVAR_BOOL(name)));
 	};
+	public boolean equals(Object v) {
+		if (!(v instanceof SimpleBoolVariable))
+			return false;
+		return name.equals(((SimpleBoolVariable)v).name);
+	}
+	public int bitMask() {
+		return 1;
+	}
 }
 
 class TemporaryVariable extends Variable {
@@ -55,6 +82,14 @@ class TemporaryVariable extends Variable {
 	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
 		il.append(new ISTORE(number));
 	};
+	public boolean equals(Object v) {
+		if (!(v instanceof TemporaryVariable))
+			return false;
+		return number == (((TemporaryVariable)v).number);
+	}
+	public int bitMask() {
+		return 0xffff;
+	}
 }
 
 class MemoryVariable extends Variable {
@@ -75,6 +110,14 @@ class MemoryVariable extends Variable {
 		addr.doAssembleValue(il, cp);
 		il.append(new INVOKESTATIC(REF_WRITE));
 	};
+	public boolean equals(Object v) {
+		if (!(v instanceof MemoryVariable))
+			return false;
+		return addr.equals(((MemoryVariable)v).addr);
+	}
+	public int bitMask() {
+		return 0xff;
+	}
 }
 
 class ReturnVariable extends Variable {
@@ -86,6 +129,12 @@ class ReturnVariable extends Variable {
 	public void doAssembleStore(InstructionList il, ConstantPoolGen cp) {
 		il.append(InstructionConstants.IRETURN);
 	};
+	public boolean equals(Object v) {
+		return (v instanceof ReturnVariable);
+	}
+	public int bitMask() {
+		return 0xffff;
+	}
 }
 
 class FunctionCALCZF extends FunctionExpression {
@@ -112,6 +161,9 @@ class FunctionCALCZF extends FunctionExpression {
 
 		ti1.setTarget(th1);
 		ti2.setTarget(th2);
+	}
+	public int bitMask() {
+		return CPU.ZF_Mask;
 	}
 }
 
@@ -142,9 +194,12 @@ class FunctionIIF extends FunctionExpression {
 		ti1.setTarget(th1);
 		ti2.setTarget(th2);
 	}
+	public int bitMask() {
+		return args[1].bitMask() | args[2].bitMask();
+	}
 }
 
-class BinaryFunction extends FunctionExpression {
+abstract class BinaryFunction extends FunctionExpression {
 	private String fname;
 	private Instruction instr;
 	public String funcName() { return fname; };
@@ -164,12 +219,18 @@ class FunctionAND extends BinaryFunction {
 	public FunctionAND(Expression expr1, Expression expr2) {
 		super("and", InstructionConstants.IAND, expr1, expr2);
 	}
+	public int bitMask() {
+		return args[1].bitMask() & args[2].bitMask();
+	}
 }
 #define FAND(x,y) (new FunctionAND((x),(y)))
 
 class FunctionOR extends BinaryFunction {
 	public FunctionOR(Expression expr1, Expression expr2) {
 		super("or", InstructionConstants.IOR, expr1, expr2);
+	}
+	public int bitMask() {
+		return args[1].bitMask() & args[2].bitMask();
 	}
 }
 #define F_OR(x,y) (new FunctionOR((x),(y)))
@@ -178,11 +239,17 @@ class FunctionXOR extends BinaryFunction {
 	public FunctionXOR(Expression expr1, Expression expr2) {
 		super("xor", InstructionConstants.IXOR, expr1, expr2);
 	}
+	public int bitMask() {
+		return args[1].bitMask() | args[2].bitMask();
+	}
 }
 
 class FunctionDEC extends BinaryFunction {
 	public FunctionDEC(Expression expr1, Expression expr2) {
 		super("dec", InstructionConstants.ISUB, expr1, expr2);
+	}
+	public int bitMask() {
+		return 0xffff; // TODO: take into account arguments width
 	}
 }
 #define FDEC(x,y) (new FunctionDEC((x),(y)))
@@ -191,12 +258,20 @@ class FunctionINC extends BinaryFunction {
 	public FunctionINC(Expression expr1, Expression expr2) {
 		super("inc", InstructionConstants.IADD, expr1, expr2);
 	}
+	public int bitMask() {
+		return 0xffff; // TODO: take into account arguments width
+	}
 }
 #define FINC(x,y) (new FunctionINC((x),(y)))
 
 class FunctionSHL extends BinaryFunction {
 	public FunctionSHL(Expression expr1, Expression expr2) {
 		super("shl", InstructionConstants.ISHL, expr1, expr2);
+	}
+	public int bitMask() {
+		if (args[1] instanceof ConstantExpression)
+			return args[0].bitMask() << ((ConstantExpression)args[1]).value;
+		return 0xffff;
 	}
 }
 #define FSHL(x,y) (new FunctionSHL((x),(y)))
@@ -205,12 +280,19 @@ class FunctionSHR extends BinaryFunction {
 	public FunctionSHR(Expression expr1, Expression expr2) {
 		super("shr", InstructionConstants.ISHR, expr1, expr2);
 	}
+	public int bitMask() {
+		if (args[1] instanceof ConstantExpression)
+			return args[0].bitMask() >> ((ConstantExpression)args[1]).value;
+		return 0xffff;
+	}
 }
 #define FSHR(x,y) (new FunctionSHR((x),(y)))
 
 abstract class Expression {
 	abstract public String asString();
 	abstract public void doAssembleValue(InstructionList il, ConstantPoolGen cp);
+	abstract public Expression expandVars(SAList sal, Int res);
+	abstract public int bitMask();
 }
 
 abstract class FunctionExpression extends Expression {
@@ -236,6 +318,23 @@ abstract class FunctionExpression extends Expression {
 		s.append(")");
 		return s.toString();
 	};
+	public Expression expandVars(SAList sal, Int res) {
+		for (int i = 0; i < args.length; ++i) {
+			args[i] = args[i].expandVars(sal, res);
+		}
+		return this;
+	}
+	public boolean equals(Object v) {
+		if (!(v instanceof FunctionExpression))
+			return false;
+		FunctionExpression o = (FunctionExpression)v;
+		if (args.length != o.args.length)
+			return false;
+		for (int i = 0; i < args.length; ++i)
+			if (!args[i].equals(o.args[i]))
+				return false;
+		return true;
+	}
 }
 
 class ConstantExpression extends Expression {
@@ -248,6 +347,17 @@ class ConstantExpression extends Expression {
 	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
 		il.append(new PUSH(cp, value));
 	};
+	public boolean equals(Object v) {
+		if (!(v instanceof ConstantExpression))
+			return false;
+		return value == (((ConstantExpression)v).value);
+	}
+	public Expression expandVars(SAList sal, Int res) {
+		return this;
+	}
+	public int bitMask() {
+		return value;
+	}
 }
 
 class ConstantBoolExpression extends Expression {
@@ -260,6 +370,24 @@ class ConstantBoolExpression extends Expression {
 	public void doAssembleValue(InstructionList il, ConstantPoolGen cp) {
 		il.append(new PUSH(cp, value));
 	};
+	public boolean equals(Object v) {
+		if (!(v instanceof ConstantBoolExpression))
+			return false;
+		return value == (((ConstantBoolExpression)v).value);
+	}
+	public Expression expandVars(SAList sal, Int res) {
+		return this;
+	}
+	public int bitMask() {
+		return value ? 1 : 0;
+	}
+}
+
+class Int {
+	public int value;
+	public Int(int val) {
+		value = val;
+	}
 }
 
 /** Assignment into which the GB asm is transformed into first */
@@ -276,6 +404,15 @@ class SimpleAssign {
 	public void doAssemble(InstructionList il, ConstantPoolGen cp) {
 		value.doAssembleValue(il, cp);
 		target.doAssembleStore(il, cp);
+	}
+	public int expandVars(SAList sal) {
+		Int ret = new Int(0);
+		if (target instanceof MemoryVariable) {
+			MemoryVariable mv = (MemoryVariable)target;
+			mv.addr = mv.addr.expandVars(sal, ret);
+		}
+		value = value.expandVars(sal, ret);
+		return ret.value;
 	}
 }
 
