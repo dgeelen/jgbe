@@ -17,7 +17,5 @@ CLASSFILES:=$(CLASSDIR)/swinggui.class $(CLASSFILES)
 all: preprocess $(CLASSFILES)
 
 $(CLASSDIR)/%.class: $(SRCDIR)/%.java
-# %.class: %.java
-#	@echo "$* | $@ | $<"
 	@echo "[java -> class] $*"
 	@jikes $(JAVAC_OPTS) $<
