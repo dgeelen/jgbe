@@ -84,18 +84,16 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		static public String biosfilename;
 		//menuitem <-- here for my KDev autocomplete
 		JMenuItem menuitemExit;
-		JMenuItem menuitemScale1x;
-		JMenuItem menuitemScale2x;
-		JMenuItem menuitemScale3x;
-		JMenuItem menuitemScale4x;
+		JCheckBoxMenuItem menuitemScale1x;
+		JCheckBoxMenuItem menuitemScale2x;
+		JCheckBoxMenuItem menuitemScale3x;
+		JCheckBoxMenuItem menuitemScale4x;
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
 		JMenuItem menuitemIncFrameSkip;
 		JMenuItem menuitemDecFrameSkip;
-		JMenuItem menuitemSoundEnable;
-		JMenuItem menuitemSoundDisable;
-		JMenuItem menuitemSoundToggle;
+		JCheckBoxMenuItem menuitemEnableSound;
 		JMenuItem[] menuitemSelectState;
 		JMenuItem[] menuItems; //Savestates?
 		JMenuItem menuitemSeparator;
@@ -107,13 +105,13 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JMenuItem menuitemColorSchemeGreys;
 		JMenuItem menuitemColorSchemeCustom;
 		JMenu menuSoundChannels;
-		JMenuItem menuitemSoundChannel1;
-		JMenuItem menuitemSoundChannel2;
-		JMenuItem menuitemSoundChannel3;
-		JMenuItem menuitemSoundChannel4;
+		JCheckBoxMenuItem menuitemSoundChannel1;
+		JCheckBoxMenuItem menuitemSoundChannel2;
+		JCheckBoxMenuItem menuitemSoundChannel3;
+		JCheckBoxMenuItem menuitemSoundChannel4;
 		JMenu menuOther;
 		JMenuItem menuitemCheats;
-		JMenuItem menuitemToggleCheats;
+		JCheckBoxMenuItem menuitemEnableCheats;
 		JCheckBoxMenuItem menuitemUseBIOS;
 		JMenuItem menuitemSetBIOS;
 		JMenu menuEmuSpeed;
@@ -130,7 +128,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JMenuItem menuitemLinkClient;
 		JMenuItem menuitemLinkSever;
 		JMenuItem menuitemConfigKeys;
-		JMenuItem menuitemToggleRemoteKeys;
+		JCheckBoxMenuItem	menuitemToggleRemoteKeys;
 
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
@@ -220,10 +218,14 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuFile.add( menuitemExit );
 
 			menuScaling = new JMenu( "Scaling");
-			menuitemScale1x = new JMenuItem( "Scale 1x", KeyEvent.VK_1 );
-			menuitemScale2x = new JMenuItem( "Scale 2x", KeyEvent.VK_2 );
-			menuitemScale3x = new JMenuItem( "Scale 3x", KeyEvent.VK_3 );
-			menuitemScale4x = new JMenuItem( "Scale 4x", KeyEvent.VK_4 );
+			menuitemScale1x = new JCheckBoxMenuItem( "Scale 1x", true );
+			menuitemScale2x = new JCheckBoxMenuItem( "Scale 2x", true );
+			menuitemScale3x = new JCheckBoxMenuItem( "Scale 3x", true );
+			menuitemScale4x = new JCheckBoxMenuItem( "Scale 4x", true );
+			menuitemScale1x.setMnemonic( KeyEvent.VK_1 );
+			menuitemScale2x.setMnemonic( KeyEvent.VK_2 );
+			menuitemScale3x.setMnemonic( KeyEvent.VK_3 );
+			menuitemScale4x.setMnemonic( KeyEvent.VK_4 );
 			menuitemScale1x.addActionListener( this );
 			menuitemScale2x.addActionListener( this );
 			menuitemScale3x.addActionListener( this );
@@ -279,22 +281,21 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 			menuSound = new JMenu( "Sound");
 			menuSound.setMnemonic( KeyEvent.VK_U );
-			menuitemSoundEnable = new JMenuItem( "Enable Sound", KeyEvent.VK_E );
-			menuitemSoundDisable = new JMenuItem( "Disable Sound", KeyEvent.VK_D );
-			menuitemSoundToggle = new JMenuItem( "Toggle Sound", KeyEvent.VK_T );
-
-			menuitemSoundEnable.addActionListener( this );
-			menuitemSoundDisable.addActionListener( this );
-			menuitemSoundToggle.addActionListener( this );
-			menuSound.add( menuitemSoundEnable );
-			menuSound.add( menuitemSoundDisable );
-			menuSound.add( menuitemSoundToggle );
+			menuitemEnableSound = new JCheckBoxMenuItem( "Enabled sound", true );
+			menuitemEnableSound.setMnemonic( KeyEvent.VK_T );
+			menuitemEnableSound.addActionListener( this );
+			menuSound.add( menuitemEnableSound );
+			
 			menuSoundChannels=new JMenu("Channels");
-			menuitemSoundChannel1=new JMenuItem( "Toggle channel 1", KeyEvent.VK_1 );
-			menuitemSoundChannel2=new JMenuItem( "Toggle channel 2", KeyEvent.VK_2 );
-			menuitemSoundChannel3=new JMenuItem( "Toggle channel 3", KeyEvent.VK_3 );
-			menuitemSoundChannel4=new JMenuItem( "Toggle channel 4", KeyEvent.VK_4 );
+			menuitemSoundChannel1=new JCheckBoxMenuItem( "Toggle channel 1", true );
+			menuitemSoundChannel2=new JCheckBoxMenuItem( "Toggle channel 2", true );
+			menuitemSoundChannel3=new JCheckBoxMenuItem( "Toggle channel 3", true );
+			menuitemSoundChannel4=new JCheckBoxMenuItem( "Toggle channel 4", true );
 
+			menuitemSoundChannel1.setMnemonic( KeyEvent.VK_1 );
+			menuitemSoundChannel2.setMnemonic( KeyEvent.VK_2 );
+			menuitemSoundChannel3.setMnemonic( KeyEvent.VK_3 );
+			menuitemSoundChannel4.setMnemonic( KeyEvent.VK_4 );
 			menuitemSoundChannel1.addActionListener(this);
 			menuitemSoundChannel2.addActionListener(this);
 			menuitemSoundChannel3.addActionListener(this);
@@ -309,9 +310,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuOther.setMnemonic( KeyEvent.VK_O );
 			menuitemCheats = new JMenuItem("Edit cheats", KeyEvent.VK_C);
 			menuitemCheats.addActionListener(this);
-			menuOther.add(menuitemCheats);
-			menuitemToggleCheats=new JMenuItem("Toggle cheats on/off", KeyEvent.VK_T);
-			menuitemToggleCheats.addActionListener(this);
+			menuitemEnableCheats=new JCheckBoxMenuItem("Enable cheat codes", false);
+			menuitemEnableCheats.setMnemonic(KeyEvent.VK_T);
+			menuitemEnableCheats.addActionListener(this);
 			menuitemUseBIOS=new JCheckBoxMenuItem("Run BIOS on reset", false);
 			menuitemUseBIOS.setMnemonic(KeyEvent.VK_B);
 			menuitemUseBIOS.addActionListener(this);
@@ -323,11 +324,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemScaleBuilder.addActionListener(this);
 			menuOther.add(menuitemScaleBuilder);
 #endif
-			menuOther.add(menuitemCheats);
-			menuOther.add(menuitemToggleCheats);
-			menuOther.add(menuitemUseBIOS);
-			menuOther.add(menuitemSetBIOS);
-			
+			menuitemToggleRemoteKeys = new JCheckBoxMenuItem("Use Remote Keys", false);
+			menuitemToggleRemoteKeys.setMnemonic(KeyEvent.VK_R);
+			menuitemToggleRemoteKeys.addActionListener(this);
+
 			menuLink=new JMenu("Link");
 			menuLink.setMnemonic( KeyEvent.VK_L );
 			menuitemLinkServe = new JMenuItem("Start Link Server", KeyEvent.VK_S);
@@ -343,12 +343,13 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 			menuitemConfigKeys = new JMenuItem("Config keys",KeyEvent.VK_1);
 			menuitemConfigKeys.addActionListener(this);
-			menuOther.add(menuitemConfigKeys);
-
-			menuitemToggleRemoteKeys = new JMenuItem("Use Remote Keys", KeyEvent.VK_R);
-			menuitemToggleRemoteKeys.addActionListener(this);
+			menuOther.add(menuitemEnableCheats);
+			menuOther.add(menuitemUseBIOS);
 			menuOther.add(menuitemToggleRemoteKeys);
-
+			menuOther.add(menuitemCheats);
+			menuOther.add(menuitemSetBIOS);
+			menuOther.add(menuitemConfigKeys);
+			
 			menuEmuSpeed = new JMenu("Emulation Speed");
 			menuitemEmuSpeedPlus  = new JMenuItem("+25%", KeyEvent.VK_PLUS);
 			menuitemEmuSpeedMinus = new JMenuItem("-25%", KeyEvent.VK_MINUS);
@@ -391,13 +392,13 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemColorSchemeCustom.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSaveState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemLoadState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemSoundToggle.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEnableSound.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSoundChannel1.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSoundChannel2.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSoundChannel3.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSoundChannel4.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemToggleCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEnableCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedPlus.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedMinus.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedMul.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -482,6 +483,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				String s = "Menu Item source: " + source.getText()
 			           + " (an instance of " + getClassName( source ) + ")";
 				System.out.println(s);*/
+			#define SET_SCALE_MODE_BOOLEANS menuitemScale1x.setState( VC.nscale == 1 ); \
+			                                menuitemScale2x.setState( VC.nscale == 2 ); \
+			                                menuitemScale3x.setState( VC.nscale == 3 ); \
+			                                menuitemScale4x.setState( VC.nscale == 4 ); \
 
 			boolean configStateChanged = false;
 			if (e.getSource().equals( menuitemExit)) {
@@ -494,6 +499,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 				configStateChanged = true;
+				SET_SCALE_MODE_BOOLEANS;
 			}
 			else if (e.getSource().equals( menuitemScale2x )) {
 				addOSDLine("Set scaling: Scale2x");
@@ -502,6 +508,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 				configStateChanged = true;
+				SET_SCALE_MODE_BOOLEANS;
 			}
 			else if (e.getSource().equals( menuitemScale3x )) {
 				addOSDLine("Set scaling: Scale3x");
@@ -510,6 +517,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 				configStateChanged = true;
+				SET_SCALE_MODE_BOOLEANS;
 			}
 			else if (e.getSource().equals( menuitemScale4x )) {
 				addOSDLine("Set scaling: Scale4x");
@@ -518,6 +526,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 				configStateChanged = true;
+				SET_SCALE_MODE_BOOLEANS;
 			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
 				++VC.fskip;
@@ -529,19 +538,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				addOSDLine("Decreased frameskip: "+VC.fskip);
 				configStateChanged = true;
 			}
-			else if (e.getSource().equals( menuitemSoundEnable )) {
-				cpu.AC.isMuted = false;
-				addOSDLine("Enabled sound");
-				configStateChanged = true;
-			}
-			else if (e.getSource().equals( menuitemSoundDisable )) {
-				cpu.AC.isMuted = true;
-				addOSDLine("Disabled sound");
-				configStateChanged = true;
-			}
-			else if (e.getSource().equals( menuitemSoundToggle )) {
-				cpu.AC.isMuted = !cpu.AC.isMuted;
-				addOSDLine(cpu.AC.isMuted ? "Disabled sound" : "Enabled sound");
+			else if (e.getSource().equals( menuitemEnableSound )) {
+				cpu.AC.isMuted = !menuitemEnableSound.getState();
+				addOSDLine( cpu.AC.isMuted?"Disabled sound":"Enabled sound");
 				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel1)) {
@@ -564,9 +563,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				addOSDLine(cpu.AC.S4.muted==0 ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
 				configStateChanged = true;
 			}
-			else if (e.getSource().equals( menuitemToggleCheats)) {
+			else if (e.getSource().equals( menuitemEnableCheats)) {
 				cheatcodes.ToggleCheats(cart);
-				addOSDLine("Toggled cheats " + (cheatcodes.UseCheats?"on":"off") );
+				addOSDLine("Cheats codes are now " + (cheatcodes.UseCheats?"enabled":"disabled") );
 			}
 			else if (e.getSource().equals( menuitemConfigKeys )) {
 				keyConfigDialog k=new keyConfigDialog(frame, keyMap);
@@ -1022,11 +1021,18 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 				menuitemUseBIOS.setState(runbiosonreset);
+				menuitemEnableSound.setState(!cpu.AC.isMuted);
 				cpu.AC.setChannelActive(1, soundchannel1active);
 				cpu.AC.setChannelActive(2, soundchannel2active);
 				cpu.AC.setChannelActive(3, soundchannel3active);
 				cpu.AC.setChannelActive(4, soundchannel4active);
+				menuitemSoundChannel1.setState( soundchannel1active );
+				menuitemSoundChannel2.setState( soundchannel2active );
+				menuitemSoundChannel3.setState( soundchannel3active );
+				menuitemSoundChannel4.setState( soundchannel4active );
+				SET_SCALE_MODE_BOOLEANS;
 				if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
+				menuitemEnableCheats.setState(usecheats);
 				in.close();
 			} catch (IOException e) {
 				System.out.println("error reading jgbe.conf");
