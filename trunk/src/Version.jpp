@@ -1,0 +1,8 @@
+#include "Global.inc"
+#include "svnrev.inc"
+
+public class Version {
+	// note: do not make this final, because then it will be inlined and
+	//       when it changes it will not be noticed
+	static String str = JGBE_VERSION_STRING;
+}
