@@ -17,6 +17,11 @@ public class Cartridge {
 	protected int[][] MM_RAM = new int[MAX_RAM_MM][];;
 	protected int[] BIOS_ROM = new int[0x100];
 
+	public void loadBios(String filename) {
+		for(int i = 0 ; i < 0x100 ; ++i) BIOS_ROM[i] = 0;
+		new Bios(filename, BIOS_ROM);
+	}
+
 	protected int rom_mm_size;
 	protected int ram_mm_size;
 
@@ -50,9 +55,9 @@ public class Cartridge {
 			err_msg = e.getMessage();
 		}
 #ifdef USE_JAVA_MOBILE
-		new Bios("/boot.rom", BIOS_ROM);
+		loadBios("/boot.rom");
 #else
-		new Bios("boot.rom", BIOS_ROM);
+		loadBios("boot.rom");
 #endif
 	PRINTFREEMEM("cartridge.create done");
 	}
