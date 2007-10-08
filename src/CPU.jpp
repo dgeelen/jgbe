@@ -60,7 +60,7 @@ static class DummyCPURunBlock implements CPURunBlock {
 		public static int RemoteKeyStatus=0;
 		public static boolean useRemoteKeys = false;
 		public static int keyBounce = 0;
-		public static int keyBounceWaitNext=0x3f;
+		public static int keyBounceWaitNext;
 
 		static boolean BIOS_enabled = false;
 
@@ -152,6 +152,8 @@ static class DummyCPURunBlock implements CPURunBlock {
 			SL_IF_VERSION( 0,  2) SL_SKIP(UINT8, 1); //SL_UINT8(DirectionKeyStatus);
 			SL_IF_VERSION( 0,  2) SL_SKIP(UINT8, 1); //SL_UINT8(ButtonKeyStatus);
 			SL_IF_VERSION(11, -1) SL_UINT8(KeyStatus);
+			SL_IF_VERSION(12, -1) SL_INT(keyBounce);
+			SL_IF_VERSION(12, -1) SL_INT(keyBounceWaitNext);
 			SL_INT(lastException);
 			SL_BOOL(BIOS_enabled);
 
@@ -906,6 +908,7 @@ static int togglestart=1;
 			IME=true; ///< Interrupt Master Enable
 			halted=false;
 			KeyStatus=0; //bitmask
+			keyBounce=0;
 			lastException=0;
 			hw_ilines = 0;
 			hblank_dma_state = 0;
@@ -999,14 +1002,12 @@ static int togglestart=1;
 		public static final void pressButton(int i) {
 			if ((GUIKeyStatus&i) != 0) return;
 			GUIKeyStatus |= i;
-			keyBounce=1000; //times to bounce the key
 			//PRINTLN("PRESS "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
 		public static final void releaseButton(int i) {
 			if ((GUIKeyStatus&i) == 0) return;
 			GUIKeyStatus&=~i;
-			keyBounce=1000; //times to bounce the key
 			//PRINTLN("RELEA "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
@@ -1077,11 +1078,10 @@ static int togglestart=1;
 			}*/
 #endif
 
-			--keyBounceWaitNext;
-			if(keyBounceWaitNext == 0) {//wait some instructions
-				keyBounceWaitNext=1000;
-				if (keyBounce > 0) {
-// 					PRINTF(".keyBounce\n");
+			if (keyBounce > 0) {
+				--keyBounceWaitNext;
+				if(keyBounceWaitNext < 0) {//wait some instructions
+					keyBounceWaitNext=1000;
 					triggerInterrupt(4);
 					--keyBounce;
 				}
@@ -1270,7 +1270,11 @@ static int togglestart=1;
 #endif
 
 		public static final int nextinstruction() {
-			KeyStatus = GUIKeyStatus;
+			if (KeyStatus != GUIKeyStatus) {
+				keyBounce = 1000;
+				keyBounceWaitNext = 0;
+				KeyStatus = GUIKeyStatus;
+			}
 			int res = 4*execute();
 			SP &= 0xffff;
 			PC &= 0xffff;
@@ -1337,7 +1341,6 @@ static int togglestart=1;
 							int rkeys = (rstatus >> 16) & 0xff;
 							if (GUIKeyStatus != rkeys) {
 								GUIKeyStatus = rkeys;
-								keyBounce = 1000; //times to bounce the key
 							}
 						}
 
