@@ -108,7 +108,18 @@ static class DummyCPURunBlock implements CPURunBlock {
 			return (cartridge != null);
 		}
 
+		public static String first_save_string = new String();
+		public static String last_save_string = new String();
+
 		static SAVELOAD_FUNCTION {
+			SL_IF_VERSION( 0,  9) first_save_string = "unknown";
+			SL_IF_VERSION( 0,  9) last_save_string = "unknown";
+			SL_IF_VERSION(10, -1) SL_STRING(first_save_string);
+			if (SL_SAVE) last_save_string = Version.str;
+			SL_IF_VERSION(10, -1) SL_STRING(last_save_string);
+			//PRINTLN("first:"+first_save_string);
+			//PRINTLN("last:"+last_save_string);
+
 			SL_IF_VERSION( 1, -1) {
 				SL_UINT8(B);
 				SL_UINT8(C);
@@ -903,6 +914,7 @@ static int togglestart=1;
 			lastException=0;
 			hw_ilines = 0;
 			hblank_dma_state = 0;
+			first_save_string = Version.str;
 		}
 
 		static final protected long cycles() {
