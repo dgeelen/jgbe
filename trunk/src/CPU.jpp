@@ -2,8 +2,6 @@
 #include "SaveLoad.inc"
 #include "CPU.inc"
 
-#define protected public
-#define private public
 import java.net.*;
 import java.io.*;
 import java.util.zip.*;
@@ -12,72 +10,72 @@ public class CPU
 static class DummyCPURunBlock implements CPURunBlock {
 	public int execute() { ASSERT(false); return 0;};
 }
-		static private CPU singleton = null;
-		protected static final int CARRY8b    = 512;
-		protected static final int CARRY8b_SHR = 5;
+		public static CPU singleton = null;
+		public static final int CARRY8b    = 512;
+		public static final int CARRY8b_SHR = 5;
 
 		//FLAGS
-		protected static final int ZF_Shift = 7;
-		protected static final int NF_Shift = ZF_Shift - 1;
-		protected static final int HC_Shift = NF_Shift - 1;
-		protected static final int CF_Shift = HC_Shift - 1;
-		protected static final int ZF_Mask  = 1 << ZF_Shift;
-		protected static final int NF_Mask  = 1 << NF_Shift;
-		protected static final int HC_Mask  = 1 << HC_Shift;
-		protected static final int CF_Mask  = 1 << CF_Shift;
+		public static final int ZF_Shift = 7;
+		public static final int NF_Shift = ZF_Shift - 1;
+		public static final int HC_Shift = NF_Shift - 1;
+		public static final int CF_Shift = HC_Shift - 1;
+		public static final int ZF_Mask  = 1 << ZF_Shift;
+		public static final int NF_Mask  = 1 << NF_Shift;
+		public static final int HC_Mask  = 1 << HC_Shift;
+		public static final int CF_Mask  = 1 << CF_Shift;
 
-		static protected long TotalInstrCount = 0;
-		static protected long TotalCycleCount = 0;
+		public static long TotalInstrCount = 0;
+		public static long TotalCycleCount = 0;
 
-		protected static int B = 1;
-		protected static int C = 2;
-		protected static int D = 3;
-		protected static int E = 4;
-		protected static int F = 5;
-		protected static int H = 6;
-		protected static int L = 7;
-		protected static int A = 0;
+		public static int B = 1;
+		public static int C = 2;
+		public static int D = 3;
+		public static int E = 4;
+		public static int F = 5;
+		public static int H = 6;
+		public static int L = 7;
+		public static int A = 0;
 
-		static protected int[] IOP = new int[0x80]; //IO Ports
-		static protected int[] HRAM = new int[0x7F]; //HighRAM
-		static protected int[][] WRAM = new int[0x08][0x1000]; //8x4k InternalRAM
-		static protected int CurrentWRAMBank=1;
+		public static int[] IOP = new int[0x80]; //IO Ports
+		public static int[] HRAM = new int[0x7F]; //HighRAM
+		public static int[][] WRAM = new int[0x08][0x1000]; //8x4k InternalRAM
+		public static int CurrentWRAMBank=1;
 
-		static protected boolean doublespeed = false;
-		static private boolean speedswitch = false;
+		public static boolean doublespeed = false;
+		public static boolean speedswitch = false;
 
-		static private int DIVcntdwn = 0;
-		static private int TIMAcntdwn = 0;
-		static private int LCDCcntdwn = 40; //gnuboy says 40
+		public static int DIVcntdwn = 0;
+		public static int TIMAcntdwn = 0;
+		public static int LCDCcntdwn = 40; //gnuboy says 40
 
-		public    static int PC=0;         ///< Program counter
-		protected static int SP=0;         ///< Stack Pointer
-		protected static int IE=0;         ///< Interrupt Enable (allowed interrupts)
-		protected static boolean IME=true; ///< Interrupt Master Enable
-		protected static boolean halted=false;
-		protected static int hw_ilines=0;  ///< gnuboy magix
+		public static int PC=0;         ///< Program counter
+		public static int SP=0;         ///< Stack Pointer
+		public static int IE=0;         ///< Interrupt Enable (allowed interrupts)
+		public static boolean IME=true; ///< Interrupt Master Enable
+		public static boolean halted=false;
+		public static int hw_ilines=0;  ///< gnuboy magix
 		//IO
-		static public int KeyStatus=0; //bitmask, low 4=direction, upper 4=start,select,a,b, inverted from GameBoy POV
-		static public int RemoteKeyStatus=0;
-		static public boolean useRemoteKeys = false;
-		private static int keyBounce = 0;
-		private static int keyBounceWaitNext=0x3f;
+		public static int KeyStatus=0; //bitmask, low 4=direction, upper 4=start,select,a,b, inverted from GameBoy POV
+		public static int RemoteKeyStatus=0;
+		public static boolean useRemoteKeys = false;
+		public static int keyBounce = 0;
+		public static int keyBounceWaitNext=0x3f;
 
 		static boolean BIOS_enabled = false;
 
 		//CPU Class variables
-		static private Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
-		static private int lastException=0;
+		public static Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
+		public static int lastException=0;
 		#ifndef USE_JAVA_MOBILE
-			static private Disassembler deasm;
+			public static Disassembler deasm;
 		#endif
-		static protected VideoController VC;
-		static protected AudioController AC;
+		public static VideoController VC;
+		public static AudioController AC;
 		static int hblank_dma_state;
 		static int vcmode;
 		//Debug helpers
-		protected static int last_memory_access=-1;
-		protected static int last_memory_access_internal=-1;
+		public static int last_memory_access=-1;
+		public static int last_memory_access_internal=-1;
 
 		public CPU() {
 			if (singleton != null) {
@@ -235,10 +233,10 @@ static class DummyCPURunBlock implements CPURunBlock {
 			stateSaveLoad(false, loadversion, null, distream);
 		}
 
-		static private int[][] rMemMap = new int[0x10][];
-		static private int[][] wMemMap = new int[0x10][];
+		public static int[][] rMemMap = new int[0x10][];
+		public static int[][] wMemMap = new int[0x10][];
 
-		static public boolean isCGB() {
+		public static boolean isCGB() {
 			//System.out.println("** <INSERT DESCRIPTIVE TEXT HERE> ** [0x0143] = " + read(0x0143));
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
@@ -254,7 +252,7 @@ check for badness = $afa
 */
 
 
-		static private int hblank_dma() {
+		public static int hblank_dma() {
 			if (hblank_dma_state < (1<<7)) return 0;
 
 			int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
@@ -277,7 +275,7 @@ check for badness = $afa
 #define R_LCDC VC.LCDC
 #define R_STAT VC.STAT
 #define R_LY VC.LY
-		static final private void lcdc_trans() {
+		public static final void lcdc_trans() {
 			/** TODO: put this logic inside VideoController? */
 			/* Mode 0  ___000___000___000___000___000___000________________000
 			 * Mode 1  ____________________________________11111111111111_____
@@ -367,7 +365,7 @@ check for badness = $afa
 			}
 		}
 
-		static final private void refreshMemMap() {
+		public static final void refreshMemMap() {
 			if (BIOS_enabled)
 				rMemMap[0x0] = null;
 			else
@@ -410,7 +408,7 @@ check for badness = $afa
 			// 0xF // lots of special stuff here...
 		}
 
-		static final protected int read(int index) {
+		public static final int read(int index) {
 			last_memory_access_internal=index;
 			int mm[]=rMemMap[index>>12];
 			if (mm!=null)
@@ -419,7 +417,7 @@ check for badness = $afa
 		}
 
 static int togglestart=1;
-		static final private int read_slow(int index) {
+		public static final int read_slow(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -619,7 +617,7 @@ static int togglestart=1;
 		}
 
 		// has arguments swapped for recompiler use (stack order and stuff)
-		static final protected void write_fast1(int value, int index) {
+		public static final void write_fast1(int value, int index) {
 			last_memory_access_internal=index;
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
@@ -629,7 +627,7 @@ static int togglestart=1;
 			write_slow(index, value);
 		}
 
-		static final protected void write(int index, int value) {
+		public static final void write(int index, int value) {
 			last_memory_access_internal=index;
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
@@ -639,7 +637,7 @@ static int togglestart=1;
 			write_slow(index, value);
 		}
 
-		static final public void write_slow(int index, int value) {
+		public static final void write_slow(int index, int value) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -860,11 +858,11 @@ static int togglestart=1;
 		}
 
 
-		static final public void reset() {
+		public static final void reset() {
 			reset(true);
 		}
 
-		static final public void reset(boolean bios) {
+		public static final void reset(boolean bios) {
 			BIOS_enabled = bios;
  			VC.reset();
  			cartridge.CurrentRAMBank=0;
@@ -917,11 +915,11 @@ static int togglestart=1;
 			first_save_string = Version.str;
 		}
 
-		static final protected long cycles() {
+		public static final long cycles() {
 			return TotalInstrCount;
 		}
 
-		static final protected void printCPUstatus() {
+		public static final void printCPUstatus() {
 			String flags = "";
 			flags += (( F & ZF_Mask ) == ZF_Mask )?"Z ":"z ";
 			flags += (( F & NF_Mask ) == NF_Mask )?"N ":"n ";
@@ -939,7 +937,7 @@ static int togglestart=1;
 			#endif
 		}
 
-		static final protected int checkInterrupts() { //handle interrupt priorities
+		public static final int checkInterrupts() { //handle interrupt priorities
 			if(IME) { // If interrupts enabled
 				int ir = IOP[0x0f]&IE; //First Requested interrupts
 				if((ir&(1<<0))!=0) { //VBlANK
@@ -971,7 +969,7 @@ static int togglestart=1;
 			return 0; // No interrupts to service
 		}
 
-		static final protected void interrupt(int i) { //execute interrupt #i
+		public static final void interrupt(int i) { //execute interrupt #i
 //  			PRINTF("INTERRUPT: PC=$%04x, interrupt=$%02x, LY=%d\n",PC,i,VC.LY);
 			IME = false;
 
@@ -979,14 +977,14 @@ static int togglestart=1;
 			PC = i;
 		}
 
-		static final protected void triggerInterrupt(int i) { // request interrupt with bit nr #i
+		public static final void triggerInterrupt(int i) { // request interrupt with bit nr #i
 			//IOP[0x0f] |= (1<<i);
 			hw_interrupt((1<<i), (1<<i));
 			hw_interrupt(0, (1<<i));
 		}
 
 #define R_IF IOP[0x0f]
-		static final protected void hw_interrupt(int i, int mask)
+		public static final void hw_interrupt(int i, int mask)
 		{
 			int oldif = R_IF;
 			i &= 0x1F & mask;
@@ -1023,7 +1021,7 @@ static int togglestart=1;
 			RemoteKeyStatus &= ~i;
 		}
 
-		static final protected int execute() {
+		public static final int execute() {
 // 			if(last_memory_access_internal==0xff00) System.out.println("ASDASDASDSADDSA");
 			int cycles;
 			TVARS;
@@ -1274,7 +1272,7 @@ static int togglestart=1;
 		static int[] rccnt =  new int[0x4000];
 #endif
 
-		static final public int nextinstruction() {
+		public static final int nextinstruction() {
 			int res = 4*execute();
 			SP &= 0xffff;
 			PC &= 0xffff;
@@ -1396,7 +1394,7 @@ static int togglestart=1;
 			return res;
 		}
 
-		final protected int exception() {
+		public final int exception() {
 			return lastException;
 		}
 
