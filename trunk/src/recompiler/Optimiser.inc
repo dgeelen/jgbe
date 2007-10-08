@@ -37,7 +37,7 @@ private static final int removeNOPs(InstructionList il) {
 	return count;
 }
 
-private static final int Optimise(VECTOR(SimpleAssign) sal) {
+private static final int Optimise(SAList sal) {
 	// expand all expressions
 	// A = C + 2;
 	// B = A + 3;  -> B = (C + 2) + 3;
@@ -46,11 +46,13 @@ private static final int Optimise(VECTOR(SimpleAssign) sal) {
 
 	PRINTLN("\n\n------Optimise----\n");
 
-	VECTOR(SimpleAssign) known = new VECTOR(SimpleAssign)();
+	SAList known = new SAList();
 
 	FOREACH(SimpleAssign, sa, sal) {
 
-		//sa.value.expandvars(known);
+		PRINTF("Before: " + sa.asString()+"\n");
+		sa.expandVars(known);
+		PRINTF("After : " + sa.asString()+"\n");
 
 
 		boolean b = true;
@@ -65,14 +67,22 @@ private static final int Optimise(VECTOR(SimpleAssign) sal) {
 		if (b)
 			known.add(sa);
 		PRINTLN("-");
+		//for (int kn = 0; kn < known.size(); ++kn ) {
+		//	SimpleAssign k = (SimpleAssign)known.elementAt(kn);
+		//	PRINTF(k.asString() + "\n");
+		//}
+
+	}
+
+		for (int kn = 0; kn < sal.size(); ++kn ) {
+			SimpleAssign k = (SimpleAssign)sal.elementAt(kn);
+			PRINTF(k.asString() + "\n");
+		}
+		PRINTLN("-");
 		for (int kn = 0; kn < known.size(); ++kn ) {
 			SimpleAssign k = (SimpleAssign)known.elementAt(kn);
 			PRINTF(k.asString() + "\n");
 		}
-
-	}
-
-	
 
 // A = 3
 // B = A
@@ -84,6 +94,10 @@ private static final int Optimise(VECTOR(SimpleAssign) sal) {
 // C = 5
 // A = 7
 
+// permutation finding!
+// -loop over all 'simple' permutations (a+b)+c => c+(a+b)
+//  -loop over all 'complex' permutations (a+b)+c => a+(b+c)
+//   - loop over all 'sub' permutations (a+b)+c => (b+a)+c
 
 	// constant folding etc etc
 	// B = (C + 2) + 3; -> B = C + 5;
