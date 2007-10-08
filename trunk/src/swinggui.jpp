@@ -161,6 +161,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				super.paintComponent(g);
 				g.drawImage(cpu.VC.getImage(),0,0, this);
 				if (osdTime > 0) {
+					while (osdLines.size() > 14*VC.nscale)
+						osdLines.remove(0);
 					g.setColor(new Color(255,255,255));
 					--osdTime;
 					if ((osdTime == 0) && (osdLines.size()>0)){
