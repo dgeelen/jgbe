@@ -956,10 +956,11 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				BufferedWriter out = new BufferedWriter(new FileWriter(filename));
 				String str;
 				boolean runbiosonreset = menuitemUseBIOS.getState();
-				boolean soundchannel1active = cpu.AC.channelActive(1); 
-				boolean soundchannel2active = cpu.AC.channelActive(2); 
-				boolean soundchannel3active = cpu.AC.channelActive(3); 
-				boolean soundchannel4active = cpu.AC.channelActive(4); 
+				boolean soundchannel1active = cpu.AC.channelActive(1);
+				boolean soundchannel2active = cpu.AC.channelActive(2);
+				boolean soundchannel3active = cpu.AC.channelActive(3);
+				boolean soundchannel4active = cpu.AC.channelActive(4);
+				boolean usecheats = cheatcodes.UseCheats;
 				#define SAVE_VAL(x) str=#x + " = " + (x); out.write(str, 0, str.length()); out.newLine()
 				SAVE_VAL(cpu.AC.isMuted);
 				SAVE_VAL(biosfilename);
@@ -970,6 +971,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				SAVE_VAL(soundchannel2active);
 				SAVE_VAL(soundchannel3active);
 				SAVE_VAL(soundchannel4active);
+				SAVE_VAL(usecheats);
 				out.close();
 			} catch (IOException e) {
 				System.out.println("error writing jgbe.conf");
@@ -986,6 +988,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				boolean soundchannel2active = true; 
 				boolean soundchannel3active = true; 
 				boolean soundchannel4active = true;
+				boolean usecheats = true;
 				biosfilename = "";
 				VC.nscale = 2;
 				while ((str = in.readLine()) != null) {
@@ -1013,6 +1016,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					LOAD_BOOL_VAL( soundchannel2active );
 					LOAD_BOOL_VAL( soundchannel3active );
 					LOAD_BOOL_VAL( soundchannel4active );
+					LOAD_BOOL_VAL( usecheats );
 					}
 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
@@ -1022,6 +1026,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.AC.setChannelActive(2, soundchannel2active);
 				cpu.AC.setChannelActive(3, soundchannel3active);
 				cpu.AC.setChannelActive(4, soundchannel4active);
+				if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
 				in.close();
 			} catch (IOException e) {
 				System.out.println("error reading jgbe.conf");
