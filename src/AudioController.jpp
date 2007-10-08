@@ -782,6 +782,7 @@ public class AudioController {
 		
 		this.cpu=cpu;
 		//#define BUFFER_SIZE (2*1024*10) /*works okayish on windows*/
+		#define WRITE_OUT_COUNT_FIXME /*win:1<<7 linux:1<<5*/(1<<6)
 		#define BUFFER_SIZE 1024          /*Linux is just a lot better*/
 		audioBuffer = new byte[BUFFER_SIZE]; //allocate enough buffer for 1 second
 		audioMutedBuffer = new byte[BUFFER_SIZE]; //allocate enough buffer for 1 second
