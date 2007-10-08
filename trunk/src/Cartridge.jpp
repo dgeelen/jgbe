@@ -177,11 +177,11 @@ public class Cartridge {
 		// Determine RAM size (1 memmap entry per 4 KBytes (round up)
 		ram_mm_size = 0;
 		switch(MM_ROM[0][0x0149]) {
-			case 0x00: ram_mm_size =  0; PRINTLN("Card has no RAM"); break;
-			case 0x01: ram_mm_size =  1; PRINTLN("Card has 2KBytes of RAM"); break;
-			case 0x02: ram_mm_size =  2; PRINTLN("Card has 8Kbytes of RAM"); break;
-			case 0x03: ram_mm_size =  8; PRINTLN("Card has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
-			case 0x04: ram_mm_size = 32; PRINTLN("Card has 128 KBytes of RAM (16 banks of 8KBytes each)"); break;
+			case 0x00: ram_mm_size =  0; PRINTLN("Cartridge has no RAM"); break;
+			case 0x01: ram_mm_size =  1; PRINTLN("Cartridge has 2KBytes of RAM"); break;
+			case 0x02: ram_mm_size =  2; PRINTLN("Cartridge has 8Kbytes of RAM"); break;
+			case 0x03: ram_mm_size =  8; PRINTLN("Cartridge has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
+			case 0x04: ram_mm_size = 32; PRINTLN("Cartridge has 128 KBytes of RAM (16 banks of 8KBytes each)"); break;
 		} // switch(header[0x0149])
 
 		if((MBC==2)&&(ram_mm_size==0)) ram_mm_size=1; // MBC2 has 512x4bits RAM builtin
