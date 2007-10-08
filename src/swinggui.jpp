@@ -81,6 +81,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		VECTOR(String) rcFiles = new VECTOR(String)();
 		int osdTime = 0;
 		static public String curcartname;
+		static public String biosfilename;
 		//menuitem <-- here for my KDev autocomplete
 		JMenuItem menuitemExit;
 		JMenuItem menuitemScale1x;
@@ -113,6 +114,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JMenu menuOther;
 		JMenuItem menuitemCheats;
 		JMenuItem menuitemToggleCheats;
+		JCheckBoxMenuItem menuitemUseBIOS;
+		JMenuItem menuitemSetBIOS;
 		JMenu menuEmuSpeed;
 		JMenuItem menuitemEmuSpeedPlus;
 		JMenuItem menuitemEmuSpeedMinus;
@@ -301,11 +304,18 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuSound.add(menuSoundChannels);
 			mainMenuBar.add( menuSound) ;
 			menuOther=new JMenu("Other");
+			menuOther.setMnemonic( KeyEvent.VK_O );
 			menuitemCheats = new JMenuItem("Edit cheats", KeyEvent.VK_C);
 			menuitemCheats.addActionListener(this);
 			menuOther.add(menuitemCheats);
 			menuitemToggleCheats=new JMenuItem("Toggle cheats on/off", KeyEvent.VK_T);
 			menuitemToggleCheats.addActionListener(this);
+			menuitemUseBIOS=new JCheckBoxMenuItem("Run BIOS on reset", false);
+			menuitemUseBIOS.setMnemonic(KeyEvent.VK_B);
+			menuitemUseBIOS.addActionListener(this);
+			menuitemSetBIOS=new JMenuItem("Select BIOS ROM", KeyEvent.VK_B);
+			menuitemSetBIOS.addActionListener(this);
+			
 #ifdef SCALEBUILDER
 			menuitemScaleBuilder=new JMenuItem("Built Scale", KeyEvent.VK_S);
 			menuitemScaleBuilder.addActionListener(this);
@@ -313,8 +323,11 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 #endif
 			menuOther.add(menuitemCheats);
 			menuOther.add(menuitemToggleCheats);
-
+			menuOther.add(menuitemUseBIOS);
+			menuOther.add(menuitemSetBIOS);
+			
 			menuLink=new JMenu("Link");
+			menuLink.setMnemonic( KeyEvent.VK_L );
 			menuitemLinkServe = new JMenuItem("Start Link Server", KeyEvent.VK_S);
 			menuitemLinkClient = new JMenuItem("Start Link Client", KeyEvent.VK_C);
 			menuitemLinkSever = new JMenuItem("Stop Link", KeyEvent.VK_L);
@@ -590,6 +603,28 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				}
 
 			}
+			else if(e.getSource().equals( menuitemUseBIOS )) {
+				if (menuitemUseBIOS.getState()) cart.loadBios(biosfilename);
+				else cart.loadBios("");
+				configStateChanged = true;
+			}
+			else if(e.getSource().equals( menuitemSetBIOS )) {
+				JFileChooser fc = new JFileChooser(".");
+				fc.showOpenDialog(frame);
+				File selFile = fc.getSelectedFile();
+				if(selFile != null) {
+					if(selFile.length() != 256) JOptionPane.showMessageDialog(null,
+					                            "This file's size is not equal to 256 bytes!",
+					                            "Invalid BIOS Rom",
+					                            JOptionPane.INFORMATION_MESSAGE);
+					else {
+						biosfilename = selFile.getAbsolutePath();
+						if (menuitemUseBIOS.getState()) cart.loadBios(biosfilename);
+						else cart.loadBios("");
+						configStateChanged = true;
+					}
+				}
+			}
 			else if(e.getSource().equals( menuitemOpenROM )) {
 				JFileChooser fc;
 				if (rcFiles.size() > 0) {
@@ -609,6 +644,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 					pauseEmulation(false);
 					cart=new Cartridge(selFile.getAbsolutePath());
+					if (menuitemUseBIOS.getState()) cart.loadBios(biosfilename);
+					else cart.loadBios("");
 					CPU.loadCartridge(cart);
 					updateCartName(selFile.getAbsolutePath());
 					cheatcodes = new CheatCodeEditor(frame, curcartname);
@@ -758,6 +795,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 						pauseEmulation(false);
 						cart=new Cartridge((String)rcFiles.elementAt(i));
+						if (menuitemUseBIOS.getState()) cart.loadBios(biosfilename);
+						else cart.loadBios("");
 						CPU.loadCartridge(cart);
 						updateCartName((String)rcFiles.elementAt(i));
 						cheatcodes = new CheatCodeEditor(frame, curcartname);
@@ -916,6 +955,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				String str;
 				str = "cpu.AC.isMuted = " + cpu.AC.isMuted;
 				out.write(str, 0, str.length()); out.newLine();
+				str = "biosfilename = " + biosfilename;
+				out.write(str, 0, str.length()); out.newLine();
+				str = "runBiosOnReset = " + menuitemUseBIOS.getState();
+				out.write(str, 0, str.length()); out.newLine();
 				out.close();
 			} catch (IOException e) {
 				System.out.println("error writing jgbe.conf");
@@ -931,8 +974,13 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					int index = str.indexOf("=");
 					String property = str.substring(0, index).trim();
 					String value = str.substring( index+1, str.length()).trim();
-					if( property.equalsIgnoreCase("cpu.AC.isMuted")) {
+					if( property.equalsIgnoreCase("cpu.AC.isMuted"))
 						cpu.AC.isMuted = value.equalsIgnoreCase("True");
+					else if (property.equalsIgnoreCase("biosfilename")) {
+						biosfilename = value;
+					}
+					else if (property.equalsIgnoreCase("runBiosOnReset")) {
+						menuitemUseBIOS.setState(value.equalsIgnoreCase("True"));
 					}
 				}
 				in.close();
@@ -1092,8 +1140,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			gui.cpu = new CPU();
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui.VC );
-			gui.loadConfig();
 			gui.createAndShowGUI();
+			gui.loadConfig();
+			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
 			gui.loadKeyBinds();
 			cheatcodes = new CheatCodeEditor(frame, curcartname);
 			cheatcodes.applyCheatCodes(cart);
