@@ -640,19 +640,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				fc.showOpenDialog(frame);
 				File selFile = fc.getSelectedFile();
 				if(selFile != null) {
-					System.out.println(selFile.getAbsolutePath());
-
-					pauseEmulation(false);
-					cart=new Cartridge(selFile.getAbsolutePath());
-					if (menuitemUseBIOS.getState()) cart.loadBios(biosfilename);
-					else cart.loadBios("");
-					CPU.loadCartridge(cart);
-					updateCartName(selFile.getAbsolutePath());
-					cheatcodes = new CheatCodeEditor(frame, curcartname);
-					cheatcodes.applyCheatCodes(cart);
-					addOSDLine("loaded Rom: " + curcartname);
-
-					resumeEmulation(false);
+					tryToLoadROM(selFile.getAbsolutePath());
 				}
 			}
 			else if(e.getSource().equals( menuitemLinkServe )) {
@@ -790,21 +778,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				}
 				if(menuItems!=null)
 					for (int i = 0; i < menuItems.length; ++i) {
-						if (e.getSource().equals(menuItems[i])) {
-							//System.out.println(menuItems[i].getText());
-
-						pauseEmulation(false);
-						cart=new Cartridge((String)rcFiles.elementAt(i));
-						if (menuitemUseBIOS.getState()) cart.loadBios(biosfilename);
-						else cart.loadBios("");
-						CPU.loadCartridge(cart);
-						updateCartName((String)rcFiles.elementAt(i));
-						cheatcodes = new CheatCodeEditor(frame, curcartname);
-						cheatcodes.applyCheatCodes(cart);
-						addOSDLine("loaded Rom: " + curcartname);
-
-						resumeEmulation(false);
-					}
+						if (e.getSource().equals(menuItems[i]))
+						tryToLoadROM((String)rcFiles.elementAt(i));
 				}
 				//System.out.println("timer!");
 				long ctime = System.nanoTime();
@@ -1067,6 +1042,27 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			}
 		}
 
+		private void tryToLoadROM(String filename) {
+			pauseEmulation(false);
+			Cartridge tcart=new Cartridge(filename);
+			if (menuitemUseBIOS.getState())
+				tcart.loadBios(biosfilename);
+			else
+				tcart.loadBios("");
+			if(tcart.getError() == null) {
+				cart = tcart;
+				CPU.loadCartridge(cart);
+				updateCartName(filename);
+				cheatcodes = new CheatCodeEditor(frame, curcartname);
+				cheatcodes.applyCheatCodes(cart);
+				addOSDLine("loaded Rom: " + curcartname);
+			}
+			else { //error loading file as ROM
+				JOptionPane.showMessageDialog(frame, "There was an error loading this ROM!\n("+tcart.getError()+")" , "Error!", JOptionPane.ERROR_MESSAGE);
+			}
+			resumeEmulation(false);
+		}
+
 		private void loadKeyBinds() {
 			DataInputStream distream=null;
 			try {
@@ -1176,24 +1172,14 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			if(lastcart && (gui.rcFiles.size() > 0))
 				romfile = (String)gui.rcFiles.elementAt(0);
 
-			if (!romfile.equals("")) {
-				cart = new Cartridge(romfile);
-				if(cart.getError()!=null) {
-					System.out.println("ERROR: "+cart.getError());
-					cart = null;
-				}
-				else {
-					gui.updateCartName(romfile);
-					System.out.println("Succesfully loaded ROM :)");
-				}
-			}
-
 			gui.cpu = new CPU();
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui.VC );
 			gui.createAndShowGUI();
 			gui.loadConfig();
-			PRINTLN("VC.nscale = "+gui.VC.nscale);
+			if (!romfile.equals(""))
+				gui.tryToLoadROM(romfile);
+			
 			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
 			gui.loadKeyBinds();
 			cheatcodes = new CheatCodeEditor(frame, curcartname);
