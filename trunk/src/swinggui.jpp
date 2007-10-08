@@ -138,10 +138,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		public void updateCartName(String fname) {
 			int slashPos = fname.lastIndexOf(File.separator);
 			int dotPos = fname.lastIndexOf(".");
-			if (dotPos == -1) dotPos = fname.length()+1;
-
+			if (dotPos == -1) dotPos = fname.length();
 			curcartname = fname.substring(slashPos+1, dotPos);
-			System.out.println("cartname = " + curcartname);
+			PRINTLN("cartname = " + curcartname);
 
 			rcFiles.remove(fname);
 			rcFiles.insertElementAt(fname, 0);
