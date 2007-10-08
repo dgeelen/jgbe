@@ -1,5 +1,4 @@
 #include "Global.inc"
-#include "svnrev.inc"
 #ifndef USE_JAVA_MOBILE
 import javax.swing.*;
 import javax.swing.event.*;
@@ -440,7 +439,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		private void createAndShowGUI() {
 			//JFrame.setDefaultLookAndFeelDecorated( true );
 
-			frame = new JFrame( "JGameBoy Emulator V"+JGBE_VERSION_STRING );
+			frame = new JFrame( "JGameBoy Emulator V"+Version.str);
 			frame.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
 // 			frame.setBounds( 60,60,100,100 );
 
@@ -806,7 +805,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				FPSTimeMillis = ctime;
 				double afps=fps/(timeLapse/1000000000.0);
 				double emuspeed = ((int)(afps/(4194304.0/702240000.0)))/100.0;
-				frame.setTitle("JGBE V"+JGBE_VERSION_STRING+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"%");
+				frame.setTitle("JGBE V"+Version.str+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"%");
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
