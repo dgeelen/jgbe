@@ -83,7 +83,7 @@ tester: all
 rndCartridge: $(SRCDIR)/rndCartridge.cpp
 	g++ -O3 $(SRCDIR)/rndCartridge.cpp -o rndCartridge
 
-$(SRCDIR)/%.java: $(SRCDIR)/%.jpp Makefile.inc Makefile.config Makefile
+$(SRCDIR)/%.java: $(SRCDIR)/%.jpp
 	@echo "[jpp  -> java ] $*"
 	@cat $(SRCDIR)/Autogen.txt > $@
 	@gcc -MD -MF $*.d -E $(PPFLAGS) -x c $< >> $@ || (rm -f $@ && false)
