@@ -53,6 +53,7 @@ public class Cartridge {
 		catch (java.io.IOException e) {
 			PRINTLN("error loading cartridge from file!: " + e.getMessage());
 			err_msg = e.getMessage();
+			if(err_msg == null) err_msg = "Java Error messages are useless! (UNKNOWN_ERROR)";
 		}
 #ifdef USE_JAVA_MOBILE
 		loadBios("/boot.rom");
