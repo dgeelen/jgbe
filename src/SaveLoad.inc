@@ -52,6 +52,13 @@
 		var = distream.readBoolean(); \
 }
 
+#define SL_STRING(var) {\
+	if (SL_SAVE) \
+		dostream.writeUTF(var); \
+	else \
+		var = distream.readUTF(); \
+}
+
 #define SL_ARR(type, var, len) {\
 	for (int sl_i = 0; sl_i < (len); ++sl_i) \
 		SL_ ## type (var[sl_i]); \
