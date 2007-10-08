@@ -103,10 +103,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JMenuItem menuitemPause;
 		JMenuItem menuitemReset;
 		JMenu menuColorScheme;
-		JCheckBoxMenuItem menuitemColorSchemeOriginalGameboy;
-		JCheckBoxMenuItem menuitemColorSchemeBlackAndWhite;
-		JCheckBoxMenuItem menuitemColorSchemeGreys;
-		JCheckBoxMenuItem menuitemColorSchemeCustom;
+		JCheckBoxMenuItem[] menuitemColorSchemes;
 		JMenu menuSoundChannels;
 		JCheckBoxMenuItem menuitemSoundChannel1;
 		JCheckBoxMenuItem menuitemSoundChannel2;
@@ -257,22 +254,19 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuVideo.add( menuFrameSkip) ;
 
 			menuColorScheme = new JMenu("Color scheme");
-			menuitemColorSchemeOriginalGameboy = new JCheckBoxMenuItem("GameBoy LCD", false);
-			menuitemColorSchemeOriginalGameboy.setMnemonic(KeyEvent.VK_L);
-			menuitemColorSchemeBlackAndWhite = new JCheckBoxMenuItem("Black and White", false);
-			menuitemColorSchemeBlackAndWhite.setMnemonic(KeyEvent.VK_B);
-			menuitemColorSchemeGreys = new JCheckBoxMenuItem("Graytones", false);
-			menuitemColorSchemeGreys.setMnemonic(KeyEvent.VK_G);
-			menuitemColorSchemeCustom = new JCheckBoxMenuItem("Custom", false);
-			menuitemColorSchemeCustom.setMnemonic(KeyEvent.VK_C);
-			menuColorScheme.add(menuitemColorSchemeOriginalGameboy);
-			menuColorScheme.add(menuitemColorSchemeBlackAndWhite);
-			menuColorScheme.add(menuitemColorSchemeGreys);
-			menuColorScheme.add(menuitemColorSchemeCustom);
-			menuitemColorSchemeOriginalGameboy.addActionListener(this);
-			menuitemColorSchemeBlackAndWhite.addActionListener(this);
-			menuitemColorSchemeGreys.addActionListener(this);
-			menuitemColorSchemeCustom.addActionListener(this);
+			menuitemColorSchemes = new JCheckBoxMenuItem[4];
+			menuitemColorSchemes[0] = new JCheckBoxMenuItem("GameBoy LCD", false);
+			menuitemColorSchemes[0].setMnemonic(KeyEvent.VK_L);
+			menuitemColorSchemes[1] = new JCheckBoxMenuItem("Black and White", false);
+			menuitemColorSchemes[1].setMnemonic(KeyEvent.VK_B);
+			menuitemColorSchemes[2] = new JCheckBoxMenuItem("Graytones", false);
+			menuitemColorSchemes[2].setMnemonic(KeyEvent.VK_G);
+			menuitemColorSchemes[3] = new JCheckBoxMenuItem("Custom", false);
+			menuitemColorSchemes[3].setMnemonic(KeyEvent.VK_C);
+			for (int i = 0; i < menuitemColorSchemes.length; ++i) {
+				menuColorScheme.add(menuitemColorSchemes[i]);
+				menuitemColorSchemes[i].addActionListener(this);
+			}
 			menuVideo.add(menuColorScheme);
 
 			menuState = new JMenu("State");
@@ -401,10 +395,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemScale4x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemIncFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemDecFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemColorSchemeOriginalGameboy.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemColorSchemeBlackAndWhite.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemColorSchemeGreys.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemColorSchemeCustom.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemes[0].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemes[1].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemes[2].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemes[3].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSaveState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemLoadState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEnableSound.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -740,12 +734,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				CPU.AC.setSpeed(1.0);
 				addOSDLine("EmuSpeed: 100%");
 			}
-			#define SELECT_COLOR_MENU(x) menuitemColorSchemeOriginalGameboy.setState(false); \
-			                             menuitemColorSchemeBlackAndWhite.setState(false); \
-			                             menuitemColorSchemeGreys.setState(false); \
-			                             menuitemColorSchemeCustom.setState(false); \
-			                             menuitemColorScheme ## x.setState(true)
-			else if(e.getSource().equals( menuitemColorSchemeOriginalGameboy )) {
+			#define SELECT_COLOR_MENU(x) for(int i=0; i<menuitemColorSchemes.length; ++i) \
+			                             	menuitemColorSchemes[i].setState(false); \
+			                             menuitemColorSchemes[x].setState(true)
+			else if(e.getSource().equals( menuitemColorSchemes[0] )) {
 				int[][] c={ {0xa0, 0xe0, 0x20},	// WHITE
 										{0x70, 0xb0, 0x40},  // LIGHTGRAY
 										{0x40, 0x70, 0x32},  // DARKGRAY
@@ -753,9 +745,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.VC.setGrayShades(c);
 				cs.setDefault(c,c,c);
 				configStateChanged = true;
-				SELECT_COLOR_MENU( OriginalGameboy );
+				SELECT_COLOR_MENU( 0 );
 			}
-			else if(e.getSource().equals( menuitemColorSchemeBlackAndWhite )) {
+			else if(e.getSource().equals( menuitemColorSchemes[1] )) {
 				int[][] c={ {0xf8, 0xf8, 0xf8},	// WHITE
 										{0xa8, 0xa8, 0xa8},  // LIGHTGRAY
 										{0x60, 0x60, 0x60},  // DARKGRAY
@@ -763,9 +755,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.VC.setGrayShades(c);
 				cs.setDefault(c,c,c);
 				configStateChanged = true;
-				SELECT_COLOR_MENU( BlackAndWhite );
+				SELECT_COLOR_MENU( 1 );
 			}
-			else if(e.getSource().equals( menuitemColorSchemeGreys )) {
+			else if(e.getSource().equals( menuitemColorSchemes[2] )) {
 				int[][] c={ {0xc5, 0xc5, 0xc5},	// WHITE
 										{0x9a, 0x9a, 0x9a},  // LIGHTGRAY
 										{0x61, 0x61, 0x61},  // DARKGRAY
@@ -773,16 +765,16 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.VC.setGrayShades(c);
 				cs.setDefault(c,c,c);
 				configStateChanged = true;
-				SELECT_COLOR_MENU( Greys );
+				SELECT_COLOR_MENU( 2 );
 			}
-			else if (e.getSource().equals( menuitemColorSchemeCustom )) {
+			else if (e.getSource().equals( menuitemColorSchemes[3] )) {
 				if ( !cpu.isCGB() ) {
 					cs.setDefault( VC.getGrayShade(0),
 					 	             VC.getGrayShade(1),
 					 	             VC.getGrayShade(2));
-					cs.setVisible( true );
+					if (!loading) cs.setVisible( true );
 					configStateChanged = true;
-					SELECT_COLOR_MENU( Custom );
+					SELECT_COLOR_MENU( 3 );
 				}
 				else {
 					JOptionPane.showMessageDialog(frame,
@@ -951,7 +943,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		}
 
 		public void saveConfig() { //FIXME: STUB
-			try {
+			if(!loading) try {
 				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
 				BufferedWriter out = new BufferedWriter(new FileWriter(filename));
 				String str;
@@ -977,17 +969,17 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 				/* SAVE PAL */
 				str = "ColorType = ";
-				if (menuitemColorSchemeOriginalGameboy.getState()) str += "OriginalGameboy";
-				if (menuitemColorSchemeBlackAndWhite.getState()) str += "BlackAndWhite";
-				if (menuitemColorSchemeGreys.getState()) str += "GreyShades";
-				if (menuitemColorSchemeCustom.getState()) {
-					str += "Custom:";
+				for (int i = 0; i < menuitemColorSchemes.length; ++i)
+					if (menuitemColorSchemes[i].getState()) str += i;
+				out.write(str, 0, str.length()); out.newLine();
+				if (menuitemColorSchemes[3].getState()) {
+					str = "CustomColors =";
 					for(int k=0; k<3; ++k)
-						for(int i=0; i<3; ++i)
+						for(int i=0; i<4; ++i)
 							for(int j=0; j<3; ++j)
 								str+=" "+VC.getGrayShade(k)[i][j];
+					out.write(str, 0, str.length()); out.newLine();
 				}
-				out.write(str, 0, str.length()); out.newLine();
 
 				out.close();
 			} catch (IOException e) {
@@ -995,7 +987,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			}
 		}
 
+		private boolean loading = false;
 		public void loadConfig() { //FIXME: STUB
+			loading = true;
 			try {
 				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
 				BufferedReader in = new BufferedReader(new FileReader(filename));
@@ -1021,11 +1015,11 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						property="";
 						value="";
 					}
-					PRINTLN(property+"("+value+")");
+// 					PRINTLN(property+"("+value+")");
 					#define LOAD_INT_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
 					                        	try { \
 					                        		(x) = Integer.parseInt(value); \
-					                        	} catch( Exception e) {	} \
+					                        	} catch( Exception e) { } \
 					                         }
 					#define LOAD_BOOL_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
 					                         	x = value.equalsIgnoreCase("True"); \
@@ -1033,6 +1027,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					#define LOAD_STRING_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
 					                             	x = value; \
 					                             }
+
 					LOAD_BOOL_VAL( cpu.AC.isMuted );
 					LOAD_STRING_VAL( biosfilename );
 					LOAD_BOOL_VAL( runbiosonreset );
@@ -1043,7 +1038,32 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					LOAD_BOOL_VAL( soundchannel3active );
 					LOAD_BOOL_VAL( soundchannel4active );
 					LOAD_BOOL_VAL( usecheats );
+
+					/* LOAD PAL */
+					if (property.equalsIgnoreCase("ColorType")) {
+						int n = 0;
+						try {
+							n = Integer.parseInt(value);
+						} catch( Exception e) { };
+						actionPerformed(new ActionEvent(menuitemColorSchemes[n], 0, ""));
 					}
+					if(property.equalsIgnoreCase("CustomColors")) {
+						String[] strs = value.split(" ");
+
+						int[][][] ints = new int[3][4][3];
+						for (int k = 0; k < 3; ++k) {
+							for (int i = 0; i < 12; ++i) {
+								try {
+									ints[k][i / 3][i % 3] = Integer.parseInt(strs[k*12+i]);
+								} catch( Exception e) { };
+							}
+						}
+						cpu.VC.setGrayShades(ints[0],ints[1],ints[2]);
+						cs.setDefault( VC.getGrayShade(0),
+						               VC.getGrayShade(1),
+						               VC.getGrayShade(2));
+					}
+				}
 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
@@ -1064,8 +1084,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			} catch (IOException e) {
 				System.out.println("error reading jgbe.conf");
 			}
+			loading = false;
 		}
-		
+
 		#define PRINT_KEY_DEFAULT PRINTLN((keyMap[i]>>8>0 ? \
 		                                  KeyEvent.getKeyModifiersText(keyMap[i]>>8)+"+" : "") +\
 		                                  KeyEvent.getKeyText(keyMap[i]&0xff))
@@ -1229,7 +1250,6 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui );
 			gui.createAndShowGUI();
-			gui.loadConfig();
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
 			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
@@ -1237,6 +1257,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			gui.loadKeyBinds();
 			
 			cheatcodes.applyCheatCodes(cart);
+			
+			gui.loadConfig();
+			
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
 				gui.cpu.AC.isMuted = true;
