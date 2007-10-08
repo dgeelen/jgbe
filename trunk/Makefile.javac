@@ -1,13 +1,13 @@
 #VM_DEST:=-target 1.5
 #VM_SOURCE:=-source 1.5
 
-JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -Xlint -O -d $(CLASSDIR) -classpath "$(CLASSPATH)"
+JAVAC_OPTS:=$(VM_DEST) $(VM_SOURCE) -Xlint -O -d $(CLASSDIR) -classpath "$(CLASSPATH)" -sourcepath "$(SRCPATH)"
 
 #swinggui.class first class file to compile to speed up building
 CLASSFILES:=$(CLASSDIR)/swinggui.class $(CLASSFILES)
 
 all: preprocess $(CLASSFILES)
 
-$(CLASSDIR)/%.class: %.java
+$(CLASSDIR)/%.class: $(SRCDIR)/%.java
 	@echo "[java -> class] $*"
 	@javac $(JAVAC_OPTS) $<
