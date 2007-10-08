@@ -24,9 +24,11 @@ public class ColorSelector extends JFrame
 	private int[][][] colors = new int[3][4][3];
 
 	private VideoController vc;
+	private swinggui gui;
 
-	public ColorSelector (VideoController vc) {
-		this.vc = vc;
+	public ColorSelector (swinggui gui) {
+		this.vc = gui.VC;
+		this.gui = gui;
 
 		setLayout(new BorderLayout());
 		setSize (450, 450);
@@ -95,6 +97,7 @@ public class ColorSelector extends JFrame
 		}
 
 		vc.setGrayShades( colors[0], colors[1], colors[2] );
+		gui.saveConfig();
 
 		setTestColor(r, g, b);
 	}
