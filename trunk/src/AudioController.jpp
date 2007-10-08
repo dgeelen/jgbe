@@ -710,6 +710,42 @@ public class AudioController {
 	//private SoundRegister SR5; //On cartridge, not used atm
 	protected CPU cpu;
 
+	public boolean channelActive(int i) {
+		switch(i) {
+			case 1:
+				return S1.muted == 1;
+			case 2:
+				return S2.muted == 1;
+			case 3:
+				return S3.muted == 1;
+			case 4:
+				return S4.muted == 1;
+			default:
+				System.out.println("AudioController: No such channel: " + i);
+				return false;
+		}
+	}
+
+	public void setChannelActive(int i, boolean b){
+		switch(i) {
+			case 1:
+				S1.muted = b?1:0;
+				break;
+			case 2:
+				S2.muted = b?1:0;
+				break;
+			case 3:
+				S3.muted = b?1:0;
+				break;
+			case 4:
+				S4.muted = b?1:0;
+				break;
+			default:
+				System.out.println("AudioController: No such channel: " + i);
+				break;
+		}
+	}
+
 	public void toggleChannelOnOff(int i){
 		switch(i) {
 			case 1:

@@ -953,12 +953,21 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
 				BufferedWriter out = new BufferedWriter(new FileWriter(filename));
 				String str;
-				str = "cpu.AC.isMuted = " + cpu.AC.isMuted;
-				out.write(str, 0, str.length()); out.newLine();
-				str = "biosfilename = " + biosfilename;
-				out.write(str, 0, str.length()); out.newLine();
-				str = "runBiosOnReset = " + menuitemUseBIOS.getState();
-				out.write(str, 0, str.length()); out.newLine();
+				boolean runbiosonreset = menuitemUseBIOS.getState();
+				boolean soundchannel1active = cpu.AC.channelActive(1); 
+				boolean soundchannel2active = cpu.AC.channelActive(2); 
+				boolean soundchannel3active = cpu.AC.channelActive(3); 
+				boolean soundchannel4active = cpu.AC.channelActive(4); 
+				#define SAVE_VAL(x) str=#x + " = " + (x); out.write(str, 0, str.length()); out.newLine()
+				SAVE_VAL(cpu.AC.isMuted);
+				SAVE_VAL(biosfilename);
+				SAVE_VAL(runbiosonreset);
+				SAVE_VAL(VC.nscale);
+				SAVE_VAL(VC.fskip);
+				SAVE_VAL(soundchannel1active);
+				SAVE_VAL(soundchannel2active);
+				SAVE_VAL(soundchannel3active);
+				SAVE_VAL(soundchannel4active);
 				out.close();
 			} catch (IOException e) {
 				System.out.println("error writing jgbe.conf");
@@ -970,19 +979,47 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
 				BufferedReader in = new BufferedReader(new FileReader(filename));
 				String str;
+				boolean runbiosonreset = false;
+				boolean soundchannel1active = true; 
+				boolean soundchannel2active = true; 
+				boolean soundchannel3active = true; 
+				boolean soundchannel4active = true;
+				biosfilename = "";
+				VC.nscale = 2;
 				while ((str = in.readLine()) != null) {
 					int index = str.indexOf("=");
 					String property = str.substring(0, index).trim();
 					String value = str.substring( index+1, str.length()).trim();
-					if( property.equalsIgnoreCase("cpu.AC.isMuted"))
-						cpu.AC.isMuted = value.equalsIgnoreCase("True");
-					else if (property.equalsIgnoreCase("biosfilename")) {
-						biosfilename = value;
+					
+					#define LOAD_INT_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
+					                        	try { \
+					                        		(x) = Integer.parseInt(value); \
+					                        	} catch( Exception e) {	} \
+					                         }
+					#define LOAD_BOOL_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
+					                         	x = value.equalsIgnoreCase("True"); \
+					                         }
+					#define LOAD_STRING_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
+					                             	x = value; \
+					                             }
+					LOAD_BOOL_VAL( cpu.AC.isMuted );
+					LOAD_STRING_VAL( biosfilename );
+					LOAD_BOOL_VAL( runbiosonreset );
+					LOAD_INT_VAL( VC.nscale );
+					LOAD_INT_VAL( VC.fskip );
+					LOAD_BOOL_VAL( soundchannel1active );
+					LOAD_BOOL_VAL( soundchannel2active );
+					LOAD_BOOL_VAL( soundchannel3active );
+					LOAD_BOOL_VAL( soundchannel4active );
 					}
-					else if (property.equalsIgnoreCase("runBiosOnReset")) {
-						menuitemUseBIOS.setState(value.equalsIgnoreCase("True"));
-					}
-				}
+				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
+				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
+				frame.pack();
+				menuitemUseBIOS.setState(runbiosonreset);
+				cpu.AC.setChannelActive(1, soundchannel1active);
+				cpu.AC.setChannelActive(2, soundchannel2active);
+				cpu.AC.setChannelActive(3, soundchannel3active);
+				cpu.AC.setChannelActive(4, soundchannel4active);
 				in.close();
 			} catch (IOException e) {
 				System.out.println("error reading jgbe.conf");
@@ -1117,6 +1154,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					logfile = args[++i];
 				if (args[i].equals("-nosound"))
 					sound = false;
+				if (args[i].equals("-sound"))
+					sound = true;
 				if (args[i].equals("-debug"))
 					debug = true;
 				if ((args[i].equals("-lastcart"))) //TODO: FIXME: Invert this (current behavious is a work-around)
@@ -1142,6 +1181,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			gui.cs = new ColorSelector( gui.VC );
 			gui.createAndShowGUI();
 			gui.loadConfig();
+			PRINTLN("VC.nscale = "+gui.VC.nscale);
 			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
 			gui.loadKeyBinds();
 			cheatcodes = new CheatCodeEditor(frame, curcartname);
