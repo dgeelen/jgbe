@@ -185,7 +185,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 		private JMenuBar createJMenuBar() {
 			JMenuBar mainMenuBar;
-			JMenu menuSettings;
+			JMenu menuVideo;
 			JMenu menuScaling;
 			JMenu menuFrameSkip;
 			JMenu menuState;
@@ -196,9 +196,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuFile = new JMenu( "File" );
 			menuFile.setMnemonic( KeyEvent.VK_F );
 			mainMenuBar.add( menuFile );
-			menuSettings = new JMenu( "Video" );
-			menuSettings.setMnemonic( KeyEvent.VK_S );
-			mainMenuBar.add( menuSettings );
+			menuVideo = new JMenu( "Video" );
+			menuVideo.setMnemonic( KeyEvent.VK_V );
+			mainMenuBar.add( menuVideo );
 
 			menuitemOpenROM = new JMenuItem("Open ROM", KeyEvent.VK_O);
 			menuitemOpenROM.addActionListener( this );
@@ -227,7 +227,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuScaling.add( menuitemScale2x );
 			menuScaling.add( menuitemScale3x );
 			menuScaling.add( menuitemScale4x );
-			menuSettings.add( menuScaling) ;
+			menuVideo.add( menuScaling) ;
 
 			menuFrameSkip = new JMenu( "Frame Skipping");
 			menuitemIncFrameSkip = new JMenuItem( "Increase Frame Skip", KeyEvent.VK_I );
@@ -236,7 +236,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemDecFrameSkip.addActionListener( this );
 			menuFrameSkip.add( menuitemIncFrameSkip );
 			menuFrameSkip.add( menuitemDecFrameSkip );
-			menuSettings.add( menuFrameSkip) ;
+			menuVideo.add( menuFrameSkip) ;
 
 			menuColorScheme = new JMenu("Color scheme");
 			menuitemColorSchemeOriginalGameboy = new JMenuItem("GameBoy LCD", KeyEvent.VK_L);
@@ -251,9 +251,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemColorSchemeBlackAndWhite.addActionListener(this);
 			menuitemColorSchemeGreys.addActionListener(this);
 			menuitemColorSchemeCustom.addActionListener(this);
-			menuSettings.add(menuColorScheme);
+			menuVideo.add(menuColorScheme);
 
 			menuState = new JMenu("State");
+			menuState.setMnemonic(KeyEvent.VK_S);
 			menuitemSaveState = new JMenuItem( "Save State", KeyEvent.VK_S );
 			menuitemLoadState = new JMenuItem( "Load State", KeyEvent.VK_L );
 
@@ -272,6 +273,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			mainMenuBar.add( menuState) ;
 
 			menuSound = new JMenu( "Sound");
+			menuSound.setMnemonic( KeyEvent.VK_U );
 			menuitemSoundEnable = new JMenuItem( "Enable Sound", KeyEvent.VK_E );
 			menuitemSoundDisable = new JMenuItem( "Disable Sound", KeyEvent.VK_D );
 			menuitemSoundToggle = new JMenuItem( "Toggle Sound", KeyEvent.VK_T );
@@ -465,6 +467,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				String s = "Menu Item source: " + source.getText()
 			           + " (an instance of " + getClassName( source ) + ")";
 				System.out.println(s);*/
+
+			boolean configStateChanged = false;
 			if (e.getSource().equals( menuitemExit)) {
 				windowClosed(null);
 			}
@@ -474,6 +478,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemScale2x )) {
 				addOSDLine("Set scaling: Scale2x");
@@ -481,6 +486,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemScale3x )) {
 				addOSDLine("Set scaling: Scale3x");
@@ -488,6 +494,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemScale4x )) {
 				addOSDLine("Set scaling: Scale4x");
@@ -495,42 +502,52 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
 				++VC.fskip;
 				addOSDLine("Increased frameskip: "+VC.fskip);
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemDecFrameSkip )) {
 				if (VC.fskip>1) --VC.fskip;
 				addOSDLine("Decreased frameskip: "+VC.fskip);
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundEnable )) {
 				cpu.AC.isMuted = false;
 				addOSDLine("Enabled sound");
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundDisable )) {
 				cpu.AC.isMuted = true;
 				addOSDLine("Disabled sound");
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundToggle )) {
 				cpu.AC.isMuted = !cpu.AC.isMuted;
 				addOSDLine(cpu.AC.isMuted ? "Disabled sound" : "Enabled sound");
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel1)) {
 				cpu.AC.toggleChannelOnOff(1);
 				addOSDLine(cpu.AC.S1.muted==0 ? "Disabled soundchannel 1" : "Enabled soundchannel 1");
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel2)) {
 				cpu.AC.toggleChannelOnOff(2);
 				addOSDLine(cpu.AC.S2.muted==0 ? "Disabled soundchannel 2" : "Enabled soundchannel 2");
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel3)) {
 				cpu.AC.toggleChannelOnOff(3);
 				addOSDLine(cpu.AC.S3.muted==0 ? "Disabled soundchannel 3" : "Enabled soundchannel 3");
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel4)) {
 				cpu.AC.toggleChannelOnOff(4);
 				addOSDLine(cpu.AC.S4.muted==0 ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemToggleCheats)) {
 				cheatcodes.ToggleCheats(cart);
@@ -760,6 +777,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
+			if (configStateChanged ) saveConfig();
 		}
 		long FPSTimeMillis = System.nanoTime();
 
@@ -891,6 +909,38 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			makeRcFilesMenuItems();
 		}
 
+		public void saveConfig() { //FIXME: STUB
+			try {
+				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
+				BufferedWriter out = new BufferedWriter(new FileWriter(filename));
+				String str;
+				str = "cpu.AC.isMuted = " + cpu.AC.isMuted;
+				out.write(str, 0, str.length()); out.newLine();
+				out.close();
+			} catch (IOException e) {
+				System.out.println("error writing jgbe.conf");
+			}
+		}
+
+		public void loadConfig() { //FIXME: STUB
+			try {
+				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
+				BufferedReader in = new BufferedReader(new FileReader(filename));
+				String str;
+				while ((str = in.readLine()) != null) {
+					int index = str.indexOf("=");
+					String property = str.substring(0, index).trim();
+					String value = str.substring( index+1, str.length()).trim();
+					if( property.equalsIgnoreCase("cpu.AC.isMuted")) {
+						cpu.AC.isMuted = value.equalsIgnoreCase("True");
+					}
+				}
+				in.close();
+			} catch (IOException e) {
+				System.out.println("error reading jgbe.conf");
+			}
+		}
+		
 		#define PRINT_KEY_DEFAULT PRINTLN((keyMap[i]>>8>0 ? \
 		                                  KeyEvent.getKeyModifiersText(keyMap[i]>>8)+"+" : "") +\
 		                                  KeyEvent.getKeyText(keyMap[i]&0xff))
@@ -1010,7 +1060,6 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 		public static void starter(swinggui gui, String[] args) {
 			gui.loadRCFiles();
-
 			boolean sound=true, debug=false, lastcart=false;
 			String romfile="", logfile="";
 			for (int i = 0; i < args.length; ++i) {
@@ -1043,7 +1092,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			gui.cpu = new CPU();
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui.VC );
-
+			gui.loadConfig();
 			gui.createAndShowGUI();
 			gui.loadKeyBinds();
 			cheatcodes = new CheatCodeEditor(frame, curcartname);
