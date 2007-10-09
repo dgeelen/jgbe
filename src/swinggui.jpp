@@ -7,8 +7,7 @@ import java.awt.event.*;
 /* These may be needed for 'true' outline fonts
 import java.awt.font.*;
 import java.awt.geom.*;*/
-import java.util.Vector;
-// import java.util.*;
+import java.util.ArrayList;
 import java.net.*;
 import java.io.*;
 import java.awt.image.BufferedImage;
@@ -142,7 +141,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			PRINTLN("cartname = " + curcartname);
 
 			rcFiles.remove(fname);
-			rcFiles.insertElementAt(fname, 0);
+			rcFiles.add(0, fname);
 			saveRCFiles();
 		}
 
@@ -168,7 +167,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					}
 					for (int i = 0; i < osdLines.size(); ++i) {
 						//FIXME: Make proper Font Outlines (Difficulty: Very Hard)
-						String s=(String)osdLines.elementAt(i);
+						String s=(String)osdLines.get(i);
 // 						g.drawString(s, 9,  10+10*i);
 // 						g.drawString(s, 10,  9+10*i);
 						g.setColor(ColorMediumGray);
@@ -621,7 +620,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			else if(e.getSource().equals( menuitemOpenROM )) {
 				JFileChooser fc;
 				if (rcFiles.size() > 0) {
-					String lastpath = (String)rcFiles.elementAt(0);
+					String lastpath = (String)rcFiles.get(0);
 					int slashPos = lastpath.lastIndexOf(File.separator);
 					lastpath = lastpath.substring(0, slashPos+1);
 					fc = new JFileChooser(lastpath);
@@ -797,7 +796,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				if(menuItems!=null)
 					for (int i = 0; i < menuItems.length; ++i) {
 						if (e.getSource().equals(menuItems[i]))
-						tryToLoadROM((String)rcFiles.elementAt(i));
+						tryToLoadROM((String)rcFiles.get(i));
 				}
 				//System.out.println("timer!");
 				long ctime = System.nanoTime();
@@ -930,7 +929,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				String str;
 				int num = MIN(10, rcFiles.size());
 				for (int i = 0; i < num; ++i) {
-					str = (String)rcFiles.elementAt(i);
+					str = (String)rcFiles.get(i);
 					out.write(str, 0, str.length());
 					out.newLine();
 				}
@@ -1243,7 +1242,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					lastcart=true;
 			}
 			if(lastcart && (gui.rcFiles.size() > 0))
-				romfile = (String)gui.rcFiles.elementAt(0);
+				romfile = (String)gui.rcFiles.get(0);
 
 			gui.cpu = new CPU();
 			gui.VC = gui.cpu.VC;

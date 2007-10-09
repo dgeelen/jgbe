@@ -129,7 +129,7 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 
 		dialog.addWindowListener( new WindowAdapter() {
 			public void windowOpened( WindowEvent e ){
-				((JTextField)editboxes.firstElement()).requestFocus();
+				((JTextField)editboxes.get(0)).requestFocus();
 			}
 		});
 	}
@@ -149,7 +149,7 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 			FOREACH(JTextField, tf, editboxes) {
 				if(tf.hasFocus()) {
 					tf.setText((keyModifiers>0 ? KeyEvent.getKeyModifiersText(keyModifiers)+"+" : "") + KeyEvent.getKeyText(keyCode));
-					((JTextField)editboxes.elementAt(Math.min(j+1, editboxes.size()-1))).requestFocus();
+					((JTextField)editboxes.get(Math.min(j+1, editboxes.size()-1))).requestFocus();
 					keyMap[j] = keyState;
 				}
 				++j;
