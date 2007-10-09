@@ -61,16 +61,16 @@
 #ifdef USE_JAVA_142
 	#define STRFORMAT(x, y...) Format142.strformat(x, new int[] { y })
 	#define PRINTF(x, y...) Format142.strprintf(x, new int[] { y })
-	#define VECTOR(t) Vector
+	#define VECTOR(t) ArrayList
 	#define FOREACH_CAT_HELPER(x, y) x ## y
 	#define FOREACH_CAT(a, b) FOREACH_CAT_HELPER(a,b)
 	#define FOREACH(type, var, vec) \
 		for (int FOREACH_CAT(foreach, __LINE__) = 0; FOREACH_CAT(foreach, __LINE__) < (vec).size(); ++ FOREACH_CAT(foreach, __LINE__) ) \
-			for (type var = (type)((vec).elementAt(FOREACH_CAT(foreach, __LINE__))); var != null; var = null)
+			for (type var = (type)((vec).get(FOREACH_CAT(foreach, __LINE__))); var != null; var = null)
 #else
 	#define STRFORMAT(x...) String.format(x)
 	#define PRINTF(x...) System.out.printf(x)
-	#define VECTOR(t) Vector<t>
+	#define VECTOR(t) ArrayList<t>
 	#define FOREACH(type, var, vec) \
 		for (type var : vec)
 #endif

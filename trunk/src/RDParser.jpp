@@ -1,6 +1,6 @@
 #include "Global.inc"
 #ifndef USE_JAVA_MOBILE
-import java.util.Vector;
+import java.util.ArrayList;
 public class RDParser {
 	private char[] input;
 	private int parsingPosition;
@@ -158,7 +158,7 @@ public class RDParser {
 					++i;
 				}
 		for(int k=0; k<vars.size(); ++k) {
-			flup ff=(flup)vars.elementAt(k);
+			flup ff=(flup)vars.get(k);
 			if(ff.s.equals(s)) f=ff;
 		}
 		return f;
