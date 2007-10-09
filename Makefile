@@ -133,7 +133,7 @@ clean:
 	rm -f $(DEPSDIR)/*.d
 	rm -f $(JARDIR)/jgbe.jar
 	rm -f $(CLASSDIR)/jgbe.zip
-	rm -f svnrev.inc
+	rm -f $(SRCDIR)/svnrev.inc
 	touch $(JPPFILES)
 
 cleaner: clean
