@@ -16,11 +16,7 @@ public class PASoundLine implements SourceDataLine {
 	}
 
 	/// Writes audio data to the mixer via this source data line.
-	public int write(byte[] b, int off, int len) {
-		ASSERT(false);
-		// TODO
-		return 0;
-	}
+	public native int write(byte[] b, int off, int len);
 
 	/// Obtains the number of bytes of data currently available to the application for processing in the data line's internal buffer.
 	public int available() {
@@ -98,10 +94,7 @@ public class PASoundLine implements SourceDataLine {
 	}
 
 	/// Allows a line to engage in data I/O.
-	public void start() {
-		ASSERT(false);
-		// TODO
-	}
+	public native void start();
 
 	/// Stops the line.	
 	public void stop() {
@@ -166,5 +159,9 @@ public class PASoundLine implements SourceDataLine {
 	public void removeLineListener(LineListener listener) {
 		ASSERT(false);
 		// TODO
+	}
+
+	static {
+		System.loadLibrary("PASoundLine");
 	}
 }
