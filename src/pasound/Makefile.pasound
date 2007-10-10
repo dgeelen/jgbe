@@ -1,10 +1,23 @@
-$(CLASSDIR)/PASoundLine.class: $(CLASSDIR)/libPASoundLine.so
+all: $(CLASSDIR)/libPASoundLine.so
+
+JNICFLAGS:=-I/usr/lib/jvm/java-6-sun-1.6.0.00/include/ -I/usr/lib/jvm/java-6-sun-1.6.0.00/include/linux
+JNILDFLAGS:=-shared -lportaudio
 
 $(CLASSDIR)/libPASoundLine.so: $(SRCDIR)/pasound/pasoundline.o
-	touch $@
+	@echo "[.o   -> .so  ] PASoundLine"
+	@ld $(JNILDFLAGS) $< -o $@
 
 $(SRCDIR)/pasound/pasoundline.o: $(SRCDIR)/pasound/pasoundline.c $(SRCDIR)/pasound/pasoundline.h
-	touch $@
+	@echo "[.c .h-> .o   ] PASoundLine"
+	@gcc $(JNICFLAGS) -c $(SRCDIR)/pasound/pasoundline.c -o $@
 
-$(SRCDIR)/pasound/pasoundline.h: $(SRCDIR)/PASoundLine.java
-	touch $@
+$(SRCDIR)/pasound/pasoundline.h: $(CLASSDIR)/PASoundLine.class
+	@echo "[class-> .h   ] PASoundLine"
+	@cd $(CLASSDIR) && javah -jni -o ../$@ PASoundLine
+
+clean: paclean
+paclean:
+	rm -f $(CLASSDIR)/PASoundLine.class
+	rm -f $(CLASSDIR)/libPASoundLine.so
+	rm -f $(SRCDIR)/pasound/pasoundline.o
+	rm -f $(SRCDIR)/pasound/pasoundline.h
