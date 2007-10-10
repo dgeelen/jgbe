@@ -8,21 +8,19 @@ if [ "${SVNVER}" = "exported" ]; then
 fi
 
 if [ "${GITHEAD}" != "" ]; then
-	SVNVER=`git-svn find-rev ${GITHEAD} 2> /dev/null`
+	GITSVN=`git-rev-parse git-svn 2> /dev/null`
+	
+	if [ "${GITSVN}" != "" ]; then
+		SVNVER=`git-svn find-rev ${GITSVN}`
 
-	while [ \( "${SVNVER}" = "" \) -a \( "${GITHEAD}" != "" \) ]
-	do
-		GITHEAD=`git-rev-parse ${GITHEAD}^ 2> /dev/null 1> /dev/null && git-rev-parse ${GITHEAD}^ 2> /dev/null`
-		SVNVER=`git-svn find-rev ${GITHEAD} 2> /dev/null`
-#echo $GITHEAD
-	done
+		if [ "${GITHEAD}" != "${GITSVN}" ]; then
+			SVNVER=${SVNVER}G
+		fi
+		GITDIFF=`git-diff HEAD | cat`
 
-	if [ \( "${SVNVER}" != "" \) -a \( "${GITHEAD}" != "${GITHEAD_ORIG}" \) ]; then
-		SVNVER=${SVNVER}G
-	fi
-	GITDIFF=`git-diff HEAD | cat`
-	if [ "${GITDIFF}" != "" ]; then
-		SVNVER=${SVNVER}M
+		if [ "${GITDIFF}" != "" ]; then
+			SVNVER=${SVNVER}M
+		fi
 	fi
 fi
 
