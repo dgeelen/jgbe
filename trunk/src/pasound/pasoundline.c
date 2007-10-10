@@ -49,7 +49,7 @@ jint Java_PASoundLine_write(JNIEnv* env, jobject this, jbyteArray b, jint off, j
 {
 	assert(singleton_lock == 1);
 	jbyte *buffer = (*env)->GetByteArrayElements(env, b, NULL);
-	pa_write(buffer, len);
+	pa_write(buffer+off, len);
 }
 
 void pa_init()
