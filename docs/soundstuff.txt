@@ -1,0 +1,40 @@
+info from:http://www.jsresources.org/faq_audio.html
+
+
+1.1.12.	
+
+How can I detect a buffer underrun or overrun?
+	
+
+The following is working reliably at least with the "Direct Audio Device" mixers:
+
+    *
+
+      SourceDataLine: underrun if (line.available() == line.getBufferSize())
+
+      SourceDataLine.available(): how much data can be written to the buffer. If the whole buffer can be written to, there is no data in the buffer to be rendered.
+    *
+
+      TargetDataLine: overrun if (line.available() == line.getBufferSize())
+
+      TargetDataLine.available(): how much data can be read from the buffer. If the whole buffer can be read, there is no space in the buffer for new data captured from the line.
+
+(Matthias)
+
+
+---------------------------------------
+Random ML thread...:
+
+To get the lowest latency possible you need to keep the SourceDataLine  
+filled with enough data to cope with your potential lateness, but not much  
+more. You also need to keep the TargetDataLine as empty as possible.
+
+I use a trvial control loop which notes how many frames have been written  
+and how many frames have actually got to the hardware  
+(getLongFramePosition()). The difference in these frame counts is the  
+number of frames output latency which can easily be converted to  
+milliseconds output latency. Once the control loop is stable the overall  
+input/output latency remains constant, I minimise input latency by crudely  
+flushing the TargetDataLine once the loop is stable. Rather than blocking  
+I return silence if the TargetDataLine doesn't have enough data so it then  
+stablises at a minimum latency.
