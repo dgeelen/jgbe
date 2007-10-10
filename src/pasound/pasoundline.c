@@ -100,7 +100,7 @@ static void pa_write(uint8* d, int len)
 	int i;
 	for (i=0; i<len; i++ )
 	{
-		do {} while (pa.cpos == ((pa.cmax+1)&BUFMASK));
+		while (pa.cpos == ((pa.cmax+1)&BUFMASK)) Pa_Sleep(1);
 		pa.data[pa.cmax++] = *d++;
 		pa.cmax &= BUFMASK;
 	}
