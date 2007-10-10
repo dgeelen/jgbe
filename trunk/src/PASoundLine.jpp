@@ -1,0 +1,170 @@
+#include "Global.inc"
+
+import javax.sound.sampled.*;
+
+public class PASoundLine implements SourceDataLine {
+	/// Opens the line with the specified format, causing the line to acquire any required system resources and become operational.
+	public void open(AudioFormat format) {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Opens the line with the specified format and suggested buffer size, causing the line to acquire any required system resources and become operational.
+	public void open(AudioFormat format, int bufferSize) {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Writes audio data to the mixer via this source data line.
+	public int write(byte[] b, int off, int len) {
+		ASSERT(false);
+		// TODO
+		return 0;
+	}
+
+	/// Obtains the number of bytes of data currently available to the application for processing in the data line's internal buffer.
+	public int available() {
+		ASSERT(false);
+		// TODO
+		return 0;
+	}
+
+	/// Drains queued data from the line by continuing data I/O until the data line's internal buffer has been emptied.
+	public void drain() {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Flushes queued data from the line.
+	public void flush() {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Obtains the maximum number of bytes of data that will fit in the data line's internal buffer.
+	public int getBufferSize() {
+		ASSERT(false);
+		// TODO
+		return 0;
+	}
+
+	/// Obtains the current format (encoding, sample rate, number of channels, etc.) of the data line's audio data.
+	public AudioFormat getFormat() {
+		ASSERT(false);
+		// TODO
+		return null;
+	}
+
+	/// Obtains the current position in the audio data, in sample frames.
+	public int getFramePosition() {
+		ASSERT(false);
+		// TODO
+		return 0;
+	}
+
+	/// Obtains the current position in the audio data, in sample frames.
+	public long getLongFramePosition() {
+		ASSERT(false);
+		// TODO
+		return 0;
+	}
+
+	/// Obtains the current volume level for the line.
+	public float getLevel() {
+		ASSERT(false);
+		// TODO
+		return 0.0f;
+	}
+
+	/// Obtains the current position in the audio data, in microseconds.
+	public long getMicrosecondPosition() {
+		ASSERT(false);
+		// TODO
+		return 0;
+	}
+
+	/// Indicates whether the line is engaging in active I/O (such as playback or capture).
+	public boolean isActive() {
+		ASSERT(false);
+		// TODO
+		return false;
+	}
+
+	/// Indicates whether the line is running.
+	public boolean isRunning() {
+		ASSERT(false);
+		// TODO
+		return false;
+	}
+
+	/// Allows a line to engage in data I/O.
+	public void start() {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Stops the line.	
+	public void stop() {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Adds a listener to this line.
+	public void addLineListener(LineListener listener) {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Closes the line, indicating that any system resources in use by the line can be released.
+	public void close() {
+		ASSERT(false);
+		// TODO
+	}
+ 
+	/// Obtains a control of the specified type, if there is any.
+	public Control getControl(Control.Type control) {
+		ASSERT(false);
+		// TODO
+		return null;
+	}
+
+	/// Obtains the set of controls associated with this line.
+	public Control[] getControls() {
+		ASSERT(false);
+		// TODO
+		return null;
+	}
+
+	/// Obtains the Line.Info object describing this line.
+	public Line.Info getLineInfo() {
+		ASSERT(false);
+		// TODO
+		return null;
+	}
+
+	/// Indicates whether the line supports a control of the specified type.
+	public boolean isControlSupported(Control.Type control) {
+		ASSERT(false);
+		// TODO
+		return false;
+	}
+
+	/// Indicates whether the line is open, meaning that it has reserved system resources and is operational, although it might not currently be playing or capturing sound.
+	public boolean isOpen() {
+		ASSERT(false);
+		// TODO
+		return false;
+	}
+
+	/// Opens the line, indicating that it should acquire any required system resources and become operational.
+	public void open() {
+		ASSERT(false);
+		// TODO
+	}
+
+	/// Removes the specified listener from this line's list of listeners.}
+	public void removeLineListener(LineListener listener) {
+		ASSERT(false);
+		// TODO
+	}
+}
