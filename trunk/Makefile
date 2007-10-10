@@ -8,6 +8,7 @@ GJAVAFILES:=$(JPPFILES:.jpp=.java)
 AJAVAFILES:=$(shell ls $(SRCDIR)/*.java) $(GJAVAFILES)
 AJAVAFILES:=$(shell echo $(AJAVAFILES) | sort | uniq)
 CLASSFILES:=$(AJAVAFILES:$(SRCDIR)/%.java=$(CLASSDIR)/%.class)
+MAKEFILES :=Makefile Makefile.inc Makefile.config $(shell cat Makefile.inc 2> /dev/null | sed "s:-include ::")
 BOOTROM   :=$(shell find -iname boot.rom | head -1)
 
 ifeq ($(CLASSPATH),)
@@ -154,5 +155,8 @@ version:
 		echo $${NEWVER} > $(SRCDIR)/svnrev.inc; \
 	fi \
 	)
+
+$(GJAVAFILES): $(MAKEFILES)
+$(CLASSFILES): $(MAKEFILES)
 
 -include $(JPPFILES:$(SRCDIR)/%.jpp=$(DEPSDIR)/%.d)
