@@ -1,0 +1,10 @@
+$(CLASSDIR)/PASoundLine.class: $(CLASSDIR)/libPASoundLine.so
+
+$(CLASSDIR)/libPASoundLine.so: $(SRCDIR)/pasound/pasoundline.o
+	touch $@
+
+$(SRCDIR)/pasound/pasoundline.o: $(SRCDIR)/pasound/pasoundline.c $(SRCDIR)/pasound/pasoundline.h
+	touch $@
+
+$(SRCDIR)/pasound/pasoundline.h: $(SRCDIR)/PASoundLine.java
+	touch $@
