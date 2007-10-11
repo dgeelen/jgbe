@@ -128,8 +128,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JCheckBoxMenuItem	menuitemToggleRemoteKeys;
 		JCheckBoxMenuItem menuitemSpeedRunRecord; //Resets CPU and enables Recording
 		JCheckBoxMenuItem menuitemSpeedRunPlay;   //Resets CPU and enables Playback
+		JMenuItem menuitemShowAdvancedAudioPropertiesDialog;
 
 		static CheatCodeEditor cheatcodes;
+		static AdvancedAudioPropertiesDialog advancedAudioPropertiesDialog;
 		CPURunner cpuRunner;
 
 		protected ColorSelector cs;
@@ -313,6 +315,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuSoundChannels.add(menuitemSoundChannel3);
 			menuSoundChannels.add(menuitemSoundChannel4);
 			menuSound.add(menuSoundChannels);
+			menuitemShowAdvancedAudioPropertiesDialog = new JMenuItem("Advanced...", KeyEvent.VK_A);
+			menuitemShowAdvancedAudioPropertiesDialog.addActionListener(this);
+			menuSound.add(menuitemShowAdvancedAudioPropertiesDialog);
 			mainMenuBar.add( menuSound) ;
 			menuOther=new JMenu("Other");
 			menuOther.setMnemonic( KeyEvent.VK_O );
@@ -823,6 +828,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.useRemoteKeys = !cpu.useRemoteKeys;
 				addOSDLine("Remote Keys: "+(cpu.useRemoteKeys?"Enabled":"Disabled"));
 			}
+			else if(e.getSource().equals( menuitemShowAdvancedAudioPropertiesDialog )) {
+				advancedAudioPropertiesDialog.showWindow();
+			}
 			else { //timer?
 				for (int i = 0; i < 10; ++i) {
 					if (e.getSource().equals(menuitemSelectState[i])) {
@@ -1318,6 +1326,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				gui.cpuRunner = new SimpleCPURunner();
 				gui.resumeEmulation(false);
 			}
+
+			//Audio Properties Dialog
+			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, CPU.AC);
 		}
 
 		public void start() {
