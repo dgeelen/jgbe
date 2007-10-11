@@ -26,11 +26,23 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		this.ac = ac;
 		dialog= new JDialog(owner, "Advanced Audio Properties", true);
 		if(ac != null) {
-			JScrollPane scroll;
-
+			JPanel panel;
+			BorderLayout layout;
+			JLabel label;
 			audioWriteInterval = new JSlider(0, ac.audioSource.getBufferSize(), ac.audioBuffer.length);
 			audioWriteInterval.addChangeListener(this);
-			dialog.add(audioWriteInterval);
+
+			panel = new JPanel();
+			layout = new BorderLayout();
+			label = new JLabel("Interval between audio-output attempts:");
+			panel.setLayout(layout);
+			panel.add(label, BorderLayout.NORTH);
+			panel.add(audioWriteInterval, BorderLayout.SOUTH);
+// 			dialog.add(scroll);
+// 			scroll = new JScrollPane(audioWriteInterval);
+			panel.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
+			panel.setPreferredSize(new Dimension(640, 480));
+			dialog.add(panel);
 		}
 		dialog.addComponentListener(this);
 		dialog.setLocationRelativeTo(null);
