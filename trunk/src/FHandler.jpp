@@ -110,13 +110,11 @@ public final class FHandler {
 		try {
 			InputStream bistream = getResourceStream("VeraMono.ttf");
 			Font base = Font.createFont(Font.TRUETYPE_FONT, bistream);
-			PRINTLN("font success");
 			bistream.close();
 			return base.deriveFont(0, 12);
 		}
 		catch (Exception e) {
-			PRINTLN("Error while loading font, attempting fallback");
-// 			e.printStackTrace();
+			PRINTLN("Error while loading font, using fallback font");
 			return new Font("Bitstream Vera Sans Mono",0, 12);
 		}
 	}
