@@ -1,0 +1,61 @@
+#include "Global.inc"
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.net.*;
+import java.awt.image.BufferedImage;
+import javax.swing.table.*;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.io.*;
+public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeListener, ActionListener {
+	JFrame owner;
+	AudioController ac;
+	JDialog dialog;
+	JSlider audioWriteInterval;
+	JSlider audioBufferSize;
+
+	public AdvancedAudioPropertiesDialog(JFrame o) { // DO NOT USE THIS CONSTRUCTOR
+		ASSERT(false);
+	}
+	
+	public AdvancedAudioPropertiesDialog(JFrame o, AudioController ac) {
+		owner = o;
+		this.ac = ac;
+		dialog= new JDialog(owner, "Advanced Audio Properties", true);
+		if(ac != null) {
+			JScrollPane scroll;
+
+			audioWriteInterval = new JSlider(0, ac.audioSource.getBufferSize(), ac.audioBuffer.length);
+			audioWriteInterval.addChangeListener(this);
+			dialog.add(audioWriteInterval);
+		}
+		dialog.addComponentListener(this);
+		dialog.setLocationRelativeTo(null);
+		dialog.setResizable(false);
+		dialog.pack();
+
+		Dimension d = owner.getSize();
+		Point     p = new Point();
+		p.setLocation((owner.getLocation().getX()+(d.getWidth()/2)) - (dialog.getWidth()/2), (owner.getLocation().getY()+d.getHeight()/2)-(dialog.getHeight()/2));
+		dialog.setLocation(p);
+	}
+
+	public void showWindow() {
+			dialog.setVisible( true );
+	}
+	
+	public void actionPerformed( ActionEvent e ) {
+	}
+	
+	public void stateChanged( ChangeEvent e) {
+		
+	}
+	
+	public void componentHidden(ComponentEvent e) {}
+	public void componentMoved(ComponentEvent e) {}
+	public void componentShown(ComponentEvent e) {}
+	public void componentResized(ComponentEvent e) {}
+}

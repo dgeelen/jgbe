@@ -671,11 +671,11 @@ public class AudioController {
 #ifndef JMGBE
 	private AudioFormat myAudioFormat;
 	private DataLine.Info myLineInfo;
-	private SourceDataLine audioSource;
+	public SourceDataLine audioSource;
 #endif
-	private byte audioBuffer[];
-	private byte audioMutedBuffer[];
-	public int audioBufferIndex;
+	public byte audioBuffer[];
+	public	int audioBufferIndex;
+	public  int audioWriteInterval;
 	private int IO[];
 	private int WAVE[] = new int[16];
 	private final int sampleRate=44100;//22050;//44100;//22050;
@@ -781,12 +781,27 @@ public class AudioController {
 		PRINTLN("(You may need to add one of these to "+__FILE__+")");
 		
 		this.cpu=cpu;
+
+
+
+
+
+/*******************************<FIXME>******************************/
+
+		
 		//#define BUFFER_SIZE (2*1024*10) /*works okayish on windows*/
-		#define WRITE_OUT_COUNT_FIXME /*win:1<<7 linux:1<<5*/(1<<8)
+		#define WRITE_OUT_COUNT_FIXME /*win:1<<7 linux:1<<5*/(1<<6)
 		#define BUFFER_SIZE 1024          /*Linux is just a lot better*/
+
+	audioWriteInterval = WRITE_OUT_COUNT_FIXME;
+
+/*******************************</FIXME>******************************/
+
+
+
+
+
 		audioBuffer = new byte[BUFFER_SIZE]; //allocate enough buffer for 1 second
-		audioMutedBuffer = new byte[BUFFER_SIZE]; //allocate enough buffer for 1 second
-		for(int i=0; i<audioMutedBuffer.length; ++i) audioMutedBuffer[i]=0;
 #ifndef JMGBE
 		try {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
@@ -1117,16 +1132,17 @@ public class AudioController {
 			//TODO: Assume Stereo
 			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
 			audioBufferIndex %= audioBuffer.length;
+			if(isMuted) {
+				l=0;
+				r=0;
+			}
 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
 
 			if (audioBufferIndex >= WRITE_OUT_COUNT_FIXME) { //WriteOut every n samples (1<<5 for linux, at least 1<<7 for windows)
 #ifndef JMGBE
 			if(audioSource!=null)
-				if (!isMuted)
 					audioSource.write(audioBuffer, 0, audioBufferIndex);
-				else
-					audioSource.write(audioMutedBuffer, 0, audioBufferIndex);
 #endif
 				audioBufferIndex = 0;
 			}
