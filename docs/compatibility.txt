@@ -1,16 +1,21 @@
     :                                                                      :
-.---'---[ Final Fantasy Adventure (U) [!].gb ]-----------------------------'---.
-| MD5    : 24cd3bdf490ef2e1aa6a8af380eccd78                                    |
-| Status : BROKEN CRASH UNPLAYABLE                                             |
-| Notes  : Plays the first few notes of the OP, then crashes the Emu :-(       |
-'---.----------------------------------------------------------------------.---'
-    |                                                                      |    
 .---'---[ Earthworm Jim (U) [!].gb ]---------------------------------------'---.
 | MD5    : 0d24eeff28040ff2a8f63de5bc8cbea2                                    |
 | Status : BUG PLAYABLE                                                        |
 | Notes  : Player dies once immediately after starting level 1                 |
 '---.----------------------------------------------------------------------.---'
-    |                                                                      |    
+    |                                                                      |
+.---'---[ Final Fantasy Adventure (U) [!].gb ]-----------------------------'---.
+| MD5    : 24cd3bdf490ef2e1aa6a8af380eccd78                                    |
+| Status : PLAYABLE                                                            |
+'---.----------------------------------------------------------------------.---'
+    |                                                                      |
+.---'---[ Teenage Mutant Ninja Turtles III - Radical Rescue (U).gb ]-------'---.
+| MD5    : e6104df1feb1318ff1764c791eb4ce0e                                    |
+| Status : PLAYABLE                                                            |
+| Notes  : Confirmed finishable                                                |
+'---.----------------------------------------------------------------------.---'
+    |                                                                      |
 .---'---[  ]---------------------------------------------------------------'---.
 | MD5    :                                                                     |
 | Status :                                                                     |
