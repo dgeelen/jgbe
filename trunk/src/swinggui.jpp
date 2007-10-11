@@ -70,7 +70,6 @@ class SimpleCPURunner implements CPURunner, Runnable {
 }
 
 public class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener {
-		public static boolean RIGHT_TO_LEFT = false;
 		private static DrawingArea grfx;
 		protected VideoController VC;
 		protected CPU cpu;
@@ -414,23 +413,19 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		public void addComponentsToPane( Container contentPane ) {
 //      Use BorderLayout. Default empty constructor with no horizontal and vertical
 //      gaps
-			contentPane.setLayout( new BorderLayout( 5,5 ) );
-			if ( !( contentPane.getLayout() instanceof BorderLayout ) ) {
-				contentPane.add( new JLabel( "Container doesn't use BorderLayout!" ) );
-				return;
-			}
-
-			if ( RIGHT_TO_LEFT ) {
-				contentPane.setComponentOrientation(
-				  java.awt.ComponentOrientation.RIGHT_TO_LEFT );
-			}
+// 			contentPane.setLayout( new BorderLayout( 5,5 ) );
+			contentPane.setLayout(new FlowLayout(FlowLayout.CENTER,0,0));
+// 			if ( !( contentPane.getLayout() instanceof BorderLayout ) ) {
+// 				contentPane.add( new JLabel( "Container doesn't use BorderLayout!" ) );
+// 				return;
+// 			}
 
 			grfx=new DrawingArea( cpu.VC ); //doublebuffering
 			grfx.setFocusable(true);
 			grfx.addKeyListener(this);
 			grfx.setDoubleBuffered(false);
 			grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-			contentPane.add( grfx, BorderLayout.CENTER );
+			contentPane.add( grfx );
 		}
 
 		static JFrame frame;
