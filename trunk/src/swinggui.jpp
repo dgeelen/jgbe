@@ -126,6 +126,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JMenuItem menuitemLinkSever;
 		JMenuItem menuitemConfigKeys;
 		JCheckBoxMenuItem	menuitemToggleRemoteKeys;
+		JCheckBoxMenuItem menuitemSpeedRunRecord; //Resets CPU and enables Recording
+		JCheckBoxMenuItem menuitemSpeedRunPlay;   //Resets CPU and enables Playback
 
 		static CheatCodeEditor cheatcodes;
 		CPURunner cpuRunner;
@@ -349,6 +351,14 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 			menuitemConfigKeys = new JMenuItem("Config keys",KeyEvent.VK_1);
 			menuitemConfigKeys.addActionListener(this);
+
+			menuitemSpeedRunRecord = new JCheckBoxMenuItem("Record speedrun", false);
+			menuitemSpeedRunPlay = new JCheckBoxMenuItem("Play speedrun", false);
+			menuitemSpeedRunRecord.setMnemonic(KeyEvent.VK_E);
+			menuitemSpeedRunPlay.setMnemonic(KeyEvent.VK_P);
+			menuitemSpeedRunRecord.addActionListener(this);
+			menuitemSpeedRunPlay.addActionListener(this);
+
 			menuOther.add(menuitemEnableCheats);
 			menuOther.add(menuitemUseBIOS);
 			menuOther.add(menuitemToggleRemoteKeys);
@@ -367,12 +377,17 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemEmuSpeedMul.addActionListener(this);
 			menuitemEmuSpeedDiv.addActionListener(this);
 			menuitemEmuSpeedNormal.addActionListener(this);
+
 			menuEmuSpeed.add(menuitemEmuSpeedPlus);
 			menuEmuSpeed.add(menuitemEmuSpeedMinus);
 			menuEmuSpeed.add(menuitemEmuSpeedMul);
 			menuEmuSpeed.add(menuitemEmuSpeedDiv);
 			menuEmuSpeed.add(menuitemEmuSpeedNormal);
 			menuOther.add(menuEmuSpeed ) ;
+			menuOther.addSeparator();
+			menuOther.add(menuitemSpeedRunRecord);
+			menuOther.add(menuitemSpeedRunPlay);
+
 			mainMenuBar.add( menuOther) ;
 
 			return mainMenuBar;
@@ -686,6 +701,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					System.out.println("Error loading state! " + ioe.getMessage());
 				};
 				resumeEmulation(false);
+				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
 			}
 			else if(e.getSource().equals( menuitemPause )) {
 				if(cpuRunner.isRunning())
@@ -698,6 +714,33 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.reset();
 				resumeEmulation(false);
 				addOSDLine("Reset gameboy");
+			}
+			else if(e.getSource().equals( menuitemSpeedRunRecord )) {
+				if(cpu.keyHistoryEnabled) {
+					addOSDLine("Stopped recording of your speedrun");
+					pauseEmulation(false);
+					cpu.keyHistoryEnabled = false;
+					resumeEmulation(false);
+				}
+				else {
+					menuitemSpeedRunPlay.setState(false);
+					addOSDLine("Now recording speedrun");
+					pauseEmulation(false);
+					cpu.reset();
+					cpu.keyHistoryEnabled = true;
+					resumeEmulation(false);
+				}
+				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
+			}
+			else if(e.getSource().equals( menuitemSpeedRunPlay )) {
+				menuitemSpeedRunRecord.setState(false);
+				pauseEmulation(false);
+				IntVector hist = cpu.keyHistory;
+				cpu.keyHistory = new IntVector();
+				cpu.reset();
+				cpu.keyHistory = hist;
+				cpu.playbackHistoryIndex = 0;
+				resumeEmulation(false);
 			}
 			else if(e.getSource().equals( menuitemEmuSpeedPlus )) {
 				double cs = CPU.AC.currentEmulationSpeed;

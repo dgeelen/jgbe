@@ -65,6 +65,7 @@ static class DummyCPURunBlock implements CPURunBlock {
 		public static boolean keyHistoryEnabled;
 		public static IntVector keyHistory;
 		public static int lastKeyChange;
+		public static int playbackHistoryIndex = -1;
 
 		static boolean BIOS_enabled = false;
 
@@ -465,7 +466,11 @@ static int togglestart=1;
 				}
 				else if (index == 0x100) {
 					System.out.println("reading from 0x100, disableing BIOS rom (PC="+PC+")");
-					reset(false); // reset without forcing mono mode
+					BIOS_enabled = false;
+					//reset(false); // reset without forcing mono mode
+					refreshMemMap();
+					VC.isCGB = BIOS_enabled?false:isCGB();
+					A=VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
 					b = read(index);
 				}
 				else {
@@ -928,6 +933,8 @@ static int togglestart=1;
 			lastException=0;
 			hw_ilines = 0;
 			hblank_dma_state = 0;
+			playbackHistoryIndex = -1;
+			keyHistoryEnabled = false;
 			first_save_string = Version.str;
 		}
 
@@ -1286,15 +1293,32 @@ static int togglestart=1;
 #endif
 
 		public static final int nextinstruction() {
-			if (KeyStatus != GUIKeyStatus) {
-				keyBounce = 1000;
-				keyBounceWaitNext = 0;
-			}
-			if (KeyStatus != GUIKeyStatus || lastKeyChange > 0x3fffffff) {
-				KeyStatus = GUIKeyStatus;
-				keyHistory.add(lastKeyChange);
-				keyHistory.add(KeyStatus);
-				lastKeyChange = 0;
+			if (playbackHistoryIndex == -1) {
+				if (KeyStatus != GUIKeyStatus) {
+					keyBounce = 1000;
+					keyBounceWaitNext = 0;
+				}
+				if (KeyStatus != GUIKeyStatus || lastKeyChange > 0x3fffffff) {
+					KeyStatus = GUIKeyStatus;
+					keyHistory.add(lastKeyChange);
+					keyHistory.add(KeyStatus);
+					lastKeyChange = 0;
+				}
+			} else if (playbackHistoryIndex < keyHistory.size()) {
+				int d = keyHistory.get(playbackHistoryIndex);
+				if (d <= lastKeyChange) {
+					//PRINTLN("Playback!"+playbackHistoryIndex);
+					lastKeyChange = 0;
+					++playbackHistoryIndex;
+					d = keyHistory.get(playbackHistoryIndex++);
+					if (KeyStatus != d)  {
+						KeyStatus = d;
+						keyBounce = 1000;
+						keyBounceWaitNext = 0;
+					}
+				}
+			} else {
+				playbackHistoryIndex = -1;
 			}
 			int res = 4*execute();
 			SP &= 0xffff;
