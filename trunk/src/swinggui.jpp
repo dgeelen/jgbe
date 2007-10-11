@@ -3,11 +3,14 @@
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
+import java.awt.dnd.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 /* These may be needed for 'true' outline fonts
 import java.awt.font.*;
 import java.awt.geom.*;*/
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.net.*;
 import java.io.*;
 import java.awt.image.BufferedImage;
@@ -478,9 +481,62 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			Point     p = new Point();
 			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
 			frame.setLocation(p);
+
+			/* DND */
+			JavaCrossplatformnessIsAMyth transferhandler = new JavaCrossplatformnessIsAMyth();
+			grfx.setTransferHandler(transferhandler);
+			
+
 			frame.setVisible( true );
 		}
+		
+		public class JavaCrossplatformnessIsAMyth extends TransferHandler {
+			private final String URI_LIST = "uri-list";
+			public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+				for(int i=0; i< transferFlavors.length; ++i) {
+					DataFlavor flavor = transferFlavors[i];
+					// windows
+					if (flavor.equals(DataFlavor.javaFileListFlavor)) {
+						return true;
+					// kde
+					} else if (URI_LIST.equals( flavor.getSubType() )) {
+						return true;				
+					}
+				}
+			return false;
+			}
+		
+			public boolean importData(JComponent comp, Transferable t) {
+				VECTOR(File) files = null;
+				try {
+					for(int i=0; i < t.getTransferDataFlavors().length; ++i) {
+						DataFlavor flavor = t.getTransferDataFlavors()[i];
+						Object obj = t.getTransferData(flavor);
+						// windows
+						if (DataFlavor.javaFileListFlavor.equals(flavor)) {
+							files = (VECTOR(File))t.getTransferData(flavor);
+						// kde
+						} else if (URI_LIST.equals(flavor.getSubType()) && obj instanceof String ) {
+							String urilist = (String)obj;
+							Scanner scanner = new Scanner(urilist.trim());
+							files = new VECTOR(File)();
+							while (scanner.hasNextLine()) {					
+								files.add(new File(new URI(scanner.nextLine()) ) );
+							}
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					return false;
+				}
+		
+				if(files != null) if(files.size() == 1) tryToLoadROM(files.get(0).toString());// PRINTLN(files.get(0));
+				
+				return true;
+			}
+		}
 
+		
 		public void componentHidden(ComponentEvent e) {}
 		public void componentMoved(ComponentEvent e) {}
 		public void componentShown(ComponentEvent e) {}
