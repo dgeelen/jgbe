@@ -1,14 +1,16 @@
+ - [DONE] Fix Super Mario Land 1 - World 4-1 upside down plant bug (savestate 4)
+ - [DONE] Make mouse-over eval for Debugger
+ - [DONE] Make color selector for palettes
+ - [DONE] Fix 'If' for scale 4x
+ - [PARTIALLY] make save and load custom palette colors
+ - [PARTIALLY] Add speedrun tools
  - add optimisations to recompiler
  - make recompiler cache for rombanks besides 0
  - Fix line in pac-in-time
- - [DONE] Fix Super Mario Land 1 - World 4-1 upside down plant bug (savestate 4)
- - [DONE] Make mouse-over eval for Debugger
  - Make scanlines
  - Fix batman intro logo
  - Add interframe blending
  - Hire 'clean-up-crew'
- - [DONE] Make color selector for palettes
- - Fix 'If' for scale 4x
  - Fix keyrepeat (for linux and MacOS and solaris and BSD and ... everything except wind00ze) (actually, probably only for linux....)
  - SPRITE PRIORITIES
- - make save and load custom palette colors
+ - Make the GUI move when resizing
