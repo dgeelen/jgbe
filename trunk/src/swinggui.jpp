@@ -1001,7 +1001,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				biosfilename = "";
 				VC.nscale = 2;
 				while ((str = in.readLine()) != null) {
-					PRINTF("loadConfig(): `"+str+"' --> ");
+// 					PRINTF("loadConfig(): `"+str+"' --> ");
 					int index = str.indexOf("#");	if(index>=0) str = str.substring(0, index).trim();
 					index=str.indexOf("=");
 					String property, value;
