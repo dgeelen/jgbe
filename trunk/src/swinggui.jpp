@@ -1351,9 +1351,14 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				romfile = (String)gui.rcFiles.get(0);
 
 			gui.cpu = new CPU();
+
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui );
 			gui.createAndShowGUI();
+			//Audio Properties Dialog
+			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, CPU.AC);
+// 			advancedAudioPropertiesDialog.showWindow();
+			
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
 			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
@@ -1386,9 +1391,6 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				gui.cpuRunner = new SimpleCPURunner();
 				gui.resumeEmulation(false);
 			}
-
-			//Audio Properties Dialog
-			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, CPU.AC);
 		}
 
 		public void start() {
