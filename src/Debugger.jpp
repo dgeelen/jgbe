@@ -147,13 +147,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						decRunFor();
 					}
 					catch( Throwable t ) {
-						System.out.println("+=================================================+");
-						System.out.println("UNHANDLED ERROR:");
+						PRINTLN("+=================================================+");
+						PRINTLN("UNHANDLED ERROR:");
 						t.printStackTrace();
-						System.out.println("+-------------------------------------------------+");
+						PRINTLN("+-------------------------------------------------+");
 						gui.cpu.PC=OldPC;
 						gui.cpu.printCPUstatus();
-						System.out.println("+=================================================+");
+						PRINTLN("+=================================================+");
 						keeprunning = false;
 					}
 					if (logwriter != null) {
@@ -174,7 +174,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 							logwriter.write(out);
 						}
 						catch (java.io.IOException e) {
-							System.out.println("Error writing logfile:" + e.getMessage());
+							PRINTLN("Error writing logfile:" + e.getMessage());
 							logwriter = null;
 						}
 					}
@@ -262,7 +262,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				if (evt.getType() == TableModelEvent.UPDATE) {
 					int column = evt.getColumn();
 					int row = evt.getFirstRow();
-	 				System.out.println("row: " + row + " column: " + column);
+// 	 				System.out.println("row: " + row + " column: " + column);
 					int index = (row)*8 + (column-2) + memaddr;
 					int i=memaddr; memaddr=index; prepareParser(); memaddr=i; //HAXHAXHAXHAXHAXHAX
 					int value = parser.Evaluate(((String)mem.getValueAt(row, column)).trim());
@@ -277,20 +277,20 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	}
 
 	public void mouseExited(MouseEvent e) {
-		PRINTLN("MOUSE EXIT");
+// 		PRINTLN("MOUSE EXIT");
 	}
 	public void mouseEntered(MouseEvent e) {
-		PRINTLN("MOUSE ENTER");
+// 		PRINTLN("MOUSE ENTER");
 	}
 
 	public void mouseReleased(MouseEvent e) {
-		PRINTLN("MOUSE RELEASE");
+// 		PRINTLN("MOUSE RELEASE");
 	}
 	public void mousePressed(MouseEvent e) {
-		PRINTLN("MOUSE PRESSED");
+// 		PRINTLN("MOUSE PRESSED");
 	}
 	public void mouseClicked(MouseEvent e) {
-		PRINTLN("MOUSE CLICKED");
+// 		PRINTLN("MOUSE CLICKED");
 	}
 
 	public void adjustmentValueChanged(AdjustmentEvent e) {
@@ -732,7 +732,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 // 				int x[]=null;
 // 				x[0] = 0;
 // 			}
-			PRINTF(s+"\n");
+// 			PRINTF(s+"\n");
 // 			cmds.selectAll();
 			i=s.indexOf("=");
 			if(i>-1) { //assignment
@@ -842,7 +842,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						}
 					}
 					else {
-						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
+// 						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
 					}
 				}
 				s="-";
@@ -899,20 +899,20 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 	public void itemStateChanged( ItemEvent e ) {
 		JMenuItem source = ( JMenuItem )( e.getSource() );
-		System.out.println("Menu Item source: " + source.getText() + " (an instance of " + getClassName( source ) + ")"	+ "\n"
-		                   + "    State of check Box: " + (( e.getStateChange() == ItemEvent.SELECTED ) ? "selected":"unselected" ));
+// 		System.out.println("Menu Item source: " + source.getText() + " (an instance of " + getClassName( source ) + ")"	+ "\n"
+// 		                   + "    State of check Box: " + (( e.getStateChange() == ItemEvent.SELECTED ) ? "selected":"unselected" ));
 	}
 
 	public void keyTyped(KeyEvent e) {
-		System.out.println("keyTyped");
+// 		System.out.println("keyTyped");
 	}
 
 	public void keyPressed(KeyEvent e) {
-		System.out.println("DEBUGGER: keyPressed");
+// 		System.out.println("DEBUGGER: keyPressed");
 	}
 
 	public void keyReleased(KeyEvent e) {
-		System.out.println("DEBUGGER: keyReleased" + e.getKeyCode());
+// 		System.out.println("DEBUGGER: keyReleased" + e.getKeyCode());
 	}
 
 	// Returns the class name, no package info
