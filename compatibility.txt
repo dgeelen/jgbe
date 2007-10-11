@@ -5,6 +5,12 @@
 | Notes  : Plays the first few notes of the OP, then crashes the Emu :-(       |
 '---.----------------------------------------------------------------------.---'
     |                                                                      |    
+.---'---[ Earthworm Jim (U) [!].gb ]---------------------------------------'---.
+| MD5    : 0d24eeff28040ff2a8f63de5bc8cbea2                                    |
+| Status : BUG PLAYABLE                                                        |
+| Notes  : Player dies once immediately after starting level 1                 |
+'---.----------------------------------------------------------------------.---'
+    |                                                                      |    
 .---'---[  ]---------------------------------------------------------------'---.
 | MD5    :                                                                     |
 | Status :                                                                     |
