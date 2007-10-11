@@ -1,0 +1,23 @@
+#include "Global.inc"
+
+import java.awt.event.*;
+
+public class TimedKeyListener implements KeyListener {
+	private KeyListener kl;
+	public TimedKeyListener(KeyListener akl) {
+		kl = akl;
+	}
+
+	public void keyReleased(KeyEvent e) {
+		kl.keyReleased(e);
+	}
+
+	public void keyPressed(KeyEvent e) {
+		PRINTLN("pressed");
+		kl.keyPressed(e);
+	}
+
+	public void keyTyped(KeyEvent e) {
+		kl.keyTyped(e);
+	}
+}
