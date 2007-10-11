@@ -11,7 +11,7 @@ public class IntVector {
 		for (int i = 0; i < length; ++i)
 			data[i] = old[i];
 	}
-	
+
 	public IntVector() {
 		clear();
 	}
@@ -101,5 +101,9 @@ public class IntVector {
 		SL_INT(length);
 		if (SL_LOAD) data = new int[length*2];
 		SL_ARR(INT, data, length);
+	}
+
+	void setSize(int len) {
+		length = len;
 	}
 }

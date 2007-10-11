@@ -179,11 +179,21 @@ static class DummyCPURunBlock implements CPURunBlock {
 			SL_IF_VERSION( 7, -1) SL_UINT8(hblank_dma_state);
 
 			SL_IF_VERSION(13, -1) {
-				SL_BOOL(keyHistoryEnabled);
-				if (keyHistoryEnabled) {
+				if (SL_SAVE && playbackHistoryIndex != -1) {
+					SL_BOOL(keyHistoryEnabled);
 					SL_INT(lastKeyChange);
+					int olen = keyHistory.size();
+					keyHistory.setSize(playbackHistoryIndex);
 					SL_OBJ(keyHistory);
+					keyHistory.setSize(olen);
+				} else {
+					SL_BOOL(keyHistoryEnabled);
+					if (keyHistoryEnabled) {
+						SL_INT(lastKeyChange);
+						SL_OBJ(keyHistory);
+					}
 				}
+				if (SL_LOAD) playbackHistoryIndex = -1;
 			} else
 				keyHistoryEnabled = false;
 
@@ -416,7 +426,7 @@ check for badness = $afa
 				rMemMap[0xA] = wMemMap[0xA] = null;
 				rMemMap[0xB] = wMemMap[0xB] = null;
 			}
-			
+
 			// WRAM, bank 0 and a switchable bank
 			rMemMap[0xC] = wMemMap[0xC] = WRAM[0];
 			rMemMap[0xD] = wMemMap[0xD] = WRAM[CurrentWRAMBank];
@@ -1319,6 +1329,7 @@ static int togglestart=1;
 				}
 			} else {
 				playbackHistoryIndex = -1;
+				keyHistoryEnabled = true;
 			}
 			int res = 4*execute();
 			SP &= 0xffff;
