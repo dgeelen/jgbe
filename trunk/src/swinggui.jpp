@@ -298,7 +298,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemEnableSound.setMnemonic( KeyEvent.VK_T );
 			menuitemEnableSound.addActionListener( this );
 			menuSound.add( menuitemEnableSound );
-			
+
 			menuSoundChannels=new JMenu("Channels");
 			menuitemSoundChannel1=new JCheckBoxMenuItem( "Toggle channel 1", true );
 			menuitemSoundChannel2=new JCheckBoxMenuItem( "Toggle channel 2", true );
@@ -334,7 +334,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuitemUseBIOS.addActionListener(this);
 			menuitemSetBIOS=new JMenuItem("Select BIOS ROM", KeyEvent.VK_B);
 			menuitemSetBIOS.addActionListener(this);
-			
+
 #ifdef SCALEBUILDER
 			menuitemScaleBuilder=new JMenuItem("Built Scale", KeyEvent.VK_S);
 			menuitemScaleBuilder.addActionListener(this);
@@ -373,7 +373,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuOther.add(menuitemCheats);
 			menuOther.add(menuitemSetBIOS);
 			menuOther.add(menuitemConfigKeys);
-			
+
 			menuEmuSpeed = new JMenu("Emulation Speed");
 			menuitemEmuSpeedPlus  = new JMenuItem("+25%", KeyEvent.VK_PLUS);
 			menuitemEmuSpeedMinus = new JMenuItem("-25%", KeyEvent.VK_MINUS);
@@ -486,11 +486,11 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			/* DND */
 			JavaCrossplatformnessIsAMyth transferhandler = new JavaCrossplatformnessIsAMyth();
 			grfx.setTransferHandler(transferhandler);
-			
+
 
 			frame.setVisible( true );
 		}
-		
+
 		public class JavaCrossplatformnessIsAMyth extends TransferHandler {
 			private final String URI_LIST = "uri-list";
 			public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
@@ -501,12 +501,12 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						return true;
 					// kde
 					} else if (URI_LIST.equals( flavor.getSubType() )) {
-						return true;				
+						return true;
 					}
 				}
 			return false;
 			}
-		
+
 			public boolean importData(JComponent comp, Transferable t) {
 				VECTOR(File) files = null;
 				try {
@@ -521,7 +521,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 							String urilist = (String)obj;
 							Scanner scanner = new Scanner(urilist.trim());
 							files = new VECTOR(File)();
-							while (scanner.hasNextLine()) {					
+							while (scanner.hasNextLine()) {
 								files.add(new File(new URI(scanner.nextLine()) ) );
 							}
 						}
@@ -530,14 +530,14 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					e.printStackTrace();
 					return false;
 				}
-		
+
 				if(files != null) if(files.size() == 1) tryToLoadROM(files.get(0).toString());// PRINTLN(files.get(0));
-				
+
 				return true;
 			}
 		}
 
-		
+
 		public void componentHidden(ComponentEvent e) {}
 		public void componentMoved(ComponentEvent e) {}
 		public void componentShown(ComponentEvent e) {}
@@ -764,6 +764,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				};
 				resumeEmulation(false);
 				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
+				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
 			}
 			else if(e.getSource().equals( menuitemPause )) {
 				if(cpuRunner.isRunning())
@@ -793,6 +794,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					resumeEmulation(false);
 				}
 				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
+				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
 			}
 			else if(e.getSource().equals( menuitemSpeedRunPlay )) {
 				menuitemSpeedRunRecord.setState(false);
@@ -802,7 +804,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.reset();
 				cpu.keyHistory = hist;
 				cpu.playbackHistoryIndex = 0;
+				cpu.keyHistoryEnabled = false;
 				resumeEmulation(false);
+				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
 			}
 			else if(e.getSource().equals( menuitemEmuSpeedPlus )) {
 				double cs = CPU.AC.currentEmulationSpeed;
@@ -1359,17 +1363,17 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			//Audio Properties Dialog
 			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, CPU.AC);
 // 			advancedAudioPropertiesDialog.showWindow();
-			
+
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
 			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
 			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
 			gui.loadKeyBinds();
-			
+
 			cheatcodes.applyCheatCodes(cart);
-			
+
 			gui.loadConfig();
-			
+
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
 				gui.cpu.AC.isMuted = true;
