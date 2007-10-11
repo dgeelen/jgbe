@@ -1,0 +1,105 @@
+#include "Global.inc"
+#include "SaveLoad.inc"
+
+public class IntVector {
+	private int length;
+	private int[] data;
+
+	private void resize(int newsize) {
+		int[] old = data;
+		data = new int[newsize];
+		for (int i = 0; i < length; ++i)
+			data[i] = old[i];
+	}
+	
+	public IntVector() {
+		clear();
+	}
+
+	/// Increases the capacity of this ArrayList instance, if necessary, to ensure that it can hold at least the number of elements specified by the minimum capacity argument.
+	public void ensureCapacity(int minCapacity) {
+		if (data.length < minCapacity)
+			resize(minCapacity);
+	}
+
+	/// Inserts the specified element at the specified position in this list.
+	public void add(int index, int element) {
+		if (data.length == length) resize(length*2);
+		for (int i = index; i < length; ++i)
+			data[i+1] = data[i];
+		data[index] = element;
+		++length;
+	}
+
+	/// Appends the specified element to the end of this list.
+	public boolean add(int element) {
+		if (data.length == length) resize(length*2);
+		data[length++] = element;
+		return true;
+	}
+
+	/// Removes all of the elements from this list.
+	public void clear() {
+		length = 0;
+		data = new int[1024];
+	}
+
+// boolean 	contains(Object elem)
+//          Returns true if this list contains the specified element.
+
+	/// Returns the element at the specified position in this list.
+	public int get(int index) {
+		ASSERT(index < length);
+		return data[index];
+	}
+
+// int 	indexOf(Object elem)
+//          Searches for the first occurence of the given argument, testing for equality using the equals method.
+
+	/// Tests if this list has no elements.
+	public boolean isEmpty() {
+		return length == 0;
+	}
+
+// int 	lastIndexOf(Object elem)
+//          Returns the index of the last occurrence of the specified object in this list.
+
+	/// Removes the element at the specified position in this list.
+	int remove(int index) {
+		int res = data[index];
+		for (int i = index+1; i < length; ++i)
+			data[i-1] = data[i];
+		return res;
+	}
+
+//protected  void 	removeRange(int fromIndex, int toIndex)
+//          Removes from this List all of the elements whose index is between fromIndex, inclusive and toIndex, exclusive.
+
+	/// Replaces the element at the specified position in this list with the specified element.
+	int set(int index, int element) {
+		int res = data[index];
+		data[index] = element;
+		return res;
+	}
+
+	/// Returns the number of elements in this list.
+	public int size() {
+		return length;
+	};
+
+// Object[] 	toArray()
+//          Returns an array containing all of the elements in this list in the correct order.
+// Object[] 	toArray(Object[] a)
+//          Returns an array containing all of the elements in this list in the correct order; the runtime type of the returned array is that of the specified array.
+
+	/// Trims the capacity of this ArrayList instance to be the list's current size.
+	void 	trimToSize() {
+		resize(length);
+	}
+
+	SAVELOAD_FUNCTION {
+		SL_INT(length);
+		if (SL_LOAD) data = new int[length*2];
+		SL_ARR(INT, data, length);
+	}
+}
