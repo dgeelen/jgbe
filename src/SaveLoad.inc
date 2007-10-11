@@ -1,8 +1,10 @@
 #ifndef SAVELOAD_INC
 #define SAVELOAD_INC
 
+import java.io.*;
+
 #define SL_MAGIX (0x4a374a53)                // JGBS = <J>ava <G>ame<B>oy <S>tate in ascii hex
-#define SL_SAVE_VERSION     12               // version we save, change when changing savestate format
+#define SL_SAVE_VERSION     13               // version we save, change when changing savestate format
 #define SL_LOAD_MIN_VERSION  0               // oldest version we can handle
 #define SL_LOAD_MAX_VERSION SL_SAVE_VERSION  // newest version we can handle, normally the same as what we save
 

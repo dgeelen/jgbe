@@ -3,8 +3,8 @@
 #include "CPU.inc"
 
 import java.net.*;
-import java.io.*;
 import java.util.zip.*;
+import java.util.ArrayList;
 public class CPU
 {
 static class DummyCPURunBlock implements CPURunBlock {
@@ -62,6 +62,10 @@ static class DummyCPURunBlock implements CPURunBlock {
 		public static int keyBounce = 0;
 		public static int keyBounceWaitNext;
 
+		public static boolean keyHistoryEnabled;
+		public static IntVector keyHistory;
+		public static int lastKeyChange;
+
 		static boolean BIOS_enabled = false;
 
 		//CPU Class variables
@@ -90,6 +94,7 @@ static class DummyCPURunBlock implements CPURunBlock {
 			#endif
 			VC = new VideoController(this, 160, 144);
 			AC = new AudioController(this);
+			keyHistory = new IntVector();
 			cartridge = null;
 			//CPU.rccache[0x2cbb] = CPURecompiler.Recompile(0x2cbb);
 		}
@@ -171,6 +176,15 @@ static class DummyCPURunBlock implements CPURunBlock {
 			SL_IF_VERSION( 4, -1) SL_UINT8(hw_ilines);
 
 			SL_IF_VERSION( 7, -1) SL_UINT8(hblank_dma_state);
+
+			SL_IF_VERSION(13, -1) {
+				SL_BOOL(keyHistoryEnabled);
+				if (keyHistoryEnabled) {
+					SL_INT(lastKeyChange);
+					SL_OBJ(keyHistory);
+				}
+			} else
+				keyHistoryEnabled = false;
 
 			if (SL_LOAD) {
 				refreshMemMap();
@@ -909,6 +923,8 @@ static int togglestart=1;
 			halted=false;
 			KeyStatus=0; //bitmask
 			keyBounce=0;
+			lastKeyChange = 0;
+			keyHistory.clear();
 			lastException=0;
 			hw_ilines = 0;
 			hblank_dma_state = 0;
@@ -1273,12 +1289,18 @@ static int togglestart=1;
 			if (KeyStatus != GUIKeyStatus) {
 				keyBounce = 1000;
 				keyBounceWaitNext = 0;
+			}
+			if (KeyStatus != GUIKeyStatus || lastKeyChange > 0x3fffffff) {
 				KeyStatus = GUIKeyStatus;
+				keyHistory.add(lastKeyChange);
+				keyHistory.add(KeyStatus);
+				lastKeyChange = 0;
 			}
 			int res = 4*execute();
 			SP &= 0xffff;
 			PC &= 0xffff;
 			++TotalInstrCount;
+			lastKeyChange += res;
 			TotalCycleCount += res;
 			lastException = ((res!=0) ? 0 : 1);
 			last_memory_access=last_memory_access_internal;
