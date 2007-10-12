@@ -946,6 +946,12 @@ static int togglestart=1;
 			playbackHistoryIndex = -1;
 			keyHistoryEnabled = false;
 			first_save_string = Version.str;
+
+			for (int i = 0; i < 0x80; ++i) IOP[i] = 0;
+			for (int i = 0; i < 0x7f; ++i) HRAM[i] = 0;
+			for (int i = 0; i < 0x08; ++i) 
+				for (int j = 0; j < 0x1000; ++j) 
+					WRAM[i][j] = 0;
 		}
 
 		public static final long cycles() {
