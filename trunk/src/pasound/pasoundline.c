@@ -1,20 +1,12 @@
 #include "pasoundline.h"
 #include <assert.h>
 #include <stdio.h>
-#include <math.h>
 #include "portaudio.h"
 
 static int singleton_lock = 0;
 
-#define NUM_SECONDS   (5)
 #define SAMPLE_RATE   (44100)
 #define FRAMES_PER_BUFFER  (64)
-
-#ifndef M_PI
-#define M_PI  (3.14159265)
-#endif
-
-#define TABLE_SIZE   (200)
 
 #define BUFSIZE 2048
 #define BUFMASK 2047
@@ -58,38 +50,37 @@ void pa_init()
 	pa.cpos = pa.cmax = 0;
 	PaError err;
 
-	printf("PortAudio Test: output sine wave. SR = %d, BufSize = %d\n", SAMPLE_RATE, FRAMES_PER_BUFFER);
-	printf("1\n");
+	printf("PortAudio Init: SR = %d, BufSize = %d\n", SAMPLE_RATE, FRAMES_PER_BUFFER);
 
 	err = Pa_Initialize();
 	if( err != paNoError ) goto error;
 
 	pa.outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
 	pa.outputParameters.channelCount = 2;       /* stereo output */
-	pa.outputParameters.sampleFormat = paInt8; /* 32 bit floating point output */
+	pa.outputParameters.sampleFormat = paInt8; /* 8 bit signed? output */
 	pa.outputParameters.suggestedLatency = Pa_GetDeviceInfo( pa.outputParameters.device )->defaultLowOutputLatency;
 	pa.outputParameters.hostApiSpecificStreamInfo = NULL;
 
 	err = Pa_OpenStream(
-						&pa.stream,
-						NULL, /* no input */
-						&pa.outputParameters,
-						SAMPLE_RATE,
-						FRAMES_PER_BUFFER,
-						paClipOff,      /* we won't output out of range samples so don't bother clipping them */
-						pa_callback,
-						(void*)&pa );
+	        &pa.stream,
+	        NULL, /* no input */
+	        &pa.outputParameters,
+	        SAMPLE_RATE,
+	        FRAMES_PER_BUFFER,
+	        paClipOff,      /* we won't output out of range samples so don't bother clipping them */
+	        pa_callback,
+	        (void*)&pa );
 
 	if( err != paNoError ) goto error;
 
 	err = Pa_StartStream( pa.stream );
 	if( err != paNoError ) goto error;
-	
+
 	return;
-	
+
 error:
 	Pa_Terminate();
-	fprintf( stderr, "An error occured while using the portaudio stream\n" );
+	fprintf( stderr, "An error occured while initialising the portaudio stream\n" );
 	fprintf( stderr, "Error number: %d\n", err );
 	fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
 	return ;//err;
