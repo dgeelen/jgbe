@@ -2,10 +2,11 @@
  - [DONE] Make mouse-over eval for Debugger
  - [DONE] Make color selector for palettes
  - [DONE] Fix 'If' for scale 4x
+ - [DONE] make recompiler cache for rombanks besides 0
  - [PARTIALLY] make save and load custom palette colors
  - [PARTIALLY] Add speedrun tools
+ - check VideoController and Cartridge to make sure they reset everything they save/load
  - add optimisations to recompiler
- - make recompiler cache for rombanks besides 0
  - Fix line in pac-in-time
  - Make scanlines
  - Fix batman intro logo
