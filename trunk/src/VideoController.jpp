@@ -331,193 +331,192 @@ public class VideoController {
 // 	static int fps23fix=0;
 	final private void blitImage() {
 		cfskip--;
-		if (cfskip < 0)
+		if (cfskip < 0) {
 			cfskip += fskip;
-		else
-			return;
-		if (scale != nscale) scale();
-		//Graphics g = drawImg[curDrawImg^1].getGraphics();
-#ifndef USE_JAVA_MOBILE
-		WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
-#endif
-		if (scale == 1) {
-			for (int y = 0; y < 144; ++y) {
-				BLITPIXTYPE[] blitLine = blitImg[y];
-//				for (int x = 0; x < 160; ++x)	 {
-//					BLIT_PIX(x, y, blitLine[x]);
-//				}
-				wr.setDataElements(0,y,160,1, blitLine);
-			}
-		}
-		else if (scale == 2) {
-			// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
-			#define A blitLine1[xn]
-			#define B blitLine1[x]
-			#define C blitLine1[xp]
-			#define D blitLine2[xn]
-			#define E blitLine2[x]
-			#define F blitLine2[xp]
-			#define G blitLine3[xn]
-			#define H blitLine3[x]
-			#define I blitLine3[xp]
-			int ti1 = -1, ti2 = -1;
-			ti2 += 160*2;
-			for (int y = 0; y < 144; ++y) {
-				int yn = (y==0  )?0  :y-1;
-				int yp = (y==143)?143:y+1;
-				BLITPIXTYPE[] blitLine2 = blitImg[y];
-				BLITPIXTYPE[] blitLine1 = blitImg[yn];
-				BLITPIXTYPE[] blitLine3 = blitImg[yp];
-				for (int x = 0; x < 160; ++x) {
-					int xn = (x==0  )?0  :x-1;
-					int xp = (x==159)?159:x+1;
-					if (!EQ(blitLine2[xn], blitLine2[xp])
-					&&  !EQ(blitLine1[x] , blitLine3[x])) {
-						BLIT_PIX_WI(ti1, EQ(B, D) ? D : E);
-						BLIT_PIX_WI(ti1, EQ(B, F) ? F : E);
-						BLIT_PIX_WI(ti2, EQ(H, D) ? D : E);
-						BLIT_PIX_WI(ti2, EQ(H, F) ? F : E);
-					}
-					else {
-						BLITPIXTYPE col = E;
-						BLIT_PIX_WI(ti1, col);
-						BLIT_PIX_WI(ti1, col);
-						BLIT_PIX_WI(ti2, col);
-						BLIT_PIX_WI(ti2, col);
-					}
+			if (scale != nscale) scale();
+			//Graphics g = drawImg[curDrawImg^1].getGraphics();
+	#ifndef USE_JAVA_MOBILE
+			WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
+	#endif
+			if (scale == 1) {
+				for (int y = 0; y < 144; ++y) {
+					BLITPIXTYPE[] blitLine = blitImg[y];
+	//				for (int x = 0; x < 160; ++x)	 {
+	//					BLIT_PIX(x, y, blitLine[x]);
+	//				}
+					wr.setDataElements(0,y,160,1, blitLine);
 				}
-				ti1 += 160*2;
+			}
+			else if (scale == 2) {
+				// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
+				#define A blitLine1[xn]
+				#define B blitLine1[x]
+				#define C blitLine1[xp]
+				#define D blitLine2[xn]
+				#define E blitLine2[x]
+				#define F blitLine2[xp]
+				#define G blitLine3[xn]
+				#define H blitLine3[x]
+				#define I blitLine3[xp]
+				int ti1 = -1, ti2 = -1;
 				ti2 += 160*2;
-			}
-			wr.setDataElements(0,0,160*scale,144*scale, drawData);
-		} else if (scale == 3) {
-			// 'scale3x' algo // http://scale2x.sourceforge.net/algorithm.html
-			int ti1 = -1, ti2 = -1, ti3 = -1;
-			ti2 += 160*3;
-			ti3 += 160*3*2;
-			for (int y = 0; y < 144; ++y) {
-				int yn = (y==0  )?0  :y-1;
-				int yp = (y==143)?143:y+1;
-				BLITPIXTYPE[] blitLine2 = blitImg[y];
-				BLITPIXTYPE[] blitLine1 = blitImg[yn];
-				BLITPIXTYPE[] blitLine3 = blitImg[yp];
-				for (int x = 0; x < 160; ++x) {
-					int xn = (x==0  )?0  :x-1;
-					int xp = (x==159)?159:x+1;
-					if (!EQ(B, H) && !EQ(D, F)) {
-						BLIT_PIX_WI(ti1 , EQ(D, B) ? D : E);
-						BLIT_PIX_WI(ti1 , (EQ(D, B) && !EQ(E, C)) || (EQ(B, F) && !EQ(E, A))? B : E);
-						BLIT_PIX_WI(ti1 , EQ(B, F) ? F : E);
-						BLIT_PIX_WI(ti2 , (EQ(D, B) && !EQ(E, G)) || (EQ(D, H) && !EQ(E, A))? D : E);
-						BLIT_PIX_WI(ti2 , E);
-						BLIT_PIX_WI(ti2 , (EQ(B, F) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, C))? F : E);
-						BLIT_PIX_WI(ti3 , EQ(D, H) ? D : E);
-						BLIT_PIX_WI(ti3 , (EQ(D, H) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, G))? H : E);
-						BLIT_PIX_WI(ti3 , EQ(H, F) ? F : E);
-					} else {
-						BLITPIXTYPE col = E;
-						BLIT_PIX_WI(ti1 , col);
-						BLIT_PIX_WI(ti1 , col);
-						BLIT_PIX_WI(ti1 , col);
-						BLIT_PIX_WI(ti2 , col);
-						BLIT_PIX_WI(ti2 , col);
-						BLIT_PIX_WI(ti2 , col);
-						BLIT_PIX_WI(ti3 , col);
-						BLIT_PIX_WI(ti3 , col);
-						BLIT_PIX_WI(ti3 , col);
+				for (int y = 0; y < 144; ++y) {
+					int yn = (y==0  )?0  :y-1;
+					int yp = (y==143)?143:y+1;
+					BLITPIXTYPE[] blitLine2 = blitImg[y];
+					BLITPIXTYPE[] blitLine1 = blitImg[yn];
+					BLITPIXTYPE[] blitLine3 = blitImg[yp];
+					for (int x = 0; x < 160; ++x) {
+						int xn = (x==0  )?0  :x-1;
+						int xp = (x==159)?159:x+1;
+						if (!EQ(blitLine2[xn], blitLine2[xp])
+						&&  !EQ(blitLine1[x] , blitLine3[x])) {
+							BLIT_PIX_WI(ti1, EQ(B, D) ? D : E);
+							BLIT_PIX_WI(ti1, EQ(B, F) ? F : E);
+							BLIT_PIX_WI(ti2, EQ(H, D) ? D : E);
+							BLIT_PIX_WI(ti2, EQ(H, F) ? F : E);
+						}
+						else {
+							BLITPIXTYPE col = E;
+							BLIT_PIX_WI(ti1, col);
+							BLIT_PIX_WI(ti1, col);
+							BLIT_PIX_WI(ti2, col);
+							BLIT_PIX_WI(ti2, col);
+						}
 					}
+					ti1 += 160*2;
+					ti2 += 160*2;
 				}
-				ti1 += 160*3*2;
-				ti2 += 160*3*2;
+				wr.setDataElements(0,0,160*scale,144*scale, drawData);
+			} else if (scale == 3) {
+				// 'scale3x' algo // http://scale2x.sourceforge.net/algorithm.html
+				int ti1 = -1, ti2 = -1, ti3 = -1;
+				ti2 += 160*3;
 				ti3 += 160*3*2;
+				for (int y = 0; y < 144; ++y) {
+					int yn = (y==0  )?0  :y-1;
+					int yp = (y==143)?143:y+1;
+					BLITPIXTYPE[] blitLine2 = blitImg[y];
+					BLITPIXTYPE[] blitLine1 = blitImg[yn];
+					BLITPIXTYPE[] blitLine3 = blitImg[yp];
+					for (int x = 0; x < 160; ++x) {
+						int xn = (x==0  )?0  :x-1;
+						int xp = (x==159)?159:x+1;
+						if (!EQ(B, H) && !EQ(D, F)) {
+							BLIT_PIX_WI(ti1 , EQ(D, B) ? D : E);
+							BLIT_PIX_WI(ti1 , (EQ(D, B) && !EQ(E, C)) || (EQ(B, F) && !EQ(E, A))? B : E);
+							BLIT_PIX_WI(ti1 , EQ(B, F) ? F : E);
+							BLIT_PIX_WI(ti2 , (EQ(D, B) && !EQ(E, G)) || (EQ(D, H) && !EQ(E, A))? D : E);
+							BLIT_PIX_WI(ti2 , E);
+							BLIT_PIX_WI(ti2 , (EQ(B, F) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, C))? F : E);
+							BLIT_PIX_WI(ti3 , EQ(D, H) ? D : E);
+							BLIT_PIX_WI(ti3 , (EQ(D, H) && !EQ(E, I)) || (EQ(H, F) && !EQ(E, G))? H : E);
+							BLIT_PIX_WI(ti3 , EQ(H, F) ? F : E);
+						} else {
+							BLITPIXTYPE col = E;
+							BLIT_PIX_WI(ti1 , col);
+							BLIT_PIX_WI(ti1 , col);
+							BLIT_PIX_WI(ti1 , col);
+							BLIT_PIX_WI(ti2 , col);
+							BLIT_PIX_WI(ti2 , col);
+							BLIT_PIX_WI(ti2 , col);
+							BLIT_PIX_WI(ti3 , col);
+							BLIT_PIX_WI(ti3 , col);
+							BLIT_PIX_WI(ti3 , col);
+						}
+					}
+					ti1 += 160*3*2;
+					ti2 += 160*3*2;
+					ti3 += 160*3*2;
+				}
+				wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			}
-			wr.setDataElements(0,0,160*scale,144*scale, drawData);
-		}
-		else if (scale == 4) {
-			// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
-			int ti1 = -1, ti2 = -1, ti3 = -1, ti4 = -1;
-			ti2 += 160*4;
-			ti3 += 160*4*2;
-			ti4 += 160*4*3;
-			for (int y = 0; y < 144; ++y) {
-				int yn = (y==0  )?0  :y-1;
-				int yp = (y==143)?143:y+1;
-				BLITPIXTYPE[] blitLine2 = blitImg[y];
-				BLITPIXTYPE[] blitLine1 = blitImg[yn];
-				BLITPIXTYPE[] blitLine3 = blitImg[yp];
-				for (int x = 0; x < 160; ++x) {
-					int xn = (x==0  )?0  :x-1;
-					int xp = (x==159)?159:x+1;
-/*	Reference, this one works * /
-						BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
-						BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
-						BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
-						BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
-						BLIT_PIX_WI(ti2, EQ(B, D) ? B : E);
-						BLIT_PIX_WI(ti2, E);
-						BLIT_PIX_WI(ti2, E);
-						BLIT_PIX_WI(ti2, EQ(B, F) ? B : E); 
-						BLIT_PIX_WI(ti3, EQ(H, D) ? H : E);
-						BLIT_PIX_WI(ti3, E);
-						BLIT_PIX_WI(ti3, E);
-						BLIT_PIX_WI(ti3, EQ(H, F) ? H : E);
-						BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
-						BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
-						BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
-						BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
+			else if (scale == 4) {
+				// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
+				int ti1 = -1, ti2 = -1, ti3 = -1, ti4 = -1;
+				ti2 += 160*4;
+				ti3 += 160*4*2;
+				ti4 += 160*4*3;
+				for (int y = 0; y < 144; ++y) {
+					int yn = (y==0  )?0  :y-1;
+					int yp = (y==143)?143:y+1;
+					BLITPIXTYPE[] blitLine2 = blitImg[y];
+					BLITPIXTYPE[] blitLine1 = blitImg[yn];
+					BLITPIXTYPE[] blitLine3 = blitImg[yp];
+					for (int x = 0; x < 160; ++x) {
+						int xn = (x==0  )?0  :x-1;
+						int xp = (x==159)?159:x+1;
+	/*	Reference, this one works * /
+							BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
+							BLIT_PIX_WI(ti1, EQ(B, D) ? B : E);
+							BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
+							BLIT_PIX_WI(ti1, EQ(B, F) ? B : E);
+							BLIT_PIX_WI(ti2, EQ(B, D) ? B : E);
+							BLIT_PIX_WI(ti2, E);
+							BLIT_PIX_WI(ti2, E);
+							BLIT_PIX_WI(ti2, EQ(B, F) ? B : E); 
+							BLIT_PIX_WI(ti3, EQ(H, D) ? H : E);
+							BLIT_PIX_WI(ti3, E);
+							BLIT_PIX_WI(ti3, E);
+							BLIT_PIX_WI(ti3, EQ(H, F) ? H : E);
+							BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
+							BLIT_PIX_WI(ti4, EQ(H, D) ? H : E);
+							BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
+							BLIT_PIX_WI(ti4, EQ(H, F) ? H : E);
 
-/*/// However, this one should be a bit faster (However, my short test only gives a small increase of ~3fps)
-					if (EQ(B, D)) {
+	/*/// However, this one should be a bit faster (However, my short test only gives a small increase of ~3fps)
+						if (EQ(B, D)) {
+								BLIT_PIX_WI(ti1, B);
+								BLIT_PIX_WI(ti1, B);
+								BLIT_PIX_WI(ti2, B);
+						} else {
+								BLIT_PIX_WI(ti1, E);
+								BLIT_PIX_WI(ti1, E);
+								BLIT_PIX_WI(ti2, E);
+						}
+						BLIT_PIX_WI(ti2, E);
+						BLIT_PIX_WI(ti2, E); 
+						if (EQ(B, F)) {
 							BLIT_PIX_WI(ti1, B);
 							BLIT_PIX_WI(ti1, B);
-							BLIT_PIX_WI(ti2, B);
-					} else {
+							BLIT_PIX_WI(ti2, B); 
+						} else {
 							BLIT_PIX_WI(ti1, E);
 							BLIT_PIX_WI(ti1, E);
 							BLIT_PIX_WI(ti2, E);
-					}
-					BLIT_PIX_WI(ti2, E);
-					BLIT_PIX_WI(ti2, E); 
-					if (EQ(B, F)) {
-						BLIT_PIX_WI(ti1, B);
-						BLIT_PIX_WI(ti1, B);
-						BLIT_PIX_WI(ti2, B); 
-					} else {
-						BLIT_PIX_WI(ti1, E);
-						BLIT_PIX_WI(ti1, E);
-						BLIT_PIX_WI(ti2, E);
-					}
-					if (EQ(H, D)) {
+						}
+						if (EQ(H, D)) {
+								BLIT_PIX_WI(ti3, H);
+								BLIT_PIX_WI(ti4, H);
+								BLIT_PIX_WI(ti4, H);
+						} else {
+								BLIT_PIX_WI(ti3, E);
+								BLIT_PIX_WI(ti4, E);
+								BLIT_PIX_WI(ti4, E);
+						}
+						BLIT_PIX_WI(ti3, E);
+						BLIT_PIX_WI(ti3, E);
+						if (EQ(H, F)) {
 							BLIT_PIX_WI(ti3, H);
 							BLIT_PIX_WI(ti4, H);
 							BLIT_PIX_WI(ti4, H);
-					} else {
+						} else {
 							BLIT_PIX_WI(ti3, E);
 							BLIT_PIX_WI(ti4, E);
 							BLIT_PIX_WI(ti4, E);
+						} /* */
 					}
-					BLIT_PIX_WI(ti3, E);
-					BLIT_PIX_WI(ti3, E);
-					if (EQ(H, F)) {
-						BLIT_PIX_WI(ti3, H);
-						BLIT_PIX_WI(ti4, H);
-						BLIT_PIX_WI(ti4, H);
-					} else {
-						BLIT_PIX_WI(ti3, E);
-						BLIT_PIX_WI(ti4, E);
-						BLIT_PIX_WI(ti4, E);
-					} /* */
+					ti1 += 160*4*3;
+					ti2 += 160*4*3;
+					ti3 += 160*4*3;
+					ti4 += 160*4*3;
 				}
-				ti1 += 160*4*3;
-				ti2 += 160*4*3;
-				ti3 += 160*4*3;
-				ti4 += 160*4*3;
+				wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			}
-			wr.setDataElements(0,0,160*scale,144*scale, drawData);
-		}
-		//source.newPixels();
-		curDrawImg ^= 1;
-		if (listener != null) listener.updateUI();
+			//source.newPixels();
+			curDrawImg ^= 1;
+			if (listener != null) listener.updateUI();
+  }
 		curBGY = 0;
 		curWNDY = 0;
 
