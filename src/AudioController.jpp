@@ -991,12 +991,22 @@ public class AudioController {
 		sound_dirty();
 	}
 
-	final private void sound_reset() {
+	final public void reset() {
+		cyclesLeftToRender=0;
+		S1=new SoundRegister();
+		S2=new SoundRegister();
+		S3=new SoundRegister();
+		S4=new SoundRegister();
+		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
+		SweepTimerTick=false;
+
 		int[] w=cpu.isCGB()?cgbwave:dmgwave;
 		for (int i = 0; i < 0x10; ++i)
 			WAVE[i]=w[i];
 		for (int i = 0; i < 0x10; ++i)
 			IO[i] = WAVE[i];
+		for (int i = 0x10; i < 0x30; ++i)
+			IO[i] = 0;
 		sound_off();
 	}
 
