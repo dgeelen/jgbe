@@ -15,3 +15,7 @@
  - Fix keyrepeat (for linux and MacOS and solaris and BSD and ... everything except wind00ze) (actually, probably only for linux....)
  - SPRITE PRIORITIES
  - Make the GUI move when resizing
+ - fix Demotronic trix demo
+     CA12==0 --> Error!
+     happens at 0b06
+     check for badness = $afa
