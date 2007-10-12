@@ -445,8 +445,13 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 			grfx=new DrawingArea( cpu.VC ); //doublebuffering
 			grfx.setFocusable(true);
-			grfx.addKeyListener(this);
-			//grfx.addKeyListener(new TimedKeyListener(this));
+
+			// Fix(/workaround) broken X11 key repeat stupidity
+			if (System.getProperty("os.name").equals("Linux"))
+				grfx.addKeyListener(new TimedKeyListener(this));
+			else
+				grfx.addKeyListener(this);
+
 			grfx.setDoubleBuffered(false);
 			grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 			contentPane.add( grfx );
