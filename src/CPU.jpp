@@ -938,6 +938,7 @@ static int togglestart=1;
 			halted=false;
 			KeyStatus=0; //bitmask
 			keyBounce=0;
+			keyBounceWaitNext=0;
 			lastKeyChange = 0;
 			keyHistory.clear();
 			lastException=0;
