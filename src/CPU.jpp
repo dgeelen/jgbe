@@ -5,14 +5,11 @@
 import java.net.*;
 import java.util.zip.*;
 import java.util.ArrayList;
-public class CPU
-{
-static class DummyCPURunBlock implements CPURunBlock {
-	public int execute() { ASSERT(false); return 0;};
-}
+public class CPU {
+	static class DummyCPURunBlock implements CPURunBlock {
+		public int execute() { ASSERT(false); return 0;};
+	}
 		public static CPU singleton = null;
-		public static final int CARRY8b    = 512;
-		public static final int CARRY8b_SHR = 5;
 
 		//FLAGS
 		public static final int ZF_Shift = 7;
