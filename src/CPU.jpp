@@ -24,6 +24,7 @@ public class CPU {
 		public static long TotalInstrCount = 0;
 		public static long TotalCycleCount = 0;
 
+		public static int A = 0;
 		public static int B = 1;
 		public static int C = 2;
 		public static int D = 3;
@@ -31,10 +32,9 @@ public class CPU {
 		public static int F = 5;
 		public static int H = 6;
 		public static int L = 7;
-		public static int A = 0;
 
 		public static int[] IOP = new int[0x80]; //IO Ports
-		public static int[] HRAM = new int[0x7F]; //HighRAM
+		public static int[] HRAM = new int[0x7f]; //HighRAM
 		public static int[][] WRAM = new int[0x08][0x1000]; //8x4k InternalRAM
 		public static int CurrentWRAMBank=1;
 
@@ -118,8 +118,6 @@ public class CPU {
 			SL_IF_VERSION(10, -1) SL_STRING(first_save_string);
 			if (SL_SAVE) last_save_string = Version.str;
 			SL_IF_VERSION(10, -1) SL_STRING(last_save_string);
-			//PRINTLN("first:"+first_save_string);
-			//PRINTLN("last:"+last_save_string);
 
 			SL_IF_VERSION( 1, -1) {
 				SL_UINT8(B);
@@ -265,17 +263,6 @@ public class CPU {
 			//System.out.println("** <INSERT DESCRIPTIVE TEXT HERE> ** [0x0143] = " + read(0x0143));
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
-
-/*
-
-CA12==0 --> Error!
-happens at 0b06
-check for badness = $afa
-
-
-
-*/
-
 
 		public static int hblank_dma() {
 			if (hblank_dma_state < (1<<7)) return 0;
@@ -441,7 +428,6 @@ check for badness = $afa
 			return read_slow(index);
 		}
 
-static int togglestart=1;
 		public static final int read_slow(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
@@ -460,12 +446,9 @@ static int togglestart=1;
 
 			int b;
 			last_memory_access_internal=index;
-// 			System.out.println("ERROR: not using memmap "+ index);
-			if(index<0) { //Invalid
-				System.out.println("ERROR: CPU.read(): No negative addresses in GameBoy memorymap.");
-				b=-1;
-			}
-			else if(index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+			ASSERT(index>=0 && index <=0xffff);
+
+			if (index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 				if (index < 0x100) {
 					b = cartridge.BIOS_ROM[index];
 				    //System.out.println("reading from BIOS rom");
@@ -554,7 +537,7 @@ static int togglestart=1;
 					case 0xff42: // SCY
 						b = VC.SCY;
 						break;
-					case 0xff43: // SCX
+					case 0xff43: // SCX// 			System.out.println("ERROR: not using memmap "+ index);
 						b = VC.SCX;
 						break;
 					case 0xff44: // LY
@@ -677,16 +660,11 @@ static int togglestart=1;
 			 * FFFF        Interrupt Enable Register
 			 */
 			last_memory_access_internal=index;
-			int mm[]=wMemMap[index>>12];
-			if (mm!=null) {
-				mm[index&0x0FFF] = value;
-				return;
-			}
+			ASSERT(wMemMap[index>>12] == null); // remove when not triggered for some time...
 
-			if(index<0) { //Invalid
-				System.out.println("ERROR: CPU.write(): No negative addresses in GameBoy memorymap.");
-			}
-			else if(index < 0x8000) { //cartridge ROM
+			ASSERT(index>=0 && index <=0xffff);
+
+			if(index < 0x8000) { //cartridge ROM
 				cartridge.write(index, value);
 
 				refreshMemMap();
@@ -874,7 +852,6 @@ static int togglestart=1;
 			}
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
 				IE=value; // Interrupt Enable Register
-				//System.out.println("IE write: VBlank="+(IE&1)+" STAT="+((IE&2)>>1)+" Timer="+((IE&4)>>2)+" Serial="+((IE&8)>>3)+" Joypad="+((IE&16)>>4 ));
 			}
 			else {
 				System.out.println("ERROR: CPU.write(): Out of range memory access: $"+index);
@@ -1006,7 +983,6 @@ static int togglestart=1;
 		}
 
 		public static final void interrupt(int i) { //execute interrupt #i
-//  			PRINTF("INTERRUPT: PC=$%04x, interrupt=$%02x, LY=%d\n",PC,i,VC.LY);
 			IME = false;
 
 			DO_PUSH_OLD(PC);
@@ -1014,7 +990,6 @@ static int togglestart=1;
 		}
 
 		public static final void triggerInterrupt(int i) { // request interrupt with bit nr #i
-			//IOP[0x0f] |= (1<<i);
 			hw_interrupt((1<<i), (1<<i));
 			hw_interrupt(0, (1<<i));
 		}
@@ -1038,13 +1013,11 @@ static int togglestart=1;
 		public static final void pressButton(int i) {
 			if ((GUIKeyStatus&i) != 0) return;
 			GUIKeyStatus |= i;
-			//PRINTLN("PRESS "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
 		public static final void releaseButton(int i) {
 			if ((GUIKeyStatus&i) == 0) return;
 			GUIKeyStatus&=~i;
-			//PRINTLN("RELEA "+keyBounce + " "+KeyStatus + " " + System.nanoTime());
 		}
 
 		public static final void pressRemoteButton(int i) {
@@ -1056,7 +1029,6 @@ static int togglestart=1;
 		}
 
 		public static final int execute() {
-// 			if(last_memory_access_internal==0xff00) System.out.println("ASDASDASDSADDSA");
 			int cycles;
 			TVARS;
 
@@ -1064,6 +1036,8 @@ static int togglestart=1;
 				checkInterrupts();
 				halted = false;
 				//return 12; // 12 cycles for this?
+// 				return 12+execute();
+				
  				return 4;/* FIXME(?) For break on interrupt */
 			}
 
