@@ -665,7 +665,6 @@ public class AudioController {
 	}
 
 
-	public int samplesQueued = 0;
 	protected boolean isMuted=false;
 	private boolean isEnabled=true;
 #ifndef JMGBE
@@ -1164,26 +1163,6 @@ public class AudioController {
 	}
 
 	static long lastms = System.currentTimeMillis();
-
-#if 0
-	final public int samplesLeft() {
-		return samplesQueued-audioSource.getFramePosition();
-	}
-
-	final public int samplesBuffered() {
-		return (audioBufferIndex>>1);
-	}
-
-	final public void doFlush(int numsamples)	{
-		int stereoSamples = numsamples<<1;
-		//audioSource.drain();
-		audioSource.write(audioBuffer, 0, stereoSamples);
-		samplesQueued += numsamples;
-		audioBufferIndex -= stereoSamples;
-		if (audioBufferIndex != 0)
-			System.arraycopy(audioBuffer, stereoSamples, audioBuffer, 0, audioBufferIndex);
-	}
-#endif
 
 	static byte bla=0;
 	final public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
