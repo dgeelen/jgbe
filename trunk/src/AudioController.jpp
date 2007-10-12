@@ -807,12 +807,12 @@ public class AudioController {
 			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
 			MatchMixerInfo mixers[] = {
 				/** "rev50 [plughw:0,0]" (linux) works brilliantly but claims the audio hardware for itself */
-				//new MatchMixerInfo("plughw:0,1"              , "", "", "", BUFFER_SIZE),
-				//new MatchMixerInfo("plughw:0,0"              , "", "", "", BUFFER_SIZE),
+				new MatchMixerInfo("plughw:0,1"              , "", "", "", BUFFER_SIZE),
+				new MatchMixerInfo("plughw:0,0"              , "", "", "", BUFFER_SIZE),
 				/** "Primary Sound Driver" seems to work good under windows */
 				new MatchMixerInfo("Primary Sound Driver", "", "", "", BUFFER_SIZE*4),
 				/** FIXME: These should be selectable from a menu in the GUI rather than hardcoded... **/
-				//new MatchMixerInfo("Primair geluidsstuurprogramma", "", "", "", BUFFER_SIZE),
+				new MatchMixerInfo("Primair geluidsstuurprogramma", "", "", "", BUFFER_SIZE),
 				//new MatchMixerInfo("C-Media Wave Device", "", "", "", 1536), //mireille
 				//"Alsa DataLine Mixer (hw:0)", // can't get this to work... :-(
 				//"Java Sound Audio Engine", // piece of crap...
