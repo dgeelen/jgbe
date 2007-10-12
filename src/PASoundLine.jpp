@@ -162,6 +162,11 @@ public class PASoundLine implements SourceDataLine {
 	}
 
 	static {
-		System.loadLibrary("PASoundLine");
+		System.loadLibrary("portaudio");
+		System.load(
+			System.getProperty("user.dir")+
+			System.getProperty("file.separator")+
+			System.mapLibraryName("PASoundLine")
+		);
 	}
 }
