@@ -78,7 +78,6 @@ static class DummyCPURunBlock implements CPURunBlock {
 		public static VideoController VC;
 		public static AudioController AC;
 		static int hblank_dma_state;
-		static int vcmode;
 		//Debug helpers
 		public static int last_memory_access=-1;
 		public static int last_memory_access_internal=-1;
@@ -167,7 +166,7 @@ static class DummyCPURunBlock implements CPURunBlock {
 			SL_OBJ(VC);
 			SL_IF_VERSION( 2, -1) SL_OBJ(AC);
 
-			SL_IF_VERSION( 3, -1) SL_UINT8(vcmode);
+			SL_IF_VERSION( 3, 13) SL_SKIP(UINT8, 1); // vcmode
 
 			SL_IF_VERSION( 0,  8) SL_INT(TotalInstrCount);
 			SL_IF_VERSION( 0,  8) SL_INT(TotalCycleCount);
