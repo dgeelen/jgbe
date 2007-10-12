@@ -39,9 +39,9 @@ public class PASoundLine implements SourceDataLine {
 
 	/// Obtains the maximum number of bytes of data that will fit in the data line's internal buffer.
 	public int getBufferSize() {
-		ASSERT(false);
+		// ASSERT(false);
 		// TODO
-		return 0;
+		return 2048;
 	}
 
 	/// Obtains the current format (encoding, sample rate, number of channels, etc.) of the data line's audio data.
