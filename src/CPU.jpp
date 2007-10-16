@@ -174,7 +174,8 @@ public class CPU {
 
 			SL_IF_VERSION(13, -1) {
 				if (SL_SAVE && playbackHistoryIndex != -1) {
-					SL_BOOL(keyHistoryEnabled);
+					boolean t = true;
+					SL_BOOL(t);
 					SL_INT(lastKeyChange);
 					int olen = keyHistory.size();
 					keyHistory.setSize(playbackHistoryIndex);
