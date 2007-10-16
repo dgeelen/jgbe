@@ -151,7 +151,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			saveRCFiles();
 		}
 
-		public class DrawingArea extends JPanel{
+		public class DrawingArea extends JPanel implements IVideoListener {
 			private static final long serialVersionUID = 1L; // prevent warning
 			VideoController VC;
 			public DrawingArea(VideoController vc) {
@@ -162,6 +162,11 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			Color ColorTextLight  = new Color(255,255,255);
 			int DrawingAreaFontSize = 10;
 			Font DrawingAreaFont = new Font("SansSerif", Font.BOLD, DrawingAreaFontSize);
+
+			public void updateVideoImage(Image img) {
+				updateUI();
+			}
+
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				g.drawImage(cpu.VC.getImage(),0,0, this);
