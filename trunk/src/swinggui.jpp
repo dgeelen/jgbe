@@ -158,7 +158,10 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				super();
 				VC=vc;
 			}
-			Color ColorMediumGray = new Color(128,128,128);
+			Color ColorTextShadow = new Color(128,128,128);
+			Color ColorTextLight  = new Color(255,255,255);
+			int DrawingAreaFontSize = 10;
+			Font DrawingAreaFont = new Font("SansSerif", Font.BOLD, DrawingAreaFontSize);
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				g.drawImage(cpu.VC.getImage(),0,0, this);
@@ -176,11 +179,12 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						String s=(String)osdLines.get(i);
 // 						g.drawString(s, 9,  10+10*i);
 // 						g.drawString(s, 10,  9+10*i);
-						g.setColor(ColorMediumGray);
-						g.drawString(s, 11, 10+10*i);
-						g.drawString(s, 10, 11+10*i);
-						g.setColor(Color.WHITE);
-						g.drawString(s, 10, 10+10*i);
+// 						g.setFont(DrawingAreaFont);
+						g.setColor(ColorTextShadow);
+						g.drawString(s, 11, (DrawingAreaFontSize+1)+DrawingAreaFontSize*i);
+						g.drawString(s, 11, (DrawingAreaFontSize+1)+DrawingAreaFontSize*i);
+						g.setColor(ColorTextLight);
+						g.drawString(s, 10, DrawingAreaFontSize+DrawingAreaFontSize*i);
 					}
 				}
 				++fps;
