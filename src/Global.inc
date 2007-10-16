@@ -53,7 +53,7 @@
 #define BUTTON_START  (1<<7)
 
 #ifdef USE_JAVA_MOBILE
-	#define PRINTFREEMEM(x)  { System.out.println("in "+x+": Free Memory="+(Runtime.getRuntime().freeMemory()/1024) + "  used = "+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)); }
+	#define PRINTFREEMEM(x)  { PRINTLN("in "+x+": Free Memory="+(Runtime.getRuntime().freeMemory()/1024) + "  used = "+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024)); }
 #else
 	#define PRINTFREEMEM(x)
 #endif

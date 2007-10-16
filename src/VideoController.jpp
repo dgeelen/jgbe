@@ -217,11 +217,11 @@ public class VideoController {
 		drawData = new int[width*height];
 #ifndef USE_JAVA_MOBILE
 		if (listener == null) {
-			System.out.println("creating BufferedImage's");
+			PRINTLN("creating BufferedImage's");
 			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		} else {
-			System.out.println("creating VolatileImage's");
+			PRINTLN("creating VolatileImage's");
 			// we dont reall create volatile images cause they are slow...
 			// maybe they work faster on windows... needs testing
 			/*
@@ -733,26 +733,26 @@ public class VideoController {
 
 	final public int read(int index) {
 		if(index<0x8000) {
-			System.out.println("Error: VideoController.read(): Reading from non VideoController-Address "+index);
+			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
 		else if(index < 0xa000) {
 			return VRAM[index-0x8000+CurrentVRAMBank];
 		}
 		else if(index<0xfe00) {
-			System.out.println("Error: VideoController.read(): Reading from non VideoController-Address "+index);
+			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
 		else if(index<0xfea0) {
 			return OAM[index-0xfe00];
 		}
 		else {
-			System.out.println("Error: VideoController.read(): Reading from non VideoController-Address "+index);
+			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
 		return VRAM[index+CurrentVRAMBank];
 	}
 
 	final public void write(int index, int value) {
 		if(index<0x8000) {
-			System.out.println("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
+			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
 		else if(index < 0xa000) {
 			VRAM[index-0x8000+CurrentVRAMBank]=value;
@@ -761,13 +761,13 @@ public class VideoController {
 			//alldirty = true;
 		}
 		else if(index<0xfe00) {
-			System.out.println("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
+			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
 		else if(index<0xfea0) {
 			OAM[index-0xfe00]=value;
 		}
 		else {
-			System.out.println("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
+			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
 	}
 

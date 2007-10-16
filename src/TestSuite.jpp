@@ -49,20 +49,20 @@ public class TestSuite
 	public final void run( String[] args ) {
 
 			if (args.length == 0) {
-				System.out.println();
-				System.out.println("ERROR: missing argument");
-				System.out.println();
-				System.out.println("USAGE: java TestSuite ROMFILE");
-				System.out.println();
+				PRINTLN();
+				PRINTLN("ERROR: missing argument");
+				PRINTLN();
+				PRINTLN("USAGE: java TestSuite ROMFILE");
+				PRINTLN();
 				return;
 			}
 			cartridge = new Cartridge(args[0]);
 			if(cartridge.getError()!=null) {
-				System.out.println("ERROR: "+cartridge.getError());
+				PRINTLN("ERROR: "+cartridge.getError());
 				return;
 			}
 
-			System.out.println("Succesfully loaded ROM :)");
+			PRINTLN("Succesfully loaded ROM :)");
 			cpu = new CPU();
 			cpu.loadCartridge(cartridge);
 			cpu.AC.isMuted = true;
@@ -75,7 +75,7 @@ public class TestSuite
 #ifdef ENABLE_RECOMPILER
 			CPU.rccache0[0x100] = CPURecompiler.doRecompile(0x100);
 #endif
-			System.out.println("Starting Tests...");
+			PRINTLN("Starting Tests...");
 			time = runinstr(0);            //NOP
 			time = runinstr(0);            //NOP
 			for (int i = 0; i < 0x100; ++i) {

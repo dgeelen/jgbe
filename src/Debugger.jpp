@@ -42,7 +42,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				logwriter = new BufferedWriter( new FileWriter(logfilename) );
 		}
 		catch (java.io.IOException e) {
-			System.out.println("Error opening logfile:" + e.getMessage());
+			PRINTLN("Error opening logfile:" + e.getMessage());
 			logwriter = null;
 		}
 		deasm= new Disassembler(gui.cpu);
@@ -233,7 +233,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			setText(String.valueOf(value));
-// 			System.out.println("row "+row+"="+this.Colors[row]);
+// 			PRINTLN("row "+row+"="+this.Colors[row]);
 			if((this.Colors!=null)) setBackground(this.Colors[row]);
 			else setBackground(Color.WHITE);
 
@@ -262,13 +262,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				if (evt.getType() == TableModelEvent.UPDATE) {
 					int column = evt.getColumn();
 					int row = evt.getFirstRow();
-// 	 				System.out.println("row: " + row + " column: " + column);
+// 	 				PRINTLN("row: " + row + " column: " + column);
 					int index = (row)*8 + (column-2) + memaddr;
 					int i=memaddr; memaddr=index; prepareParser(); memaddr=i; //HAXHAXHAXHAXHAXHAX
 					int value = parser.Evaluate(((String)mem.getValueAt(row, column)).trim());
 // 					PRINTF("index=$%04x, value=$%02x\n", index , value);
 					gui.cpu.write(index, value);
-					update(); //System.out.println("update EditMemTableModelListener");
+					update(); //PRINTLN("update EditMemTableModelListener");
 	/*				mem.setColumnSelectionInterval(column + 1, column + 1);
 					mem.setRowSelectionInterval(row, row);*/
 				}
@@ -424,7 +424,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			updateInstructions();
 			memScroller.setValue(Math.min(memaddr, memScroller.getMaximum()));
 		}
-//  		System.out.println("update all");
+//  		PRINTLN("update all");
 	}
 
 	public int[] oldHWRegs=new int[20];
@@ -474,7 +474,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
 	i=gui.cpu.read(0xFF04);
 	hwregs.setValueAt(STRFORMAT("ff04:  DIV=$%02x",i), k,1);
-// 	System.out.println("DIV: i="+i+" old="+oldHWRegs[j]);
+// 	PRINTLN("DIV: i="+i+" old="+oldHWRegs[j]);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
 	i=gui.cpu.read(0xFF0f);
 	hwregs.setValueAt(STRFORMAT("ff0f:   IF=$%02x",i), k,1);
@@ -739,7 +739,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				String l = s.substring(0,i).trim();
 				updateRegisters(); //sets the variables
 				prepareParser();
-// 				System.out.println("memaddr="+memaddr);
+// 				PRINTLN("memaddr="+memaddr);
 				int v = parser.Evaluate(s.substring(i+1).trim());
 				if(!parser.parseError) {
 					if(l.equalsIgnoreCase("a")){
@@ -842,7 +842,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						}
 					}
 					else {
-// 						System.out.println("Cannot assign `"+v+"' to `"+l+"'");
+// 						PRINTLN("Cannot assign `"+v+"' to `"+l+"'");
 					}
 				}
 				s="-";
@@ -872,7 +872,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 							logwriter.flush();
 						}
 						catch (java.io.IOException e2) {
-							System.out.println("Error flushing logfile:" + e2.getMessage());
+							PRINTLN("Error flushing logfile:" + e2.getMessage());
 							logwriter = null;
 						}
 					}
@@ -893,26 +893,26 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 #endif
 		}
 		else {
-// 			System.out.println( "Action event i an instance of " + getClassName( f ));
+// 			PRINTLN( "Action event i an instance of " + getClassName( f ));
 		}
 	}
 
 	public void itemStateChanged( ItemEvent e ) {
 		JMenuItem source = ( JMenuItem )( e.getSource() );
-// 		System.out.println("Menu Item source: " + source.getText() + " (an instance of " + getClassName( source ) + ")"	+ "\n"
+// 		PRINTLN("Menu Item source: " + source.getText() + " (an instance of " + getClassName( source ) + ")"	+ "\n"
 // 		                   + "    State of check Box: " + (( e.getStateChange() == ItemEvent.SELECTED ) ? "selected":"unselected" ));
 	}
 
 	public void keyTyped(KeyEvent e) {
-// 		System.out.println("keyTyped");
+// 		PRINTLN("keyTyped");
 	}
 
 	public void keyPressed(KeyEvent e) {
-// 		System.out.println("DEBUGGER: keyPressed");
+// 		PRINTLN("DEBUGGER: keyPressed");
 	}
 
 	public void keyReleased(KeyEvent e) {
-// 		System.out.println("DEBUGGER: keyReleased" + e.getKeyCode());
+// 		PRINTLN("DEBUGGER: keyReleased" + e.getKeyCode());
 	}
 
 	// Returns the class name, no package info
