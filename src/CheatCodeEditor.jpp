@@ -261,57 +261,51 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 	}
 
 	public void loadCheatCodes() {
-		String name = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator+"cheats"+File.separator;
-		File cheatsdir=new File(name);
-		if(cheatsdir.exists()) {
+		String name = null;
+		try {
+			name = FHandler.JGBEDir("cheats");
 			name += cartname + ".cht";
-			try {
-				BufferedReader in = new BufferedReader(new FileReader(name));
-				String str;
-				codes.clear();
-				while ((str = in.readLine()) != null) {
-					int i=str.indexOf(",");
-					int j=str.indexOf(",",i+1);
-					codes.add(new CheatCode(str.substring(0,i).equals("on")?true:false,
-					                        str.substring(i+2,j),
-					                        str.substring(j+2)));
-				}
-				in.close();
-			} catch (IOException e) {
-				System.out.println("error reading `"+name+"'");
+			BufferedReader in = new BufferedReader(new FileReader(name));
+			String str;
+			codes.clear();
+			while ((str = in.readLine()) != null) {
+				int i=str.indexOf(",");
+				int j=str.indexOf(",",i+1);
+				codes.add(new CheatCode(str.substring(0,i).equals("on")?true:false,
+							str.substring(i+2,j),
+							str.substring(j+2)));
 			}
+			in.close();
+		} catch (IOException e) {
+			PRINTLN("error reading '"+name+"'");
+			PRINTLN(e.getMessage());
 		}
 	}
+
 	public void componentHidden(ComponentEvent e) {}
 	public void componentMoved(ComponentEvent e) {}
 	public void componentShown(ComponentEvent e) {}
 	public void componentResized(ComponentEvent e) {}
 
 	public void saveCheatCodes() {
-		String name = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
-		File jgbedir=new File(name);
-		if(!jgbedir.exists()) if(!jgbedir.mkdir()) PRINTF("failed!\n");
-		name += "cheats"+File.separator;
-		File cheatsdir=new File(name);
-		if(!cheatsdir.exists()) if(!cheatsdir.mkdir()) PRINTF("failed!\n");
-		if(cheatsdir.exists()) {
+		String name = null;
+		try {
+			name = FHandler.JGBEDir("cheats");
 			name += cartname + ".cht";
-			try {
-				BufferedWriter out = new BufferedWriter(new FileWriter(name));
-				String str;
-				FOREACH(CheatCode, c, codes) {
-					str = c.enabled?"on":"off";
-					str+= ", "+c.strCode;
-					str+= ", "+c.Description;
-					out.write(str, 0, str.length());
-					out.newLine();
-				}
-				out.close();
-			} catch (IOException e) {
-				System.out.println("error writing to `"+name+"'");
+			BufferedWriter out = new BufferedWriter(new FileWriter(name));
+			String str;
+			FOREACH(CheatCode, c, codes) {
+				str = c.enabled?"on":"off";
+				str+= ", "+c.strCode;
+				str+= ", "+c.Description;
+				out.write(str, 0, str.length());
+				out.newLine();
 			}
+			out.close();
+		} catch (IOException e) {
+			PRINTLN("error writing to '"+name+"'");
+			PRINTLN(e.getMessage());
 		}
-//		System.out.println("TODO: save cheats");
 	}
 
 	private void listCodes() {
