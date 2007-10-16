@@ -750,6 +750,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					PRINTLN("Error saving state! ");
 					PRINTLN(ioe.getMessage());
 				};
+				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
+				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
 				resumeEmulation(false);
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
@@ -767,6 +769,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					PRINTLN(ioe.getMessage());
 				};
 				resumeEmulation(false);
+				if(cpu.keyHistoryEnabled) addOSDLine("Note: Speedrun in progress");
 				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
 				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
 			}
