@@ -734,38 +734,33 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			else if(e.getSource().equals( menuitemSaveState )) {
 				if (!CPU.canRun()) return;
 				pauseEmulation(false);
-				String stname = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
-				File jgbedir=new File(stname);
-				if(!jgbedir.exists()) if(!jgbedir.mkdir()) PRINTF("failed!\n");
-				stname += "savestates"+File.separator;
-				File sstatedir=new File(stname);
-				if(!sstatedir.exists()) if(!sstatedir.mkdir()) PRINTF("failed!\n");
-				if(sstatedir.exists()) {
+				addOSDLine("Saving State "+selectedState);
+				try {
+					String stname = FHandler.JGBEDir("savestates");
 					stname += curcartname + ".st" + selectedState;
-					addOSDLine("Saving State "+selectedState);
-					try {
-						DataOutputStream dostream = FHandler.getDataOutputStream(stname);
-						CPU.saveState(dostream);
-						dostream.close();
-					}
-					catch (java.io.IOException ioe) {
-						System.out.println("Error saving state! ");
-					};
+					DataOutputStream dostream = FHandler.getDataOutputStream(stname);
+					CPU.saveState(dostream);
+					dostream.close();
 				}
+				catch (java.io.IOException ioe) {
+					System.out.println("Error saving state! ");
+					PRINTLN(ioe.getMessage());
+				};
 				resumeEmulation(false);
 			}
 			else if(e.getSource().equals( menuitemLoadState )) {
 				if (!CPU.canRun()) return;
 				pauseEmulation(false);
-				String stname = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"savestates"+File.separator + curcartname + ".st" + selectedState;
 				addOSDLine("Loading State "+selectedState);
 				try {
+					String stname = FHandler.JGBEDir("savestates") + curcartname + ".st" + selectedState;
 					DataInputStream distream = FHandler.getDataInputStream(stname);
 					CPU.loadState(distream);
 					distream.close();
 				}
 				catch (java.io.IOException ioe) {
 					System.out.println("Error loading state! " + ioe.getMessage());
+					PRINTLN(ioe.getMessage());
 				};
 				resumeEmulation(false);
 				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
@@ -916,7 +911,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				FPSTimeMillis = ctime;
 				double afps=fps/(timeLapse/1000000000.0);
 				double emuspeed = ((int)(afps/(4194304.0/702240000.0)))/100.0;
-				frame.setTitle("JGBE V"+Version.str+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"%");
+				frame.setTitle("JGBE V"+Version.str+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"% - "+ CPU.TotalCycleCount);
 				//cpu.AC.srendered = 0;
 				fps = 0;
 			}
@@ -1021,7 +1016,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 		public void loadRCFiles() {
 			try {
-				String rcfilename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"rcfiles.log";
+				String rcfilename = FHandler.JGBEDir("") + "rcfiles.log";
 				BufferedReader in = new BufferedReader(new FileReader(rcfilename));
 				String str;
 				rcFiles.clear();
@@ -1036,7 +1031,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 		public void saveRCFiles() {
 			try {
-				String rcfilename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"rcfiles.log";
+				String rcfilename = FHandler.JGBEDir("") + "rcfiles.log";
 				BufferedWriter out = new BufferedWriter(new FileWriter(rcfilename));
 				String str;
 				int num = MIN(10, rcFiles.size());
@@ -1054,7 +1049,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 		public void saveConfig() {
 			if(!loading) try {
-				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
+				String filename = FHandler.JGBEDir("") + "jgbe.conf";
 				BufferedWriter out = new BufferedWriter(new FileWriter(filename));
 				String str;
 				boolean runbiosonreset = menuitemUseBIOS.getState();
@@ -1105,7 +1100,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		public void loadConfig() {
 			loading = true;
 			try {
-				String filename = System.getProperty("user.home")+File.separator+".jgbe"+File.separator+"jgbe.conf";
+				String filename = FHandler.JGBEDir("") + "jgbe.conf";
 				BufferedReader in = new BufferedReader(new FileReader(filename));
 				String str;
 				boolean runbiosonreset = false;
@@ -1207,8 +1202,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		private void saveKeyBinds() {
 			DataOutputStream distream=null;
 			try {
-				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
-				FileOutputStream fistream = new FileOutputStream(path+"keys.conf");
+				String path = FHandler.JGBEDir("") + "keys.conf";
+				FileOutputStream fistream = new FileOutputStream(path);
 				distream = new DataOutputStream(fistream);
 				for(int i=0; i<16+nrOfShortCuts; ++i) {
 					distream.writeInt(keyMap[i]);
@@ -1254,8 +1249,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		private void loadKeyBinds() {
 			DataInputStream distream=null;
 			try {
-				String path=FHandler.EnsureExists(""); //ensure JGBE Config dir exists
-				FileInputStream fistream = new FileInputStream(path+"keys.conf");
+				String path = FHandler.JGBEDir("") + "keys.conf";
+				FileInputStream fistream = new FileInputStream(path);
 				distream = new DataInputStream(fistream);
 				for(int i=0; i<16+nrOfShortCuts; ++i) {
 						keyMap[i] = distream.readInt();

@@ -7,13 +7,53 @@ public final class FHandler {
 	// workaround for getResourceAsStream not working in static methods
 	private static FHandler fhinstance = new FHandler();
 
-	public static String EnsureExists(String relpath) throws IOException {
-		String name = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
-		File dir=new File(name+relpath);
-		if(!dir.exists()) if(!dir.mkdirs()) PRINTLN("failed to create path to "+relpath);
-		return name+relpath;
+	/** returns (and creates if it does not exist yet) a
+	 *  path to a directory which should be used by jgbe
+	 *  to store persistent information, like settings
+	 *  and save states
+	 */
+	private static final String RootJGBEDir() throws IOException {
+		File file;
+		String path;
+
+		path = System.getenv("JGBEDIR");
+		if (path != null && !path.equals("")) {
+			if (!path.endsWith(File.separator))
+				path += File.separator;
+			file = new File(path);
+
+			if (file.exists() || file.mkdir())
+				return path;
+
+			throw new IOException("Can't find or create '"+path+"'($JGBEDIR)");
+		}
+
+		path = System.getProperty("user.home")+File.separator+ ".jgbe"+File.separator;
+		file = new File(path);
+
+		if (file.exists() || file.mkdir())
+			return path;
+
+		throw new IOException("Can't find or create '"+path+"'(user.home)");
 	}
 
+	public static String JGBEDir(String relpath) throws IOException {
+		// Sanitize relpath
+		if (relpath.length() > 0 && relpath.startsWith(File.separator))
+			relpath = relpath.substring(1);
+		if (!relpath.endsWith(File.separator))
+			relpath += File.separator;
+
+		// Find root JGBEDir
+		String rootpath = RootJGBEDir();
+
+		// Create relative dir
+		String path = rootpath + relpath;
+		File dir=new File(path);
+		if (!dir.exists() && !dir.mkdirs())
+			throw new IOException("Can't or create '"+relpath+"' in '"+rootpath+"'");
+		return path;
+	}
 
 	public static DataInputStream getDataInputStream(String fname) throws IOException {
 		int dotPos=0;
