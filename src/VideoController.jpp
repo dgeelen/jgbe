@@ -18,7 +18,7 @@ public class VideoController {
 #ifdef USE_JAVA_MOBILE
 	private Graphics listener = null;
 #else
-	private JPanel listener = null;
+	private IVideoListener listener = null;
 	private Image drawImg[];
 	private int drawData[];
 #endif
@@ -197,9 +197,9 @@ public class VideoController {
 	}
 
 #ifndef USE_JAVA_MOBILE
-	final public void addListener(JPanel panel) {
+	final public void addListener(IVideoListener vl) {
 
-		listener = panel; // only 1 listener at a time currently :-p
+		listener = vl; // only 1 listener at a time currently :-p
 		//drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 		this.scale();
 	}
@@ -515,7 +515,7 @@ public class VideoController {
 			}
 			//source.newPixels();
 			curDrawImg ^= 1;
-			if (listener != null) listener.updateUI();
+			if (listener != null) listener.updateVideoImage(getImage());
   }
 		curBGY = 0;
 		curWNDY = 0;
