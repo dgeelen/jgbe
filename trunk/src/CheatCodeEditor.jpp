@@ -171,7 +171,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 				oldvalue = ShTables.RRC_val[oldvalue];
 				oldvalue ^= 0xba;
 				if(address>0x7fff) address=-1;
-// 				System.out.println("addr="+address+" patch="+patch+" old="+oldvalue);
+// 				PRINTLN("addr="+address+" patch="+patch+" old="+oldvalue);
 				strCode=c.substring(0,3)+"-"+c.substring(3,6)+"-"+c.substring(6,9);
 			}
 		}
@@ -404,7 +404,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 			dialog.setVisible(false);
 		}
 		else {
-			System.out.println("Unhandled event");
+			PRINTLN("Unhandled event");
 		}
 	}
 }

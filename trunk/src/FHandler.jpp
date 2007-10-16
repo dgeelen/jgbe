@@ -69,13 +69,13 @@ public final class FHandler {
 			FileInputStream fistream = new FileInputStream(fname);
 			BufferedInputStream bistream = new BufferedInputStream(fistream);
 #else
-			System.out.println("NonStatic.class.getResourceAsStream("+fname+");");
+			PRINTLN("NonStatic.class.getResourceAsStream("+fname+");");
 			Class clazz = Runtime.getRuntime().getClass();
 			InputStream bistream = clazz.getResourceAsStream(fname);
-// 			System.out.println("bistream="+bistream);
+// 			PRINTLN("bistream="+bistream);
 #endif
 			DataInputStream distream = new DataInputStream(bistream);
-// 			System.out.println("distream="+distream);
+// 			PRINTLN("distream="+distream);
 			return distream;
 		}
 		else {
@@ -92,7 +92,7 @@ public final class FHandler {
 
 			return distream;
 #else
-			System.out.println("FHandler opening zipfile not supported!");
+			PRINTLN("FHandler opening zipfile not supported!");
 			return null;
 #endif
 		}
@@ -112,17 +112,17 @@ public final class FHandler {
 			FileOutputStream fostream = new FileOutputStream(fname);
 			BufferedOutputStream bostream = new BufferedOutputStream(fostream);
 #else
-			System.out.println("NonStatic.class.getResourceAsStream("+fname+");");
+			PRINTLN("NonStatic.class.getResourceAsStream("+fname+");");
 			Class clazz = Runtime.getRuntime().getClass();
 			OutputStream bostream = clazz.getResourceAsStream(fname);
-// 			System.out.println("bostream="+bostream);
+// 			PRINTLN("bostream="+bostream);
 #endif
 			DataOutputStream dostream = new DataOutputStream(bostream);
-// 			System.out.println("dostream="+dostream);
+// 			PRINTLN("dostream="+dostream);
 			return dostream;
 		}
 		else {
-			System.out.println("FHandler opening zipfile not supported!");
+			PRINTLN("FHandler opening zipfile not supported!");
 			return null;
 		}
 	}

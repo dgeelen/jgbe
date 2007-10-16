@@ -566,7 +566,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 /*				JMenuItem source = ( JMenuItem )( e.getSource() );
 				String s = "Menu Item source: " + source.getText()
 			           + " (an instance of " + getClassName( source ) + ")";
-				System.out.println(s);*/
+				PRINTLN(s);*/
 			#define SET_SCALE_MODE_BOOLEANS menuitemScale1x.setState( VC.nscale == 1 ); \
 			                                menuitemScale2x.setState( VC.nscale == 2 ); \
 			                                menuitemScale3x.setState( VC.nscale == 3 ); \
@@ -743,7 +743,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					dostream.close();
 				}
 				catch (java.io.IOException ioe) {
-					System.out.println("Error saving state! ");
+					PRINTLN("Error saving state! ");
 					PRINTLN(ioe.getMessage());
 				};
 				resumeEmulation(false);
@@ -759,7 +759,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					distream.close();
 				}
 				catch (java.io.IOException ioe) {
-					System.out.println("Error loading state! " + ioe.getMessage());
+					PRINTLN("Error loading state! " + ioe.getMessage());
 					PRINTLN(ioe.getMessage());
 				};
 				resumeEmulation(false);
@@ -905,7 +905,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						if (e.getSource().equals(menuItems[i]))
 						tryToLoadROM((String)rcFiles.get(i));
 				}
-				//System.out.println("timer!");
+				//PRINTLN("timer!");
 				long ctime = System.nanoTime();
 				long timeLapse =  ctime - FPSTimeMillis;
 				FPSTimeMillis = ctime;
@@ -927,11 +927,11 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			           + "    State of check Box: "
 			           + (( e.getStateChange() == ItemEvent.SELECTED ) ?
 			              "selected":"unselected" );
-			System.out.println( s );
+			PRINTLN( s );
 		}
 
 		public void keyTyped(KeyEvent e) {
-			//System.out.println("keyTyped");
+			//PRINTLN("keyTyped");
 		}
 
 		static final int[] keyMasks = {
@@ -1025,7 +1025,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				}
 				in.close();
 			} catch (IOException e) {
-				System.out.println("error reading rcfiles.log");
+				PRINTLN("error reading rcfiles.log");
 			}
 		}
 
@@ -1042,7 +1042,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				}
 				out.close();
 			} catch (IOException e) {
-				System.out.println("error writing rcfiles.log");
+				PRINTLN("error writing rcfiles.log");
 			}
 			makeRcFilesMenuItems();
 		}
@@ -1092,7 +1092,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 				out.close();
 			} catch (IOException e) {
-				System.out.println("error writing jgbe.conf");
+				PRINTLN("error writing jgbe.conf");
 			}
 		}
 
@@ -1191,7 +1191,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				menuitemEnableCheats.setState(usecheats);
 				in.close();
 			} catch (IOException e) {
-				System.out.println("error reading jgbe.conf");
+				PRINTLN("error reading jgbe.conf");
 			}
 			loading = false;
 		}

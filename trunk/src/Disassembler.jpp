@@ -238,10 +238,10 @@ public class Disassembler
 
 		public static void main(String[] args)
 		{
-				System.out.println(Disassembler.disassemble(0));
-				System.out.println(Disassembler.disassemble(0));
-				System.out.println(Disassembler.disassemble(255));
-				System.out.println(Disassembler.disassemble(255));
+				PRINTLN(Disassembler.disassemble(0));
+				PRINTLN(Disassembler.disassemble(0));
+				PRINTLN(Disassembler.disassemble(255));
+				PRINTLN(Disassembler.disassemble(255));
 		}
 }
 #else

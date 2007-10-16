@@ -727,7 +727,7 @@ public class AudioController {
 			case 4:
 				return S4.muted == 1;
 			default:
-				System.out.println("AudioController: No such channel: " + i);
+				PRINTLN("AudioController: No such channel: " + i);
 				return false;
 		}
 	}
@@ -747,7 +747,7 @@ public class AudioController {
 				S4.muted = b?1:0;
 				break;
 			default:
-				System.out.println("AudioController: No such channel: " + i);
+				PRINTLN("AudioController: No such channel: " + i);
 				break;
 		}
 	}
@@ -767,7 +767,7 @@ public class AudioController {
 				S4.muted = 1-S4.muted;
 				break;
 			default:
-				System.out.println("AudioController: No such channel to toggle: " + i);
+				PRINTLN("AudioController: No such channel to toggle: " + i);
 				break;
 		}
 	}
@@ -831,7 +831,7 @@ public class AudioController {
 			audioSource.start();
 		}
 		catch (Exception e) {
-				System.out.println("Error while opening sound output, sound will be unavailable ("+e+")");
+				PRINTLN("Error while opening sound output, sound will be unavailable ("+e+")");
 				isMuted = true;
 		}
 #endif
@@ -1055,7 +1055,7 @@ public class AudioController {
 				s <<= 2;
 				if ((IO[0x15] & 1)!=0) r += s;
 				if ((IO[0x15] & 16)!=0) l += s;
-// 				System.out.println("S1 l="+l+" r="+r);
+// 				PRINTLN("S1 l="+l+" r="+r);
 			}
 
 			if (MIN(S2.on, S2.muted)!=0)
@@ -1074,7 +1074,7 @@ public class AudioController {
 				s <<= 2;
 				if ((IO[0x15] & 2)!=0) r += s;
 				if ((IO[0x15] & 32)!=0) l += s;
-// 				System.out.println("S2 l="+l+" r="+r);
+// 				PRINTLN("S2 l="+l+" r="+r);
 			}
 
 			if (MIN(S3.on, S3.muted)!=0)
@@ -1090,7 +1090,7 @@ public class AudioController {
 				else s = 0;
 				if ((IO[0x15] & 4)!=0) r += s;
 				if ((IO[0x15] & 64)!=0) l += s;
-// 				System.out.println("S3 l="+l+" r="+r);
+// 				PRINTLN("S3 l="+l+" r="+r);
 			}
 
 			if (MIN(S4.on, S4.muted)!=0)
@@ -1113,7 +1113,7 @@ public class AudioController {
 				s += s << 1;
 				if ((IO[0x15] & 8)!=0) r += s;
 				if ((IO[0x15] & 128)!=0) l += s;
-// 				System.out.println("S4 l="+l+" r="+r);
+// 				PRINTLN("S4 l="+l+" r="+r);
 			}
 
 			l *= (IO[0x14] & 0x07);
@@ -1173,15 +1173,15 @@ public class AudioController {
 	public int read(int index) {
 		int i=(index&0xff)-0x10;
 		if((i<0)||(i>0x3f)) {
-			System.out.println("AudioController: Error: reading from non sound-address:"+index);
+			PRINTLN("AudioController: Error: reading from non sound-address:"+index);
 			return -1;
 			}
 		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
-			System.out.println("AudioController: Sound disabled: Reads are undefined!");
+			PRINTLN("AudioController: Sound disabled: Reads are undefined!");
 			return 0;
 		}
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
-			//System.out.println("AudioController: Warning: read from unknown IO address, acting as normal RAM...");
+			//PRINTLN("AudioController: Warning: read from unknown IO address, acting as normal RAM...");
 		}
 		sound_mix(); //???
 		return IO[i];
@@ -1190,15 +1190,15 @@ public class AudioController {
 	public void write(int index, int value) {
 		int i=(index&0xff)-0x10;
 		if((i<0)||(i>0x2f)) {
-			System.out.println("AudioController: Error: writing to non sound-address:"+index);
+			PRINTLN("AudioController: Error: writing to non sound-address:"+index);
 			return;
 			}
 		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
-			System.out.println("AudioController: Sound disabled: Writes are undefined!");
+			PRINTLN("AudioController: Sound disabled: Writes are undefined!");
 			return;
 		}
 		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
-			//System.out.println("AudioController: Warning: writing to unknown IO address, acting as normal RAM...");
+			//PRINTLN("AudioController: Warning: writing to unknown IO address, acting as normal RAM...");
 			IO[i]=value;
 			return;
 		}
