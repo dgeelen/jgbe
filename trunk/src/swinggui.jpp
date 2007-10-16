@@ -85,6 +85,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		int osdTime = 0;
 		static public String curcartname;
 		static public String biosfilename;
+		static public DataOutputStream speedRunPlayWithOutputVideoStream;
 		//menuitem <-- here for my KDev autocomplete
 		JMenuItem menuitemExit;
 		JCheckBoxMenuItem menuitemScale1x;
@@ -131,6 +132,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		JCheckBoxMenuItem	menuitemToggleRemoteKeys;
 		JCheckBoxMenuItem menuitemSpeedRunRecord; //Resets CPU and enables Recording
 		JCheckBoxMenuItem menuitemSpeedRunPlay;   //Resets CPU and enables Playback
+		JCheckBoxMenuItem menuitemSpeedRunPlayWithOutput; //Play to file/pipe for encoding
 		JMenuItem menuitemShowAdvancedAudioPropertiesDialog;
 
 		static CheatCodeEditor cheatcodes;
@@ -165,6 +167,29 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 			public void updateVideoImage(Image img) {
 				updateUI();
+				if( speedRunPlayWithOutputVideoStream != null) {
+					BufferedImage bimg = (BufferedImage)img;
+					int[] data = (int[])bimg.getRaster().getDataElements(0,0,bimg.getWidth(),bimg.getHeight(),null);
+					//PRINTF("Width = %d, Height= %d, Length = %d\n",bimg.getWidth(),bimg.getHeight(),data.length);
+					for(int i=0; i<data.length; ++i) {
+						int j = data[i];
+						int ar = (j>>16)&0xff;
+						int ag = (j>> 8)&0xff;
+						int ab = (j>> 0)&0xff;
+						try {
+							speedRunPlayWithOutputVideoStream.writeByte(ar);
+							speedRunPlayWithOutputVideoStream.writeByte(ag);
+							speedRunPlayWithOutputVideoStream.writeByte(ab);
+						}
+						catch (IOException ee) {
+							speedRunPlayWithOutputVideoStream = null;
+							JOptionPane.showMessageDialog(frame,
+							                              "Error while writing to file, aborting recording:\n"+ee.getMessage(),
+							                              "Error!",
+							                               JOptionPane.ERROR_MESSAGE);
+						}
+					}
+				}
 			}
 
 			public void paintComponent(Graphics g) {
@@ -371,10 +396,13 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 			menuitemSpeedRunRecord = new JCheckBoxMenuItem("Record speedrun", false);
 			menuitemSpeedRunPlay = new JCheckBoxMenuItem("Play speedrun", false);
+			menuitemSpeedRunPlayWithOutput = new JCheckBoxMenuItem("Record speedrun to file", false);
 			menuitemSpeedRunRecord.setMnemonic(KeyEvent.VK_E);
 			menuitemSpeedRunPlay.setMnemonic(KeyEvent.VK_P);
+			menuitemSpeedRunPlayWithOutput.setMnemonic(KeyEvent.VK_F);
 			menuitemSpeedRunRecord.addActionListener(this);
 			menuitemSpeedRunPlay.addActionListener(this);
+			menuitemSpeedRunPlayWithOutput.addActionListener(this);
 
 			menuOther.add(menuitemEnableCheats);
 			menuOther.add(menuitemUseBIOS);
@@ -404,6 +432,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 			menuOther.addSeparator();
 			menuOther.add(menuitemSpeedRunRecord);
 			menuOther.add(menuitemSpeedRunPlay);
+			menuOther.add(menuitemSpeedRunPlayWithOutput);
 
 			mainMenuBar.add( menuOther) ;
 
@@ -808,7 +837,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
 				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
 			}
-			else if(e.getSource().equals( menuitemSpeedRunPlay )) {
+			else if(e.getSource().equals( menuitemSpeedRunPlay ) || e.getSource().equals( menuitemSpeedRunPlayWithOutput )) {
 				menuitemSpeedRunRecord.setState(false);
 				pauseEmulation(false);
 				IntVector hist = cpu.keyHistory;
@@ -817,6 +846,34 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 				cpu.keyHistory = hist;
 				cpu.playbackHistoryIndex = 0;
 				cpu.keyHistoryEnabled = false;
+				if(e.getSource().equals( menuitemSpeedRunPlayWithOutput )) {
+					if(menuitemSpeedRunPlayWithOutput.getState()) {
+						JFileChooser fc = new JFileChooser(".");
+						File selFile;
+						fc.showOpenDialog(frame);
+						selFile = fc.getSelectedFile();
+						if(selFile != null) {
+							try {
+								speedRunPlayWithOutputVideoStream = FHandler.getDataOutputStream(selFile.getAbsolutePath());
+							}
+							catch (IOException ee) {
+								speedRunPlayWithOutputVideoStream = null;
+								JOptionPane.showMessageDialog(frame,
+								                              "Error while opening file, recording will fail:\n"+ee.getMessage(),
+								                              "Error!",
+								                              JOptionPane.ERROR_MESSAGE);
+							}
+						}
+						// TODO: audio stream/file
+						/*fc.showOpenDialog(frame);*/selFile = null;
+						selFile = fc.getSelectedFile();
+						if(selFile != null) {
+						}
+					}
+					else {
+						speedRunPlayWithOutputVideoStream = null;
+					}
+				}
 				resumeEmulation(false);
 				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
 			}
