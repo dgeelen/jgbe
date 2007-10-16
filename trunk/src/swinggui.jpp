@@ -170,7 +170,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						osdLines.remove(0);
 					g.setColor(new Color(255,255,255));
 					--osdTime;
-					if ((osdTime == 0) && (osdLines.size()>0)){
+					if ((osdTime == 0) && (osdLines.size()>0)) {
 						osdLines.remove(0);
 						osdTime = 15;
 					}
