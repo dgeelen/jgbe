@@ -92,6 +92,15 @@ public class VideoController {
 	private int cfskip = 0;
 	public int fskip = 1; // 1 is off
 
+	public void setGrayShade(int i, int j, Color c) {
+		GrayColors[i][j][0] = c.getRed();
+		GrayColors[i][j][1] = c.getGreen();
+		GrayColors[i][j][2] = c.getBlue();
+		updateMonoColData(0); //???
+		updateMonoColData(1);
+		updateMonoColData(2);
+	}
+	
 	public void setGrayShades(int[][] g) {
 		GrayColors[0] = g;
 		GrayColors[1] = g;

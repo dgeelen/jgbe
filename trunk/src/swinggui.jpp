@@ -914,7 +914,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 										{0x40, 0x70, 0x32},  // DARKGRAY
 										{0x10, 0x50, 0x26}}; // BLACK
 				cpu.VC.setGrayShades(c);
-				cs.setDefault(c,c,c);
+				cs.setVisible( false );
 				configStateChanged = true;
 				SELECT_COLOR_MENU( 0 );
 			}
@@ -924,7 +924,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 										{0x60, 0x60, 0x60},  // DARKGRAY
 										{0x00, 0x00, 0x00}}; // BLACK
 				cpu.VC.setGrayShades(c);
-				cs.setDefault(c,c,c);
+				cs.setVisible( false );
 				configStateChanged = true;
 				SELECT_COLOR_MENU( 1 );
 			}
@@ -934,15 +934,12 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 										{0x61, 0x61, 0x61},  // DARKGRAY
 										{0x3f, 0x3f, 0x3f}}; // BLACK
 				cpu.VC.setGrayShades(c);
-				cs.setDefault(c,c,c);
+ 				cs.setVisible( false );
 				configStateChanged = true;
 				SELECT_COLOR_MENU( 2 );
 			}
 			else if (e.getSource().equals( menuitemColorSchemes[3] )) {
 				if ( !cpu.isCGB() ) {
-					cs.setDefault( VC.getGrayShade(0),
-					 	             VC.getGrayShade(1),
-					 	             VC.getGrayShade(2));
 					if (!loading) cs.setVisible( true );
 					configStateChanged = true;
 					SELECT_COLOR_MENU( 3 );
@@ -1237,9 +1234,6 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 							}
 						}
 						cpu.VC.setGrayShades(ints[0],ints[1],ints[2]);
-						cs.setDefault( VC.getGrayShade(0),
-						               VC.getGrayShade(1),
-						               VC.getGrayShade(2));
 					}
 				}
 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel

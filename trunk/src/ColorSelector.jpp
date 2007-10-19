@@ -2,139 +2,131 @@ import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.event.*;
 import java.awt.*;
+import javax.swing.colorchooser.AbstractColorChooserPanel;
+
 
 #include "Global.inc"
 
-public class ColorSelector extends JFrame
-  implements MouseListener, ChangeListener, ActionListener {
-
+public class ColorSelector extends JFrame implements MouseListener, ChangeListener, ActionListener {
 	public static final long serialVersionUID = 1;
-
-	private JPanel pnlColor  = new JPanel();
-	private JPanel pnlSelect = new JPanel();
-	private JPanel pnlTest   = new JPanel();
-
-	private String[] optionStr = {"background ", "sprites 1.", "sprites 2."};
-	private ButtonGroup group = new ButtonGroup();
-	private JRadioButton[] buttons = new JRadioButton[12];
-
-	private String[] colorStr = {"Red", "Green", "Blue"};
-	private JSlider[] sliders = new JSlider[3];
-
-	private int[][][] colors = new int[3][4][3];
 
 	private VideoController vc;
 	private swinggui gui;
 
+	JColorChooser colorchooser;
+	JPanel colorabletypes;
+	JPanel colorsBackground;
+	JPanel colorsSprites1;
+	JPanel colorsSprites2;
+
+	JPanel[] colorPanes;
+	int currentColorPane = 0;
+
+	public void updateColorPanes() {
+		for(int i=0; i<12; ++i) {
+			colorPanes[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		}
+		colorPanes[currentColorPane].setBorder(BorderFactory.createLineBorder(Color.RED, 3));
+	}
+	
 	public ColorSelector (swinggui gui) {
 		this.vc = gui.VC;
 		this.gui = gui;
 
-		setLayout(new BorderLayout());
-		setSize (450, 450);
+		setLayout(new FlowLayout());
 		setResizable( false );
 		addMouseListener (this);
 
-		initSelectPanel();
-		setPreferredSize(new Dimension(480, 240));
-		add(pnlSelect, BorderLayout.WEST);
-		initColorPanel();
-		add(pnlColor, BorderLayout.CENTER);
-		add(pnlTest, BorderLayout.EAST);
-	}
-
-	private void initSelectPanel() {
-		pnlSelect.setLayout(new GridLayout(12, 2));
-
-		for (int i = 0; i < 12; ++i) {
-			String lblText = optionStr[(int)(i / 4)] + (i % 4 + 1);
-			pnlSelect.add(new Label(lblText));
-
-			buttons[i] = new JRadioButton();
-			buttons[i].addActionListener( this );
-			group.add(buttons[i]);
-			pnlSelect.add(buttons[i]);
+		colorchooser = new JColorChooser();
+		colorchooser.getSelectionModel().addChangeListener(this);
+// 		colorchooser.addChooserPanel(); /*FIXME: Instert maarten's HSV chooser*/
+		colorabletypes = new JPanel();
+		colorsBackground = new JPanel();
+		colorsBackground.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Background:"));
+		colorsSprites1 = new JPanel();
+		colorsSprites1.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sprites 1:"));
+		colorsSprites2 = new JPanel();
+		colorsSprites2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Sprites 2:"));
+		colorsBackground.setLayout(new GridLayout(0,4));
+		colorsSprites1.setLayout(new GridLayout(0,4));
+		colorsSprites2.setLayout(new GridLayout(0,4));
+		colorPanes = new JPanel[12];
+		for(int i=0; i<12; ++i) {
+			colorPanes[i] = new JPanel();
+			colorPanes[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+			colorPanes[i].addMouseListener(this);
+			colorPanes[i].setPreferredSize(new Dimension(48,48));
 		}
+		colorsBackground.setLayout(new FlowLayout());
+		colorsSprites1.setLayout(new FlowLayout());
+		colorsSprites2.setLayout(new FlowLayout());
+		colorabletypes.setLayout(new FlowLayout());
+		for(int i=0; i< 4; ++i) colorsBackground.add(colorPanes[i]);
+		for(int i=4; i< 8; ++i) colorsSprites1.add(colorPanes[i]);
+		for(int i=8; i<12; ++i) colorsSprites2.add(colorPanes[i]);
+		colorabletypes.setLayout(new GridLayout(3,1));
+		colorabletypes.add(colorsBackground);
+		colorabletypes.add(colorsSprites1);
+		colorabletypes.add(colorsSprites2);
 
-		buttons[0].setSelected(true);
+		JPanel dividerthing = new JPanel();
+		dividerthing.setLayout(new BorderLayout());
+		JPanel presets = new JPanel();
+		JPanel combos  = new JPanel();
+		JPanel buttons = new JPanel();
+		presets.setLayout(new GridLayout(2,0));
+		buttons.add(new JButton("New"));
+		buttons.add(new JButton("Delete"));
+		presets.add(buttons);
+		presets.add(new JComboBox());
+		presets.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Presets:"));
+		dividerthing.add(presets, BorderLayout.NORTH);
+		dividerthing.add(colorabletypes, BorderLayout.CENTER);
+		add(colorchooser);
+		add(dividerthing);
+		
+		initColorPanels();
+		pack();
 	}
 
-	private void initColorPanel() {
-		pnlColor.setLayout(new GridLayout(3, 3));
-
-		for (int i = 0; i < 3; ++i) {
-			sliders[i] = new JSlider(JSlider.HORIZONTAL, 0, 255, 0);
-			sliders[i].addChangeListener(this);
-			pnlColor.add(new JLabel(colorStr[i]));
-			pnlColor.add(sliders[i]);
-		}
+	private void initColorPanels() {
+		int[][] c;
+		c = vc.getGrayShade(0);
+		for(int i=0; i< 4; ++i) colorPanes[i].setBackground(new Color(c[i][0], c[i][1], c[i][2]));
+		c = vc.getGrayShade(1);
+		for(int i=4; i< 8; ++i) colorPanes[i].setBackground(new Color(c[i%4][0], c[i%4][1], c[i%4][2]));
+		c = vc.getGrayShade(2);
+		for(int i=8; i<12; ++i) colorPanes[i].setBackground(new Color(c[i%4][0], c[i%4][1], c[i%4][2]));
+		currentColorPane = 0;
+		updateColorPanes();
 	}
-
-	private void setTestColor(int r, int g, int b) {
-		pnlTest.setBackground(new Color(r, g, b));
-	}
-
-	public void mouseClicked (MouseEvent e) {
-// 		System.out.printf("(%d, %d)\n", e.getX(), e.getY());
-	}
-
-	boolean hack=false;
 
 	public void stateChanged(ChangeEvent e) {
-		if (hack) return;
-		int r = sliders[0].getValue();
-		int g = sliders[1].getValue();
-		int b = sliders[2].getValue();
-
-		int selected = 0;
-
-		for (int i = 0; i < 12; ++i) {
-			if ( buttons[i].isSelected() ) {
-			  colors[i/4][i%4][0] = r;
-				colors[i/4][i%4][1] = g;
-			  colors[i/4][i%4][2] = b;
-			}
+		if( e.getSource().equals( colorchooser.getSelectionModel() )) {
+			Color c = colorchooser.getColor();
+			colorPanes[currentColorPane].setBackground( c);
+			vc.setGrayShade(currentColorPane/4, currentColorPane%4, c);
 		}
-
-		vc.setGrayShades( colors[0], colors[1], colors[2] );
 		gui.saveConfig();
-
-		setTestColor(r, g, b);
 	}
 
-	public void actionPerformed(ActionEvent e) {
-		hack = true;
-		for (int i = 0; i < 12; ++i) {
-			if ( e.getSource().equals( buttons[i] ) ) {
-				setTestColor( colors[i/4][i%4][0], colors[i/4][i%4][1], colors[i/4][i%4][2] );
-				sliders[0].setValue(colors[i/4][i%4][0]);
-				sliders[1].setValue(colors[i/4][i%4][1]);
-				sliders[2].setValue(colors[i/4][i%4][2]);
+	public void mousePressed (MouseEvent e) {
+		for(int i=0; i<12; ++i) {
+			if(e.getSource().equals( colorPanes[i] )) {
+				currentColorPane = i;
+				colorchooser.setColor(colorPanes[currentColorPane].getBackground());
+				updateColorPanes();
 			}
 		}
-		hack = false;
 	}
 
-	public void setDefault(int[][] fore, int[][] back1, int[][] back2) {
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 3; ++j) {
-				colors[0][i][j] = fore[i][j];
-				colors[1][i][j] = back1[i][j];
-				colors[2][i][j] = back2[i][j];
-			}
-		}
-
-		hack = true;
-		for (int i = 0; i < 12; ++i) {
-			sliders[0].setValue(colors[i/4][i%4][0]);
-			sliders[1].setValue(colors[i/4][i%4][1]);
-			sliders[2].setValue(colors[i/4][i%4][2]);
-		}
-		hack = false;
+	public void setVisible(boolean b) {
+		initColorPanels();
+		super.setVisible(b);
 	}
-
-	public void mousePressed (MouseEvent e) {}
+	public void actionPerformed(ActionEvent e) {}
 	public void mouseReleased (MouseEvent e) {}
 	public void mouseExited (MouseEvent e) {}
 	public void mouseEntered (MouseEvent e) {}
+	public void mouseClicked(MouseEvent e) {}
 }
