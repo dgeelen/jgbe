@@ -328,16 +328,16 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 			menuSound = new JMenu( "Sound");
 			menuSound.setMnemonic( KeyEvent.VK_U );
-			menuitemEnableSound = new JCheckBoxMenuItem( "Enabled sound", true );
+			menuitemEnableSound = new JCheckBoxMenuItem( "Enable sound", true );
 			menuitemEnableSound.setMnemonic( KeyEvent.VK_T );
 			menuitemEnableSound.addActionListener( this );
 			menuSound.add( menuitemEnableSound );
 
 			menuSoundChannels=new JMenu("Channels");
-			menuitemSoundChannel1=new JCheckBoxMenuItem( "Toggle channel 1", true );
-			menuitemSoundChannel2=new JCheckBoxMenuItem( "Toggle channel 2", true );
-			menuitemSoundChannel3=new JCheckBoxMenuItem( "Toggle channel 3", true );
-			menuitemSoundChannel4=new JCheckBoxMenuItem( "Toggle channel 4", true );
+			menuitemSoundChannel1=new JCheckBoxMenuItem( "Enable channel 1", true );
+			menuitemSoundChannel2=new JCheckBoxMenuItem( "Enable channel 2", true );
+			menuitemSoundChannel3=new JCheckBoxMenuItem( "Enable channel 3", true );
+			menuitemSoundChannel4=new JCheckBoxMenuItem( "Enable channel 4", true );
 
 			menuitemSoundChannel1.setMnemonic( KeyEvent.VK_1 );
 			menuitemSoundChannel2.setMnemonic( KeyEvent.VK_2 );
