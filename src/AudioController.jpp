@@ -1150,17 +1150,15 @@ public class AudioController {
 
 			if (audioBufferIndex >= WRITE_OUT_COUNT_FIXME) { //WriteOut every n samples (1<<5 for linux, at least 1<<7 for windows)
 #ifndef JMGBE
-			if(audioSource!=null)
+			if(audioSource!=null && !speedHax)
 					audioSource.write(audioBuffer, 0, audioBufferIndex);
 #endif
 				audioBufferIndex = 0;
 			}
 		}
-
-
-
 		IO[0x16] = (IO[0x16]&0xf0) | S1.on | (S2.on<<1) | (S3.on<<2) | (S4.on<<3);
 	}
+	public static boolean speedHax = false;
 
 	static long lastms = System.currentTimeMillis();
 

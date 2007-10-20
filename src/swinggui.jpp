@@ -1028,6 +1028,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					return;
 				}
 			}
+			if(keyCode == 32) { //FIXME: Not configurable....
+				cpu.AC.speedHax = false;
+			}
 		}
 
 		public void keyPressed(KeyEvent e) {
@@ -1046,6 +1049,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 					cpu.pressRemoteButton(keyMasks[i&7]);
 					return;
 				}
+			}
+			if(keyCode == 32) { //FIXME: Not configurable....
+				cpu.AC.speedHax = true;
 			}
 		}
 
