@@ -25,7 +25,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		owner = o;
 		this.ac = ac;
 		dialog= new JDialog(owner, "Advanced Audio Properties", true);
-		if(ac != null) {
+		if(ac != null && ac.audioSource != null) {
 			JPanel panel;
 			BorderLayout layout;
 			JLabel label;
