@@ -1171,18 +1171,19 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		private boolean loading = false;
 		public void loadConfig() {
 			loading = true;
+			boolean runbiosonreset = false;
+			boolean soundchannel1active = true;
+			boolean soundchannel2active = true;
+			boolean soundchannel3active = true;
+			boolean soundchannel4active = true;
+			boolean usecheats = true;
+			int colorType = 0;
+			biosfilename = "";
+			VC.nscale = 2;
 			try {
 				String filename = FHandler.JGBEDir("") + "jgbe.conf";
 				BufferedReader in = new BufferedReader(new FileReader(filename));
 				String str;
-				boolean runbiosonreset = false;
-				boolean soundchannel1active = true;
-				boolean soundchannel2active = true;
-				boolean soundchannel3active = true;
-				boolean soundchannel4active = true;
-				boolean usecheats = true;
-				biosfilename = "";
-				VC.nscale = 2;
 				while ((str = in.readLine()) != null) {
 // 					PRINTF("loadConfig(): `"+str+"' --> ");
 					int index = str.indexOf("#");	if(index>=0) str = str.substring(0, index).trim();
@@ -1222,11 +1223,9 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 
 					/* LOAD PAL */
 					if (property.equalsIgnoreCase("ColorType")) {
-						int n = 0;
 						try {
-							n = Integer.parseInt(value);
+							colorType = Integer.parseInt(value);
 						} catch( Exception e) { };
-						actionPerformed(new ActionEvent(menuitemColorSchemes[n], 0, ""));
 					}
 					if(property.equalsIgnoreCase("CustomColors")) {
 						String[] strs = value.split(" ");
@@ -1242,26 +1241,27 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						cpu.VC.setGrayShades(ints[0],ints[1],ints[2]);
 					}
 				}
-				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				frame.pack();
-				menuitemUseBIOS.setState(runbiosonreset);
-				menuitemEnableSound.setState(!cpu.AC.isMuted);
-				cpu.AC.setChannelActive(1, soundchannel1active);
-				cpu.AC.setChannelActive(2, soundchannel2active);
-				cpu.AC.setChannelActive(3, soundchannel3active);
-				cpu.AC.setChannelActive(4, soundchannel4active);
-				menuitemSoundChannel1.setState( soundchannel1active );
-				menuitemSoundChannel2.setState( soundchannel2active );
-				menuitemSoundChannel3.setState( soundchannel3active );
-				menuitemSoundChannel4.setState( soundchannel4active );
-				SET_SCALE_MODE_BOOLEANS;
-				if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
-				menuitemEnableCheats.setState(usecheats);
 				in.close();
 			} catch (IOException e) {
 				PRINTLN("error reading jgbe.conf");
 			}
+			grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
+			grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
+			frame.pack();
+			menuitemUseBIOS.setState(runbiosonreset);
+			menuitemEnableSound.setState(!cpu.AC.isMuted);
+			cpu.AC.setChannelActive(1, soundchannel1active);
+			cpu.AC.setChannelActive(2, soundchannel2active);
+			cpu.AC.setChannelActive(3, soundchannel3active);
+			cpu.AC.setChannelActive(4, soundchannel4active);
+			menuitemSoundChannel1.setState( soundchannel1active );
+			menuitemSoundChannel2.setState( soundchannel2active );
+			menuitemSoundChannel3.setState( soundchannel3active );
+			menuitemSoundChannel4.setState( soundchannel4active );
+			actionPerformed(new ActionEvent(menuitemColorSchemes[colorType], 0, ""));
+			SET_SCALE_MODE_BOOLEANS;
+			if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
+			menuitemEnableCheats.setState(usecheats);
 			loading = false;
 		}
 
