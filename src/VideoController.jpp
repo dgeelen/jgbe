@@ -53,9 +53,9 @@ public class VideoController {
 
 	// Looks a lot like Origional Gameboy
 	static final private int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
-	                               {0x70, 0xb0, 0x40},   // LIGHTGRAY
-	                               {0x40, 0x70, 0x32},   // DARKGRAY
-	                               {0x10, 0x50, 0x26} }; // BLACK
+	                                            {0x70, 0xb0, 0x40},   // LIGHTGRAY
+	                                            {0x40, 0x70, 0x32},   // DARKGRAY
+	                                            {0x10, 0x50, 0x26} }; // BLACK
 
 	private int GrayColors[][][] = { GRAYSHADES, GRAYSHADES, GRAYSHADES };
 
@@ -100,20 +100,33 @@ public class VideoController {
 		updateMonoColData(1);
 		updateMonoColData(2);
 	}
-	
+
+	/* NOTE: Do not use 'clone', for it creates a 'shallow' copy,
+		* meaning that sub-arrays are still shared.
+		* I think the same holds for arrayCopy(), so we do it this way
+		* Java Suckiness FTW!
+		*/
+	#define unshallowCloneInto(x, y) \
+															y = new int[4][3]; \
+															for(int abc=0; abc<4; ++abc) { \
+																for(int bca=0; bca<3; ++bca) { \
+																	y[abc][bca]=x[abc][bca]; \
+																} \
+															}
+
 	public void setGrayShades(int[][] g) {
-		GrayColors[0] = g;
-		GrayColors[1] = g;
-		GrayColors[2] = g;
+		unshallowCloneInto(g, GrayColors[0]);
+		unshallowCloneInto(g, GrayColors[1]);
+		unshallowCloneInto(g, GrayColors[2]);
 		updateMonoColData(0); //???
 		updateMonoColData(1);
 		updateMonoColData(2);
 	}
 
 	public void setGrayShades(int[][] g1, int[][] g2, int[][] g3) {
-		GrayColors[0] = g1;
-		GrayColors[1] = g2;
-		GrayColors[2] = g3;
+		unshallowCloneInto(g1, GrayColors[0]);
+		unshallowCloneInto(g2, GrayColors[1]);
+		unshallowCloneInto(g3, GrayColors[2]);
 		updateMonoColData(0); //???
 		updateMonoColData(1);
 		updateMonoColData(2);
