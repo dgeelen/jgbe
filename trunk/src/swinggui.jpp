@@ -9,10 +9,10 @@ import java.awt.event.*;
 /* These may be needed for 'true' outline fonts
 import java.awt.font.*;
 import java.awt.geom.*;*/
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.awt.image.BufferedImage;
 
 #include "keyConfigDialog.inc"
@@ -558,7 +558,8 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						Object obj = t.getTransferData(flavor);
 						// windows
 						if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-							files = (VECTOR(File))t.getTransferData(flavor);
+							files = new VECTOR(File)();
+							files.addAll( (java.util.Collection)t.getTransferData(flavor) );
 						// kde
 						} else if (URI_LIST.equals(flavor.getSubType()) && obj instanceof String ) {
 							String urilist = (String)obj;
