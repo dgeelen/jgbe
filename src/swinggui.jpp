@@ -147,10 +147,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		static public DataOutputStream speedRunPlayWithOutputVideoStream;
 		//menuitem <-- here for my KDev autocomplete
 		JMenuItem menuitemExit;
-		JCheckBoxMenuItem menuitemScale1x;
-		JCheckBoxMenuItem menuitemScale2x;
-		JCheckBoxMenuItem menuitemScale3x;
-		JCheckBoxMenuItem menuitemScale4x;
+		MenuItemArrayGroup scaleRadioGroup;
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
@@ -323,22 +320,13 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuFile.add( menuitemExit );
 
 			menuScaling = new JMenu( "Scaling");
-			menuitemScale1x = new JCheckBoxMenuItem( "Scale 1x", true );
-			menuitemScale2x = new JCheckBoxMenuItem( "Scale 2x", true );
-			menuitemScale3x = new JCheckBoxMenuItem( "Scale 3x", true );
-			menuitemScale4x = new JCheckBoxMenuItem( "Scale 4x", true );
-			menuitemScale1x.setMnemonic( KeyEvent.VK_1 );
-			menuitemScale2x.setMnemonic( KeyEvent.VK_2 );
-			menuitemScale3x.setMnemonic( KeyEvent.VK_3 );
-			menuitemScale4x.setMnemonic( KeyEvent.VK_4 );
-			menuitemScale1x.addActionListener( this );
-			menuitemScale2x.addActionListener( this );
-			menuitemScale3x.addActionListener( this );
-			menuitemScale4x.addActionListener( this );
-			menuScaling.add( menuitemScale1x );
-			menuScaling.add( menuitemScale2x );
-			menuScaling.add( menuitemScale3x );
-			menuScaling.add( menuitemScale4x );
+			scaleRadioGroup = new MenuItemArrayGroup();
+			scaleRadioGroup.add(new JRadioButtonMenuItem( "Scale 1x" ), KeyEvent.VK_1);
+			scaleRadioGroup.add(new JRadioButtonMenuItem( "Scale 2x" ), KeyEvent.VK_2);
+			scaleRadioGroup.add(new JRadioButtonMenuItem( "Scale 3x" ), KeyEvent.VK_3);
+			scaleRadioGroup.add(new JRadioButtonMenuItem( "Scale 4x" ), KeyEvent.VK_4);
+			scaleRadioGroup.addActionListener( this );
+			scaleRadioGroup.addToMenu(menuScaling);
 			menuVideo.add( menuScaling) ;
 
 			menuFrameSkip = new JMenu( "Frame Skipping");
@@ -506,10 +494,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemPause.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemReset.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemExit.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemScale1x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemScale2x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemScale3x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemScale4x.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			for (int i = 0; i < 4; ++i)
+				scaleRadioGroup.get(i).setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemIncFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemDecFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemColorSchemes[0].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -665,50 +651,18 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				String s = "Menu Item source: " + source.getText()
 			           + " (an instance of " + getClassName( source ) + ")";
 				PRINTLN(s);*/
-			#define SET_SCALE_MODE_BOOLEANS menuitemScale1x.setState( VC.nscale == 1 ); \
-			                                menuitemScale2x.setState( VC.nscale == 2 ); \
-			                                menuitemScale3x.setState( VC.nscale == 3 ); \
-			                                menuitemScale4x.setState( VC.nscale == 4 ); \
-
 			boolean configStateChanged = false;
 			if (e.getSource().equals( menuitemExit)) {
 				windowClosed(null);
 			}
-			else if (e.getSource().equals( menuitemScale1x )) {
-				addOSDLine("Set scaling: Scale1x");
-				VC.nscale = 1;
+			else if (scaleRadioGroup.contains(e.getSource())) {
+				int idx = scaleRadioGroup.getSelectedIndex();
+				VC.nscale = idx+1;
+				addOSDLine("Set scaling: Scale"+VC.nscale+"x");
  				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 				frame.pack();
 				configStateChanged = true;
-				SET_SCALE_MODE_BOOLEANS;
-			}
-			else if (e.getSource().equals( menuitemScale2x )) {
-				addOSDLine("Set scaling: Scale2x");
-				VC.nscale = 2;
- 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				frame.pack();
-				configStateChanged = true;
-				SET_SCALE_MODE_BOOLEANS;
-			}
-			else if (e.getSource().equals( menuitemScale3x )) {
-				addOSDLine("Set scaling: Scale3x");
-				VC.nscale = 3;
- 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				frame.pack();
-				configStateChanged = true;
-				SET_SCALE_MODE_BOOLEANS;
-			}
-			else if (e.getSource().equals( menuitemScale4x )) {
-				addOSDLine("Set scaling: Scale4x");
-				VC.nscale = 4;
- 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				frame.pack();
-				configStateChanged = true;
-				SET_SCALE_MODE_BOOLEANS;
 			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
 				++VC.fskip;
@@ -1319,7 +1273,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemSoundChannel3.setState( soundchannel3active );
 			menuitemSoundChannel4.setState( soundchannel4active );
 			actionPerformed(new ActionEvent(menuitemColorSchemes[colorType], 0, ""));
-			SET_SCALE_MODE_BOOLEANS;
+			scaleRadioGroup.setSelectedIndex(VC.nscale-1);
 			if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
 			menuitemEnableCheats.setState(usecheats);
 			loading = false;
