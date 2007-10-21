@@ -8,8 +8,7 @@ public class IntVector {
 	private void resize(int newsize) {
 		int[] old = data;
 		data = new int[newsize];
-		for (int i = 0; i < length; ++i)
-			data[i] = old[i];
+		System.arraycopy(old, 0, data, 0, length);
 	}
 
 	public IntVector() {
@@ -25,8 +24,7 @@ public class IntVector {
 	/// Inserts the specified element at the specified position in this list.
 	public void add(int index, int element) {
 		if (data.length == length) resize(length*2);
-		for (int i = index; i < length; ++i)
-			data[i+1] = data[i];
+		System.arraycopy(data, index, data, index+1, length-index);
 		data[index] = element;
 		++length;
 	}
