@@ -17,6 +17,65 @@ import java.awt.image.BufferedImage;
 
 #include "keyConfigDialog.inc"
 
+class MenuItemArray extends ArrayList {
+	public void add(JMenuItem b) {
+		super.add(b);
+	}
+	public void add(JMenuItem b, int mnemonic) {
+		super.add(b);
+		b.setMnemonic(mnemonic);
+	}
+	public void remove(JMenuItem b) {
+		super.remove(b);
+	}
+	public void addActionListener(ActionListener l) {
+		FOREACH(JMenuItem, ab, this)
+			ab.addActionListener(l);
+	}
+	public void addToMenu(JMenu m) {
+		FOREACH(JMenuItem, ab, this)
+			m.add(ab);
+	}
+	public boolean contains(Object b) {
+		return (b instanceof JMenuItem) && super.contains(b);
+	}
+	public JMenuItem get(int index) {
+		return (JMenuItem)super.get(index);
+	}
+}
+
+class MenuItemArrayGroup extends MenuItemArray {
+	private ButtonGroup grp = new ButtonGroup();
+	public void add(JMenuItem b) {
+		super.add(b);
+		grp.add(b);
+	}
+	public void add(JMenuItem b, int mnemonic) {
+		super.add(b);
+		grp.add(b);
+	}
+	public void remove(JMenuItem b) {
+		super.remove(b);
+		grp.remove(b);
+	}
+	public int getSelectedIndex() {
+		int i = -1;
+		FOREACH(JMenuItem, ab, this) {
+			++i;
+			if (ab.isSelected())
+				return i;
+		}
+		return -1;
+	}
+	public void setSelectedIndex(int index) {
+		int i = -1;
+		FOREACH(JMenuItem, ab, this) {
+			++i;
+			ab.setSelected(i == index);
+		}
+	}
+}
+
 class SimpleCPURunner implements CPURunner, Runnable {
 	private volatile int threadStatus = 0;
 	private Thread cpurunthread;
