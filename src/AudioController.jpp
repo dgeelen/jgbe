@@ -686,8 +686,9 @@ public final class AudioController {
 	public int CRATE;
 	protected double currentEmulationSpeed=1.0;
 
+	boolean[] channelactive = new boolean[5]; // entry [0] not used...
+
 	public final class SoundRegister {
-		int muted=1;
 		int on;
 		int pos; // TODO: unsigned?
 		int cnt, encnt, swcnt;
@@ -718,59 +719,16 @@ public final class AudioController {
 	protected CPU cpu;
 
 	public boolean channelActive(int i) {
-		switch(i) {
-			case 1:
-				return S1.muted == 1;
-			case 2:
-				return S2.muted == 1;
-			case 3:
-				return S3.muted == 1;
-			case 4:
-				return S4.muted == 1;
-			default:
-				PRINTLN("AudioController: No such channel: " + i);
-				return false;
-		}
+		return channelactive[i];
 	}
 
 	public void setChannelActive(int i, boolean b){
-		switch(i) {
-			case 1:
-				S1.muted = b?1:0;
-				break;
-			case 2:
-				S2.muted = b?1:0;
-				break;
-			case 3:
-				S3.muted = b?1:0;
-				break;
-			case 4:
-				S4.muted = b?1:0;
-				break;
-			default:
-				PRINTLN("AudioController: No such channel: " + i);
-				break;
-		}
+		channelactive[i] = b;
 	}
 
-	public void toggleChannelOnOff(int i){
-		switch(i) {
-			case 1:
-				S1.muted = 1-S1.muted;
-				break;
-			case 2:
-				S2.muted = 1-S2.muted;
-				break;
-			case 3:
-				S3.muted = 1-S3.muted;
-				break;
-			case 4:
-				S4.muted = 1-S4.muted;
-				break;
-			default:
-				PRINTLN("AudioController: No such channel to toggle: " + i);
-				break;
-		}
+	public boolean toggleChannelOnOff(int i){
+		channelactive[i] ^= true;
+		return channelactive[i];
 	}
 
 	public AudioController(CPU cpu) {
@@ -1024,7 +982,7 @@ public final class AudioController {
 		{
 			l = r = 0;
 
-			if (MIN(S1.on, S1.muted)!=0)
+			if (channelactive[1] && S1.on!=0)
 			{
 				s = sqwave[IO[0x01]>>6][(S1.pos>>18)&7] & S1.envol;
 				S1.pos += S1.freq;
@@ -1060,7 +1018,7 @@ public final class AudioController {
 // 				PRINTLN("S1 l="+l+" r="+r);
 			}
 
-			if (MIN(S2.on, S2.muted)!=0)
+			if (channelactive[2] && S2.on!=0)
 			{
 				s = sqwave[IO[0x06]>>6][(S2.pos>>18)&7] & S2.envol;
 				S2.pos += S2.freq;
@@ -1079,7 +1037,7 @@ public final class AudioController {
 // 				PRINTLN("S2 l="+l+" r="+r);
 			}
 
-			if (MIN(S3.on, S3.muted)!=0)
+			if (channelactive[3] && S3.on!=0)
 			{
 				s = WAVE[(S3.pos>>22) & 15];
 				if ((S3.pos & (1<<21))!=0) s &= 15;
@@ -1095,7 +1053,7 @@ public final class AudioController {
 // 				PRINTLN("S3 l="+l+" r="+r);
 			}
 
-			if (MIN(S4.on, S4.muted)!=0)
+			if (channelactive[4] && S4.on!=0)
 			{
 				if ((IO[0x12] & 8)!=0) s = 1 & (noise7[
 					(S4.pos>>20)&15] >> (7-((S4.pos>>17)&7)));
