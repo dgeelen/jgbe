@@ -72,7 +72,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	}
 }
 
-public class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener {
+public final class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener {
 		private static DrawingArea grfx;
 		protected VideoController VC;
 		protected CPU cpu;
@@ -535,7 +535,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 		}
 
 		public class JavaCrossplatformnessIsAMyth extends TransferHandler {
-			private final String URI_LIST = "uri-list";
+			private static final String URI_LIST = "uri-list";
 			public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
 				for(int i=0; i< transferFlavors.length; ++i) {
 					DataFlavor flavor = transferFlavors[i];
@@ -547,7 +547,7 @@ public class swinggui extends JApplet implements ActionListener, ItemListener, K
 						return true;
 					}
 				}
-			return false;
+				return false;
 			}
 
 			public boolean importData(JComponent comp, Transferable t) {
