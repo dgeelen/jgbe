@@ -161,11 +161,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		JMenuItem menuitemReset;
 		JMenu menuColorScheme;
 		JCheckBoxMenuItem[] menuitemColorSchemes;
+
 		JMenu menuSoundChannels;
-		JCheckBoxMenuItem menuitemSoundChannel1;
-		JCheckBoxMenuItem menuitemSoundChannel2;
-		JCheckBoxMenuItem menuitemSoundChannel3;
-		JCheckBoxMenuItem menuitemSoundChannel4;
+		MenuItemArray soundChannelGroup;
 		JMenu menuOther;
 		JMenuItem menuitemCheats;
 		JCheckBoxMenuItem menuitemEnableCheats;
@@ -382,24 +380,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemEnableSound.addActionListener( this );
 			menuSound.add( menuitemEnableSound );
 
-			menuSoundChannels=new JMenu("Channels");
-			menuitemSoundChannel1=new JCheckBoxMenuItem( "Enable channel 1", true );
-			menuitemSoundChannel2=new JCheckBoxMenuItem( "Enable channel 2", true );
-			menuitemSoundChannel3=new JCheckBoxMenuItem( "Enable channel 3", true );
-			menuitemSoundChannel4=new JCheckBoxMenuItem( "Enable channel 4", true );
+			menuSoundChannels = new JMenu("Channels");
+			soundChannelGroup = new MenuItemArray();
+			soundChannelGroup.add(new JCheckBoxMenuItem("Enable channel 1"), KeyEvent.VK_1);
+			soundChannelGroup.add(new JCheckBoxMenuItem("Enable channel 2"), KeyEvent.VK_2);
+			soundChannelGroup.add(new JCheckBoxMenuItem("Enable channel 3"), KeyEvent.VK_3);
+			soundChannelGroup.add(new JCheckBoxMenuItem("Enable channel 4"), KeyEvent.VK_4);
+			soundChannelGroup.addActionListener(this);
+			soundChannelGroup.addToMenu(menuSoundChannels);
 
-			menuitemSoundChannel1.setMnemonic( KeyEvent.VK_1 );
-			menuitemSoundChannel2.setMnemonic( KeyEvent.VK_2 );
-			menuitemSoundChannel3.setMnemonic( KeyEvent.VK_3 );
-			menuitemSoundChannel4.setMnemonic( KeyEvent.VK_4 );
-			menuitemSoundChannel1.addActionListener(this);
-			menuitemSoundChannel2.addActionListener(this);
-			menuitemSoundChannel3.addActionListener(this);
-			menuitemSoundChannel4.addActionListener(this);
-			menuSoundChannels.add(menuitemSoundChannel1);
-			menuSoundChannels.add(menuitemSoundChannel2);
-			menuSoundChannels.add(menuitemSoundChannel3);
-			menuSoundChannels.add(menuitemSoundChannel4);
 			menuSound.add(menuSoundChannels);
 			menuitemShowAdvancedAudioPropertiesDialog = new JMenuItem("Advanced...", KeyEvent.VK_A);
 			menuitemShowAdvancedAudioPropertiesDialog.addActionListener(this);
@@ -507,10 +496,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemSaveState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemLoadState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEnableSound.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemSoundChannel1.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemSoundChannel2.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemSoundChannel3.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemSoundChannel4.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			for (int i = 0; i < 4; ++i)
+				soundChannelGroup.get(i).setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEnableCheats.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedPlus.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -681,24 +668,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				addOSDLine( cpu.AC.isMuted?"Disabled sound":"Enabled sound");
 				configStateChanged = true;
 			}
-			else if (e.getSource().equals( menuitemSoundChannel1)) {
-				cpu.AC.toggleChannelOnOff(1);
-				addOSDLine(!cpu.AC.channelActive(1) ? "Disabled soundchannel 1" : "Enabled soundchannel 1");
-				configStateChanged = true;
-			}
-			else if (e.getSource().equals( menuitemSoundChannel2)) {
-				cpu.AC.toggleChannelOnOff(2);
-				addOSDLine(!cpu.AC.channelActive(2) ? "Disabled soundchannel 2" : "Enabled soundchannel 2");
-				configStateChanged = true;
-			}
-			else if (e.getSource().equals( menuitemSoundChannel3)) {
-				cpu.AC.toggleChannelOnOff(3);
-				addOSDLine(!cpu.AC.channelActive(3) ? "Disabled soundchannel 3" : "Enabled soundchannel 3");
-				configStateChanged = true;
-			}
-			else if (e.getSource().equals( menuitemSoundChannel4)) {
-				cpu.AC.toggleChannelOnOff(4);
-				addOSDLine(!cpu.AC.channelActive(4) ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
+			else if (soundChannelGroup.contains(e.getSource())) {
+				int channel = soundChannelGroup.indexOf(e.getSource())+1;
+				boolean enabled = cpu.AC.toggleChannelOnOff(channel);
+				addOSDLine((enabled ? "Enabled" : "Disabled") + " soundchannel " + channel);
 				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemEnableCheats)) {
@@ -1186,10 +1159,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		public void loadConfig() {
 			loading = true;
 			boolean runbiosonreset = false;
-			boolean soundchannel1active = true;
-			boolean soundchannel2active = true;
-			boolean soundchannel3active = true;
-			boolean soundchannel4active = true;
+			boolean[] soundchannelactive = new boolean[4];
 			boolean usecheats = true;
 			int colorType = 0;
 			biosfilename = "";
@@ -1229,11 +1199,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					LOAD_BOOL_VAL( runbiosonreset );
 					LOAD_INT_VAL( VC.nscale );
 					LOAD_INT_VAL( VC.fskip );
-					LOAD_BOOL_VAL( soundchannel1active );
-					LOAD_BOOL_VAL( soundchannel2active );
-					LOAD_BOOL_VAL( soundchannel3active );
-					LOAD_BOOL_VAL( soundchannel4active );
-					LOAD_BOOL_VAL( usecheats );
+					for (int i = 0; i < 4; ++i)
+						if (property.equalsIgnoreCase("soundchannel"+(i+1)+"active"))
+							soundchannelactive[i] = value.equalsIgnoreCase("True");
 
 					/* LOAD PAL */
 					if (property.equalsIgnoreCase("ColorType")) {
@@ -1264,14 +1232,11 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			frame.pack();
 			menuitemUseBIOS.setState(runbiosonreset);
 			menuitemEnableSound.setState(!cpu.AC.isMuted);
-			cpu.AC.setChannelActive(1, soundchannel1active);
-			cpu.AC.setChannelActive(2, soundchannel2active);
-			cpu.AC.setChannelActive(3, soundchannel3active);
-			cpu.AC.setChannelActive(4, soundchannel4active);
-			menuitemSoundChannel1.setState( soundchannel1active );
-			menuitemSoundChannel2.setState( soundchannel2active );
-			menuitemSoundChannel3.setState( soundchannel3active );
-			menuitemSoundChannel4.setState( soundchannel4active );
+			for (int i = 0; i < 4; ++i) {
+				PRINTLN("Channel :"+i+"="+soundchannelactive[i]);
+				cpu.AC.setChannelActive(i+1, soundchannelactive[i]);
+				((JCheckBoxMenuItem)soundChannelGroup.get(i)).setState(soundchannelactive[i]);
+			}
 			actionPerformed(new ActionEvent(menuitemColorSchemes[colorType], 0, ""));
 			scaleRadioGroup.setSelectedIndex(VC.nscale-1);
 			if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
