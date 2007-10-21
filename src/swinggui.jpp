@@ -154,7 +154,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		JMenuItem menuitemIncFrameSkip;
 		JMenuItem menuitemDecFrameSkip;
 		JCheckBoxMenuItem menuitemEnableSound;
-		JMenuItem[] menuitemSelectState;
+		MenuItemArrayGroup savestateRadioGroup;
 		JMenuItem[] menuItems; //Savestates?
 		JMenuItem menuitemSeparator;
 		JMenuItem menuitemPause;
@@ -363,14 +363,16 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemLoadState.addActionListener( this );
 			menuState.add( menuitemSaveState );
 			menuState.add( menuitemLoadState );
-			//menuState.add( menuitemSeparator );
-			menuitemSelectState = new JMenuItem[10];
+			menuState.addSeparator();
+			savestateRadioGroup = new MenuItemArrayGroup();
 			for (int i = 0; i < 10; ++i) {
-				menuitemSelectState[i] = new JMenuItem( "Select State " + i, KeyEvent.VK_0 + i);
-				menuitemSelectState[i].setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_0 + i, 0));
-				menuitemSelectState[i].addActionListener( this );
-				menuState.add(menuitemSelectState[i]);
+				savestateRadioGroup.add(new JRadioButtonMenuItem("Select State " + i), KeyEvent.VK_0 + i);
+				savestateRadioGroup.get(i).setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_0 + i, 0));
 			}
+			savestateRadioGroup.addActionListener(this);
+			savestateRadioGroup.addToMenu(menuState);
+			savestateRadioGroup.setSelectedIndex(0);
+
 			mainMenuBar.add( menuState) ;
 
 			menuSound = new JMenu( "Sound");
@@ -972,14 +974,12 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			else if(e.getSource().equals( menuitemShowAdvancedAudioPropertiesDialog )) {
 				advancedAudioPropertiesDialog.showWindow();
 			}
+			else if (savestateRadioGroup.contains(e.getSource())) {
+				int idx = savestateRadioGroup.getSelectedIndex();
+				selectedState = idx;
+				addOSDLine("Selected State "+selectedState);
+			}
 			else { //timer?
-				for (int i = 0; i < 10; ++i) {
-					if (e.getSource().equals(menuitemSelectState[i])) {
-						selectedState = i;
-						addOSDLine("Selected State "+selectedState);
-						return;
-					}
-				}
 				if(menuItems!=null)
 					for (int i = 0; i < menuItems.length; ++i) {
 						if (e.getSource().equals(menuItems[i]))
