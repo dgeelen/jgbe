@@ -359,6 +359,7 @@ public final class VideoController {
 			//Graphics g = drawImg[curDrawImg^1].getGraphics();
 	#ifndef USE_JAVA_MOBILE
 			WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
+			drawData = ((DataBufferInt)wr.getDataBuffer()).getData();
 	#endif
 			if (scale == 1) {
 				for (int y = 0; y < 144; ++y) {
@@ -366,7 +367,8 @@ public final class VideoController {
 	//				for (int x = 0; x < 160; ++x)	 {
 	//					BLIT_PIX(x, y, blitLine[x]);
 	//				}
-					wr.setDataElements(0,y,160,1, blitLine);
+					//wr.setDataElements(0,y,160,1, blitLine);
+					System.arraycopy(blitLine, 0, drawData, y*160, 160);
 				}
 			}
 			else if (scale == 2) {
@@ -409,7 +411,7 @@ public final class VideoController {
 					ti1 += 160*2;
 					ti2 += 160*2;
 				}
-				wr.setDataElements(0,0,160*scale,144*scale, drawData);
+				//wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			} else if (scale == 3) {
 				// 'scale3x' algo // http://scale2x.sourceforge.net/algorithm.html
 				int ti1 = -1, ti2 = -1, ti3 = -1;
@@ -451,7 +453,7 @@ public final class VideoController {
 					ti2 += 160*3*2;
 					ti3 += 160*3*2;
 				}
-				wr.setDataElements(0,0,160*scale,144*scale, drawData);
+				//wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			}
 			else if (scale == 4) {
 				// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
@@ -533,7 +535,7 @@ public final class VideoController {
 					ti3 += 160*4*3;
 					ti4 += 160*4*3;
 				}
-				wr.setDataElements(0,0,160*scale,144*scale, drawData);
+				//wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			}
 			//source.newPixels();
 			curDrawImg ^= 1;
