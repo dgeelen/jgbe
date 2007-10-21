@@ -148,6 +148,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		//menuitem <-- here for my KDev autocomplete
 		JMenuItem menuitemExit;
 		MenuItemArrayGroup scaleRadioGroup;
+		MenuItemArrayGroup interpolationRadioGroup;
+		JCheckBoxMenuItem keepAspectRatio;
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
@@ -209,6 +211,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 		public class DrawingArea extends JPanel implements IVideoListener {
 			private static final long serialVersionUID = 1L; // prevent warning
+
+			public int interpolation;
 			VideoController VC;
 			public DrawingArea(VideoController vc) {
 				super();
@@ -248,7 +252,18 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
-				g.drawImage(cpu.VC.getImage(),0,0, this);
+				if (interpolation == 0) {
+					g.drawImage(cpu.VC.getImage(),0,0, this);
+				} else {
+					((Graphics2D)g).setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+						(interpolation == 1) ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR  :
+						(interpolation == 2) ? RenderingHints.VALUE_INTERPOLATION_BILINEAR  :
+						(interpolation == 3) ? RenderingHints.VALUE_INTERPOLATION_BICUBIC  :
+						null
+					);
+
+					g.drawImage(cpu.VC.getImage(),0,0, getWidth(),getHeight(), this);
+				}
 				if (osdTime > 0) {
 					while (osdLines.size() > 3*VC.nscale) //Made this 3 by user request
 						osdLines.remove(0);
@@ -325,6 +340,22 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			scaleRadioGroup.add(new JRadioButtonMenuItem( "Scale 4x" ), KeyEvent.VK_4);
 			scaleRadioGroup.addActionListener( this );
 			scaleRadioGroup.addToMenu(menuScaling);
+			menuScaling.addSeparator();
+
+			interpolationRadioGroup = new MenuItemArrayGroup();
+			interpolationRadioGroup.add(new JRadioButtonMenuItem("No Interpolation (fixed window size)"));
+			interpolationRadioGroup.add(new JRadioButtonMenuItem("Nearest Neighbour Interpolation"));
+			interpolationRadioGroup.add(new JRadioButtonMenuItem("BiLinear Interpolation"));
+			interpolationRadioGroup.add(new JRadioButtonMenuItem("BiCubic Interpolation"));
+
+			interpolationRadioGroup.addActionListener(this);
+			interpolationRadioGroup.addToMenu(menuScaling);
+
+			menuScaling.addSeparator();
+			keepAspectRatio = new JCheckBoxMenuItem("Keep ascpect ratio");
+			keepAspectRatio.addActionListener(this);
+			menuScaling.add(keepAspectRatio);
+
 			menuVideo.add( menuScaling) ;
 
 			menuFrameSkip = new JMenu( "Frame Skipping");
@@ -525,7 +556,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				grfx.addKeyListener(this);
 
 			grfx.setDoubleBuffered(false);
-			grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 			contentPane.add( grfx );
 		}
 
@@ -536,7 +566,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			frame = new JFrame( "JGameBoy Emulator V"+Version.str);
 			frame.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
-// 			frame.setBounds( 60,60,100,100 );
 
 			//Set up the content pane and add swing components to it
 			frame.setJMenuBar( createJMenuBar() );
@@ -563,7 +592,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			/* DND */
 			JavaCrossplatformnessIsAMyth transferhandler = new JavaCrossplatformnessIsAMyth();
 			grfx.setTransferHandler(transferhandler);
-
 
 			frame.setVisible( true );
 		}
@@ -619,7 +647,26 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		public void componentHidden(ComponentEvent e) {}
 		public void componentMoved(ComponentEvent e) {}
 		public void componentShown(ComponentEvent e) {}
-		public void componentResized(ComponentEvent e) {}
+		public void componentResized(ComponentEvent e) {
+			Dimension size;
+			if (grfx.interpolation == 0)
+				size = new Dimension(VC.nscale*160, VC.nscale*144);
+			else {
+				size = frame.getContentPane().getSize();
+				if (keepAspectRatio.getState()) {
+					double ratio = size.getWidth()/size.getHeight();
+					double target = 160.0/144.0;
+					if (ratio < target)
+						size.height = (int)Math.round(size.getWidth() / target);
+					else
+						size.width = (int)Math.round(size.getHeight() * target);
+				}
+			}
+			//PRINTF("resized w:%d h:%d\n",frame.getWidth(), frame.getHeight());
+			grfx.setSize(size);
+			grfx.setPreferredSize(size);
+			if (grfx.interpolation == 0) frame.pack();
+		}
 
 		public void pauseEmulation(boolean verbose) {
 			if(cpuRunner!=null) {
@@ -648,10 +695,18 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				int idx = scaleRadioGroup.getSelectedIndex();
 				VC.nscale = idx+1;
 				addOSDLine("Set scaling: Scale"+VC.nscale+"x");
- 				grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
-				frame.pack();
+				componentResized(null);
 				configStateChanged = true;
+			}
+			else if (interpolationRadioGroup.contains(e.getSource())) {
+				int idx = interpolationRadioGroup.getSelectedIndex();
+				frame.setResizable(idx != 0);
+				keepAspectRatio.setEnabled(idx != 0);
+				grfx.interpolation = idx;
+				componentResized(null);
+			}
+			else if (e.getSource().equals(keepAspectRatio)) {
+				componentResized(null);
 			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
 				++VC.fskip;
@@ -1242,6 +1297,11 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
 			menuitemEnableCheats.setState(usecheats);
 			loading = false;
+
+			// FIXME: save/load these
+			interpolationRadioGroup.setSelectedIndex(0);
+			keepAspectRatio.setState(true);
+			keepAspectRatio.setEnabled(false);
 		}
 
 		#define PRINT_KEY_DEFAULT PRINTLN((keyMap[i]>>8>0 ? \
