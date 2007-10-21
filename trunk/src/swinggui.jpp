@@ -668,22 +668,22 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 			else if (e.getSource().equals( menuitemSoundChannel1)) {
 				cpu.AC.toggleChannelOnOff(1);
-				addOSDLine(cpu.AC.S1.muted==0 ? "Disabled soundchannel 1" : "Enabled soundchannel 1");
+				addOSDLine(!cpu.AC.channelActive(1) ? "Disabled soundchannel 1" : "Enabled soundchannel 1");
 				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel2)) {
 				cpu.AC.toggleChannelOnOff(2);
-				addOSDLine(cpu.AC.S2.muted==0 ? "Disabled soundchannel 2" : "Enabled soundchannel 2");
+				addOSDLine(!cpu.AC.channelActive(2) ? "Disabled soundchannel 2" : "Enabled soundchannel 2");
 				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel3)) {
 				cpu.AC.toggleChannelOnOff(3);
-				addOSDLine(cpu.AC.S3.muted==0 ? "Disabled soundchannel 3" : "Enabled soundchannel 3");
+				addOSDLine(!cpu.AC.channelActive(3) ? "Disabled soundchannel 3" : "Enabled soundchannel 3");
 				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemSoundChannel4)) {
 				cpu.AC.toggleChannelOnOff(4);
-				addOSDLine(cpu.AC.S4.muted==0 ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
+				addOSDLine(!cpu.AC.channelActive(4) ? "Disabled soundchannel 4" : "Enabled soundchannel 4");
 				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemEnableCheats)) {
