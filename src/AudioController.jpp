@@ -999,6 +999,7 @@ public final class AudioController {
 		S4=new SoundRegister();
 		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
 		SweepTimerTick=false;
+		audioBufferIndex=0;
 
 		int[] w=cpu.isCGB()?cgbwave:dmgwave;
 		for (int i = 0; i < 0x10; ++i)
