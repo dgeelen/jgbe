@@ -19,15 +19,14 @@ public final class VideoController {
 	private Graphics listener = null;
 #else
 	private IVideoListener listener = null;
-	private Image drawImg[];
+	private Image drawImg[] = new Image[2];
 	private int drawData[];
 #endif
 	private int curDrawImg = 0;
 
 	private int CurrentVRAMBank=0;
-	//private int VRAM[][]=new int[2][0x2000]; //8k per bank;
-	protected int VRAM[]=new int[0x4000]; //8k per bank;
-	protected int OAM[]=new int[0xa0]; //Sprite Attribute Table;
+	protected int VRAM[]=new int[0x4000]; //8k per bank, 2 banks, flattened;
+	protected int OAM[] =new int[0xa0];   //Sprite Attribute Table;
 
 	protected boolean isCGB;
 
@@ -45,12 +44,6 @@ public final class VideoController {
 
 	protected int[][][] Scalerx4 = new int[0x100][4][4];
 
-// 	protected int GRAYSHADES[][] = {
-// 	                                 {0xFF, 0xFF, 0xFF},   // WHITE
-// 	                                 {0xD3, 0xD3, 0xE3},   // LIGHTGRAY
-// 	                                 {0xBE, 0xBE, 0xBE},   // DARKGRAY
-// 	                                 {0x00, 0x00, 0x00} }; // BLACK
-
 	// Looks a lot like Origional Gameboy
 	private static final int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
 	                                            {0x70, 0xb0, 0x40},   // LIGHTGRAY
@@ -67,16 +60,15 @@ public final class VideoController {
 
 	/* caching vars */
 #ifdef USE_JAVA_MOBILE
-#define BLITPIXTYPE int[]
+	#define BLITPIXTYPE int[]
 	private int blitImg[][][]=new int[144][160][3]; // [y][x]
 	private int palColors[][] = new int[8*4*2][3];
-// 	private Color colColors[] = new Color[8*4*2];
 #else
-#define BLITPIXTYPE int
+	#define BLITPIXTYPE int
 	private BLITPIXTYPE blitImg[][] =new BLITPIXTYPE[144][160]; // [y][x]
 	private BLITPIXTYPE palColors[] = new BLITPIXTYPE[8*4*2];
 #endif
-	private int patpix[][][] = new int[4096][][]; // see updatepatpix()
+	private int patpix[][][] = new int[4096][][];   // see updatepatpix()
 	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
 	private boolean anydirty = true;                // see updatepatpix()
 // 	private boolean alldirty = true;                // see updatepatpix()
@@ -101,18 +93,16 @@ public final class VideoController {
 		updateMonoColData(2);
 	}
 
-	/* NOTE: Do not use 'clone', for it creates a 'shallow' copy,
-		* meaning that sub-arrays are still shared.
-		* I think the same holds for arrayCopy(), so we do it this way
-		* Java Suckiness FTW!
-		*/
-	#define unshallowCloneInto(x, y) \
-															y = new int[4][3]; \
-															for(int abc=0; abc<4; ++abc) { \
-																for(int bca=0; bca<3; ++bca) { \
-																	y[abc][bca]=x[abc][bca]; \
-																} \
-															}
+	/* NOTE: Do not use 'clone', for it creates a 'shallow' copy when used
+	 *       with 2d arrays, meaning that sub-arrays are still shared.
+	 * TODO: Make this a proper function
+	 */
+	#define unshallowCloneInto(x, y) { \
+		y = new int[4][3]; \
+		for(int abc=0; abc<4; ++abc) \
+			for(int bca=0; bca<3; ++bca) \
+				y[abc][bca]=x[abc][bca]; \
+	}
 
 	public void setGrayShades(int[][] g) {
 		unshallowCloneInto(g, GrayColors[0]);
@@ -222,7 +212,6 @@ public final class VideoController {
 	public void addListener(IVideoListener vl) {
 
 		listener = vl; // only 1 listener at a time currently :-p
-		//drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 		this.scale();
 	}
 #else
@@ -236,102 +225,40 @@ public final class VideoController {
 		scale = nscale;
 		int width = scale*MIN_WIDTH;
 		int height = scale*MIN_HEIGHT;
-		drawData = new int[width*height];
 #ifndef USE_JAVA_MOBILE
-		if (listener == null) {
-			PRINTLN("creating BufferedImage's");
-			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-			drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		} else {
-			PRINTLN("creating VolatileImage's");
-			// we dont reall create volatile images cause they are slow...
-			// maybe they work faster on windows... needs testing
-			/*
-			GraphicsEnvironment ge =GraphicsEnvironment.getLocalGraphicsEnvironment();
-			GraphicsDevice gs = ge.getDefaultScreenDevice();
-			GraphicsConfiguration gc = gs.getDefaultConfiguration();
-			drawImg[0]=gc.createCompatibleImage(width, height);
-			drawImg[1]=gc.createCompatibleImage(width, height);
-			*/
-			//drawImg[0]=listener.createVolatileImage(width, height);
-			//drawImg[1]=listener.createVolatileImage(width, height);
-			drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-			drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-			//source = new MemoryImageSource(width, height, drawData, 0, width);
-	    //source.setAnimated(true);
-	    //source.setFullBufferUpdates(true);
-			//Image offscreen = Toolkit.getDefaultToolkit().createImage(source);
-			//drawImg[0] = offscreen;
-			//drawImg[1] = offscreen;
-		}
+		drawImg[0]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		drawImg[1]=new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 #endif
 	}
 
 #ifndef USE_JAVA_MOBILE
 	public Image getImage() {
-		// return ((VolatileImage)drawImg[curDrawImg]).getScaledInstance(image_width, image_height,Image.SCALE_FAST); // display image not being drawn to
 		return drawImg[curDrawImg]; // display image not being drawn to
 	}
 #endif
-
-	private void palQuadify(int[] col) {
-		for (int i=0; i<3; ++i) {
-			col[3+i] = col[i];
-			col[6+i] = col[i];
-			col[9+i] = col[i];
-		}
-	}
 
 	private void palChange(int palcol, int r, int g, int b) {
 #ifdef USE_JAVA_MOBILE
 		palColors[palcol][0] = r;
 		palColors[palcol][1] = g;
 		palColors[palcol][2] = b;
-//
-// 		colColors[palcol] = new Color(r,g,b);
 #else
-		palColors[palcol] =
-		/*	((BufferedImage)drawImg[curDrawImg^1]).
-			getColorModel().
-			getDataElements((r<<16)|(g<<8)|(b<<0), null);
-		*/
-		((r<<16)|(g<<8)|(b<<0));
+		palColors[palcol] = ((r<<16)|(g<<8)|(b<<0));
 #endif
 	}
 
+// put pixel into the blit buffer using specified color and palet
 #define DRAWPIX(x, pal, col) { \
 		blitLine[x] = palColors[pal | col]; \
 } \
 
-// blitting using WritableRaster
-#define BLIT_PIX_WR(x,y, col) \
-	wr.setPixel(x,y, intColors[col])
-
-#define BLIT_PIX_W2(x,y, col) \
-	wr.setDataElements(x,y, palColors[col])
-
-#define BLIT_PIX_W3(x,y, col) {\
-	int[] tmp = new int[1]; \
-	tmp[0] = col; \
-	wr.setDataElements(x,y, tmp); \
-}
-
-#define BLIT_PIX_W4(x,y, col) \
-//	wr.setDataElements(0,y,x,1, col)
-
-#define BLIT_PIX_W5(x,y, col) \
-	drawData[((y)*MIN_WIDTH*scale)+(x)] = col
-//	wr.setDataElements(0,y,x,1, col)
-
+// draw pixel using a moving index into a flat array
 #define BLIT_PIX_WI(i, col) \
 	drawData[++i] = col
-//	wr.setDataElements(0,y,x,1, col)
 
-
-#define BLIT_PIX_GR(x,y, col) { \
-	g.setColor(colColors[col]); \
-	g.drawRect(x,y, 0, 0); \
-}
+// draw set of pixels into a flat array
+#define BLIT_PIX_WA(src, srcoff, len, ind) \
+	System.arraycopy(src, srcoff, drawData, ind, len)
 
 #define BLIT_PIX_USE_JAVA_MOBILE(x,y, col) { \
 	int[] tcol = col; \
@@ -342,15 +269,20 @@ public final class VideoController {
 #define EQ(a,b) ((a) == (b))
 //#define EQ(a,b) ((a).equals(b))
 
-#ifndef USE_JAVA_MOBILE
-#define BLIT_PIX BLIT_PIX_W5
-#else
-#define BLIT_PIX BLIT_PIX_USE_JAVA_MOBILE
+#ifdef USE_JAVA_MOBILE
+// UNTESTED! dont know if it even compiles...
+#undef BLIT_PIX_WI
+#define BLIT_PIX_WI(i, col) { \
+	BLIT_PIX_USE_JAVA_MOBILE( i % (scale * 160), i / (scale * 160), col); \
+	++i; \
+}
+#undef BLIT_PIX_WA(src, srcoff, len, ind) { \
+	for (int blit_i = 0, int blit_ind = ind; blit_i < len; ++i)\
+		BLIT_PIX_WI(ind, src[srcoff+blit_i]); \
+}
 #endif
 
-	//static long lastms = System.nanoTime();
 	static long lastms;
-// 	static int fps23fix=0;
 	private void blitImage() {
 		cfskip--;
 		if (cfskip < 0) {
@@ -364,11 +296,7 @@ public final class VideoController {
 			if (scale == 1) {
 				for (int y = 0; y < 144; ++y) {
 					BLITPIXTYPE[] blitLine = blitImg[y];
-	//				for (int x = 0; x < 160; ++x)	 {
-	//					BLIT_PIX(x, y, blitLine[x]);
-	//				}
-					//wr.setDataElements(0,y,160,1, blitLine);
-					System.arraycopy(blitLine, 0, drawData, y*160, 160);
+					BLIT_PIX_WA(blitLine, 0, 160, y*160);
 				}
 			}
 			else if (scale == 2) {
@@ -411,7 +339,6 @@ public final class VideoController {
 					ti1 += 160*2;
 					ti2 += 160*2;
 				}
-				//wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			} else if (scale == 3) {
 				// 'scale3x' algo // http://scale2x.sourceforge.net/algorithm.html
 				int ti1 = -1, ti2 = -1, ti3 = -1;
@@ -453,10 +380,9 @@ public final class VideoController {
 					ti2 += 160*3*2;
 					ti3 += 160*3*2;
 				}
-				//wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			}
 			else if (scale == 4) {
-				// 'scale2x' algo // http://scale2x.sourceforge.net/algorithm.html
+				// 'scalex4' algo // invented by Simon Sasburg
 				int ti1 = -1, ti2 = -1, ti3 = -1, ti4 = -1;
 				ti2 += 160*4;
 				ti3 += 160*4*2;
@@ -535,9 +461,7 @@ public final class VideoController {
 					ti3 += 160*4*3;
 					ti4 += 160*4*3;
 				}
-				//wr.setDataElements(0,0,160*scale,144*scale, drawData);
 			}
-			//source.newPixels();
 			curDrawImg ^= 1;
 			if (listener != null) listener.updateVideoImage(getImage());
   }
