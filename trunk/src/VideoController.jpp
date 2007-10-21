@@ -11,7 +11,7 @@ import java.awt.*;
 import java.awt.image.*;
 #endif
 
-public class VideoController {
+public final class VideoController {
 	private static final int MIN_WIDTH  = 160;
 	private static final int MIN_HEIGHT = 144;
 
@@ -52,7 +52,7 @@ public class VideoController {
 // 	                                 {0x00, 0x00, 0x00} }; // BLACK
 
 	// Looks a lot like Origional Gameboy
-	static final private int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
+	private static final int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
 	                                            {0x70, 0xb0, 0x40},   // LIGHTGRAY
 	                                            {0x40, 0x70, 0x32},   // DARKGRAY
 	                                            {0x10, 0x50, 0x26} }; // BLACK
@@ -219,14 +219,14 @@ public class VideoController {
 	}
 
 #ifndef USE_JAVA_MOBILE
-	final public void addListener(IVideoListener vl) {
+	public void addListener(IVideoListener vl) {
 
 		listener = vl; // only 1 listener at a time currently :-p
 		//drawImg[1]=new BufferedImage(160, 144, BufferedImage.TYPE_3BYTE_BGR);
 		this.scale();
 	}
 #else
-	final public void addListener(Graphics grfx) {
+	public void addListener(Graphics grfx) {
 		listener = grfx;
 		//this.scale(drawImg[0].getWidth(null), drawImg[0].getHeight(null));
 	}
@@ -268,13 +268,13 @@ public class VideoController {
 	}
 
 #ifndef USE_JAVA_MOBILE
-	final public Image getImage() {
+	public Image getImage() {
 		// return ((VolatileImage)drawImg[curDrawImg]).getScaledInstance(image_width, image_height,Image.SCALE_FAST); // display image not being drawn to
 		return drawImg[curDrawImg]; // display image not being drawn to
 	}
 #endif
 
-	final private void palQuadify(int[] col) {
+	private void palQuadify(int[] col) {
 		for (int i=0; i<3; ++i) {
 			col[3+i] = col[i];
 			col[6+i] = col[i];
@@ -282,7 +282,7 @@ public class VideoController {
 		}
 	}
 
-	final private void palChange(int palcol, int r, int g, int b) {
+	private void palChange(int palcol, int r, int g, int b) {
 #ifdef USE_JAVA_MOBILE
 		palColors[palcol][0] = r;
 		palColors[palcol][1] = g;
@@ -351,7 +351,7 @@ public class VideoController {
 	//static long lastms = System.nanoTime();
 	static long lastms;
 // 	static int fps23fix=0;
-	final private void blitImage() {
+	private void blitImage() {
 		cfskip--;
 		if (cfskip < 0) {
 			cfskip += fskip;
@@ -476,7 +476,7 @@ public class VideoController {
 							BLIT_PIX_WI(ti2, EQ(B, D) ? B : E);
 							BLIT_PIX_WI(ti2, E);
 							BLIT_PIX_WI(ti2, E);
-							BLIT_PIX_WI(ti2, EQ(B, F) ? B : E); 
+							BLIT_PIX_WI(ti2, EQ(B, F) ? B : E);
 							BLIT_PIX_WI(ti3, EQ(H, D) ? H : E);
 							BLIT_PIX_WI(ti3, E);
 							BLIT_PIX_WI(ti3, E);
@@ -497,11 +497,11 @@ public class VideoController {
 								BLIT_PIX_WI(ti2, E);
 						}
 						BLIT_PIX_WI(ti2, E);
-						BLIT_PIX_WI(ti2, E); 
+						BLIT_PIX_WI(ti2, E);
 						if (EQ(B, F)) {
 							BLIT_PIX_WI(ti1, B);
 							BLIT_PIX_WI(ti1, B);
-							BLIT_PIX_WI(ti2, B); 
+							BLIT_PIX_WI(ti2, B);
 						} else {
 							BLIT_PIX_WI(ti1, E);
 							BLIT_PIX_WI(ti1, E);
@@ -553,7 +553,7 @@ public class VideoController {
 #undef I
 	}
 
-	final public void updateMonoColData(int index) {
+	public void updateMonoColData(int index) {
 		// index = 0 -> FF47 - BGP - BG Palette Data (R/W) - Non CGB Mode Only
 		// index = 1 -> FF48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
 		// index = 2 -> FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
@@ -573,7 +573,7 @@ public class VideoController {
 		temp = curColors[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
 	}
 
-	final public void setBGColData(int value) {
+	public void setBGColData(int value) {
 		BGPD[BGPI&0x3f] = value;
 		int bnum = (BGPI & 0x3e) >> 1;
 		updateBGColData(bnum);
@@ -581,7 +581,7 @@ public class VideoController {
 			++BGPI;
 	}
 
-	final public void updateBGColData(int bnum) {
+	public void updateBGColData(int bnum) {
 		int base = bnum << 1;
 
 		// calculate color now
@@ -603,11 +603,11 @@ public class VideoController {
 		palChange((palnum << 2) | colnum | 0x20, r, g, b);
 	}
 
-	final public int getBGColData() {
+	public int getBGColData() {
 		return BGPD[BGPI&0x3f];
 	}
 
-	final public void setOBColData(int value) {
+	public void setOBColData(int value) {
 		OBPD[OBPI&0x3f] = value;
 		int bnum = (OBPI & 0x3e) >> 1;
 		updateOBColData(bnum);
@@ -615,7 +615,7 @@ public class VideoController {
 			++OBPI;
 	}
 
-	final public void updateOBColData(int bnum) {
+	public void updateOBColData(int bnum) {
 		int base = bnum << 1;
 
 		// calculate color now
@@ -633,7 +633,7 @@ public class VideoController {
 		palChange((palnum << 2) | colnum, r, g, b);
 	}
 
-	final public int getOBColData() {
+	public int getOBColData() {
 		return OBPD[OBPI&0x3f];
 	}
 
@@ -651,7 +651,7 @@ public class VideoController {
 	 *  patpix[2048..3072-1] hold patterns flipped y-wise
 	 *  patpix[3072..3072-1] hold patterns flipped x-wise and y-wise
 	 */
-	final private void updatepatpix() {
+	private void updatepatpix() {
 		if (!anydirty/* && !alldirty*/)
 			return;
 
@@ -690,7 +690,7 @@ public class VideoController {
 #define R_STAT STAT
 #define R_LCDC LCDC
 
-	final protected void stat_trigger()
+	protected void stat_trigger()
 	{
 		int condbits[] = { 0x08, 0x30, 0x20, 0x00 };
 		int flag = 0;
@@ -717,7 +717,7 @@ public class VideoController {
 	* update the STAT interrupt line.
 	*/
 
-	final protected void stat_change(int stat)
+	protected void stat_change(int stat)
 	{
 		stat &= 3;
 		R_STAT = (R_STAT & 0x7C) | stat;
@@ -729,7 +729,7 @@ public class VideoController {
 		stat_trigger();
 	}
 
-	final public void modeChanged(int mode) {
+	public void modeChanged(int mode) {
 /*	TEST: it no verk :(
 		STAT &=0xfc;
 		STAT |=(mode&0x03);*/
@@ -753,7 +753,7 @@ public class VideoController {
 			renderScanLine();
 	}
 
-	final public int read(int index) {
+	public int read(int index) {
 		if(index<0x8000) {
 			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
@@ -772,7 +772,7 @@ public class VideoController {
 		return VRAM[index+CurrentVRAMBank];
 	}
 
-	final public void write(int index, int value) {
+	public void write(int index, int value) {
 		if(index<0x8000) {
 			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
@@ -793,13 +793,13 @@ public class VideoController {
 		}
 	}
 
-	final public void selectVRAMBank(int i) {
+	public void selectVRAMBank(int i) {
 		CurrentVRAMBank=i*0x2000;
 		if ((i <0) || (i > 1))
 			PRINTF("current offset=%x\n",CurrentVRAMBank);
 	}
 
-	final public int getcurVRAMBank() {
+	public int getcurVRAMBank() {
 		return CurrentVRAMBank/0x2000;
 	}
 
@@ -821,7 +821,7 @@ public class VideoController {
 
 #define DRAWPIX_S(x, pal, col) DRAWPIX(x, (pal << 2), col)
 
-	final public void renderScanLine() {
+	public void renderScanLine() {
 		/* FF40 - LCDC - LCD Control (R/W)
 		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
 		* Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
@@ -870,7 +870,7 @@ public class VideoController {
 
 	//private int lbgTileY = -1;
 
-	final private void calcBGTileBuf() {
+	private void calcBGTileBuf() {
 		/*	not really 100% correct...
 				if (lbgTileY==bgTileY)
 			return;
@@ -899,7 +899,7 @@ public class VideoController {
 		}
 	}
 
-	final private void renderScanlineBG() {
+	private void renderScanlineBG() {
 		int bufMap = 0;
 		int cnt = windX;
 		if (cnt == 0) return;
@@ -936,7 +936,7 @@ public class VideoController {
 			DRAWPIX(curX++, TilePal, PatLine[t]);
 	}
 
-	final private void calcWindTileBuf() {
+	private void calcWindTileBuf() {
 		int tileMap = WindowTileMap + (bgTileY*32);
 		int attrMap = tileMap + 0x2000;
 		int bufMap = 0;
@@ -961,7 +961,7 @@ public class VideoController {
 		}
 	}
 
-	final private void renderScanlineWindow() {
+	private void renderScanlineWindow() {
 		int bufMap = 0;
 		int curX = MAX(windX,0);
 		int cnt = 160-curX;
@@ -994,7 +994,7 @@ public class VideoController {
 			DRAWPIX(curX++, TilePal, PatLine[t]);
 	}
 
-	final private void renderScanlineSprites() {
+	private void renderScanlineSprites() {
 		boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
 		for (int spr = 0; spr < 40; ++spr) {

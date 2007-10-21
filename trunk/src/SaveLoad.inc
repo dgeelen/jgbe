@@ -11,7 +11,7 @@ import java.io.*;
 #define SL_LOAD_COMPRESS_VERSION 5 // first version to use compression
 
 #define SAVELOAD_FUNCTION \
-	protected final void stateSaveLoad(boolean save, int version, DataOutputStream dostream, DataInputStream distream) throws IOException
+	protected void stateSaveLoad(boolean save, int version, DataOutputStream dostream, DataInputStream distream) throws IOException
 
 #define SL_SAVE (save)
 #define SL_LOAD (!save)

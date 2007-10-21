@@ -5,7 +5,7 @@
 import java.net.*;
 import java.util.zip.*;
 import java.util.ArrayList;
-public class CPU {
+public final class CPU {
 	static class DummyCPURunBlock implements CPURunBlock {
 		public int execute() { ASSERT(false); return 0;};
 	}
@@ -96,7 +96,7 @@ public class CPU {
 			//CPU.rccache[0x2cbb] = CPURecompiler.Recompile(0x2cbb);
 		}
 
-		public static final void loadCartridge(Cartridge acartridge) {
+		public static void loadCartridge(Cartridge acartridge) {
 			cartridge = acartridge;
 
 			reset();
@@ -197,7 +197,7 @@ public class CPU {
 			}
 		}
 
-		public static final void saveState(DataOutputStream dostream)
+		public static void saveState(DataOutputStream dostream)
 		throws IOException
 		{
 			int saveversion = SL_SAVE_VERSION; //change when changing savestate format
@@ -222,7 +222,7 @@ public class CPU {
 			}
 		}
 
-		public static final void loadState(DataInputStream distream)
+		public static void loadState(DataInputStream distream)
 		throws IOException
 		{
 			int loadversion;
@@ -288,7 +288,7 @@ public class CPU {
 #define R_LCDC VC.LCDC
 #define R_STAT VC.STAT
 #define R_LY VC.LY
-		public static final void lcdc_trans() {
+		public static void lcdc_trans() {
 			/** TODO: put this logic inside VideoController? */
 			/* Mode 0  ___000___000___000___000___000___000________________000
 			 * Mode 1  ____________________________________11111111111111_____
@@ -378,7 +378,7 @@ public class CPU {
 			}
 		}
 
-		public static final void refreshMemMap() {
+		public static void refreshMemMap() {
 			if (BIOS_enabled)
 				rMemMap[0x0] = null;
 			else
@@ -421,7 +421,7 @@ public class CPU {
 			// 0xF // lots of special stuff here...
 		}
 
-		public static final int read(int index) {
+		public static int read(int index) {
 			last_memory_access_internal=index;
 			int mm[]=rMemMap[index>>12];
 			if (mm!=null)
@@ -429,7 +429,7 @@ public class CPU {
 			return read_slow(index);
 		}
 
-		public static final int read_slow(int index) {
+		public static int read_slow(int index) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -625,7 +625,7 @@ public class CPU {
 		}
 
 		// has arguments swapped for recompiler use (stack order and stuff)
-		public static final void write_fast1(int value, int index) {
+		public static void write_fast1(int value, int index) {
 			last_memory_access_internal=index;
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
@@ -635,7 +635,7 @@ public class CPU {
 			write_slow(index, value);
 		}
 
-		public static final void write(int index, int value) {
+		public static void write(int index, int value) {
 			last_memory_access_internal=index;
 			int mm[]=wMemMap[index>>12];
 			if (mm!=null) {
@@ -645,7 +645,7 @@ public class CPU {
 			write_slow(index, value);
 		}
 
-		public static final void write_slow(int index, int value) {
+		public static void write_slow(int index, int value) {
 			/* Memorymap:
 			 * 0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 			 * 4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -860,11 +860,11 @@ public class CPU {
 		}
 
 
-		public static final void reset() {
+		public static void reset() {
 			reset(true);
 		}
 
-		public static final void reset(boolean bios) {
+		public static void reset(boolean bios) {
 			BIOS_enabled = bios;
  			VC.reset();
  			cartridge.CurrentRAMBank=0;
@@ -924,16 +924,16 @@ public class CPU {
 
 			for (int i = 0; i < 0x80; ++i) IOP[i] = 0;
 			for (int i = 0; i < 0x7f; ++i) HRAM[i] = 0;
-			for (int i = 0; i < 0x08; ++i) 
-				for (int j = 0; j < 0x1000; ++j) 
+			for (int i = 0; i < 0x08; ++i)
+				for (int j = 0; j < 0x1000; ++j)
 					WRAM[i][j] = 0;
 		}
 
-		public static final long cycles() {
+		public static long cycles() {
 			return TotalInstrCount;
 		}
 
-		public static final void printCPUstatus() {
+		public static void printCPUstatus() {
 			String flags = "";
 			flags += (( F & ZF_Mask ) == ZF_Mask )?"Z ":"z ";
 			flags += (( F & NF_Mask ) == NF_Mask )?"N ":"n ";
@@ -951,7 +951,7 @@ public class CPU {
 			#endif
 		}
 
-		public static final int checkInterrupts() { //handle interrupt priorities
+		public static int checkInterrupts() { //handle interrupt priorities
 			if(IME) { // If interrupts enabled
 				int ir = IOP[0x0f]&IE; //First Requested interrupts
 				if((ir&(1<<0))!=0) { //VBlANK
@@ -983,20 +983,20 @@ public class CPU {
 			return 0; // No interrupts to service
 		}
 
-		public static final void interrupt(int i) { //execute interrupt #i
+		public static void interrupt(int i) { //execute interrupt #i
 			IME = false;
 
 			DO_PUSH_OLD(PC);
 			PC = i;
 		}
 
-		public static final void triggerInterrupt(int i) { // request interrupt with bit nr #i
+		public static void triggerInterrupt(int i) { // request interrupt with bit nr #i
 			hw_interrupt((1<<i), (1<<i));
 			hw_interrupt(0, (1<<i));
 		}
 
 #define R_IF IOP[0x0f]
-		public static final void hw_interrupt(int i, int mask)
+		public static void hw_interrupt(int i, int mask)
 		{
 			int oldif = R_IF;
 			i &= 0x1F & mask;
@@ -1011,25 +1011,25 @@ public class CPU {
 			hw_ilines |= i;
 		}
 
-		public static final void pressButton(int i) {
+		public static void pressButton(int i) {
 			if ((GUIKeyStatus&i) != 0) return;
 			GUIKeyStatus |= i;
 		}
 
-		public static final void releaseButton(int i) {
+		public static void releaseButton(int i) {
 			if ((GUIKeyStatus&i) == 0) return;
 			GUIKeyStatus&=~i;
 		}
 
-		public static final void pressRemoteButton(int i) {
+		public static void pressRemoteButton(int i) {
 			RemoteKeyStatus |= i;
 		}
 
-		public static final void releaseRemoteButton(int i) {
+		public static void releaseRemoteButton(int i) {
 			RemoteKeyStatus &= ~i;
 		}
 
-		public static final int execute() {
+		public static int execute() {
 			int cycles;
 			TVARS;
 
@@ -1038,7 +1038,7 @@ public class CPU {
 				halted = false;
 				//return 12; // 12 cycles for this?
 // 				return 12+execute();
-				
+
  				return 4;/* FIXME(?) For break on interrupt */
 			}
 
@@ -1280,7 +1280,7 @@ public class CPU {
 		static int[] rccnt =  new int[0x4000];
 #endif
 
-		public static final int nextinstruction() {
+		public static int nextinstruction() {
 			if (playbackHistoryIndex == -1) {
 				if (KeyStatus != GUIKeyStatus) {
 					keyBounce = 1000;
@@ -1430,7 +1430,7 @@ public class CPU {
 			return res;
 		}
 
-		public final int exception() {
+		public int exception() {
 			return lastException;
 		}
 
