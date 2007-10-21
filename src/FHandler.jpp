@@ -140,7 +140,7 @@ public final class FHandler {
 		BufferedInputStream bistream = new BufferedInputStream(fistream);
 		return bistream;
 	}
-	
+
 	/** returns the Bitstream Vera Sans Mono Font, normal style, size 12
 	 *  first look for VeraMono.ttf in the current dir/jar file
 	 *  then ask the system for the "Bitstream Vera Sans Mono" font
