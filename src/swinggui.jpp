@@ -1288,7 +1288,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemUseBIOS.setState(runbiosonreset);
 			menuitemEnableSound.setState(!cpu.AC.isMuted);
 			for (int i = 0; i < 4; ++i) {
-				PRINTLN("Channel :"+i+"="+soundchannelactive[i]);
 				cpu.AC.setChannelActive(i+1, soundchannelactive[i]);
 				((JCheckBoxMenuItem)soundChannelGroup.get(i)).setState(soundchannelactive[i]);
 			}
