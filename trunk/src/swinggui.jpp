@@ -150,6 +150,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		MenuItemArrayGroup scaleRadioGroup;
 		MenuItemArrayGroup interpolationRadioGroup;
 		JCheckBoxMenuItem keepAspectRatio;
+		JCheckBoxMenuItem enableFullScreen;
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
@@ -301,6 +302,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 		private JMenu menuFile;
 
+		private JMenuBar mainMenuBar;
+
 		private JMenuBar createJMenuBar() {
 			JMenuBar mainMenuBar;
 			JMenu menuVideo;
@@ -331,6 +334,12 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemExit = new JMenuItem( "Exit", KeyEvent.VK_X );
 			menuitemExit.addActionListener( this );
 			menuFile.add( menuitemExit );
+
+			enableFullScreen = new JCheckBoxMenuItem("Full Screen");
+			enableFullScreen.addActionListener(this);
+			menuVideo.add(enableFullScreen);
+
+			menuVideo.addSeparator();
 
 			menuScaling = new JMenu( "Scaling");
 			scaleRadioGroup = new MenuItemArrayGroup();
@@ -538,15 +547,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemEmuSpeedNormal.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 		}
 		public void addComponentsToPane( Container contentPane ) {
-//      Use BorderLayout. Default empty constructor with no horizontal and vertical
-//      gaps
-// 			contentPane.setLayout( new BorderLayout( 5,5 ) );
-			contentPane.setLayout(new FlowLayout(FlowLayout.CENTER,0,0));
-// 			if ( !( contentPane.getLayout() instanceof BorderLayout ) ) {
-// 				contentPane.add( new JLabel( "Container doesn't use BorderLayout!" ) );
-// 				return;
-// 			}
-
 			grfx=new DrawingArea( cpu.VC ); //doublebuffering
 			grfx.setFocusable(true);
 
@@ -561,15 +561,25 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 		static JFrame frame;
+		static JFrame fsframe;
 
 		private void createAndShowGUI() {
 			//JFrame.setDefaultLookAndFeelDecorated( true );
 
 			frame = new JFrame( "JGameBoy Emulator V"+Version.str);
+			fsframe = new JFrame( "JGameBoy Emulator V"+Version.str);
+
 			frame.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
+			fsframe.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
+
+			frame.getContentPane().setLayout(null);
+			fsframe.getContentPane().setLayout(null);
+
+			fsframe.setUndecorated(true);
 
 			//Set up the content pane and add swing components to it
-			frame.setJMenuBar( createJMenuBar() );
+			mainMenuBar = createJMenuBar();
+			frame.setJMenuBar( mainMenuBar );
 			addComponentsToPane( frame.getContentPane() );
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
 			URL imgurl = getClass().getResource("icon.gif");
@@ -582,9 +592,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 			frame.addComponentListener(this);
 			frame.addWindowListener(this);
+			fsframe.addWindowListener(this);
 
 			frame.setResizable(false);
-			frame.pack();
+
 			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
 			Point     p = new Point();
 			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
@@ -645,28 +656,65 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 
+		boolean fulls = false;
+
 		public void componentHidden(ComponentEvent e) {}
 		public void componentMoved(ComponentEvent e) {}
 		public void componentShown(ComponentEvent e) {}
 		public void componentResized(ComponentEvent e) {
-			Dimension size;
-			if (grfx.interpolation == 0)
-				size = new Dimension(VC.nscale*160, VC.nscale*144);
-			else {
-				size = frame.getContentPane().getSize();
+			if (fulls != enableFullScreen.getState()) {
+				if (enableFullScreen.getState()) {
+					frame.setVisible(false);
+
+					fsframe.getContentPane().add(grfx);
+					fsframe.setJMenuBar(mainMenuBar);
+
+					GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+					GraphicsDevice gd = ge.getDefaultScreenDevice();
+					gd.setFullScreenWindow(fsframe);
+				} else {
+					GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+					GraphicsDevice gd = ge.getDefaultScreenDevice();
+					gd.setFullScreenWindow(null);
+					fsframe.setVisible(false);
+
+					frame.setResizable(grfx.interpolation != 0);
+					frame.getContentPane().add(grfx);
+					frame.setJMenuBar(mainMenuBar);
+					frame.setVisible(true);
+				}
+				fulls = enableFullScreen.getState();
+			}
+
+			Dimension psize,csize;
+			csize = (fulls ? fsframe: frame.getContentPane()).getSize();
+			if (grfx.interpolation == 0) {
+				psize = new Dimension(VC.nscale*160, VC.nscale*144);
+				grfx.setSize(psize);
+				grfx.setPreferredSize(psize);
+				if (!fulls) {
+					Dimension fsize = frame.getSize();
+					Dimension bsize = new Dimension();
+					bsize.width = MAX(psize.width + (fsize.width - csize.width), frame.getPreferredSize().width);
+					bsize.height = MAX(psize.height + (fsize.height - csize.height), frame.getPreferredSize().height);
+					frame.getContentPane().setSize(psize);
+					frame.setSize(bsize);
+				}
+			} else {
+				psize = new Dimension(csize);
 				if (keepAspectRatio.getState()) {
-					double ratio = size.getWidth()/size.getHeight();
+					double ratio = psize.getWidth()/psize.getHeight();
 					double target = 160.0/144.0;
 					if (ratio < target)
-						size.height = (int)Math.round(size.getWidth() / target);
+						psize.height = (int)Math.round(psize.getWidth() / target);
 					else
-						size.width = (int)Math.round(size.getHeight() * target);
+						psize.width = (int)Math.round(psize.getHeight() * target);
 				}
 			}
-			//PRINTF("resized w:%d h:%d\n",frame.getWidth(), frame.getHeight());
-			grfx.setSize(size);
-			grfx.setPreferredSize(size);
-			if (grfx.interpolation == 0) frame.pack();
+			Rectangle trect = new Rectangle(psize);
+			if (psize.width < csize.width) trect.translate((csize.width - psize.width)/2,0);
+			if (psize.height < csize.height) trect.translate(0,(csize.height - psize.height)/2);
+			grfx.setBounds(trect);
 		}
 
 		public void pauseEmulation(boolean verbose) {
@@ -707,6 +755,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				componentResized(null);
 			}
 			else if (e.getSource().equals(keepAspectRatio)) {
+				componentResized(null);
+			}
+			else if (e.getSource().equals(enableFullScreen)) {
 				componentResized(null);
 			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
@@ -1302,6 +1353,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			interpolationRadioGroup.setSelectedIndex(0);
 			keepAspectRatio.setState(true);
 			keepAspectRatio.setEnabled(false);
+			enableFullScreen.setState(false);
+			enableFullScreen.setEnabled(true);
 		}
 
 		#define PRINT_KEY_DEFAULT PRINTLN((keyMap[i]>>8>0 ? \
