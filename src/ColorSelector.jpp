@@ -36,6 +36,7 @@ public class ColorSelector extends JFrame implements MouseListener, ChangeListen
 		setLayout(new FlowLayout());
 		setResizable( false );
 		addMouseListener (this);
+		setTitle("Color Editor");
 
 		colorchooser = new JColorChooser();
 		colorchooser.getSelectionModel().addChangeListener(this);
