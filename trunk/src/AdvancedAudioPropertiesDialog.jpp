@@ -10,6 +10,8 @@ import javax.swing.table.*;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.io.*;
+import java.util.Arrays;
+
 public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeListener, ActionListener {
 	JFrame owner;
 	AudioController ac;
@@ -20,33 +22,60 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 	public AdvancedAudioPropertiesDialog(JFrame o) { // DO NOT USE THIS CONSTRUCTOR
 		ASSERT(false);
 	}
-	
+
+	int[] samplingRates = {4000, 8000, 11025, 22050, 44100};
 	public AdvancedAudioPropertiesDialog(JFrame o, AudioController ac) {
 		owner = o;
 		this.ac = ac;
 		dialog= new JDialog(owner, "Advanced Audio Properties", true);
-		if(ac != null && ac.audioSource != null) {
-			JPanel panel;
-			BorderLayout layout;
-			JLabel label;
-			audioWriteInterval = new JSlider(0, ac.audioSource.getBufferSize(), ac.audioBuffer.length);
-			audioWriteInterval.addChangeListener(this);
+/*		dialog.setSize(new Dimension(640,480));
+		dialog.setPreferredSize(new Dimension(640,480));*/
+		/* Setting Components */
+		JComboBox outputDevices = new JComboBox();
+		JCheckBox useStereo = new JCheckBox("Stereo output");
 
-			panel = new JPanel();
-			layout = new BorderLayout();
-			label = new JLabel("Interval between audio-output attempts:");
-			panel.setLayout(layout);
-			panel.add(label, BorderLayout.NORTH);
-			panel.add(audioWriteInterval, BorderLayout.SOUTH);
-// 			dialog.add(scroll);
-// 			scroll = new JScrollPane(audioWriteInterval);
-			panel.setMaximumSize(new Dimension(640, Integer.MAX_VALUE));
-			panel.setPreferredSize(new Dimension(640, 480));
-			dialog.add(panel);
+		
+		JSlider samplingRateSlider = new JSlider(0, samplingRates.length);
+		VECTOR(Integer) sr = new VECTOR(Integer)();
+		for(int i=0; i<samplingRates.length; ++i) sr.add(new Integer(samplingRates[i]));
+		JSpinner samplingRateSpinner = new JSpinner(new SpinnerListModel(sr));
+
+		JSlider bufferSizeSlider = new JSlider(1, 4096);
+		JSpinner bufferSizeSpinner = new JSpinner(new SpinnerNumberModel(1,1,4096,1));
+		
+		JSlider outputIntervalSlider = new JSlider(0, bufferSizeSlider.getMaximum());
+		JSpinner outputIntervalSpinner = new JSpinner(new SpinnerNumberModel(1,1,bufferSizeSlider.getMaximum(),1));
+		
+		if(ac != null && ac.audioSource != null) {
+			BorderLayout bl = new BorderLayout();
+			dialog.setLayout(bl);
+			JPanel container = new JPanel();
+			container.setLayout(new GridLayout(8,2));
+			container.add(new JLabel("Output device:"));
+			container.add(new JPanel());
+			container.add(outputDevices);
+			container.add(useStereo);
+			container.add(new JLabel("Sampling rate:"));
+			container.add(new JPanel());
+			container.add(samplingRateSlider);
+			container.add(samplingRateSpinner);
+			container.add(new JLabel("Buffer size:"));
+			container.add(new JPanel());
+			container.add(bufferSizeSlider);
+			container.add(bufferSizeSpinner);
+			container.add(new JLabel("Output interval:"));
+			container.add(new JPanel());
+			container.add(outputIntervalSlider);
+			container.add(outputIntervalSpinner);
+			dialog.add(new JPanel(), BorderLayout.NORTH);
+			dialog.add(new JPanel(), BorderLayout.SOUTH);
+			dialog.add(new JPanel(), BorderLayout.WEST);
+			dialog.add(new JPanel(), BorderLayout.EAST);
+			dialog.add(container, BorderLayout.CENTER);
 		}
 		dialog.addComponentListener(this);
 		dialog.setLocationRelativeTo(null);
-		dialog.setResizable(false);
+		dialog.setResizable(true);
 		dialog.pack();
 
 		Dimension d = owner.getSize();
