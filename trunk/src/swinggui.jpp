@@ -534,7 +534,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemEmuSpeedPlus.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedMinus.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedMul.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
-			menuitemEmuSpeedDiv.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);			menuitemEmuSpeedNormal.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEmuSpeedDiv.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemEmuSpeedNormal.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 		}
 		public void addComponentsToPane( Container contentPane ) {
 //      Use BorderLayout. Default empty constructor with no horizontal and vertical
