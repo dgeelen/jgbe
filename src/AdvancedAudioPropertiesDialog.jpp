@@ -1,20 +1,18 @@
 #include "Global.inc"
+import java.io.*;
+import javax.sound.sampled.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.net.*;
-import java.awt.image.BufferedImage;
-import javax.swing.table.*;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
-import java.io.*;
-import java.util.Arrays;
 
 public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeListener, ActionListener {
 	JFrame owner;
-	AudioController ac;
+	AudioDriver ad;
 	JDialog dialog;
 	JSlider audioWriteInterval;
 	JSlider audioBufferSize;
@@ -23,30 +21,114 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		ASSERT(false);
 	}
 
-	int[] samplingRates = {4000, 8000, 11025, 22050, 44100};
-	public AdvancedAudioPropertiesDialog(JFrame o, AudioController ac) {
+// 	int[] samplingRates = {4000, 8000, 11025, 22050, 44100};
+	VECTOR(Integer) samplingRates = new VECTOR(Integer)();
+	VECTOR(Mixer.Info) mixers = new VECTOR(Mixer.Info)();
+	private JComboBox outputDevices;
+	private JCheckBox useStereo;
+	private JSlider samplingRateSlider;
+	private JSpinner samplingRateSpinner;
+	private JSlider bufferSizeSlider;
+	private JSpinner bufferSizeSpinner;
+	private JSlider outputIntervalSlider;
+	private JSpinner outputIntervalSpinner;
+	
+	public AdvancedAudioPropertiesDialog(JFrame o, AudioDriver ad) {
 		owner = o;
-		this.ac = ac;
+		this.ad = ad;
 		dialog= new JDialog(owner, "Advanced Audio Properties", true);
 /*		dialog.setSize(new Dimension(640,480));
 		dialog.setPreferredSize(new Dimension(640,480));*/
+		
 		/* Setting Components */
-		JComboBox outputDevices = new JComboBox();
-		JCheckBox useStereo = new JCheckBox("Stereo output");
+		if(ad != null) {
+			outputDevices = new JComboBox();
+			Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+			outputDevices.addActionListener(this);
+			for (int i = 0; i < mixers.length; i++) {
+				Mixer mixer = AudioSystem.getMixer(mixers[i]);
+				Line.Info[] info = mixer.getSourceLineInfo();
+				boolean b = false;
+				for(int j=0; j < info.length; ++j) {
+					if(info[j].toString().indexOf("buffer") >= 0)
+						b = true;
+				}
+				if(b) {
+					this.mixers.add(mixers[i]);
+					outputDevices.addItem(mixers[i].getName());
+/* This attempts to query available sampling rates from the system,
+ * but it doesn't seem to work as intended, and always returns -1 (AudioSystem.NOT_SPECIFIED).
+ * I think this means we can just guess-o-matic a set of sampling rates?
+ * 
+ *				Line.Info[] infos = AudioSystem.getMixer(mixers[i]).getSourceLineInfo();
+ *				PRINTLN(infos);
+ *				for (int l = 0; l < infos.length; ++l) {
+ *					if (infos[l] instanceof DataLine.Info) {
+ *						DataLine.Info dataLineInfo = (DataLine.Info) infos[l];
+ *						AudioFormat[] supportedFormats = dataLineInfo.getFormats();
+ *						PRINTLN(dataLineInfo);
+ *						for(int j = 0; j < supportedFormats.length; ++j) {
+ *							PRINTLN(supportedFormats[j]);
+ *							Integer k = new Integer((int)supportedFormats[j].getSampleRate());
+ *							if(!samplingRates.contains(k)) {
+ *								samplingRates.add(k);
+ *								PRINTLN(k);
+ *							}
+ *						}
+ *					}
+ *				}
+ */
+				}
+			}
+			/* Set a set of predetermined samplingRates (which may or may not be supported by any line),
+				* instead of asking the current mixer which samplingRates it supports
+				*/
+			samplingRates.add(new Integer(   8000));
+			samplingRates.add(new Integer(  11025));
+			samplingRates.add(new Integer(  22050));
+			samplingRates.add(new Integer(  32000));
+			samplingRates.add(new Integer(  44056));
+			samplingRates.add(new Integer(  44100));
+			samplingRates.add(new Integer(  47250));
+			samplingRates.add(new Integer(  48000));
+// 			samplingRates.add(new Integer(  50000));
+// 			samplingRates.add(new Integer(  50400));
+// 			samplingRates.add(new Integer(  88200));
+// 			samplingRates.add(new Integer(  96000));
+// 			samplingRates.add(new Integer( 176400));
+// 			samplingRates.add(new Integer( 192000));
+// 			samplingRates.add(new Integer(2822400));
 
-		
-		JSlider samplingRateSlider = new JSlider(0, samplingRates.length);
-		VECTOR(Integer) sr = new VECTOR(Integer)();
-		for(int i=0; i<samplingRates.length; ++i) sr.add(new Integer(samplingRates[i]));
-		JSpinner samplingRateSpinner = new JSpinner(new SpinnerListModel(sr));
+			useStereo = new JCheckBox("Stereo output");
+			useStereo.addChangeListener(this);
+			useStereo.setSelected(true);
+			samplingRateSlider = new JSlider(0, samplingRates.size()-1);
+			samplingRateSlider.setPaintTicks(true);
+			samplingRateSlider.setSnapToTicks(true);
+			samplingRateSlider.setPaintTrack(true);
+			samplingRateSlider.setPaintLabels(true);
+			samplingRateSlider.updateUI();
+			samplingRateSlider.addChangeListener(this);
+			VECTOR(Integer) sr = new VECTOR(Integer)();
+			for(int i=0; i<samplingRates.size(); ++i) sr.add(samplingRates.get(i));
+			samplingRateSpinner = new JSpinner(new SpinnerListModel(sr));
+			samplingRateSpinner.addChangeListener(this);
+			bufferSizeSlider = new JSlider(1<<5, 1<<16);
+			bufferSizeSpinner = new JSpinner(new SpinnerNumberModel(1<<5, 1, 1<<16, 1));
+			bufferSizeSlider.addChangeListener(this);
+			bufferSizeSpinner.addChangeListener(this);
+			outputIntervalSlider = new JSlider(0, bufferSizeSlider.getMaximum());
+			outputIntervalSpinner = new JSpinner(new SpinnerNumberModel(1,1,bufferSizeSlider.getMaximum(),1));
+			outputIntervalSlider.addChangeListener(this);
+			outputIntervalSpinner.addChangeListener(this);
 
-		JSlider bufferSizeSlider = new JSlider(1, 4096);
-		JSpinner bufferSizeSpinner = new JSpinner(new SpinnerNumberModel(1,1,4096,1));
+			samplingRateSlider.setValue( samplingRates.indexOf(new Integer(44100)) );//Default driver rate
+			samplingRateSpinner.setValue(new Integer(44100));//Default driver rate
+			bufferSizeSlider.setValue(ad.getBufferSize());
+			bufferSizeSpinner.setValue(new Integer(ad.getBufferSize()));
+			outputIntervalSlider.setValue(ad.getOutputInterval());
+			outputIntervalSpinner.setValue(new Integer(ad.getOutputInterval()));
 		
-		JSlider outputIntervalSlider = new JSlider(0, bufferSizeSlider.getMaximum());
-		JSpinner outputIntervalSpinner = new JSpinner(new SpinnerNumberModel(1,1,bufferSizeSlider.getMaximum(),1));
-		
-		if(ac != null && ac.audioSource != null) {
 			BorderLayout bl = new BorderLayout();
 			dialog.setLayout(bl);
 			JPanel container = new JPanel();
@@ -84,17 +166,55 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		dialog.setLocation(p);
 	}
 
+	
+
 	public void showWindow() {
 			dialog.setVisible( true );
 	}
 	
 	public void actionPerformed( ActionEvent e ) {
+		if(e.getSource().equals( outputDevices )) {
+			ad.setMixerInfo((Mixer.Info)mixers.get(outputDevices.getSelectedIndex()));
+		}
 	}
 	
 	public void stateChanged( ChangeEvent e) {
-		
+		if(e.getSource().equals( samplingRateSlider )) {
+			samplingRateSpinner.setValue((Integer)samplingRates.get(samplingRateSlider.getValue()));
+			ad.setSampleRate(((Integer)samplingRates.get(samplingRateSlider.getValue())).intValue());
+		}
+		else if(e.getSource().equals( samplingRateSpinner )) {
+			for(int i=0; i<samplingRates.size(); ++i) {
+				if(samplingRateSpinner.getValue() == samplingRates.get(i))
+					samplingRateSlider.setValue(i);
+			}
+			ad.setSampleRate(((Integer)samplingRates.get(samplingRateSlider.getValue())).intValue());
+		}
+		else if(e.getSource().equals( bufferSizeSlider )) {
+			bufferSizeSpinner.setValue(new Integer(bufferSizeSlider.getValue()));
+			outputIntervalSlider.setMaximum( bufferSizeSlider.getValue());
+			ad.setBufferSize(bufferSizeSlider.getValue());
+		}
+		else if(e.getSource().equals( bufferSizeSpinner )) {
+			bufferSizeSlider.setValue(((Integer)bufferSizeSpinner.getValue()).intValue());
+			outputIntervalSlider.setMaximum( bufferSizeSlider.getValue());
+			ad.setBufferSize(bufferSizeSlider.getValue());
+		}
+		else if(e.getSource().equals( outputIntervalSlider )) {
+			outputIntervalSpinner.setValue( new Integer(outputIntervalSlider.getValue()));
+			ad.setOutputInterval( outputIntervalSlider.getValue() );
+		}
+		else if(e.getSource().equals( outputIntervalSpinner )) {
+			outputIntervalSlider.setValue( ((Integer)outputIntervalSpinner.getValue()).intValue() );
+			ad.setOutputInterval( outputIntervalSlider.getValue() );
+		}
+		else if(e.getSource().equals( useStereo )) {
+			if(useStereo.getModel().isSelected())
+				ad.setChannels(2);
+			else
+				ad.setChannels(1);
+		}
 	}
-	
 	public void componentHidden(ComponentEvent e) {}
 	public void componentMoved(ComponentEvent e) {}
 	public void componentShown(ComponentEvent e) {}

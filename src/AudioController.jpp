@@ -1,10 +1,6 @@
 #include "Global.inc"
 #include "SaveLoad.inc"
 
-import java.io.*;
-import javax.sound.sampled.*;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 // Sound IO ports:
 // FF10 - NR10 - Channel 1 Sweep register (R/W)
 // FF11 - NR11 - Channel 1 Sound length/Wave pattern duty (R/W)
@@ -40,6 +36,557 @@ import java.util.regex.Matcher;
 // FF2F - ???
 // FF30-FF3F - Wave Pattern RAM
 public final class AudioController {
+	protected boolean isMuted=false;
+	private boolean isEnabled=true;
+	private int IO[];
+	private int WAVE[] = new int[16];
+	private int sampleRate=44100;//22050;//44100;//22050;
+	public int cyclesLeftToRender;
+	private int TimerCountDown;     // 256hz
+	private boolean SweepTimerTick; // 128hz
+	private int RATE;
+	public int CRATE;
+	protected double currentEmulationSpeed=1.0;
+
+	boolean[] channelactive = new boolean[5]; // entry [0] not used...
+
+	public final class SoundRegister {
+		int on;
+		int pos; // TODO: unsigned?
+		int cnt, encnt, swcnt;
+		int len, enlen, swlen;
+		int swfreq;
+		int freq;
+		int envol, endir;
+		SAVELOAD_FUNCTION {
+			SL_INT(on);
+			SL_INT(pos);
+			SL_INT(cnt);
+			SL_INT(encnt);
+			SL_INT(swcnt);
+			SL_INT(len);
+			SL_INT(enlen);
+			SL_INT(swlen);
+			SL_INT(swfreq);
+			SL_INT(freq);
+			SL_INT(envol);
+			SL_INT(endir);
+		}
+	}
+	protected SoundRegister S1;
+	protected SoundRegister S2;
+	protected SoundRegister S3;
+	protected SoundRegister S4;
+	//private SoundRegister SR5; //On cartridge, not used atm
+	protected CPU cpu;
+
+	public boolean channelActive(int i) {
+		return channelactive[i];
+	}
+
+	public void setChannelActive(int i, boolean b){
+		channelactive[i] = b;
+	}
+
+	public boolean toggleChannelOnOff(int i){
+		channelactive[i] ^= true;
+		return channelactive[i];
+	}
+
+	IAudioListener audioListener = null;
+	public void addIAudioListener(IAudioListener audioListener) { //FIXME: only 1 listener at a time
+		this.audioListener = audioListener;
+	}
+	
+	public AudioController(CPU cpu) {
+		this.cpu = cpu;
+		this.audioListener = null;
+		IO = new int[0x30];
+		cyclesLeftToRender=0;
+		S1=new SoundRegister();
+		S2=new SoundRegister();
+		S3=new SoundRegister();
+		S4=new SoundRegister();
+		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
+		SweepTimerTick=false;
+		RATE = (1<<21) / sampleRate;
+		setSpeed(1.0);
+	}
+
+	public void setSampleRate(int r) {
+		sampleRate = r;
+		RATE = (1<<21) / sampleRate;
+		setSpeed(currentEmulationSpeed);
+	}
+	
+	public void setSpeed(double emulationSpeed) {
+		currentEmulationSpeed = emulationSpeed;
+		CRATE = (int)((4194304.0 / (double)sampleRate)*emulationSpeed); //4194304 == (1<<22)
+	}
+
+	SAVELOAD_FUNCTION	{
+		SL_IF_VERSION(-1,  5) SL_ARR(UINT8, IO, 0x20);
+		SL_IF_VERSION( 6, -1) SL_ARR(UINT8, IO, 0x30);
+		SL_ARR(UINT8, WAVE, 0x10);
+		SL_INT(cyclesLeftToRender);
+		SL_INT(TimerCountDown);
+		SL_BOOL(SweepTimerTick);
+
+		SL_OBJ(S1);
+		SL_OBJ(S2);
+		SL_OBJ(S3);
+		SL_OBJ(S4);
+
+// 		if (SL_LOAD) //restoring gamestate
+// 			audioBufferIndex=0;
+	}
+
+	void s1_init() {
+		S1.swcnt = 0;
+		S1.swfreq = ((IO[0x04]&7)<<8) + IO[0x03];
+		S1.envol = IO[0x02] >> 4;
+		S1.endir = (IO[0x02]>>3) & 1;
+		S1.endir |= S1.endir - 1;
+		S1.enlen = (IO[0x02] & 7) << 15;
+		if (S1.on==0) S1.pos = 0;
+		S1.on = 1;
+		S1.cnt = 0;
+		S1.encnt = 0;
+	}
+
+	void s2_init() {
+		S2.envol = IO[0x07] >> 4;
+		S2.endir = (IO[0x07]>>3) & 1;
+		S2.endir |= S2.endir - 1;
+		S2.enlen = (IO[0x07] & 7) << 15;
+		if (S2.on==0) S2.pos = 0;
+		S2.on = 1;
+		S2.cnt = 0;
+		S2.encnt = 0;
+	}
+
+	void s3_init() {
+		int i;
+		if (S3.on==0) S3.pos = 0;
+		S3.cnt = 0;
+		S3.on = IO[0x0a] >> 7;
+		if (S3.on!=0) for (i = 0; i < 0xf; i++)
+			IO[i+0x20] = 0x13 ^ IO[i+0x21];
+		IO[0x2f] = 0x13 ^ cpu.VC.LCDC; //0xff40
+	}
+
+	void s4_init() {
+		S4.envol = IO[0x11] >> 4;
+		S4.endir = (IO[0x11]>>3) & 1;
+		S4.endir |= S4.endir - 1;
+		S4.enlen = (IO[0x11] & 7) << 15;
+		S4.on = 1;
+		S4.pos = 0;
+		S4.cnt = 0;
+		S4.encnt = 0;
+	}
+
+	private void s1_freq_d(int d) {
+		if (RATE > (d<<4)) S1.freq = 0;
+		else S1.freq = (RATE << 17)/d;
+	}
+
+	private void s1_freq() {
+		s1_freq_d(2048 - (((IO[0x04]&7)<<8) + IO[0x03]));
+	}
+
+	private void s2_freq() {
+		int d = 2048 - (((IO[0x09]&7)<<8) + IO[0x08]);
+		if (RATE > (d<<4)) S2.freq = 0;
+		else S2.freq = (RATE << 17)/d;
+	}
+
+	private void s3_freq() {
+		int d = 2048 - (((IO[0x0e]&7)<<8) + IO[0x0d]);
+		if (RATE > (d<<3)) S3.freq = 0;
+		else S3.freq = (RATE << 21)/d;
+	}
+
+	private void s4_freq() {
+		S4.freq = (freqtab[IO[0x12]&7] >> (IO[0x12] >> 4)) * RATE;
+		if ((S4.freq >> 18)!=0) S4.freq = 1<<18;
+	}
+
+	private void sound_dirty() {
+		S1.swlen = ((IO[0x00]>>4) & 7) << 14;
+		S1.len = (64-(IO[0x01]&63)) << 13;
+		S1.envol = IO[0x02] >> 4;
+		S1.endir = (IO[0x02]>>3) & 1;
+		S1.endir |= S1.endir - 1;
+		S1.enlen = (IO[0x02] & 7) << 15;
+		s1_freq();
+		S2.len = (64-(IO[0x06]&63)) << 13;
+		S2.envol = IO[0x07] >> 4;
+		S2.endir = (IO[0x07]>>3) & 1;
+		S2.endir |= S2.endir - 1;
+		S2.enlen = (IO[0x07] & 7) << 15;
+		s2_freq();
+		S3.len = (256-IO[0x0b]) << 20;
+		s3_freq();
+		S4.len = (64-(IO[0x10]&63)) << 13;
+		S4.envol = IO[0x11] >> 4;
+		S4.endir = (IO[0x11]>>3) & 1;
+		S4.endir |= S4.endir - 1;
+		S4.enlen = (IO[0x11] & 7) << 15;
+		s4_freq();
+	}
+
+	protected void sound_off() {
+		IO[0x00] = 0x80;
+		IO[0x01] = 0xBF;
+		IO[0x02] = 0xF3;
+		IO[0x04] = 0xBF;
+		IO[0x06] = 0x3F;
+		IO[0x07] = 0x00;
+		IO[0x09] = 0xBF;
+		IO[0x0a] = 0x7F;
+		IO[0x0b] = 0xFF;
+		IO[0x0c] = 0x9F;
+		IO[0x0d] = 0xBF;
+		IO[0x10] = 0xFF;
+		IO[0x11] = 0x00;
+		IO[0x12] = 0x00;
+		IO[0x13] = 0xBF;
+		IO[0x14] = 0x77;
+		IO[0x15] = 0xF3;
+		IO[0x16] = 0xF1;
+		S1.on=0;//to prevent noise on reset, may prevent some stupid games from making noise? VERIFY
+		S2.on=0;
+		S3.on=0;
+		S4.on=0;
+		sound_dirty();
+	}
+
+	public void reset() {
+		cyclesLeftToRender=0;
+		S1=new SoundRegister();
+		S2=new SoundRegister();
+		S3=new SoundRegister();
+		S4=new SoundRegister();
+		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
+		SweepTimerTick=false;
+// 		audioBufferIndex=0;
+
+		int[] w=cpu.isCGB()?cgbwave:dmgwave;
+		for (int i = 0; i < 0x10; ++i)
+			WAVE[i]=w[i];
+		for (int i = 0; i < 0x10; ++i)
+			IO[i] = WAVE[i];
+		for (int i = 0x10; i < 0x30; ++i)
+			IO[i] = 0;
+		sound_off();
+	}
+
+	void sound_mix() {
+		int s, l, r, f, n;
+		if (RATE==0) return;
+
+		// CRATE = cycles/sample
+		for (; cyclesLeftToRender >= 0; cyclesLeftToRender -= CRATE)
+
+//while ((audioSource.getBufferSize()-audioSource.available()) > 100) {};
+		//for (int slr=(audioSource.getBufferSize()-audioSource.available()); slr < 1000; ++slr)
+//		for (int tti = samplesleft; tti < 600; ++tti)
+		{
+			l = r = 0;
+
+			if (channelactive[1] && S1.on!=0)
+			{
+				s = sqwave[IO[0x01]>>6][(S1.pos>>18)&7] & S1.envol;
+				S1.pos += S1.freq;
+				if (((IO[0x04] & 64)!=0) && ((S1.cnt += RATE) >= S1.len))
+					S1.on = 0;
+				if ((S1.enlen!=0) && (S1.encnt += RATE) >= S1.enlen)
+				{
+					S1.encnt -= S1.enlen;
+					S1.envol += S1.endir;
+					if (S1.envol < 0) S1.envol = 0;
+					if (S1.envol > 15) S1.envol = 15;
+				}
+				if ((S1.swlen!=0) && (S1.swcnt += RATE) >= S1.swlen)
+				{
+					S1.swcnt -= S1.swlen;
+					f = S1.swfreq;
+					n = (IO[0x00] & 7);
+					if ((IO[0x00] & 8)!=0) f -= (f >> n);
+					else f += (f >> n);
+					if (f > 2047)
+						S1.on = 0;
+					else
+					{
+						S1.swfreq = f;
+						IO[0x03] = f;
+						IO[0x04] = (IO[0x04] & 0xF8) | (f>>8);
+						s1_freq_d(2048 - f);
+					}
+				}
+				s <<= 2;
+				if ((IO[0x15] & 1)!=0) r += s;
+				if ((IO[0x15] & 16)!=0) l += s;
+// 				PRINTLN("S1 l="+l+" r="+r);
+			}
+
+			if (channelactive[2] && S2.on!=0)
+			{
+				s = sqwave[IO[0x06]>>6][(S2.pos>>18)&7] & S2.envol;
+				S2.pos += S2.freq;
+				if (((IO[0x09] & 64)!=0) && ((S2.cnt += RATE) >= S2.len))
+					S2.on = 0;
+				if ((S2.enlen!=0) && (S2.encnt += RATE) >= S2.enlen)
+				{
+					S2.encnt -= S2.enlen;
+					S2.envol += S2.endir;
+					if (S2.envol < 0) S2.envol = 0;
+					if (S2.envol > 15) S2.envol = 15;
+				}
+				s <<= 2;
+				if ((IO[0x15] & 2)!=0) r += s;
+				if ((IO[0x15] & 32)!=0) l += s;
+// 				PRINTLN("S2 l="+l+" r="+r);
+			}
+
+			if (channelactive[3] && S3.on!=0)
+			{
+				s = WAVE[(S3.pos>>22) & 15];
+				if ((S3.pos & (1<<21))!=0) s &= 15;
+				else s >>= 4;
+				s -= 8;
+				S3.pos += S3.freq;
+				if (((IO[0x0e] & 64)!=0) && ((S3.cnt += RATE) >= S3.len))
+					S3.on = 0;
+				if ((IO[0x0c] & 96)!=0) s <<= (3 - ((IO[0x0c]>>5)&3));
+				else s = 0;
+				if ((IO[0x15] & 4)!=0) r += s;
+				if ((IO[0x15] & 64)!=0) l += s;
+// 				PRINTLN("S3 l="+l+" r="+r);
+			}
+
+			if (channelactive[4] && S4.on!=0)
+			{
+				if ((IO[0x12] & 8)!=0) s = 1 & (noise7[
+					(S4.pos>>20)&15] >> (7-((S4.pos>>17)&7)));
+				else s = 1 & (noise15[
+					(S4.pos>>20)&4095] >> (7-((S4.pos>>17)&7)));
+				s = (-s) & S4.envol;
+				S4.pos += S4.freq;
+				if (((IO[0x13] & 64)!=0) && ((S4.cnt += RATE) >= S4.len))
+					S4.on = 0;
+				if ((S4.enlen!=0) && (S4.encnt += RATE) >= S4.enlen)
+				{
+					S4.encnt -= S4.enlen;
+					S4.envol += S4.endir;
+					if (S4.envol < 0) S4.envol = 0;
+					if (S4.envol > 15) S4.envol = 15;
+				}
+				s += s << 1;
+				if ((IO[0x15] & 8)!=0) r += s;
+				if ((IO[0x15] & 128)!=0) l += s;
+// 				PRINTLN("S4 l="+l+" r="+r);
+			}
+
+			l *= (IO[0x14] & 0x07);
+			r *= ((IO[0x14] & 0x70)>>4);
+			l >>= 3;//hax, was 4
+			r >>= 3;//hax, was 4
+
+			if (l > 127) l = 127;
+			else if (l < -128) l = -128;
+			if (r > 127) r = 127;
+			else if (r < -128) r = -128;
+
+/*			if (pcm.buf)
+			{
+				if (pcm.pos >= pcm.len)
+					pcm_submit();
+				if (pcm.stereo)
+				{
+					pcm.buf[pcm.pos++] = l+128;
+					pcm.buf[pcm.pos++] = r+128;
+				}
+				else pcm.buf[pcm.pos++] = ((l+r)>>1)+128;
+			} */
+
+			//TODO: Assume Stereo
+			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
+// 			audioBufferIndex %= audioBuffer.length;
+			if(isMuted) {
+				l=0;
+				r=0;
+			}
+// 			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
+// 			audioBuffer[audioBufferIndex++]=(byte)(r);//;
+
+// 			if (audioBufferIndex >= outputInterval) { //WriteOut every n samples (1<<5 for linux, at least 1<<7 for windows)
+#ifndef JMGBE
+/*			if(audioSource!=null && !speedHax)
+					audioSource.write(audioBuffer, 0, audioBufferIndex);*/
+				if(audioListener != null && !speedHax) {
+// 					byte[] tmp = new byte[2];
+// 					tmp[0] = l; tmp[1]=r;
+					audioListener.writeAudioSample((byte)l,(byte)r);
+				}
+#endif
+// 				audioBufferIndex = 0;
+// 			}
+		}
+		IO[0x16] = (IO[0x16]&0xf0) | S1.on | (S2.on<<1) | (S3.on<<2) | (S4.on<<3);
+	}
+	public static boolean speedHax = false;
+
+	static long lastms = System.currentTimeMillis();
+
+	static byte bla=0;
+	public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
+		cyclesLeftToRender+=nrCycles;
+		sound_mix();
+	}
+
+	public int read(int index) {
+		int i=(index&0xff)-0x10;
+		if((i<0)||(i>0x3f)) {
+			PRINTLN("AudioController: Error: reading from non sound-address:"+index);
+			return -1;
+			}
+		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
+			PRINTLN("AudioController: Sound disabled: Reads are undefined!");
+			return 0;
+		}
+		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
+			//PRINTLN("AudioController: Warning: read from unknown IO address, acting as normal RAM...");
+		}
+		sound_mix(); //???
+		return IO[i];
+	}
+
+	public void write(int index, int value) {
+		int i=(index&0xff)-0x10;
+		if((i<0)||(i>0x2f)) {
+			PRINTLN("AudioController: Error: writing to non sound-address:"+index);
+			return;
+			}
+		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
+			PRINTLN("AudioController: Sound disabled: Writes are undefined!");
+			return;
+		}
+		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
+			//PRINTLN("AudioController: Warning: writing to unknown IO address, acting as normal RAM...");
+			IO[i]=value;
+			return;
+		}
+		if ((i & 0xF0) == 0x20) {
+			if (S3.on!=0) sound_mix();
+			if (S3.on==0) {
+				WAVE[i&0x0f] = IO[i]= value;
+				}
+			return;
+		}
+		sound_mix();
+		IO[i]=value;
+		switch (i) {
+		case 0x00:
+//			IO[i] = value;
+			S1.swlen = ((value>>4) & 7) << 14;
+			S1.swfreq = ((IO[0x04]&7)<<8) + IO[0x03];
+			break;
+		case 0x01:
+//			IO[i] = value;
+			S1.len = (64-(value&63)) << 13;
+			break;
+		case 0x02:
+//			R_NR12 = b;
+			S1.envol = value >> 4;
+			S1.endir = (value>>3) & 1;
+			S1.endir |= S1.endir - 1;
+			S1.enlen = (value & 7) << 15;
+			break;
+		case 0x03:
+//			R_NR13 = b;
+			s1_freq();
+			break;
+		case 0x04:
+//			R_NR14 = b;
+			s1_freq();
+			if ((value & 128)!=0) s1_init();
+			break;
+		case 0x06:
+//			R_NR21 = b;
+			S2.len = (64-(value&63)) << 13;
+			break;
+		case 0x07:
+// 			R_NR22 = b;
+			S2.envol = value >> 4;
+			S2.endir = (value>>3) & 1;
+			S2.endir |= S2.endir - 1;
+			S2.enlen = (value & 7) << 15;
+			break;
+		case 0x08:
+// 			R_NR23 = b;
+			s2_freq();
+			break;
+		case 0x09:
+// 			R_NR24 = b;
+			s2_freq();
+			if ((value & 128)!=0) s2_init();
+			break;
+		case 0x0a:
+// 			R_NR30 = b;
+			if ((value & 128)==0) S3.on = 0;
+			break;
+		case 0x0b:
+// 			R_NR31 = b;
+			S3.len = (256-value) << 13;
+			break;
+/*		case 0x0c:
+			R_NR32 = b;
+			break;*/
+		case 0x0d:
+// 			R_NR33 = b;
+			s3_freq();
+			break;
+		case 0x0e:
+// 			R_NR34 = b;
+			s3_freq();
+			if ((value & 128)!=0) s3_init();
+			break;
+		case 0x10:
+// 			R_NR41 = b;
+			S4.len = (64-(value&63)) << 13;
+			break;
+		case 0x11:
+// 			R_NR42 = b;
+			S4.envol = value >> 4;
+			S4.endir = (value>>3) & 1;
+			S4.endir |= S4.endir - 1;
+			S4.enlen = (value & 7) << 15;
+			break;
+		case 0x12:
+// 			R_NR43 = b;
+			s4_freq();
+			break;
+		case 0x13:
+// 			R_NR44 = b;
+			if ((value & 128)!=0) s4_init();
+			break;
+/*		case 0x14:
+			R_NR50 = b;
+			break;
+		case RI_NR51:
+			R_NR51 = b;
+			break;*/
+		case 0x16:
+// 			R_NR52 = b;
+			if ((value & 128)==0)
+				sound_off();
+			break;
+		default:
+			return;
+		}
+	}
 
 	final static int dmgwave[] = {
 		0xac, 0xdd, 0xda, 0x48,
@@ -592,708 +1139,4 @@ public final class AudioController {
 		0x36,0xc9,0x49,0x48,0x48,0x4e,0x4e,0x5a,
 		0x5a,0x22,0x23,0x33,0x35,0x55,0x40,0x00,
 	};
-
-	public class MatchMixerInfo {
-		private Pattern pat_name;
-		private Pattern pat_vendor;
-		private Pattern pat_description;
-		private Pattern pat_version;
-		private String description;
-		public int buffersize;
-		public MatchMixerInfo(String name, String vendor, String description, String version, int size) {
-			pat_name        = Pattern.compile(name);
-			pat_vendor      = Pattern.compile(vendor);
-			pat_description = Pattern.compile(description);
-			pat_version     = Pattern.compile(version);
-			buffersize      = size;
-			this.description= new String(name +
-			                      (vendor.equals("")?"":"("+vendor+")")+
-			                      (description.equals("")?"":"\n\t\t"+description)+
-			                      (version.equals("")?"":" (V"+version+")"));
-		}
-		public boolean Match(Mixer.Info mixinfo) {
-			Matcher matcher;
-
-			matcher = pat_name.matcher(mixinfo.getName());
-			if (!matcher.find()) return false;
-			matcher = pat_vendor.matcher(mixinfo.	getVendor());
-			if (!matcher.find()) return false;
-			matcher = pat_description.matcher(mixinfo.getDescription());
-			if (!matcher.find()) return false;
-			matcher = pat_version.matcher(mixinfo.getVersion());
-			if (!matcher.find()) return false;
-			return true;
-		}
-		public String toString() {
-			return description;
-		}
-	}
-
-	private static SourceDataLine trygetSourceDataLine(MatchMixerInfo tMixer, AudioFormat audioFormat) {
-		SourceDataLine rline = null;
-		try {
-			if (tMixer != null) {
-				DataLine.Info	lineinfo = new DataLine.Info(SourceDataLine.class, audioFormat, tMixer.buffersize);
-				Mixer.Info[]	asInfo = AudioSystem.getMixerInfo();
-				for (int i = 0; i < asInfo.length; i++) {
-					if (tMixer.Match(asInfo[i])) {
-						Mixer mixer = AudioSystem.getMixer(asInfo[i]);
-						if (mixer.isLineSupported(lineinfo)) {
-							rline = (SourceDataLine) mixer.getLine(lineinfo);
-						}
-					}
-				}
-				if (rline != null)
-					rline.open(audioFormat, tMixer.buffersize);
-			}
-			else {
-				DataLine.Info	lineinfo = new DataLine.Info(SourceDataLine.class, audioFormat);
-				rline = (SourceDataLine) AudioSystem.getLine(lineinfo);
-				rline.open(audioFormat);
-			}
-		}
-		catch (LineUnavailableException e)
-		{
-			rline = null;
-			e.printStackTrace();
-		}
-		catch (Exception e)
-		{
-			rline = null;
-			e.printStackTrace();
-		}
-		return rline;
-	}
-
-
-	protected boolean isMuted=false;
-	private boolean isEnabled=true;
-#ifndef JMGBE
-	private AudioFormat myAudioFormat;
-	private DataLine.Info myLineInfo;
-	public SourceDataLine audioSource;
-#endif
-	public byte audioBuffer[];
-	public	int audioBufferIndex;
-	public  int audioWriteInterval;
-	private int IO[];
-	private int WAVE[] = new int[16];
-	private final int sampleRate=44100;//22050;//44100;//22050;
-	public int cyclesLeftToRender;
-	private int TimerCountDown;     // 256hz
-	private boolean SweepTimerTick; // 128hz
-	private int RATE;
-	public int CRATE;
-	protected double currentEmulationSpeed=1.0;
-
-	boolean[] channelactive = new boolean[5]; // entry [0] not used...
-
-	public final class SoundRegister {
-		int on;
-		int pos; // TODO: unsigned?
-		int cnt, encnt, swcnt;
-		int len, enlen, swlen;
-		int swfreq;
-		int freq;
-		int envol, endir;
-		SAVELOAD_FUNCTION {
-			SL_INT(on);
-			SL_INT(pos);
-			SL_INT(cnt);
-			SL_INT(encnt);
-			SL_INT(swcnt);
-			SL_INT(len);
-			SL_INT(enlen);
-			SL_INT(swlen);
-			SL_INT(swfreq);
-			SL_INT(freq);
-			SL_INT(envol);
-			SL_INT(endir);
-		}
-	}
-	protected SoundRegister S1;
-	protected SoundRegister S2;
-	protected SoundRegister S3;
-	protected SoundRegister S4;
-	//private SoundRegister SR5; //On cartridge, not used atm
-	protected CPU cpu;
-
-	public boolean channelActive(int i) {
-		return channelactive[i];
-	}
-
-	public void setChannelActive(int i, boolean b){
-		channelactive[i] = b;
-	}
-
-	public boolean toggleChannelOnOff(int i){
-		channelactive[i] ^= true;
-		return channelactive[i];
-	}
-
-	public AudioController(CPU cpu) {
-		Mixer.Info[]	asInfo = AudioSystem.getMixerInfo();
-		PRINTLN("Available AudioDevices on this system:");
-		for (int i = 0; i < asInfo.length; i++)
-			PRINTLN("  -->  "+asInfo[i].getName());
-		PRINTLN("(You may need to add one of these to "+__FILE__+")");
-
-		this.cpu=cpu;
-
-
-
-
-
-/*******************************<FIXME>******************************/
-
-
-		//#define BUFFER_SIZE (2*1024*10) /*works okayish on windows*/
-		#define WRITE_OUT_COUNT_FIXME /*win:1<<7 linux:1<<5*/(1<<6)
-		#define BUFFER_SIZE 1024          /*Linux is just a lot better*/
-
-	audioWriteInterval = WRITE_OUT_COUNT_FIXME;
-
-/*******************************</FIXME>******************************/
-
-
-
-
-
-		audioBuffer = new byte[BUFFER_SIZE]; //allocate enough buffer for 1 second
-#ifndef JMGBE
-		try {
-			myAudioFormat = new AudioFormat((float)sampleRate,8,2,true,true);
-			MatchMixerInfo mixers[] = {
-				/** "rev50 [plughw:0,0]" (linux) works brilliantly but claims the audio hardware for itself */
-				new MatchMixerInfo("plughw:0,1"              , "", "", "", BUFFER_SIZE),
-				new MatchMixerInfo("plughw:0,0"              , "", "", "", BUFFER_SIZE),
-				/** "Primary Sound Driver" seems to work good under windows */
-				new MatchMixerInfo("Primary Sound Driver", "", "", "", BUFFER_SIZE*4),
-				/** FIXME: These should be selectable from a menu in the GUI rather than hardcoded... **/
-				new MatchMixerInfo("Primair geluidsstuurprogramma", "", "", "", BUFFER_SIZE),
-				//new MatchMixerInfo("C-Media Wave Device", "", "", "", 1536), //mireille
-				//"Alsa DataLine Mixer (hw:0)", // can't get this to work... :-(
-				//"Java Sound Audio Engine", // piece of crap...
-				null }; // tries default, crappy buffer setting... lags...
-			audioSource = null;
-			int i = 0;
-			while ((audioSource==null) && (i < mixers.length)) {
-				try {
-					audioSource = trygetSourceDataLine(mixers[i++], myAudioFormat);
-				}
-				catch (Exception E) {
-					audioSource = null;
-				}
-			}
-			--i;
-			PRINTLN("Using Audiodevice `"+(mixers[i]==null?"Java Sound Engine":mixers[i].toString())+"'");
-			audioSource.start();
-		}
-		catch (Exception e) {
-				PRINTLN("Error while opening sound output, sound will be unavailable ("+e+")");
-				isMuted = true;
-		}
-#endif
-		IO = new int[0x30];
-		cyclesLeftToRender=0;
-		S1=new SoundRegister();
-		S2=new SoundRegister();
-		S3=new SoundRegister();
-		S4=new SoundRegister();
-		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
-		SweepTimerTick=false;
-		RATE = (1<<21) / sampleRate;
-		setSpeed(1.0);
-	}
-
-	public void setSpeed(double emulationSpeed) {
-		currentEmulationSpeed = emulationSpeed;
-		CRATE = (int)((4194304.0 / (double)sampleRate)*emulationSpeed); //4194304 == (1<<23)
-	}
-
-	SAVELOAD_FUNCTION	{
-		SL_IF_VERSION(-1,  5) SL_ARR(UINT8, IO, 0x20);
-		SL_IF_VERSION( 6, -1) SL_ARR(UINT8, IO, 0x30);
-		SL_ARR(UINT8, WAVE, 0x10);
-		SL_INT(cyclesLeftToRender);
-		SL_INT(TimerCountDown);
-		SL_BOOL(SweepTimerTick);
-
-		SL_OBJ(S1);
-		SL_OBJ(S2);
-		SL_OBJ(S3);
-		SL_OBJ(S4);
-
-		if (SL_LOAD) //restoring gamestate
-			audioBufferIndex=0;
-	}
-
-	void s1_init() {
-		S1.swcnt = 0;
-		S1.swfreq = ((IO[0x04]&7)<<8) + IO[0x03];
-		S1.envol = IO[0x02] >> 4;
-		S1.endir = (IO[0x02]>>3) & 1;
-		S1.endir |= S1.endir - 1;
-		S1.enlen = (IO[0x02] & 7) << 15;
-		if (S1.on==0) S1.pos = 0;
-		S1.on = 1;
-		S1.cnt = 0;
-		S1.encnt = 0;
-	}
-
-	void s2_init() {
-		S2.envol = IO[0x07] >> 4;
-		S2.endir = (IO[0x07]>>3) & 1;
-		S2.endir |= S2.endir - 1;
-		S2.enlen = (IO[0x07] & 7) << 15;
-		if (S2.on==0) S2.pos = 0;
-		S2.on = 1;
-		S2.cnt = 0;
-		S2.encnt = 0;
-	}
-
-	void s3_init() {
-		int i;
-		if (S3.on==0) S3.pos = 0;
-		S3.cnt = 0;
-		S3.on = IO[0x0a] >> 7;
-		if (S3.on!=0) for (i = 0; i < 0xf; i++)
-			IO[i+0x20] = 0x13 ^ IO[i+0x21];
-		IO[0x2f] = 0x13 ^ cpu.VC.LCDC; //0xff40
-	}
-
-	void s4_init() {
-		S4.envol = IO[0x11] >> 4;
-		S4.endir = (IO[0x11]>>3) & 1;
-		S4.endir |= S4.endir - 1;
-		S4.enlen = (IO[0x11] & 7) << 15;
-		S4.on = 1;
-		S4.pos = 0;
-		S4.cnt = 0;
-		S4.encnt = 0;
-	}
-
-	private void s1_freq_d(int d) {
-		if (RATE > (d<<4)) S1.freq = 0;
-		else S1.freq = (RATE << 17)/d;
-	}
-
-	private void s1_freq() {
-		s1_freq_d(2048 - (((IO[0x04]&7)<<8) + IO[0x03]));
-	}
-
-	private void s2_freq() {
-		int d = 2048 - (((IO[0x09]&7)<<8) + IO[0x08]);
-		if (RATE > (d<<4)) S2.freq = 0;
-		else S2.freq = (RATE << 17)/d;
-	}
-
-	private void s3_freq() {
-		int d = 2048 - (((IO[0x0e]&7)<<8) + IO[0x0d]);
-		if (RATE > (d<<3)) S3.freq = 0;
-		else S3.freq = (RATE << 21)/d;
-	}
-
-	private void s4_freq() {
-		S4.freq = (freqtab[IO[0x12]&7] >> (IO[0x12] >> 4)) * RATE;
-		if ((S4.freq >> 18)!=0) S4.freq = 1<<18;
-	}
-
-	private void sound_dirty() {
-		S1.swlen = ((IO[0x00]>>4) & 7) << 14;
-		S1.len = (64-(IO[0x01]&63)) << 13;
-		S1.envol = IO[0x02] >> 4;
-		S1.endir = (IO[0x02]>>3) & 1;
-		S1.endir |= S1.endir - 1;
-		S1.enlen = (IO[0x02] & 7) << 15;
-		s1_freq();
-		S2.len = (64-(IO[0x06]&63)) << 13;
-		S2.envol = IO[0x07] >> 4;
-		S2.endir = (IO[0x07]>>3) & 1;
-		S2.endir |= S2.endir - 1;
-		S2.enlen = (IO[0x07] & 7) << 15;
-		s2_freq();
-		S3.len = (256-IO[0x0b]) << 20;
-		s3_freq();
-		S4.len = (64-(IO[0x10]&63)) << 13;
-		S4.envol = IO[0x11] >> 4;
-		S4.endir = (IO[0x11]>>3) & 1;
-		S4.endir |= S4.endir - 1;
-		S4.enlen = (IO[0x11] & 7) << 15;
-		s4_freq();
-	}
-
-	protected void sound_off() {
-		IO[0x00] = 0x80;
-		IO[0x01] = 0xBF;
-		IO[0x02] = 0xF3;
-		IO[0x04] = 0xBF;
-		IO[0x06] = 0x3F;
-		IO[0x07] = 0x00;
-		IO[0x09] = 0xBF;
-		IO[0x0a] = 0x7F;
-		IO[0x0b] = 0xFF;
-		IO[0x0c] = 0x9F;
-		IO[0x0d] = 0xBF;
-		IO[0x10] = 0xFF;
-		IO[0x11] = 0x00;
-		IO[0x12] = 0x00;
-		IO[0x13] = 0xBF;
-		IO[0x14] = 0x77;
-		IO[0x15] = 0xF3;
-		IO[0x16] = 0xF1;
-		S1.on=0;//to prevent noise on reset, may prevent some stupid games from making noise? VERIFY
-		S2.on=0;
-		S3.on=0;
-		S4.on=0;
-		sound_dirty();
-	}
-
-	public void reset() {
-		cyclesLeftToRender=0;
-		S1=new SoundRegister();
-		S2=new SoundRegister();
-		S3=new SoundRegister();
-		S4=new SoundRegister();
-		TimerCountDown=16384; // timer ticks every 16384 clock cycles (256hz)
-		SweepTimerTick=false;
-		audioBufferIndex=0;
-
-		int[] w=cpu.isCGB()?cgbwave:dmgwave;
-		for (int i = 0; i < 0x10; ++i)
-			WAVE[i]=w[i];
-		for (int i = 0; i < 0x10; ++i)
-			IO[i] = WAVE[i];
-		for (int i = 0x10; i < 0x30; ++i)
-			IO[i] = 0;
-		sound_off();
-	}
-
-	void sound_mix() {
-		int s, l, r, f, n;
-		if (RATE==0) return;
-
-		// CRATE = cycles/sample
-		for (; cyclesLeftToRender >= 0; cyclesLeftToRender -= CRATE)
-
-//while ((audioSource.getBufferSize()-audioSource.available()) > 100) {};
-		//for (int slr=(audioSource.getBufferSize()-audioSource.available()); slr < 1000; ++slr)
-//		for (int tti = samplesleft; tti < 600; ++tti)
-		{
-			l = r = 0;
-
-			if (channelactive[1] && S1.on!=0)
-			{
-				s = sqwave[IO[0x01]>>6][(S1.pos>>18)&7] & S1.envol;
-				S1.pos += S1.freq;
-				if (((IO[0x04] & 64)!=0) && ((S1.cnt += RATE) >= S1.len))
-					S1.on = 0;
-				if ((S1.enlen!=0) && (S1.encnt += RATE) >= S1.enlen)
-				{
-					S1.encnt -= S1.enlen;
-					S1.envol += S1.endir;
-					if (S1.envol < 0) S1.envol = 0;
-					if (S1.envol > 15) S1.envol = 15;
-				}
-				if ((S1.swlen!=0) && (S1.swcnt += RATE) >= S1.swlen)
-				{
-					S1.swcnt -= S1.swlen;
-					f = S1.swfreq;
-					n = (IO[0x00] & 7);
-					if ((IO[0x00] & 8)!=0) f -= (f >> n);
-					else f += (f >> n);
-					if (f > 2047)
-						S1.on = 0;
-					else
-					{
-						S1.swfreq = f;
-						IO[0x03] = f;
-						IO[0x04] = (IO[0x04] & 0xF8) | (f>>8);
-						s1_freq_d(2048 - f);
-					}
-				}
-				s <<= 2;
-				if ((IO[0x15] & 1)!=0) r += s;
-				if ((IO[0x15] & 16)!=0) l += s;
-// 				PRINTLN("S1 l="+l+" r="+r);
-			}
-
-			if (channelactive[2] && S2.on!=0)
-			{
-				s = sqwave[IO[0x06]>>6][(S2.pos>>18)&7] & S2.envol;
-				S2.pos += S2.freq;
-				if (((IO[0x09] & 64)!=0) && ((S2.cnt += RATE) >= S2.len))
-					S2.on = 0;
-				if ((S2.enlen!=0) && (S2.encnt += RATE) >= S2.enlen)
-				{
-					S2.encnt -= S2.enlen;
-					S2.envol += S2.endir;
-					if (S2.envol < 0) S2.envol = 0;
-					if (S2.envol > 15) S2.envol = 15;
-				}
-				s <<= 2;
-				if ((IO[0x15] & 2)!=0) r += s;
-				if ((IO[0x15] & 32)!=0) l += s;
-// 				PRINTLN("S2 l="+l+" r="+r);
-			}
-
-			if (channelactive[3] && S3.on!=0)
-			{
-				s = WAVE[(S3.pos>>22) & 15];
-				if ((S3.pos & (1<<21))!=0) s &= 15;
-				else s >>= 4;
-				s -= 8;
-				S3.pos += S3.freq;
-				if (((IO[0x0e] & 64)!=0) && ((S3.cnt += RATE) >= S3.len))
-					S3.on = 0;
-				if ((IO[0x0c] & 96)!=0) s <<= (3 - ((IO[0x0c]>>5)&3));
-				else s = 0;
-				if ((IO[0x15] & 4)!=0) r += s;
-				if ((IO[0x15] & 64)!=0) l += s;
-// 				PRINTLN("S3 l="+l+" r="+r);
-			}
-
-			if (channelactive[4] && S4.on!=0)
-			{
-				if ((IO[0x12] & 8)!=0) s = 1 & (noise7[
-					(S4.pos>>20)&15] >> (7-((S4.pos>>17)&7)));
-				else s = 1 & (noise15[
-					(S4.pos>>20)&4095] >> (7-((S4.pos>>17)&7)));
-				s = (-s) & S4.envol;
-				S4.pos += S4.freq;
-				if (((IO[0x13] & 64)!=0) && ((S4.cnt += RATE) >= S4.len))
-					S4.on = 0;
-				if ((S4.enlen!=0) && (S4.encnt += RATE) >= S4.enlen)
-				{
-					S4.encnt -= S4.enlen;
-					S4.envol += S4.endir;
-					if (S4.envol < 0) S4.envol = 0;
-					if (S4.envol > 15) S4.envol = 15;
-				}
-				s += s << 1;
-				if ((IO[0x15] & 8)!=0) r += s;
-				if ((IO[0x15] & 128)!=0) l += s;
-// 				PRINTLN("S4 l="+l+" r="+r);
-			}
-
-			l *= (IO[0x14] & 0x07);
-			r *= ((IO[0x14] & 0x70)>>4);
-			l >>= 3;//hax, was 4
-			r >>= 3;//hax, was 4
-
-			if (l > 127) l = 127;
-			else if (l < -128) l = -128;
-			if (r > 127) r = 127;
-			else if (r < -128) r = -128;
-
-/*			if (pcm.buf)
-			{
-				if (pcm.pos >= pcm.len)
-					pcm_submit();
-				if (pcm.stereo)
-				{
-					pcm.buf[pcm.pos++] = l+128;
-					pcm.buf[pcm.pos++] = r+128;
-				}
-				else pcm.buf[pcm.pos++] = ((l+r)>>1)+128;
-			} */
-
-			//TODO: Assume Stereo
-			//audioBuffer[audioBufferIndex++]=(byte)(l>>1);
-			audioBufferIndex %= audioBuffer.length;
-			if(isMuted) {
-				l=0;
-				r=0;
-			}
-			audioBuffer[audioBufferIndex++]=(byte)(l);//Stereo;
-			audioBuffer[audioBufferIndex++]=(byte)(r);//;
-
-			if (audioBufferIndex >= WRITE_OUT_COUNT_FIXME) { //WriteOut every n samples (1<<5 for linux, at least 1<<7 for windows)
-#ifndef JMGBE
-			if(audioSource!=null && !speedHax)
-					audioSource.write(audioBuffer, 0, audioBufferIndex);
-#endif
-				audioBufferIndex = 0;
-			}
-		}
-		IO[0x16] = (IO[0x16]&0xf0) | S1.on | (S2.on<<1) | (S3.on<<2) | (S4.on<<3);
-	}
-	public static boolean speedHax = false;
-
-	static long lastms = System.currentTimeMillis();
-
-	static byte bla=0;
-	public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
-		cyclesLeftToRender+=nrCycles;
-		sound_mix();
-	}
-
-	public int read(int index) {
-		int i=(index&0xff)-0x10;
-		if((i<0)||(i>0x3f)) {
-			PRINTLN("AudioController: Error: reading from non sound-address:"+index);
-			return -1;
-			}
-		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
-			PRINTLN("AudioController: Sound disabled: Reads are undefined!");
-			return 0;
-		}
-		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
-			//PRINTLN("AudioController: Warning: read from unknown IO address, acting as normal RAM...");
-		}
-		sound_mix(); //???
-		return IO[i];
-	}
-
-	public void write(int index, int value) {
-		int i=(index&0xff)-0x10;
-		if((i<0)||(i>0x2f)) {
-			PRINTLN("AudioController: Error: writing to non sound-address:"+index);
-			return;
-			}
-		else if((i!=0x16) && ((IO[0x16]&0x80)==0)) { //sound disabled, can only read/write 0xff26
-			PRINTLN("AudioController: Sound disabled: Writes are undefined!");
-			return;
-		}
-		else if((i==0x05)||(i==0x0f)||((i>0x16)&&(i<0x20))) {
-			//PRINTLN("AudioController: Warning: writing to unknown IO address, acting as normal RAM...");
-			IO[i]=value;
-			return;
-		}
-		if ((i & 0xF0) == 0x20) {
-			if (S3.on!=0) sound_mix();
-			if (S3.on==0) {
-				WAVE[i&0x0f] = IO[i]= value;
-				}
-			return;
-		}
-		sound_mix();
-		IO[i]=value;
-		switch (i) {
-		case 0x00:
-//			IO[i] = value;
-			S1.swlen = ((value>>4) & 7) << 14;
-			S1.swfreq = ((IO[0x04]&7)<<8) + IO[0x03];
-			break;
-		case 0x01:
-//			IO[i] = value;
-			S1.len = (64-(value&63)) << 13;
-			break;
-		case 0x02:
-//			R_NR12 = b;
-			S1.envol = value >> 4;
-			S1.endir = (value>>3) & 1;
-			S1.endir |= S1.endir - 1;
-			S1.enlen = (value & 7) << 15;
-			break;
-		case 0x03:
-//			R_NR13 = b;
-			s1_freq();
-			break;
-		case 0x04:
-//			R_NR14 = b;
-			s1_freq();
-			if ((value & 128)!=0) s1_init();
-			break;
-		case 0x06:
-//			R_NR21 = b;
-			S2.len = (64-(value&63)) << 13;
-			break;
-		case 0x07:
-// 			R_NR22 = b;
-			S2.envol = value >> 4;
-			S2.endir = (value>>3) & 1;
-			S2.endir |= S2.endir - 1;
-			S2.enlen = (value & 7) << 15;
-			break;
-		case 0x08:
-// 			R_NR23 = b;
-			s2_freq();
-			break;
-		case 0x09:
-// 			R_NR24 = b;
-			s2_freq();
-			if ((value & 128)!=0) s2_init();
-			break;
-		case 0x0a:
-// 			R_NR30 = b;
-			if ((value & 128)==0) S3.on = 0;
-			break;
-		case 0x0b:
-// 			R_NR31 = b;
-			S3.len = (256-value) << 13;
-			break;
-/*		case 0x0c:
-			R_NR32 = b;
-			break;*/
-		case 0x0d:
-// 			R_NR33 = b;
-			s3_freq();
-			break;
-		case 0x0e:
-// 			R_NR34 = b;
-			s3_freq();
-			if ((value & 128)!=0) s3_init();
-			break;
-		case 0x10:
-// 			R_NR41 = b;
-			S4.len = (64-(value&63)) << 13;
-			break;
-		case 0x11:
-// 			R_NR42 = b;
-			S4.envol = value >> 4;
-			S4.endir = (value>>3) & 1;
-			S4.endir |= S4.endir - 1;
-			S4.enlen = (value & 7) << 15;
-			break;
-		case 0x12:
-// 			R_NR43 = b;
-			s4_freq();
-			break;
-		case 0x13:
-// 			R_NR44 = b;
-			if ((value & 128)!=0) s4_init();
-			break;
-/*		case 0x14:
-			R_NR50 = b;
-			break;
-		case RI_NR51:
-			R_NR51 = b;
-			break;*/
-		case 0x16:
-// 			R_NR52 = b;
-			if ((value & 128)==0)
-				sound_off();
-			break;
-		default:
-			return;
-		}
-
-
-		/*switch(i) {
-			case 0x00: // FF10 - NR10 - Channel 1 Sweep register (R/W)
-				S1.SweepTime   = (value&0x70)>>4;
-				S1.SweepDir    = ((value&0x08)==0)?+1:-1;
-				S1.ShiftCount  = (value&0x07);
-				break;
-			case 0x01: // FF11 - NR11 - Channel 1 Sound length/Wave pattern duty (R/W)
-				S1.WaveDuty    = (value&0xc0)>>6;
-				S1.SoundLength = (value&0x3f);
-				break;
-			case 0x02: // FF12 - NR12 - Channel 1 Volume Envelope (R/W)
-				S1.EnvelopeVolume     = (value&0xf0)>>4;
-				S1.EnvelopeDirection  = ((value&0x08)==0)?-1:+1;
-				S1.EnvelopeSweepCount = (value&0x0f);
-				break;
-			case 0x03: // FF13 - NR13 - Channel 1 Frequency lo (Write Only)
-				S1.Frequency = (S1.freq&0xf00)|value;
-				break;
-			case 0x04: // FF14 - NR14 - Channel 1 Frequency hi (R/W)
-				S1.Enabled     = (value&0x80)==0?false:true;
-				S1.Consecutive = (value&0x40)==0?true:false;
-				S1.Frequency   = (S1.freq&0xff)|((value&0x07)<<8);
-				break;
-		}*/
-
-	}
 }
