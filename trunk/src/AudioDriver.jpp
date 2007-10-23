@@ -1,0 +1,134 @@
+#include "Global.inc"
+import java.io.*;
+import javax.sound.sampled.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
+public class AudioDriver implements IAudioListener {
+	SourceDataLine audioSource;
+	Mixer.Info mixerinfo;
+	AudioController ac;
+	byte[] audioBuffer;
+	int audioBufferIndex;
+	int sampleRate;
+	int audioBufferSize;
+	int sampleSize;
+	int outputInterval;
+	int channels;
+	boolean signedSound;
+	boolean bigEndianSound;
+
+	public AudioDriver() {
+		ASSERT(false); //DO NOT USE THIS CONSTRUCTOR!
+	}
+	
+	public AudioDriver(AudioController ac) {
+		this.ac = ac;
+		audioBufferIndex = 0;
+		audioBufferSize = 4096;
+		audioBuffer = new byte[audioBufferSize];
+		sampleRate = 44100;
+		sampleSize = 8;
+		channels = 2;
+		signedSound = true;
+		bigEndianSound = true;
+		outputInterval=1<<6;
+	}
+
+	public boolean update() {
+		AudioFormat af = new AudioFormat(sampleRate, sampleSize, channels, signedSound, bigEndianSound);
+		DataLine.Info di = new DataLine.Info(SourceDataLine.class, af, audioBufferSize);
+		Mixer m = AudioSystem.getMixer(mixerinfo);
+		if(m.isLineSupported(di)) {
+			try {
+				if(audioSource!=null) { //cleanup
+					audioSource.stop();
+					audioSource.close();
+				}
+				SourceDataLine sdl = (SourceDataLine)m.getLine(di);
+				audioSource = sdl;
+				audioSource.open(af, audioBufferSize);
+				audioSource.start();
+				ac.setSampleRate(sampleRate);
+				return true;
+			}
+			catch(LineUnavailableException e) {}
+		}
+		return false;
+	};
+
+	public int getChannels() {
+		return channels;
+	}
+
+	public void setChannels(int n) {
+		channels = n;
+		audioBufferIndex = (sampleSize*channels)*(audioBufferIndex/(sampleSize*channels));;
+		update();
+	}
+	
+	public Mixer.Info getMixerInfo() {
+		return mixerinfo;
+	}
+	
+	public boolean setMixerInfo(Mixer.Info minfo) {
+		Mixer.Info tmp = mixerinfo;
+		mixerinfo = minfo;
+		if( update() ) return true;
+		mixerinfo = tmp;
+		return false;
+	}
+
+	public int getBufferSize() {
+		return audioBufferSize;
+	}
+
+	public int getOutputInterval() {
+		return outputInterval;
+	}
+	
+	public boolean setOutputInterval(int n) {
+		outputInterval = (sampleSize*channels)*(n/(sampleSize*channels));
+		if(outputInterval >= audioBufferSize -1 - (sampleSize*channels))
+			outputInterval = audioBufferSize - (sampleSize*channels);
+		outputInterval = Math.max((sampleSize*channels), outputInterval);
+		return true;
+	}
+	
+	public boolean setBufferSize(int n) {
+		audioBufferSize = (sampleSize*channels)*(n/(sampleSize*channels));;
+		setOutputInterval(Math.min(audioBufferSize, outputInterval));
+		if(audioBufferIndex >= audioBufferSize - (sampleSize*channels)) audioBufferIndex=(audioBufferSize)-(sampleSize*channels);
+		audioBuffer = new byte[n];
+		return update();
+	}
+
+	public int getSampleRate() {
+		return sampleRate;
+	}
+	
+	public boolean setSampleRate(int sr) {
+		sampleRate = sr;
+		return update();
+	}
+
+	public void writeAudioSample(byte l, byte r) {
+		if(channels==2) {
+			audioBuffer[audioBufferIndex++] = l;
+			audioBuffer[audioBufferIndex++] = r;
+		}
+		else {
+			audioBuffer[audioBufferIndex++] = (byte)((l + r)/2);
+		}
+		if(audioBufferIndex >= outputInterval) {
+			if(audioSource!=null) {
+					audioSource.write(audioBuffer, 0, audioBufferIndex);
+			}
+			audioBufferIndex = 0;
+		}
+	}
+
+	public void writeAudioSample(byte[] b) {
+		ASSERT(false); //Currently broken
+	}
+}

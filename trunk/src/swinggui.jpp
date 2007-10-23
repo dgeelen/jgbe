@@ -135,6 +135,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		private static DrawingArea grfx;
 		protected VideoController VC;
 		protected CPU cpu;
+		protected AudioDriver audioDriver;
 		private int fps;
 		private boolean isApplet;
 		private int selectedState = 0;
@@ -1522,12 +1523,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				romfile = (String)gui.rcFiles.get(0);
 
 			gui.cpu = new CPU();
+			gui.audioDriver = new AudioDriver(gui.cpu.AC);
+			CPU.AC.addIAudioListener(gui.audioDriver);
 
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui );
 			gui.createAndShowGUI();
 			//Audio Properties Dialog
-			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, CPU.AC);
+			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, gui.audioDriver);
 // 			advancedAudioPropertiesDialog.showWindow();
 
 			if (!romfile.equals(""))
@@ -1562,6 +1565,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				gui.cpuRunner = new SimpleCPURunner();
 				gui.resumeEmulation(false);
 			}
+			PRINTFREEMEM("Emulator up & running");
 		}
 
 		public void start() {
