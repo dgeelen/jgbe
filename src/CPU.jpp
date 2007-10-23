@@ -455,7 +455,7 @@ public final class CPU {
 				    //PRINTLN("reading from BIOS rom");
 				}
 				else if (index == 0x100) {
-					PRINTLN("reading from 0x100, disableing BIOS rom (PC="+PC+")");
+// 					PRINTLN("reading from 0x100, disableing BIOS rom (PC="+PC+")");
 					BIOS_enabled = false;
 					//reset(false); // reset without forcing mono mode
 					refreshMemMap();
@@ -689,7 +689,9 @@ public final class CPU {
 				VC.write(index, value);
 			}
 			else if(index < 0xff00) { //Not Usable
-				PRINTF("WARNING: CPU.write(): Write to unusable memory (0xfea0-0xfeff) index=$%04x, value=$%02x\n",index,value);
+				/* Silenced since a lot of games seem to write to here anyway
+				 * PRINTF("WARNING: CPU.write(): Write to unusable memory (0xfea0-0xfeff) index=$%04x, value=$%02x\n",index,value);
+				 */
 			}
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {

@@ -276,9 +276,9 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 							str.substring(j+2)));
 			}
 			in.close();
-		} catch (IOException e) {
-			PRINTLN("error reading '"+name+"'");
-			PRINTLN(e.getMessage());
+		} catch (IOException e) { //Fixme: perhaps we should split this into file-not-found and real errors
+// 			PRINTLN("error reading '"+name+"'");
+// 			PRINTLN(e.getMessage());
 		}
 	}
 

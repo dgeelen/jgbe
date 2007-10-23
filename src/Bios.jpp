@@ -9,8 +9,9 @@ public class Bios {
 			loadFromFile(fname, location);
 		}
 		catch (IOException ioe) {
-			PRINTLN("Bios could not be loaded (message: " + ioe.getMessage() + ").");
-			PRINTLN("Emulator will go on like nothing happened.");
+// 			PRINTLN("Bios could not be loaded (message: " + ioe.getMessage() + ").");
+// 			PRINTLN("Emulator will go on like nothing happened.");
+			PRINTLN("Using BIOS stub");
 			location[0]=0xc3;
 			location[1]=0x00;
 			location[2]=0x01;
