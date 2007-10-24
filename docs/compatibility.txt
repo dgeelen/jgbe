@@ -16,6 +16,20 @@
 | Notes  : Confirmed finishable                                                |
 '---.----------------------------------------------------------------------.---'
     |                                                                      |
+.---'---[ Smurfs, The (UE) (V1.0) (M4) [!].gb ]----------------------------'---.
+| MD5    : 4528d42eae39a3fa756eefa29d52ef55                                    |
+| Status : BROKEN                                                              |
+| Notes  : Game executes HALT with cleared Interrupt Master Enable flag        |
+|          After skipping the initial DI the game appears to function          |
+|          normally.                                                           |
+'---.----------------------------------------------------------------------.---'
+    :                                                                      :
+.---'---[ Smurfs, The (UE) (V1.1) (M3) [S][!].gb ]-------------------------'---.
+| MD5    : a574e5f7119b31e5112221c3a0ada813                                    |
+| Status : BROKEN                                                              |
+| Notes  : Identical behaviour as 4528d42eae39a3fa756eefa29d52ef55             |
+'---.----------------------------------------------------------------------.---'
+    :                                                                      :
 .---'---[  ]---------------------------------------------------------------'---.
 | MD5    :                                                                     |
 | Status :                                                                     |
