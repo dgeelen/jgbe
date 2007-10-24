@@ -867,6 +867,7 @@ public final class CPU {
 		}
 
 		public static void reset(boolean bios) {
+			if(cartridge == null) return; //Do nothing if no cartridge is inserted
 			BIOS_enabled = bios;
  			VC.reset();
  			cartridge.CurrentRAMBank=0;
