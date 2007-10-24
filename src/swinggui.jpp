@@ -131,8 +131,12 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	}
 }
 
-public final class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener {
+public final class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener, MouseMotionListener {
 		private static DrawingArea grfx;
+		private int lastmousex;
+		private int lastmousey;
+		private int lastmousecnt;
+		private int mousehidden = 0;
 		protected VideoController VC;
 		protected CPU cpu;
 		protected AudioDriver audioDriver;
@@ -226,7 +230,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			Font DrawingAreaFont = new Font("SansSerif", Font.BOLD, DrawingAreaFontSize);
 
 			public void updateVideoImage(Image img) {
-				updateUI();
+				repaint();
 				if( speedRunPlayWithOutputVideoStream != null) {
 					BufferedImage bimg = (BufferedImage)img;
 					int[] data = (int[])bimg.getRaster().getDataElements(0,0,bimg.getWidth(),bimg.getHeight(),null);
@@ -252,6 +256,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				}
 			}
 
+			Image menuimage = null;
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				if (interpolation == 0) {
@@ -289,6 +294,32 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					}
 				}
 				++fps;
+				if (fulls) {
+					int mheight = mainMenuBar.getHeight();
+					if (lastmousey <= mheight) {
+						int mwidth = mainMenuBar.getWidth();
+						Rectangle bounds = getBounds();
+						if (mwidth > bounds.x && mheight > bounds.y) {
+							// menubar overlaps screen panel, need to redraw some parts of the menu on top of the screen
+							if (menuimage == null)
+								menuimage = new BufferedImage(mainMenuBar.getWidth(), mainMenuBar.getHeight(), BufferedImage.TYPE_INT_RGB);
+							mainMenuBar.paint(menuimage.getGraphics());
+							g.drawImage(menuimage,
+								0, 0,
+								mwidth - bounds.x, mheight - bounds.y,
+								bounds.x, bounds.y,
+								mwidth, mheight,
+								this);
+						}
+					} else if (--lastmousecnt == 0) {
+						try {
+							addOSDLine("Hiding mouse");
+							new Robot().mouseMove(fsframe.getWidth(), fsframe.getHeight());
+							mousehidden = 1;
+						} catch (AWTException e) {
+						}
+					}
+				}
 			}
 		}
 
@@ -581,6 +612,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			frame.getContentPane().setLayout(null);
 			fsframe.getContentPane().setLayout(null);
 
+			fsframe.getContentPane().setBackground(Color.BLACK);
+
 			fsframe.setUndecorated(true);
 
 			//Set up the content pane and add swing components to it
@@ -599,6 +632,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			frame.addComponentListener(this);
 			frame.addWindowListener(this);
 			fsframe.addWindowListener(this);
+			mainMenuBar.addMouseMotionListener(this);
+			fsframe.addMouseMotionListener(this);
+			for (int i = 0; i < mainMenuBar.getMenuCount(); ++i)
+				mainMenuBar.getMenu(i).addMouseMotionListener(this);
 
 			frame.setResizable(false);
 
@@ -669,38 +706,39 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		public void componentShown(ComponentEvent e) {}
 		public void componentResized(ComponentEvent e) {
 			if (fulls != enableFullScreen.getState()) {
+				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+				GraphicsDevice gd = ge.getDefaultScreenDevice();
 				if (enableFullScreen.getState()) {
 					frame.setVisible(false);
 
+					fsframe.setJMenuBar(null);
+					fsframe.getContentPane().add(mainMenuBar); // add menubar first so it gets drawn properly when it has focus (why? dunno!)
 					fsframe.getContentPane().add(grfx);
-					fsframe.setJMenuBar(mainMenuBar);
 
-					GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-					GraphicsDevice gd = ge.getDefaultScreenDevice();
 					gd.setFullScreenWindow(fsframe);
 				} else {
-					GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-					GraphicsDevice gd = ge.getDefaultScreenDevice();
 					gd.setFullScreenWindow(null);
 					fsframe.setVisible(false);
 
 					frame.setResizable(grfx.interpolation != 0);
 					frame.getContentPane().add(grfx);
 					frame.setJMenuBar(mainMenuBar);
+
 					frame.setVisible(true);
 				}
 				fulls = enableFullScreen.getState();
 			}
 
-			Dimension psize,csize;
+			Dimension psize; // screen panel size
+			Dimension csize; // content pane size
 			csize = (fulls ? fsframe: frame.getContentPane()).getSize();
 			if (grfx.interpolation == 0) {
 				psize = new Dimension(VC.nscale*160, VC.nscale*144);
 				grfx.setSize(psize);
 				grfx.setPreferredSize(psize);
 				if (!fulls) {
-					Dimension fsize = frame.getSize();
-					Dimension bsize = new Dimension();
+					Dimension fsize = frame.getSize(); // frame size, including borders
+					Dimension bsize = new Dimension(); // screen panel size, plus border size
 					bsize.width = MAX(psize.width + (fsize.width - csize.width), frame.getPreferredSize().width);
 					bsize.height = MAX(psize.height + (fsize.height - csize.height), frame.getPreferredSize().height);
 					frame.getContentPane().setSize(psize);
@@ -721,6 +759,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			if (psize.width < csize.width) trect.translate((csize.width - psize.width)/2,0);
 			if (psize.height < csize.height) trect.translate(0,(csize.height - psize.height)/2);
 			grfx.setBounds(trect);
+			if (fulls)
+				mainMenuBar.setBounds(new Rectangle(mainMenuBar.getPreferredSize()));
+			grfx.repaint();
 		}
 
 		public void pauseEmulation(boolean verbose) {
@@ -1605,5 +1646,28 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 		}
 
+		public void mouseMoved(MouseEvent e) {
+			if (mousehidden == 1) {
+				mousehidden = 2;
+				return;
+			}
+			if (mousehidden == 2) {
+				addOSDLine("Unhiding mouse");
+				try {
+					new Robot().mouseMove(lastmousex, lastmousey);
+				} catch (AWTException ex) {
+				}
+				mousehidden = 0;
+				return;
+			}
+			lastmousecnt = 60 * 3;
+
+			lastmousex = e.getX();
+			lastmousey = e.getY();
+		}
+
+		public void mouseDragged(MouseEvent e) {
+			mouseMoved(e);
+		}
 	}
 #endif
