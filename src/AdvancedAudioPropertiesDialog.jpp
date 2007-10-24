@@ -32,10 +32,12 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 	private JSpinner bufferSizeSpinner;
 	private JSlider outputIntervalSlider;
 	private JSpinner outputIntervalSpinner;
+	swinggui gui;
 	
-	public AdvancedAudioPropertiesDialog(JFrame o, AudioDriver ad) {
+	public AdvancedAudioPropertiesDialog(JFrame o, AudioDriver ad, swinggui gui) {
 		owner = o;
 		this.ad = ad;
+		this.gui = gui;
 		dialog= new JDialog(owner, "Advanced Audio Properties", true);
 /*		dialog.setSize(new Dimension(640,480));
 		dialog.setPreferredSize(new Dimension(640,480));*/
@@ -43,13 +45,16 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		/* Setting Components */
 		if(ad != null) {
 			outputDevices = new JComboBox();
+			Mixer.Info FixUp = ad.getMixerInfo();
+			ad.stop();
 			Mixer.Info[] mixers = AudioSystem.getMixerInfo();
-			outputDevices.addActionListener(this);
 			for (int i = 0; i < mixers.length; i++) {
 				Mixer mixer = AudioSystem.getMixer(mixers[i]);
+// 				PRINTLN(mixer.getMixerInfo());
 				Line.Info[] info = mixer.getSourceLineInfo();
 				boolean b = false;
 				for(int j=0; j < info.length; ++j) {
+// 					PRINTLN("    "+info[j]);
 					if(info[j].toString().indexOf("buffer") >= 0)
 						b = true;
 				}
@@ -80,6 +85,10 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
  */
 				}
 			}
+			ad.start();
+			for(int i=0; i<outputDevices.getItemCount(); ++i) {
+				if(((Mixer.Info)(this.mixers.get(i))).equals(ad.getMixerInfo())) outputDevices.setSelectedIndex(i);
+			}
 			/* Set a set of predetermined samplingRates (which may or may not be supported by any line),
 				* instead of asking the current mixer which samplingRates it supports
 				*/
@@ -100,7 +109,6 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 // 			samplingRates.add(new Integer(2822400));
 
 			useStereo = new JCheckBox("Stereo output");
-			useStereo.addChangeListener(this);
 			useStereo.setSelected(true);
 			samplingRateSlider = new JSlider(0, samplingRates.size()-1);
 			samplingRateSlider.setPaintTicks(true);
@@ -108,27 +116,34 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 			samplingRateSlider.setPaintTrack(true);
 			samplingRateSlider.setPaintLabels(true);
 			samplingRateSlider.updateUI();
-			samplingRateSlider.addChangeListener(this);
 			VECTOR(Integer) sr = new VECTOR(Integer)();
 			for(int i=0; i<samplingRates.size(); ++i) sr.add(samplingRates.get(i));
 			samplingRateSpinner = new JSpinner(new SpinnerListModel(sr));
-			samplingRateSpinner.addChangeListener(this);
 			bufferSizeSlider = new JSlider(1<<5, 1<<16);
 			bufferSizeSpinner = new JSpinner(new SpinnerNumberModel(1<<5, 1, 1<<16, 1));
-			bufferSizeSlider.addChangeListener(this);
-			bufferSizeSpinner.addChangeListener(this);
+			bufferSizeSlider.setValue(ad.getBufferSize());
+			bufferSizeSpinner.setValue(new Integer(ad.getBufferSize()));
 			outputIntervalSlider = new JSlider(0, bufferSizeSlider.getMaximum());
-			outputIntervalSpinner = new JSpinner(new SpinnerNumberModel(1,1,bufferSizeSlider.getMaximum(),1));
-			outputIntervalSlider.addChangeListener(this);
-			outputIntervalSpinner.addChangeListener(this);
+			outputIntervalSpinner = new JSpinner(new SpinnerNumberModel(ad.getOutputInterval(),1,ad.getBufferSize(),ad.getFrameSize()));
+			outputIntervalSlider.setValue(ad.getOutputInterval());
+			outputIntervalSpinner.setValue(new Integer(ad.getOutputInterval()));
 
-			samplingRateSlider.setValue( samplingRates.indexOf(new Integer(44100)) );//Default driver rate
-			samplingRateSpinner.setValue(new Integer(44100));//Default driver rate
+			samplingRateSlider.setValue( samplingRates.indexOf(new Integer(ad.getSampleRate()) ));//Default driver rate
+			samplingRateSpinner.setValue(new Integer(ad.getSampleRate()));
 			bufferSizeSlider.setValue(ad.getBufferSize());
 			bufferSizeSpinner.setValue(new Integer(ad.getBufferSize()));
 			outputIntervalSlider.setValue(ad.getOutputInterval());
 			outputIntervalSpinner.setValue(new Integer(ad.getOutputInterval()));
-		
+
+			useStereo.addChangeListener(this);
+			outputDevices.addActionListener(this);
+			bufferSizeSlider.addChangeListener(this);
+			bufferSizeSpinner.addChangeListener(this);
+			samplingRateSlider.addChangeListener(this);
+			samplingRateSpinner.addChangeListener(this);
+			outputIntervalSlider.addChangeListener(this);
+			outputIntervalSpinner.addChangeListener(this);
+
 			BorderLayout bl = new BorderLayout();
 			dialog.setLayout(bl);
 			JPanel container = new JPanel();
@@ -175,6 +190,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 	public void actionPerformed( ActionEvent e ) {
 		if(e.getSource().equals( outputDevices )) {
 			ad.setMixerInfo((Mixer.Info)mixers.get(outputDevices.getSelectedIndex()));
+			gui.saveConfig();
 		}
 	}
 	
@@ -182,6 +198,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		if(e.getSource().equals( samplingRateSlider )) {
 			samplingRateSpinner.setValue((Integer)samplingRates.get(samplingRateSlider.getValue()));
 			ad.setSampleRate(((Integer)samplingRates.get(samplingRateSlider.getValue())).intValue());
+			gui.saveConfig();
 		}
 		else if(e.getSource().equals( samplingRateSpinner )) {
 			for(int i=0; i<samplingRates.size(); ++i) {
@@ -189,30 +206,44 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 					samplingRateSlider.setValue(i);
 			}
 			ad.setSampleRate(((Integer)samplingRates.get(samplingRateSlider.getValue())).intValue());
+			gui.saveConfig();
 		}
 		else if(e.getSource().equals( bufferSizeSlider )) {
-			bufferSizeSpinner.setValue(new Integer(bufferSizeSlider.getValue()));
-			outputIntervalSlider.setMaximum( bufferSizeSlider.getValue());
 			ad.setBufferSize(bufferSizeSlider.getValue());
+			bufferSizeSlider.setValue(ad.getBufferSize());
+			bufferSizeSpinner.setValue(new Integer(ad.getBufferSize()));
+			outputIntervalSlider.setMaximum( ad.getBufferSize());
+			outputIntervalSlider.setValue(ad.getOutputInterval());
+			outputIntervalSpinner.setModel(new SpinnerNumberModel(ad.getOutputInterval(),1,ad.getBufferSize(),ad.getFrameSize()));
+			gui.saveConfig();
 		}
 		else if(e.getSource().equals( bufferSizeSpinner )) {
-			bufferSizeSlider.setValue(((Integer)bufferSizeSpinner.getValue()).intValue());
-			outputIntervalSlider.setMaximum( bufferSizeSlider.getValue());
-			ad.setBufferSize(bufferSizeSlider.getValue());
+			ad.setBufferSize(((Integer)bufferSizeSpinner.getValue()).intValue());
+			bufferSizeSlider.setValue(ad.getBufferSize());
+			bufferSizeSpinner.setValue(new Integer(ad.getBufferSize()));
+			outputIntervalSlider.setMaximum( ad.getBufferSize());
+			outputIntervalSlider.setValue(ad.getOutputInterval());
+			outputIntervalSpinner.setModel(new SpinnerNumberModel(ad.getOutputInterval(),1,ad.getBufferSize(),ad.getFrameSize()));
+			gui.saveConfig();
 		}
 		else if(e.getSource().equals( outputIntervalSlider )) {
-			outputIntervalSpinner.setValue( new Integer(outputIntervalSlider.getValue()));
 			ad.setOutputInterval( outputIntervalSlider.getValue() );
+			outputIntervalSpinner.setValue( new Integer(ad.getOutputInterval()));
+			outputIntervalSlider.setValue( ad.getOutputInterval());
+			gui.saveConfig();
 		}
 		else if(e.getSource().equals( outputIntervalSpinner )) {
-			outputIntervalSlider.setValue( ((Integer)outputIntervalSpinner.getValue()).intValue() );
-			ad.setOutputInterval( outputIntervalSlider.getValue() );
+			ad.setOutputInterval( ((Integer)outputIntervalSpinner.getValue()).intValue() );
+			outputIntervalSpinner.setValue( new Integer(ad.getOutputInterval()));
+			outputIntervalSlider.setValue( ad.getOutputInterval());
+			gui.saveConfig();
 		}
 		else if(e.getSource().equals( useStereo )) {
 			if(useStereo.getModel().isSelected())
 				ad.setChannels(2);
 			else
 				ad.setChannels(1);
+			gui.saveConfig();
 		}
 	}
 	public void componentHidden(ComponentEvent e) {}
