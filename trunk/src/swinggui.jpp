@@ -595,7 +595,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		static JFrame frame;
 		static JFrame fsframe;
 
-		private void createAndShowGUI() {
+		private void createGUI() {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			}
@@ -647,10 +647,12 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			/* DND */
 			JavaCrossplatformnessIsAMyth transferhandler = new JavaCrossplatformnessIsAMyth();
 			grfx.setTransferHandler(transferhandler);
-
-			frame.setVisible( true );
 		}
 
+		public void showGUI() {
+			frame.setVisible( true );
+		}
+		
 		public class JavaCrossplatformnessIsAMyth extends TransferHandler {
 			private static final String URI_LIST = "uri-list";
 			public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
@@ -1271,6 +1273,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				boolean soundchannel3active = cpu.AC.channelActive(3);
 				boolean soundchannel4active = cpu.AC.channelActive(4);
 				boolean usecheats = cheatcodes.UseCheats;
+				int    adChannels       = audioDriver.getChannels();
+				String adName           = audioDriver.getMixerInfo().getName();
+				String adVendor         = audioDriver.getMixerInfo().getVendor();
+				String adDescription    = audioDriver.getMixerInfo().getDescription();
+				String adVersion        = audioDriver.getMixerInfo().getVersion();
+				int    adBufferSize     = audioDriver.getBufferSize();
+				int    adOutputInterval = audioDriver.getOutputInterval();
+				int    adSampleRate     = audioDriver.getSampleRate();
+				                       
 				#define SAVE_VAL(x) str=#x + " = " + (x); out.write(str, 0, str.length()); out.newLine()
 
 				str = "\
@@ -1288,6 +1299,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				SAVE_VAL(soundchannel3active);
 				SAVE_VAL(soundchannel4active);
 				SAVE_VAL(usecheats);
+				SAVE_VAL( adChannels      );
+				SAVE_VAL( adName          );
+				SAVE_VAL( adVendor        );
+				SAVE_VAL( adDescription   );
+				SAVE_VAL( adVersion       );
+				SAVE_VAL( adBufferSize    );
+				SAVE_VAL( adOutputInterval);
+				SAVE_VAL( adSampleRate    );
 
 				/* SAVE PAL */
 				str = "ColorType = ";
@@ -1318,6 +1337,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			int colorType = 0;
 			biosfilename = "";
 			VC.nscale = 2;
+			int adChannels = 2;
+			String adName = "None";
+			String adVendor = "None";
+			String adDescription = "None";
+			String adVersion = "None";
+			int adBufferSize = 2048;
+			int adOutputInterval = 1024;
+			int adSampleRate = 44100;
 			try {
 				String filename = FHandler.JGBEDir("") + "jgbe.conf";
 				BufferedReader in = new BufferedReader(new FileReader(filename));
@@ -1357,6 +1384,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 						if (property.equalsIgnoreCase("soundchannel"+(i+1)+"active"))
 							soundchannelactive[i] = value.equalsIgnoreCase("True");
 
+					LOAD_INT_VAL(adChannels);
+					LOAD_STRING_VAL(adName);
+					LOAD_STRING_VAL(adVendor);
+					LOAD_STRING_VAL(adDescription);
+					LOAD_STRING_VAL(adVersion);
+					LOAD_INT_VAL(adBufferSize);
+					LOAD_INT_VAL(adOutputInterval);
+					LOAD_INT_VAL(adSampleRate);
+
 					/* LOAD PAL */
 					if (property.equalsIgnoreCase("ColorType")) {
 						try {
@@ -1394,6 +1430,13 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			scaleRadioGroup.setSelectedIndex(VC.nscale-1);
 			if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
 			menuitemEnableCheats.setState(usecheats);
+			
+			audioDriver.setMixerInfo(adName, adVendor, adDescription, adVersion);
+			audioDriver.setChannels(adChannels);
+			audioDriver.setBufferSize(adBufferSize);
+			audioDriver.setOutputInterval(adOutputInterval);
+			audioDriver.setSampleRate(adSampleRate);
+			
 			loading = false;
 
 			// FIXME: save/load these
@@ -1557,7 +1600,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					sound = true;
 				if (args[i].equals("-debug"))
 					debug = true;
-				if ((args[i].equals("-lastcart"))) //TODO: FIXME: Invert this (current behavious is a work-around)
+				if ((args[i].equals("-lastcart"))) //TODO: FIXME: Invert this (current behaviour is a work-around)
 					lastcart=true;
 			}
 			if(lastcart && (gui.rcFiles.size() > 0))
@@ -1569,10 +1612,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui );
-			gui.createAndShowGUI();
-			//Audio Properties Dialog
-			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, gui.audioDriver);
-// 			advancedAudioPropertiesDialog.showWindow();
+			gui.createGUI();
 
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
@@ -1583,6 +1623,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			cheatcodes.applyCheatCodes(cart);
 
 			gui.loadConfig();
+			//Audio Properties Dialog
+			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, gui.audioDriver, gui);
+// 			advancedAudioPropertiesDialog.showWindow();
 
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
@@ -1606,6 +1649,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				gui.cpuRunner = new SimpleCPURunner();
 				gui.resumeEmulation(false);
 			}
+			gui.showGUI();
 			PRINTFREEMEM("Emulator up & running");
 		}
 

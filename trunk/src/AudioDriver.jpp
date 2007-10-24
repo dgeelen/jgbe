@@ -13,6 +13,7 @@ public class AudioDriver implements IAudioListener {
 	int sampleRate;
 	int audioBufferSize;
 	int sampleSize;
+	int frameSize;
 	int outputInterval;
 	int channels;
 	boolean signedSound;
@@ -30,51 +31,90 @@ public class AudioDriver implements IAudioListener {
 		sampleRate = 44100;
 		sampleSize = 8;
 		channels = 2;
+		frameSize = 2;
 		signedSound = true;
 		bigEndianSound = true;
 		outputInterval=1<<6;
 	}
 
+	public void stop() {
+		if(audioSource != null) {
+			audioSource.stop();
+			audioSource.close();
+		}
+	}
+	
+	public void start() {
+		try {
+			if(audioSource != null) {
+				audioSource.open(new AudioFormat(sampleRate, sampleSize, channels, signedSound, bigEndianSound), audioBufferSize);
+				audioSource.start();
+			}
+		}
+		catch(LineUnavailableException e) {
+				PRINTLN("Note: Sound will be unavailable");
+			}
+	}
+	
 	public boolean update() {
+// 		PRINTLN("sampleRate="+sampleRate+" sampleSize="+sampleSize+" channels="+channels+" signedSound="+signedSound+" bigEndianSound="+bigEndianSound+" audioBufferSize="+audioBufferSize+" mixer="+mixerinfo);
+		frameSize = (sampleSize+7)/8*channels;
+// 		PRINTLN(frameSize);
 		AudioFormat af = new AudioFormat(sampleRate, sampleSize, channels, signedSound, bigEndianSound);
 		DataLine.Info di = new DataLine.Info(SourceDataLine.class, af, audioBufferSize);
 		Mixer m = AudioSystem.getMixer(mixerinfo);
 		if(m.isLineSupported(di)) {
 			try {
-				if(audioSource!=null) { //cleanup
-					audioSource.stop();
-					audioSource.close();
-				}
+				stop();
 				SourceDataLine sdl = (SourceDataLine)m.getLine(di);
 				audioSource = sdl;
-				audioSource.open(af, audioBufferSize);
-				audioSource.start();
+				start();
 				ac.setSampleRate(sampleRate);
 				return true;
 			}
-			catch(LineUnavailableException e) {}
+			catch(LineUnavailableException e) {
+				PRINTLN("Note: Sound will be unavailable");
+			}
 		}
 		return false;
 	};
 
+	public int getFrameSize() {
+		return frameSize;
+	}
+	
 	public int getChannels() {
 		return channels;
 	}
 
 	public void setChannels(int n) {
 		channels = n;
-		audioBufferIndex = (sampleSize*channels)*(audioBufferIndex/(sampleSize*channels));;
+		audioBufferIndex = (frameSize)*(audioBufferIndex/(frameSize));;
 		update();
 	}
 	
 	public Mixer.Info getMixerInfo() {
 		return mixerinfo;
 	}
+
+	public boolean setMixerInfo(String adName, String adVendor, String adDescription, String adVersion) {
+// 		PRINTLN("+  name="+adName+" vendor="+adVendor+" desc="+adDescription+" version="+adVersion);
+		Mixer.Info[] mi = AudioSystem.getMixerInfo();
+		for(int i=0; i<mi.length; ++i) {
+// 			PRINTLN("-  name="+mi[i].getName()+" vendor="+mi[i].getVendor()+" desc="+mi[i].getDescription()+" version="+mi[i].getVersion());
+			if(mi[i].getName().equals(adName)
+			   && mi[i].getVendor().equals(adVendor)
+			   && mi[i].getDescription().equals(adDescription)
+			   && mi[i].getVersion().equals(adVersion)) return setMixerInfo(mi[i]);
+		}
+		return false;
+	}
 	
 	public boolean setMixerInfo(Mixer.Info minfo) {
 		Mixer.Info tmp = mixerinfo;
 		mixerinfo = minfo;
 		if( update() ) return true;
+// 		PRINTLN("FAIL");
 		mixerinfo = tmp;
 		return false;
 	}
@@ -88,17 +128,17 @@ public class AudioDriver implements IAudioListener {
 	}
 	
 	public boolean setOutputInterval(int n) {
-		outputInterval = (sampleSize*channels)*(n/(sampleSize*channels));
-		if(outputInterval >= audioBufferSize -1 - (sampleSize*channels))
-			outputInterval = audioBufferSize - (sampleSize*channels);
-		outputInterval = Math.max((sampleSize*channels), outputInterval);
+		outputInterval = (frameSize)*(n/(frameSize));
+		if(outputInterval >= audioBufferSize -1 - (frameSize))
+			outputInterval = audioBufferSize - (frameSize);
+		outputInterval = Math.max((frameSize), outputInterval);
 		return true;
 	}
 	
 	public boolean setBufferSize(int n) {
-		audioBufferSize = (sampleSize*channels)*(n/(sampleSize*channels));;
+		audioBufferSize = (frameSize)*(n/(frameSize));;
 		setOutputInterval(Math.min(audioBufferSize, outputInterval));
-		if(audioBufferIndex >= audioBufferSize - (sampleSize*channels)) audioBufferIndex=(audioBufferSize)-(sampleSize*channels);
+		if(audioBufferIndex >= audioBufferSize - (frameSize)) audioBufferIndex=(audioBufferSize)-(frameSize);
 		audioBuffer = new byte[n];
 		return update();
 	}
