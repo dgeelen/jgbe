@@ -639,20 +639,20 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			frame.setResizable(false);
 
-			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-			Point     p = new Point();
-			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
-			frame.setLocation(p);
-
 			/* DND */
 			JavaCrossplatformnessIsAMyth transferhandler = new JavaCrossplatformnessIsAMyth();
 			grfx.setTransferHandler(transferhandler);
 		}
 
 		public void showGUI() {
+			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+			Point     p = new Point();
+			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
+			frame.setLocation(p);
+
 			frame.setVisible( true );
 		}
-		
+
 		public class JavaCrossplatformnessIsAMyth extends TransferHandler {
 			private static final String URI_LIST = "uri-list";
 			public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
@@ -1281,7 +1281,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				int    adBufferSize     = audioDriver.getBufferSize();
 				int    adOutputInterval = audioDriver.getOutputInterval();
 				int    adSampleRate     = audioDriver.getSampleRate();
-				                       
+
 				#define SAVE_VAL(x) str=#x + " = " + (x); out.write(str, 0, str.length()); out.newLine()
 
 				str = "\
@@ -1430,13 +1430,13 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			scaleRadioGroup.setSelectedIndex(VC.nscale-1);
 			if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
 			menuitemEnableCheats.setState(usecheats);
-			
+
 			audioDriver.setMixerInfo(adName, adVendor, adDescription, adVersion);
 			audioDriver.setChannels(adChannels);
 			audioDriver.setBufferSize(adBufferSize);
 			audioDriver.setOutputInterval(adOutputInterval);
 			audioDriver.setSampleRate(adSampleRate);
-			
+
 			loading = false;
 
 			// FIXME: save/load these
