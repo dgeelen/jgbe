@@ -1118,8 +1118,11 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				long ctime = System.nanoTime();
 				long timeLapse =  ctime - FPSTimeMillis;
 				FPSTimeMillis = ctime;
+
 				double afps=fps/(timeLapse/1000000000.0);
-				double emuspeed = ((int)(afps/(4194304.0/702240000.0)))/100.0;
+				long ncycles = CPU.TotalCycleCount - FPSCPUCycles;
+				FPSCPUCycles = CPU.TotalCycleCount;
+				double emuspeed =  ((int)((((float)ncycles)/((4194304*timeLapse)/1000000000.0f))*10000.0f))/100.0;
 				frame.setTitle("JGBE V"+Version.str+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"% - "+ CPU.TotalCycleCount);
 				//cpu.AC.srendered = 0;
 				fps = 0;
@@ -1127,6 +1130,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			if (configStateChanged ) saveConfig();
 		}
 		long FPSTimeMillis = System.nanoTime();
+		long FPSCPUCycles = CPU.TotalCycleCount;
 
 		public void itemStateChanged( ItemEvent e ) {
 			JMenuItem source = ( JMenuItem )( e.getSource() );
