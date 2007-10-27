@@ -18,7 +18,9 @@ endif
 CLASSPATH:=$(CLASSPATH):/usr/share/bcel/lib/bcel.jar
 SRCPATH  :=$(SRCDIR)
 
+JAVA_XCB_HACK := $(shell ls LIBXCB_ALLOW_SLOPPY_LOCK > /dev/null 2>&1 /dev/null && echo "LIBXCB_ALLOW_SLOPPY_LOCK=1")
 AOSS:=$(shell which aoss 2> /dev/null)
+JAVA_BIN := $(JAVA_XCB_HACK) $(AOSS) java
 
 -include Makefile.config
 -include Makefile.inc
@@ -55,31 +57,31 @@ $(JARDIR)/sjgbe.jar: $(JARDIR)/jgbe.jar
 	@jarsigner -keystore jgbestore -storepass ab987c -keypass kpi135 -signedjar jar/sjgbe.jar jar/jgbe.jar signFiles > /dev/null
 
 fun: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart
 
 silence: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound
 
 run: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -debug
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -debug
 
 debug: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -lastcart -nosound -debug
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound -debug
 
 oglfun: all
-	cd $(CLASSDIR) && $(AOSS) java -Dsun.java2d.opengl=True swinggui -lastcart
+	cd $(CLASSDIR) && $(JAVA_BIN) -Dsun.java2d.opengl=True swinggui -lastcart
 
 # get PerfAnal.jar at
 # http://java.sun.com/developer/technicalArticles/Programming/perfanal/PerfAnal.jar
 profile: all
-	cd $(CLASSDIR) && $(AOSS) java -agentlib:hprof=cpu=samples,depth=6,thread=y,interval=1 swinggui -lastcart -nosound
-	java -jar PerfAnal.jar $(CLASSDIR)/java.hprof.txt
+	cd $(CLASSDIR) && $(JAVA_BIN) -agentlib:hprof=cpu=samples,depth=6,thread=y,interval=1 swinggui -lastcart -nosound
+	$(JAVA_BIN) -jar PerfAnal.jar $(CLASSDIR)/java.hprof.txt
 
 link: all
-	cd $(CLASSDIR) && $(AOSS) java swinggui -nosound
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -nosound
 
 tester: all
-	cd $(CLASSDIR) && java TestSuite ~/gbroms/Turtles\ 3.zip
+	cd $(CLASSDIR) && $(JAVA_BIN) TestSuite ~/gbroms/Turtles\ 3.zip
 
 rndCartridge: $(SRCDIR)/rndCartridge.cpp
 	g++ -O3 $(SRCDIR)/rndCartridge.cpp -o rndCartridge
@@ -106,7 +108,7 @@ $(SRCDIR)/%.java: $(SRCDIR)/%.jpp
 	@mv $*.d $(DEPSDIR)/
 
 jarrun: $(JARDIR)/jgbe.jar
-	cd $(JARDIR) && java -jar jgbe.jar -lastcart
+	cd $(JARDIR) && $(JAVA_BIN) -jar jgbe.jar -lastcart
 
 $(JARDIR)/jgbe.jar: $(CLASSFILES)
 	@echo "[packing] jgbe.jar"
