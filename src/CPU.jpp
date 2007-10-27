@@ -262,6 +262,7 @@ public final class CPU {
 
 		public static boolean isCGB() {
 			//PRINTLN("** <INSERT DESCRIPTIVE TEXT HERE> ** [0x0143] = " + read(0x0143));
+			if(cartridge==null) return false;
 			return (read(0x0143) == 0x80) || (read(0x0143) == 0xC0);
 		}
 
