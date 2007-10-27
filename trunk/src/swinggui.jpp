@@ -1277,14 +1277,26 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				boolean soundchannel3active = cpu.AC.channelActive(3);
 				boolean soundchannel4active = cpu.AC.channelActive(4);
 				boolean usecheats = cheatcodes.UseCheats;
-				int    adChannels       = audioDriver.getChannels();
-				String adName           = audioDriver.getMixerInfo().getName();
-				String adVendor         = audioDriver.getMixerInfo().getVendor();
-				String adDescription    = audioDriver.getMixerInfo().getDescription();
-				String adVersion        = audioDriver.getMixerInfo().getVersion();
-				int    adBufferSize     = audioDriver.getBufferSize();
-				int    adOutputInterval = audioDriver.getOutputInterval();
-				int    adSampleRate     = audioDriver.getSampleRate();
+				int    adChannels = 2;
+				String adName = "";
+				String adVendor= "";
+				String adDescription= "";
+				String adVersion= "";
+				int    adBufferSize=4096;
+				int    adOutputInterval=2048;
+				int    adSampleRate=44100;
+				if(audioDriver!=null) {
+					adChannels       = audioDriver.getChannels();
+					if(audioDriver.getMixerInfo()!=null) {
+						adName           = audioDriver.getMixerInfo().getName();
+						adVendor         = audioDriver.getMixerInfo().getVendor();
+						adDescription    = audioDriver.getMixerInfo().getDescription();
+						adVersion        = audioDriver.getMixerInfo().getVersion();
+					}
+					adBufferSize     = audioDriver.getBufferSize();
+					adOutputInterval = audioDriver.getOutputInterval();
+					adSampleRate     = audioDriver.getSampleRate();
+				}
 
 				#define SAVE_VAL(x) str=#x + " = " + (x); out.write(str, 0, str.length()); out.newLine()
 
