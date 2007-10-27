@@ -23,15 +23,19 @@ public class IntVector {
 
 	/// Inserts the specified element at the specified position in this list.
 	public void add(int index, int element) {
-		if (data.length == length) resize(length*2);
+		ensureCapacity();
 		System.arraycopy(data, index, data, index+1, length-index);
 		data[index] = element;
 		++length;
 	}
 
+	private void ensureCapacity() {
+		if (data.length == length) resize(length*2);
+	}
+
 	/// Appends the specified element to the end of this list.
 	public boolean add(int element) {
-		if (data.length == length) resize(length*2);
+		ensureCapacity();
 		data[length++] = element;
 		return true;
 	}
@@ -97,7 +101,7 @@ public class IntVector {
 
 	SAVELOAD_FUNCTION {
 		SL_INT(length);
-		if (SL_LOAD) data = new int[length*2];
+		if (SL_LOAD) data = new int[Math.max(1, length*2)];
 		SL_ARR(INT, data, length);
 	}
 
