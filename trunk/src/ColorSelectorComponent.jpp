@@ -1,0 +1,546 @@
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.border.*;
+import javax.swing.colorchooser.*;
+import java.awt.event.*;
+import java.awt.*;
+import java.awt.geom.Point2D;
+import java.util.*;
+
+public class ColorSelectorComponent extends AbstractColorChooserPanel
+{
+  // rgb colors
+  public static final int MIN_RED = 0;
+  public static final int MAX_RED = 255;
+  public static final int MIN_GREEN = 0;
+  public static final int MAX_GREEN = 255;
+  public static final int MIN_BLUE = 0;
+  public static final int MAX_BLUE = 255;
+
+  // hsv colors
+  public static final int MIN_HUE = 0;
+  public static final int MAX_HUE = 360;
+  public static final int MIN_SATURATION = 0;
+  public static final int MAX_SATURATION = 100;
+  public static final int MIN_VALUE = 0;
+  public static final int MAX_VALUE = 100;
+
+  // color wheel
+  public static final float WHEEL_WIDTH = 0.2f;
+
+	private JPanel pnlCenter = new JPanel();
+	private JPanel pnlSouth = new JPanel();
+	private JPanel pnlHSVRGBCS = new JPanel();
+	private JPanel pPanel = new JPanel();
+
+	private RGBColorSelectorComponent RGBCSC = new RGBColorSelectorComponent(this);
+	private HSVColorSelectorComponent HSVCSC = new HSVColorSelectorComponent(this);
+	private ExtendedHSVColorSelectorComponent EHSVSC = new ExtendedHSVColorSelectorComponent(this);
+
+	public ColorSelectorComponent()
+	{
+		buildChooser();
+	}
+
+	public String getDisplayName()
+	{
+		return "HSV Wheel";
+	}
+
+	public Icon getLargeDisplayIcon()
+	{
+		return new ImageIcon();
+	}
+
+	public Icon getSmallDisplayIcon()
+	{
+			return new ImageIcon();
+	}
+
+	public void updateChooser()
+	{
+		updateColors(this, getColorFromModel().getRed(), getColorFromModel().getGreen(), getColorFromModel().getBlue());
+	}
+
+	protected void buildChooser()
+	{
+		add(EHSVSC, BorderLayout.CENTER);
+
+		pnlHSVRGBCS.setLayout(new GridLayout(2,1));
+		pnlHSVRGBCS.add(RGBCSC);
+		pnlHSVRGBCS.add(HSVCSC);
+		add(pnlHSVRGBCS, BorderLayout.EAST);
+	}
+
+	/*
+	 * 0 <= r, g, b <= 255
+	 */
+	public void updateColors(JPanel caller, int r, int g, int b)
+	{
+		getColorSelectionModel().setSelectedColor(new Color(r,g,b));
+
+		if (!caller.equals(RGBCSC))
+			RGBCSC.updateColors(r, g, b);
+		if (!caller.equals(HSVCSC))
+			HSVCSC.updateColors(r, g, b);
+		if (!caller.equals(EHSVSC))
+			EHSVSC.updateColors(r, g, b);
+	}
+}
+
+class RGBColorSelectorComponent extends JPanel implements ChangeListener
+{
+	private JColoredSlider[] rgbSliders = {new JColoredSlider(ColorSelectorComponent.MIN_RED,
+                                                            ColorSelectorComponent.MAX_RED,
+                                                            ColorSelectorComponent.MIN_RED),  // r
+	                                       new JColoredSlider(ColorSelectorComponent.MIN_GREEN,
+                                                            ColorSelectorComponent.MAX_GREEN,
+                                                            ColorSelectorComponent.MIN_GREEN),  // g
+	                                       new JColoredSlider(ColorSelectorComponent.MIN_BLUE,
+                                                            ColorSelectorComponent.MAX_BLUE,
+                                                            ColorSelectorComponent.MIN_BLUE)}; // b
+
+  private SpinnerNumberModel[] snms = { new SpinnerNumberModel(ColorSelectorComponent.MIN_RED,
+                                                               ColorSelectorComponent.MIN_RED,
+                                                               ColorSelectorComponent.MAX_RED,
+                                                               1),
+                                        new SpinnerNumberModel(ColorSelectorComponent.MIN_RED,
+                                                               ColorSelectorComponent.MIN_RED,
+                                                               ColorSelectorComponent.MAX_RED,
+                                                               1),
+                                        new SpinnerNumberModel(ColorSelectorComponent.MIN_RED,
+                                                               ColorSelectorComponent.MIN_RED,
+                                                               ColorSelectorComponent.MAX_RED,
+                                                               1) };
+
+  private JSpinner[] rgbSpinners = {new JSpinner(snms[0]),
+                                    new JSpinner(snms[1]),
+                                    new JSpinner(snms[2])};
+	ColorSelectorComponent creator;
+	boolean changing = false;
+
+	public RGBColorSelectorComponent(ColorSelectorComponent creator)
+	{
+		this.creator = creator;
+
+		setLayout(new BorderLayout(3,0));
+
+		JPanel pnlCenter = new JPanel();
+		pnlCenter.setLayout(new GridLayout(3,1));
+		for (int i = 0; i < rgbSliders.length; ++i)
+		{
+			JSlider s = rgbSliders[i];
+			s.setMajorTickSpacing(s.getMaximum());
+			s.addChangeListener(this);
+			pnlCenter.add(s);
+		}
+
+		JPanel pnlEast = new JPanel();
+		pnlEast.setLayout(new GridLayout(3,1));
+		for (int i = 0; i < rgbSpinners.length; ++i)
+		{
+			JSpinner s = rgbSpinners[i];
+		  pnlEast.add(s);
+		  s.addChangeListener(this);
+    }
+
+		JPanel pnlWest = new JPanel();
+		pnlWest.setLayout(new GridLayout(3,1));
+		pnlWest.add(new JLabel("R"));
+		pnlWest.add(new JLabel("G"));
+		pnlWest.add(new JLabel("B"));
+
+    add(pnlCenter, BorderLayout.CENTER);
+    add(pnlEast, BorderLayout.EAST);
+    add(pnlWest, BorderLayout.WEST);
+		setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "RGB Colors"));
+	}
+
+	public void updateSliders()
+	{
+	  int r = rgbSliders[0].getValue();
+	  int g = rgbSliders[1].getValue();
+	  int b = rgbSliders[2].getValue();
+
+    rgbSliders[0].setMinColor(new Color(0, g, b));
+    rgbSliders[0].setMaxColor(new Color(255, g, b));
+
+    rgbSliders[1].setMinColor(new Color(r, 0, b));
+    rgbSliders[1].setMaxColor(new Color(r, 255, b));
+
+    rgbSliders[2].setMinColor(new Color(r, g, 0));
+    rgbSliders[2].setMaxColor(new Color(r, g, 255));
+
+    repaint();
+  }
+
+  public void updateSpinners()
+  {
+	  int r = rgbSliders[0].getValue();
+	  int g = rgbSliders[1].getValue();
+	  int b = rgbSliders[2].getValue();
+
+    rgbSpinners[0].setValue(new Integer(r));
+    rgbSpinners[1].setValue(new Integer(g));
+    rgbSpinners[2].setValue(new Integer(b));
+  }
+
+	public void stateChanged(ChangeEvent e)
+	{
+		if (!changing)
+		{
+		  if (e.getSource() instanceof JSlider)
+		    creator.updateColors(this,
+                             rgbSliders[0].getValue(),
+                             rgbSliders[1].getValue(),
+                             rgbSliders[2].getValue());
+		  else
+		    creator.updateColors(this,
+                             ((Integer)rgbSpinners[0].getValue()).intValue(),
+                             ((Integer)rgbSpinners[1].getValue()).intValue(),
+                             ((Integer)rgbSpinners[2].getValue()).intValue());
+    }
+	}
+
+	/*
+	 * 0 <= r, g, b <= 255
+	 */
+	public void updateColors(int r, int g, int b)
+	{
+		changing = true;
+		rgbSliders[0].setValue(r);
+		rgbSliders[1].setValue(g);
+		rgbSliders[2].setValue(b);
+		updateSliders();
+		updateSpinners();
+		changing = false;
+	}
+}
+
+class HSVColorSelectorComponent extends JPanel implements ChangeListener
+{
+	private JColoredSlider[] hsvSliders = {new JHueSlider(JSlider.HORIZONTAL,
+                                                        ColorSelectorComponent.MIN_HUE,
+                                                        ColorSelectorComponent.MAX_HUE,
+                                                        ColorSelectorComponent.MIN_HUE),  // h
+	                                       new JColoredSlider(JSlider.HORIZONTAL,
+                                                            ColorSelectorComponent.MIN_SATURATION,
+                                                            ColorSelectorComponent.MAX_SATURATION,
+                                                            ColorSelectorComponent.MIN_SATURATION),  // s
+	                                       new JColoredSlider(JSlider.HORIZONTAL,
+                                                            ColorSelectorComponent.MIN_VALUE,
+                                                            ColorSelectorComponent.MAX_VALUE,
+                                                            ColorSelectorComponent.MIN_VALUE)}; // v
+
+  private SpinnerNumberModel[] snms = { new SpinnerNumberModel(ColorSelectorComponent.MIN_HUE,
+                                                               ColorSelectorComponent.MIN_HUE,
+                                                               ColorSelectorComponent.MAX_HUE,
+                                                               1),
+                                        new SpinnerNumberModel(ColorSelectorComponent.MIN_SATURATION,
+                                                               ColorSelectorComponent.MIN_SATURATION,
+                                                               ColorSelectorComponent.MAX_SATURATION,
+                                                               1),
+                                        new SpinnerNumberModel(ColorSelectorComponent.MAX_VALUE,
+                                                               ColorSelectorComponent.MIN_VALUE,
+                                                               ColorSelectorComponent.MAX_VALUE,
+                                                               1) };
+
+  private JSpinner[] hsvSpinners = {new JSpinner(snms[0]),
+                                    new JSpinner(snms[1]),
+                                    new JSpinner(snms[2])};
+	ColorSelectorComponent creator;
+	boolean changing = false;
+
+	public HSVColorSelectorComponent(ColorSelectorComponent creator)
+	{
+		this.creator = creator;
+
+		setLayout(new BorderLayout(3,0));
+
+		JPanel pnlCenter = new JPanel();
+		pnlCenter.setLayout(new GridLayout(3,1));
+
+		for (int i = 0; i < hsvSliders.length; ++i)
+		{
+
+			JSlider s = hsvSliders[i];
+			s.addChangeListener(this);
+			pnlCenter.add(s);
+		}
+		JPanel pnlEast = new JPanel();
+		pnlEast.setLayout(new GridLayout(3,1));
+		for (int i = 0; i < hsvSpinners.length; ++i)
+		{
+			JSpinner s = hsvSpinners[i];
+		  pnlEast.add(s);
+		  s.addChangeListener(this);
+    }
+
+		JPanel pnlWest = new JPanel();
+		pnlWest.setLayout(new GridLayout(3,1));
+		pnlWest.add(new JLabel("H"));
+		pnlWest.add(new JLabel("S"));
+		pnlWest.add(new JLabel("V"));
+
+    add(pnlCenter, BorderLayout.CENTER);
+    add(pnlEast, BorderLayout.EAST);
+    add(pnlWest, BorderLayout.WEST);
+		setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "HSV Colors"));
+	}
+
+	private void setSlidersColors()
+	{
+	  float h = (float)hsvSliders[0].getValue();
+	  float s = (float)hsvSliders[1].getValue();
+	  float v = (float)hsvSliders[2].getValue();
+
+	  ((JHueSlider)hsvSliders[0]).setSaturationAndValue(s, v);
+
+    hsvSliders[1].setMinColor(ColorConverter.hsvToColor(h, 0f, v));
+    hsvSliders[1].setMaxColor(ColorConverter.hsvToColor(h, 100f, v));
+
+    hsvSliders[2].setMinColor(ColorConverter.hsvToColor(h, s, 0f));
+    hsvSliders[2].setMaxColor(ColorConverter.hsvToColor(h, s, 100f));
+		repaint();
+  }
+
+	public void stateChanged(ChangeEvent e)
+	{
+		if (!changing)
+		{
+		  Color color = ColorConverter.hsvToColor(hsvSliders[0].getValue(),
+		                                          hsvSliders[1].getValue(),
+		                                          hsvSliders[2].getValue());
+			creator.updateColors(this,
+                           color.getRed(),
+                           color.getGreen(),
+                           color.getBlue());
+		}
+	}
+
+	/*
+	 * 0 <= r, g, b <= 255
+	 */
+	public void updateColors(int r, int g, int b)
+	{
+		changing = true;
+		float[] rgb = ColorConverter.rgbToHsv(r, g, b);
+		hsvSliders[0].setValue((int)rgb[0]);
+		hsvSliders[1].setValue((int)rgb[1]);
+		hsvSliders[2].setValue((int)rgb[2]);
+		changing = false;
+		setSlidersColors();
+	}
+}
+
+class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
+{
+	private float cAngle = 0f;
+	ColorSelectorComponent creator;
+
+	public ExtendedHSVColorSelectorComponent(ColorSelectorComponent creator)
+	{
+		this.creator = creator;
+		setPreferredSize(new Dimension(300, 300));
+		setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Extended HSV Colors"));
+		addMouseListener(this);
+	}
+
+	/*
+	 * 0 <= r, g, b <= 255
+	 */
+	public void updateColors(int r, int g, int b)
+	{
+		cAngle = ColorConverter.rgbToHsv(r, g, b)[0];
+		repaint();
+	}
+
+	public void mouseClicked(MouseEvent e)
+	{
+		// Check whether click was whithin color circle
+		Insets bi = getInsets();
+		int centerX = (int)(getSize().getWidth() / 2);
+		int centerY = (int)(getSize().getHeight() / 2);
+		int bw = bi.left + bi.right;
+		int bh = bi.top + bi.bottom;
+		int width = (int)getSize().getWidth() - bw;
+		int height = (int)getSize().getHeight() - bh;
+		int min = (width < height)?width:height;
+		int dist = (int)Point2D.distance(centerX, centerY, e.getX(), e.getY());
+
+		boolean inCircle = ((int)(min*ColorSelectorComponent.WHEEL_WIDTH* 2) <= dist) &&
+                        (dist <= min/2);
+
+		if (inCircle)
+		{
+			boolean mx = false;
+			boolean my = false;
+			int x = centerX - e.getX();
+			int y = centerY - e.getY();
+			cAngle = (float)Math.toDegrees(Math.atan2(y, x));
+			if (cAngle < 0) cAngle += 360;
+			cAngle -= 180;
+			if (cAngle < 0) cAngle += 360;
+		}
+
+		repaint();
+	}
+
+	public void paintComponent(Graphics g2)
+	{
+  	Graphics2D g = (Graphics2D)g2;
+  	g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+  	                   RenderingHints.VALUE_ANTIALIAS_ON);
+
+		g.setColor(getBackground());
+		g.fillRect(0,0,(int)getSize().getWidth(), (int)getSize().getHeight());
+		Insets bi = getInsets();
+		int bw = bi.left + bi.right;
+		int bh = bi.top + bi.bottom;
+		int width = (int)getSize().getWidth() - bw;
+		int height = (int)getSize().getHeight() - bh;
+		int min = (width < height)?width:height;
+		int x = ((int)(getSize().getWidth() / 2) - (min / 2));
+		int y = ((int)(getSize().getHeight() / 2) - (min / 2));
+
+		int r1 = min/2;
+		int r2 = (int)(min * (1 - ColorSelectorComponent.WHEEL_WIDTH)) / 2;
+		x = x + min / 2;
+		y = y + min / 2;
+
+    int precision = 256*3;
+
+		for (int i = 0; i < precision; ++i)
+		{
+			g.setColor(ColorConverter.hsvToColor(i*(float)ColorSelectorComponent.MAX_HUE/((float)precision),
+                                           (float)ColorSelectorComponent.MAX_SATURATION,
+                                           (float)ColorSelectorComponent.MAX_VALUE));
+
+			int[] xs = new int[4];
+			int[] ys = new int[4];
+
+			xs[0] = x + getX(i*360f/(precision), r1);
+			xs[1] = x + getX(i*360f/(precision) + 1, r1);
+			xs[2] = x + getX(i*360f/(precision) + 1, r2);
+			xs[3] = x + getX(i*360f/(precision), r2);
+
+			ys[0] = y + getY(i*360f/(precision), r1);
+			ys[1] = y + getY(i*360f/(precision) + 1, r1);
+			ys[2] = y + getY(i*360f/(precision) + 1, r2);
+			ys[3] = y + getY(i*360f/(precision), r2);
+
+			g.fillPolygon(xs, ys, 4);
+		}
+
+    // Draw circle pointer
+    int cr = (int)((r1 - r2) * 0.2);
+    g.setColor(Color.BLACK);
+    g.drawOval(x - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + (int)getX(cAngle, (int)(((r1 + r2) / 2f))),
+               y - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + (int)getY(cAngle, (int)(((r1 + r2) / 2f))),
+               cr,
+               cr);
+		drawTriangle(g, x, y, r2, cAngle);
+	}
+
+	public void drawTriangle(Graphics2D g, int x, int y, int radius, float angle)
+	{
+		int[] xs = new int[3];
+		int[] ys = new int[3];
+
+		xs[0] = x + getX(Math.IEEEremainder(angle +   0f, 360f), radius);
+		ys[0] = y + getY(Math.IEEEremainder(angle +   0f, 360f), radius);
+
+		xs[1] = x + getX(Math.IEEEremainder(angle + 120f, 360f), radius);
+		ys[1] = y + getY(Math.IEEEremainder(angle + 120f, 360f), radius);
+
+		xs[2] = x + getX(Math.IEEEremainder(angle + 240f, 360f), radius);
+		ys[2] = y + getY(Math.IEEEremainder(angle + 240f, 360f), radius);
+
+		Point[] p = new Point[3];
+		p[0] = new Point(xs[0], ys[0]);
+		p[1] = new Point(xs[1], ys[1]);
+		p[2] = new Point(xs[2], ys[2]);
+
+		Color[] c = new Color[3];
+		c[0] = ColorConverter.hsvToColor(angle, 100f, 100f);
+		c[1] = Color.WHITE;
+		c[2] = Color.BLACK;
+
+		g.setPaint(new TriGradientPaint(p, c));
+		g.fillPolygon(xs, ys, 3);
+	}
+
+	private int getX(float degree, int radius)
+	{
+		return (int)(radius * (Math.cos(Math.toRadians(degree))));
+	}
+
+	private int getY(float degree, int radius)
+	{
+		return (int)(radius * (Math.sin(Math.toRadians(degree))));
+	}
+
+	private int getX(double degree, int radius)
+	{
+		return (int)(radius * (Math.cos(Math.toRadians(degree))));
+	}
+
+	private int getY(double degree, int radius)
+	{
+		return (int)(radius * (Math.sin(Math.toRadians(degree))));
+	}
+	public void mouseEntered(MouseEvent e) {}
+	public void mouseExited(MouseEvent e) {}
+	public void mouseReleased(MouseEvent e) {}
+	public void mousePressed(MouseEvent e) {}
+}
+
+class ColorConverter
+{
+	/*
+	 * 0 <= h <= 360
+	 * 0 <= s <= 100
+	 * 0 <= v <= 100
+	 */
+	public static Color hsvToColor(float h, float s, float v)
+	{
+		return Color.getHSBColor(h / ColorSelectorComponent.MAX_HUE,
+                             s / ColorSelectorComponent.MAX_SATURATION,
+                             v / ColorSelectorComponent.MAX_VALUE);
+	}
+
+	/**
+	 * 0 <= r, g, b < 256
+	 * return [h, s, v]
+	 * 0 <= h <= 360
+	 * 0 <= s, v <= 100
+	 */
+	public static float[] rgbToHsv(int r, int g, int b)
+	{
+		float[] result = new float[3]; // [h,s,v]
+    Color.RGBtoHSB(r, g, b, result);
+    result[0] *= ColorSelectorComponent.MAX_HUE;
+    result[1] *= ColorSelectorComponent.MAX_SATURATION;
+    result[2] *= ColorSelectorComponent.MAX_VALUE;
+		return result;
+	}
+
+	/*
+	 * 0 <= h <= 360
+	 * 0 <= s <= 100
+	 * 0 <= v <= 100
+	 * return [r,g,b]
+	 */
+	public static int[] hsvToRgb(float h, float s, float v)
+	{
+		int[] result = new int[3];
+		int color = Color.HSBtoRGB(h / ColorSelectorComponent.MAX_HUE,
+                               s / ColorSelectorComponent.MAX_SATURATION,
+                               v / ColorSelectorComponent.MAX_VALUE);
+
+    result[2] = color & 0xff;
+    result[1] = (color >> 0xff) & 0xff;
+    result[0] = (color >> 0xffff) & 0xff;
+    return result;
+	}
+}
