@@ -1126,11 +1126,17 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				frame.setTitle("JGBE V"+Version.str+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"% - "+ CPU.TotalCycleCount);
 				//cpu.AC.srendered = 0;
 				fps = 0;
+				if (deactcount > 0 && --deactcount == 0 && enableFullScreen.getState()) {
+					--deactcount;
+					enableFullScreen.setState(false);
+					componentResized(null);
+				}
 			}
 			if (configStateChanged ) saveConfig();
 		}
 		long FPSTimeMillis = System.nanoTime();
 		long FPSCPUCycles = CPU.TotalCycleCount;
+		long deactcount = 0;
 
 		public void itemStateChanged( ItemEvent e ) {
 			JMenuItem source = ( JMenuItem )( e.getSource() );
@@ -1686,11 +1692,23 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			starter(gui, args);
 		}
 
-		public void windowActivated(WindowEvent e) {}
+		public void windowActivated(WindowEvent e) {
+			if (deactcount == -1) {
+				enableFullScreen.setState(true);
+				componentResized(null);
+			}
+
+			deactcount = 0;
+		}
 		public void windowClosing(WindowEvent e) {
 			windowClosed(e);
 		}
-		public void windowDeactivated(WindowEvent e) {}
+
+		public void windowDeactivated(WindowEvent e) {
+			deactcount = 2; // would like this to be 1, or even lower
+			                // but than can make a real fullscreen request be cancelled
+		}
+
 		public void windowDeiconified(WindowEvent e) {}
 		public void windowIconified(WindowEvent e) {}
 		public void windowOpened(WindowEvent e) {}
