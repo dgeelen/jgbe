@@ -28,7 +28,7 @@ public class ColorSelector extends JFrame implements MouseListener, ChangeListen
 		}
 		colorPanes[currentColorPane].setBorder(BorderFactory.createLineBorder(Color.RED, 3));
 	}
-	
+
 	public ColorSelector (swinggui gui) {
 		this.vc = gui.VC;
 		this.gui = gui;
@@ -40,7 +40,7 @@ public class ColorSelector extends JFrame implements MouseListener, ChangeListen
 
 		colorchooser = new JColorChooser();
 		colorchooser.getSelectionModel().addChangeListener(this);
-// 		colorchooser.addChooserPanel(); /*FIXME: Instert maarten's HSV chooser*/
+ 		colorchooser.addChooserPanel(new ColorSelectorComponent());
 		colorabletypes = new JPanel();
 		colorsBackground = new JPanel();
 		colorsBackground.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Background:"));
@@ -85,7 +85,7 @@ public class ColorSelector extends JFrame implements MouseListener, ChangeListen
 		dividerthing.add(colorabletypes, BorderLayout.CENTER);
 		add(colorchooser);
 		add(dividerthing);
-		
+
 		initColorPanels();
 		pack();
 	}
