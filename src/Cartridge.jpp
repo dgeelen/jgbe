@@ -173,6 +173,9 @@ public final class Cartridge {
 			case 0x52: rom_mm_size =  72 << 2; PRINTLN("ROM size = 1.1MByte (72 banks)"); break;
 			case 0x53: rom_mm_size =  80 << 2; PRINTLN("ROM size = 1.2MByte (80 banks)"); break;
 			case 0x54: rom_mm_size =  96 << 2; PRINTLN("ROM size = 1.5MByte (96 banks)"); break;
+			default:
+				PRINTF("WARNING: Non-standard ROM size! (MM_ROM[0][0x0148]=0x%02x=%d)\n",MM_ROM[0][0x0148], MM_ROM[0][0x0148]);
+				rom_mm_size=1; //FIXME: try to load as little as possible?
 		} // switch(header[0x0148])
 
 		// Determine RAM size (1 memmap entry per 4 KBytes (round up)
@@ -183,6 +186,9 @@ public final class Cartridge {
 			case 0x02: ram_mm_size =  2; PRINTLN("Cartridge has 8Kbytes of RAM"); break;
 			case 0x03: ram_mm_size =  8; PRINTLN("Cartridge has 32 KBytes of RAM (4 banks of 8KBytes each)"); break;
 			case 0x04: ram_mm_size = 32; PRINTLN("Cartridge has 128 KBytes of RAM (16 banks of 8KBytes each)"); break;
+			default:
+				PRINTF("WARNING: Non-standard RAM size! (MM_ROM[0][0x0149]=0x%02x=%d)\n",MM_ROM[0][0x0149], MM_ROM[0][0x0149]);
+				ram_mm_size=32; //FIXME: Give it as much ram as possible?
 		} // switch(header[0x0149])
 
 		if((MBC==2)&&(ram_mm_size==0)) ram_mm_size=1; // MBC2 has 512x4bits RAM builtin
