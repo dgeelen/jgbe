@@ -212,6 +212,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			rcFiles.remove(fname);
 			rcFiles.add(0, fname);
+			while(rcFiles.size()>10) //FIXME: Hardcoded :0
+				rcFiles.remove(rcFiles.size()-1);
 			saveRCFiles();
 		}
 
@@ -1215,16 +1217,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 		public void makeRcFilesMenuItems() {
 			int staticMenuItems = 4;
-
+			ASSERT(menuFile != null); //Should never happen
 			if (menuFile != null) {
 				while (menuFile.getItemCount() > staticMenuItems) {
 					menuFile.remove(staticMenuItems);
 				}
-
 				menuItems = new JMenuItem[rcFiles.size()];
 
 				menuFile.addSeparator();
-
 				for (int i = 0; i < rcFiles.size(); ++i) {
 					String lname = (String)rcFiles.get(i);
 					String name = lname.substring(lname.lastIndexOf(File.separator) + 1);
@@ -1233,7 +1233,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					menuItems[i].addActionListener(this);
 				}
 			}
-
 		}
 
 
