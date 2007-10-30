@@ -841,6 +841,14 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 							runner.setInstrStop(v);
 						}
 					}
+					else if (l.equalsIgnoreCase("ime")) {
+						gui.cpu.IME = (v!=0);
+						update();
+					}
+					else if (l.equalsIgnoreCase("halted")) {
+						gui.cpu.halted = (v!=0);
+						update();
+					}
 					else {
 // 						PRINTLN("Cannot assign `"+v+"' to `"+l+"'");
 					}
