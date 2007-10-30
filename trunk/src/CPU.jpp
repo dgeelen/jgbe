@@ -1042,11 +1042,10 @@ public final class CPU {
 				halted = false;
 				//return 12; // 12 cycles for this?
 // 				return 12+execute();
-
- 				return 4;/* FIXME(?) For break on interrupt */
+ 				return 4;/* FIXME(?) For break on interrupt *//* note: 4 should be allright. RST takes 16 cycles */
 			}
 
-			if (halted) return 4;
+			if (halted) return 1; //Halt duration is a multiple of 4 cycles, so return 1 here
 
 #ifdef ENABLE_RECOMPILER
 			if (PC < 0x4000) {
@@ -1153,6 +1152,42 @@ public final class CPU {
 				case 0x77: WRITE_V(R16RHL, A); break;               // LD   (HL), A
 				case 0x36: WRITE_V(R16RHL, IMM8); break;            // LD   (HL), n
 				case 0x76: halted = true; break;                    // HALT
+				/* FIXME: For GB,GBP, and SGB games HALT should repeat
+				 * the instruction byte after the HALT instruction:
+				 * 
+				 * ---8<------------------------------------------------
+				 *  WARNING: The instruction immediately following the
+				 *           HALT instruction is "skipped" when interrupts are
+				 *           disabled (DI) on the GB,GBP, and SGB. As a result,
+				 *           always put a NOP after the HALT instruction. This
+				 *           instruction skipping doesn't occur when interrupts
+				 *           are enabled (EI).
+				 *           This "skipping" does not seem to occur on the
+				 *           GameBoy Color even in regular GB mode. ($143=$00)
+				 *
+				 * EXAMPLES from Martin Korth who documented this problem:
+				 *	(assuming interrupts disabled for all examples)
+				 *
+				 * 1) This code causes the 'a' register to be incremented TWICE.
+				 *			76          halt
+				 *			3C          inc  a
+				 *
+				 * 2) The next example is a bit more difficult. The following code
+				 *			76          halt
+				 *			FA 34 12    ld   a,(1234)
+				 *
+				 *	is effectively executed as
+				 *
+				 *			76          halt
+				 *			FA FA 34    ld   a,(34FA)
+				 *			12          ld   (de),a
+				 *
+				 * 3) Finally an interesting side effect
+				 *			76          halt
+				 *			76          halt
+				 *
+				 * --->8------------------------------------------------
+				 */
 				case 0xd9: IME = true; DO_RET; break;               // RETI
 				case 0xc1: R16WBC_V(POP); break;                    // POP  BC
 				case 0xd1: R16WDE_V(POP); break;                    // POP  DE
