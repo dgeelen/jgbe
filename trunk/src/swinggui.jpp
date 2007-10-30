@@ -644,6 +644,11 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				mainMenuBar.getMenu(i).addMouseMotionListener(this);
 
 			frame.setResizable(false);
+			frame.pack();
+			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+			Point     p = new Point();
+			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
+			frame.setLocation(p);
 
 			/* DND */
 			JavaCrossplatformnessIsAMyth transferhandler = new JavaCrossplatformnessIsAMyth();
@@ -651,11 +656,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 		public void showGUI() {
-			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-			Point     p = new Point();
-			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
-			frame.setLocation(p);
-
 			frame.setVisible( true );
 		}
 
