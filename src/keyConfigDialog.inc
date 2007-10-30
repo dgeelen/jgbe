@@ -1,12 +1,14 @@
 #ifndef USE_JAVA_MOBILE
-#define nrOfShortCuts 29
+#define nrOfShortCuts 36
 class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
 	private JDialog dialog;
 	private JFrame owner;
 	VECTOR(JTextField) editboxes = new VECTOR(JTextField)();
 	JTextField tbox;
 	JLabel tlabel;
-	#define INPUTBOX(c, x) tbox = new JTextField();\
+	int nInputBoxen=-16;
+	#define INPUTBOX(c, x) ASSERT(nInputBoxen++ < nrOfShortCuts ); \
+	                    tbox = new JTextField();\
 	                    tlabel = new JLabel(x);\
 	                    editboxes.add(tbox);\
 	                    c.add(tlabel);\
@@ -72,10 +74,16 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 			INPUTBOX(shortCuts, "Pause");
 			INPUTBOX(shortCuts, "Reset Gameboy");
 			INPUTBOX(shortCuts, "Exit Emulator");
+			INPUTBOX(shortCuts, "Fullscreen");
 			INPUTBOX(shortCuts, "Scale 1x");
 			INPUTBOX(shortCuts, "Scale 2x");
 			INPUTBOX(shortCuts, "Scale 3x");
 			INPUTBOX(shortCuts, "Scale 4x");
+			INPUTBOX(shortCuts, "Scale with Aspect");
+			INPUTBOX(shortCuts, "Interpolate None");
+			INPUTBOX(shortCuts, "Interpolate Nearest");
+			INPUTBOX(shortCuts, "Interpolate BiLinear");
+			INPUTBOX(shortCuts, "Interpolate BiCubic");
 			INPUTBOX(shortCuts, "Increase FrameSkip");
 			INPUTBOX(shortCuts, "Decrease FrameSkip");
 			INPUTBOX(shortCuts, "Original Colors");
@@ -96,6 +104,7 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 			INPUTBOX(shortCuts, "Emulation speed *125%");
 			INPUTBOX(shortCuts, "Emulation speed *75%");
 			INPUTBOX(shortCuts, "Emulation speed 100%");
+			INPUTBOX(shortCuts, "Emulation speed Infinite%");
 			scroll = new JScrollPane(shortCuts);
 			scroll.setPreferredSize(new Dimension(10,10) );
 			tabPane.add("Shortcuts", scroll);
