@@ -121,13 +121,13 @@ $(JARDIR)/jgbe.jar: $(CLASSFILES)
 jar: $(JARDIR)/jgbe.jar
 
 jarzip: $(CLASSFILES)
-	@echo "[packing] jgbe.jar (zip) - BROKEN!!!"
+	@echo "[packing] jgbe.jar (zip) - (Warning: needs 1.6 JVM)"
 	@mkdir -p $(CLASSDIR)/META-INF
-	@echo -en "Manifest-Version: 1.2\r\n" > $(CLASSDIR)/META-INF/MANIFEST.MF
-	@echo -en "Created-By: 1.5.0_12 (Sun Microsystems Inc.)\r\n" >> $(CLASSDIR)/META-INF/MANIFEST.MF
-	@echo -en "Main-Class: swinggui\r\n" >> $(CLASSDIR)/META-INF/MANIFEST.MF
-	@echo -en "\r\n" >> $(CLASSDIR)/META-INF/MANIFEST.MF
-	@cd $(CLASSDIR) && zip -r jgbe.zip META-INF *.class icon.gif VeraMono.ttf $(BOOTROM)
+	@echo "Manifest-Version: 1.2\r\n" > $(CLASSDIR)/META-INF/MANIFEST.MF
+	@echo "Created-By: 1.5.0_12 (Sun Microsystems Inc.)\r\n" >> $(CLASSDIR)/META-INF/MANIFEST.MF
+	@echo "Main-Class: swinggui" >> $(CLASSDIR)/META-INF/MANIFEST.MF
+	@echo "" >> $(CLASSDIR)/META-INF/MANIFEST.MF
+	@cd $(CLASSDIR) && zip -r -9 jgbe.zip META-INF *.class icon.gif VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
 
