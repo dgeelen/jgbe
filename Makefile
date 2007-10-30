@@ -11,6 +11,8 @@ CLASSFILES:=$(AJAVAFILES:$(SRCDIR)/%.java=$(CLASSDIR)/%.class)
 MAKEFILES :=Makefile Makefile.inc Makefile.config $(shell cat Makefile.inc 2> /dev/null | sed "s:-include ::")
 BOOTROM   :=$(shell find -iname boot.rom | head -1)
 
+VERSION  := $(shell sh generate-svnrev.sh "$(SRCDIR)")
+
 ifeq ($(CLASSPATH),)
 	CLASSPATH:=.
 endif
@@ -46,6 +48,10 @@ gcj: clean
 	@echo "-include Makefile.gcj" > Makefile.inc
 
 # common targets
+
+version:
+	@[ "$(VERSION)" == "" ] || echo "$(VERSION)"
+
 preprocess: version $(GJAVAFILES)
 
 applet: $(JARDIR)/sjgbe.jar
@@ -110,7 +116,7 @@ $(SRCDIR)/%.java: $(SRCDIR)/%.jpp
 jarrun: $(JARDIR)/jgbe.jar
 	cd $(JARDIR) && $(JAVA_BIN) -jar jgbe.jar -lastcart
 
-$(JARDIR)/jgbe.jar: $(CLASSFILES)
+$(JARDIR)/jgbe.jar: $(AJAVAFILES) $(CLASSFILES)
 	@echo "[packing] jgbe.jar"
 	@echo "Manifest-Version: 1.2" > $(CLASSDIR)/MANIFEST.MF.in
 	@echo "Main-Class: swinggui" >> $(CLASSDIR)/MANIFEST.MF.in
@@ -144,19 +150,6 @@ cleaner: clean
 	rm -f $(DEPSDIR)/*
 	rm -f $(GJAVAFILES)
 	rm -f Makefile.inc
-
-$(SRCDIR)/svnrev.inc: version
-version:
-	@(\
-	OLDVER=`cat $(SRCDIR)/svnrev.inc 2> /dev/null || true`; \
-	NEWVER="#define JGBE_VERSION_STRING \"`sh svnversion.sh`\""; \
-	if [ "$${OLDVER}" = "$${NEWVER}" ] ; then \
-		true; \
-	else \
-		echo [version] updating...; \
-		echo $${NEWVER} > $(SRCDIR)/svnrev.inc; \
-	fi \
-	)
 
 $(GJAVAFILES): $(MAKEFILES)
 $(CLASSFILES): $(MAKEFILES)
