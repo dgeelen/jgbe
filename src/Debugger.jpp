@@ -246,6 +246,29 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					String brep = Integer.toBinaryString(i);
 					while(brep.length() < ((regs2 == table) ? 16 : 8 )) brep="0"+brep;
 					setToolTipText(STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i));
+				} else
+				if( table == regs2 && column == 2) {
+					int intstat=(gui.cpu.IOP[0x0f]&0x1f)|((gui.cpu.IE&0x1f)<<5)|(gui.cpu.IME?1<<10:0);
+					s = "<HTML><PRE>";
+					s+=" IME     : " + ((intstat           & (1<<10)) !=0 ? "Enabled" : "Disabled");
+					s+=" <BR>";
+					s+=" Joypad  : " + ((gui.cpu.IE        & (1<< 4)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((gui.cpu.IOP[0x0f] & (1<< 4)) !=0 ? ", pending":"");
+					s+=" <BR>";
+					s+=" Serial  : " + ((gui.cpu.IE        & (1<< 3)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((gui.cpu.IOP[0x0f] & (1<< 3)) !=0 ? ", pending":"");
+					s+=" <BR>";
+					s+=" Timer   : " + ((gui.cpu.IE        & (1<< 2)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((gui.cpu.IOP[0x0f] & (1<< 2)) !=0 ? ", pending":"");
+					s+=" <BR>";
+					s+=" LCD/STAT: " + ((gui.cpu.IE        & (1<< 1)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((gui.cpu.IOP[0x0f] & (1<< 1)) !=0 ? ", pending":"");
+					s+=" <BR>";
+					s+=" V-Blank : " + ((gui.cpu.IE        & (1<< 0)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((gui.cpu.IOP[0x0f] & (1<< 0)) !=0 ? ", pending":"");
+					s+=" <BR>";
+					s+="</PRE></HTML>";
+					setToolTipText(s);
 				} else setToolTipText("");
 			}
 			else {
