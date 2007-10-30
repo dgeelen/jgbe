@@ -557,8 +557,12 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemPause.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemReset.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemExit.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			enableFullScreen.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			for (int i = 0; i < 4; ++i)
 				scaleRadioGroup.get(i).setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			keepAspectRatio.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			for (int i=0; i<4; ++i)
+				interpolationRadioGroup.get(i).setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemIncFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemDecFrameSkip.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemColorSchemes[0].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -577,7 +581,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemEmuSpeedMul.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedDiv.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEmuSpeedNormal.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			NEXT_KEYSTROKE_FROM_KEYMAP; //Non Shortcut for Max Emu Speed
 		}
+
 		public void addComponentsToPane( Container contentPane ) {
 			grfx=new DrawingArea( cpu.VC ); //doublebuffering
 			grfx.setFocusable(true);
@@ -1139,6 +1145,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		long deactcount = 0;
 
 		public void itemStateChanged( ItemEvent e ) {
+			ASSERT(false); //What does this function do?
 			JMenuItem source = ( JMenuItem )( e.getSource() );
 			String s = "Menu Item source: " + source.getText()
 			           + " (an instance of " + getClassName( source ) + ")"
@@ -1149,9 +1156,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			PRINTLN( s );
 		}
 
-		public void keyTyped(KeyEvent e) {
-			//PRINTLN("keyTyped");
-		}
+		public void keyTyped(KeyEvent e) {}
 
 		static final int[] keyMasks = {
 			BUTTON_UP,
@@ -1181,7 +1186,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					return;
 				}
 			}
-			if(keyCode == 32) { //FIXME: Not configurable....
+			if(keyCode == keyMap[nrOfShortCuts+16-1]) {
 				cpu.AC.speedHax = false;
 			}
 		}
@@ -1203,7 +1208,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					return;
 				}
 			}
-			if(keyCode == 32) { //FIXME: Not configurable....
+			if(keyCode == keyMap[nrOfShortCuts+16-1]) {
 				cpu.AC.speedHax = true;
 			}
 		}
@@ -1469,35 +1474,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			enableFullScreen.setEnabled(true);
 		}
 
-		#define PRINT_KEY_DEFAULT PRINTLN((keyMap[i]>>8>0 ? \
-		                                  KeyEvent.getKeyModifiersText(keyMap[i]>>8)+"+" : "") +\
-		                                  KeyEvent.getKeyText(keyMap[i]&0xff))
-		private void saveKeyBinds() {
-			DataOutputStream distream=null;
-			try {
-				String path = FHandler.JGBEDir("") + "keys.conf";
-				FileOutputStream fistream = new FileOutputStream(path);
-				distream = new DataOutputStream(fistream);
-				for(int i=0; i<16+nrOfShortCuts; ++i) {
-					distream.writeInt(keyMap[i]);
-//  					PRINT_KEY_DEFAULT;
-				}
-			}
-			catch(IOException e) { //File not found or error reading it
-					JOptionPane.showMessageDialog(frame,
-                                        "Could not save keybinds!",
-                                        "Error",
-					                              JOptionPane.ERROR_MESSAGE);
-			}
-			finally {
-				try {
-					distream.close();
-				}
-				catch(Exception e) {
-				}
-			}
-		}
-
 		private void tryToLoadROM(String filename) {
 			pauseEmulation(false);
 			Cartridge tcart=new Cartridge(filename);
@@ -1517,6 +1493,35 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				JOptionPane.showMessageDialog(frame, "There was an error loading this ROM!\n("+tcart.getError()+")" , "Error!", JOptionPane.ERROR_MESSAGE);
 			}
 			resumeEmulation(false);
+		}
+
+		#define PRINT_KEY_DEFAULT PRINTLN("keyMap[Magix++]="+keyMap[i]+"; // "+(keyMap[i]>>8>0 ? \
+		                                  KeyEvent.getKeyModifiersText(keyMap[i]>>8)+"+" : "") +\
+		                                  KeyEvent.getKeyText(keyMap[i]&0xff))
+		private void saveKeyBinds() {
+			DataOutputStream distream=null;
+			try {
+				String path = FHandler.JGBEDir("") + "keys.conf";
+				FileOutputStream fistream = new FileOutputStream(path);
+				distream = new DataOutputStream(fistream);
+				for(int i=0; i<16+nrOfShortCuts; ++i) {
+					distream.writeInt(keyMap[i]);
+// 					PRINT_KEY_DEFAULT;
+				}
+			}
+			catch(IOException e) { //File not found or error reading it
+					JOptionPane.showMessageDialog(frame,
+                                        "Could not save keybinds!",
+                                        "Error",
+					                              JOptionPane.ERROR_MESSAGE);
+			}
+			finally {
+				try {
+					distream.close();
+				}
+				catch(Exception e) {
+				}
+			}
 		}
 
 		private void loadKeyBinds() {
@@ -1552,52 +1557,59 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 		private void generateDefaultKeyBinds() {
-			//Magix
-			keyMap[0]=38; // Up
-			keyMap[1]=40; // Down
-			keyMap[2]=37; // Left
-			keyMap[3]=39; // Right
-			keyMap[4]=90; // Z
-			keyMap[5]=88; // X
-			keyMap[6]=61; // Equals
-			keyMap[7]=45; // Minus
-			keyMap[8]=73; // I
-			keyMap[9]=75; // K
-			keyMap[10]=74; // J
-			keyMap[11]=76; // L
-			keyMap[12]=91; // Open Bracket
-			keyMap[13]=93; // Close Bracket
-			keyMap[14]=222; // Quote
-			keyMap[15]=59; // Semicolon
-			keyMap[16]=556; // Ctrl+Comma
-			keyMap[17]=591; // Ctrl+O
-			keyMap[18]=19; // Pause
-			keyMap[19]=594; // Ctrl+R
-			keyMap[20]=593; // Ctrl+Q
-			keyMap[21]=561; // Ctrl+1
-			keyMap[22]=562; // Ctrl+2
-			keyMap[23]=563; // Ctrl+3
-			keyMap[24]=564; // Ctrl+4
-			keyMap[25]=605; // Ctrl+Close Bracket
-			keyMap[26]=603; // Ctrl+Open Bracket
-			keyMap[27]=560; // Ctrl+0
-			keyMap[28]=569; // Ctrl+9
-			keyMap[29]=568; // Ctrl+8
-			keyMap[30]=567; // Ctrl+7
-			keyMap[31]=595; // Ctrl+S
-			keyMap[32]=588; // Ctrl+L
-			keyMap[33]=577; // Ctrl+A
-			keyMap[34]=2097; // Alt+1
-			keyMap[35]=2098; // Alt+2
-			keyMap[36]=2099; // Alt+3
-			keyMap[37]=2100; // Alt+4
-			keyMap[38]=704; // Ctrl+Back Quote
-			keyMap[39]=604; // Ctrl+Back Slash
-			keyMap[40]=829; // Ctrl+Shift+Equals
-			keyMap[41]=557; // Ctrl+Minus
-			keyMap[42]=861; // Ctrl+Shift+Close Bracket
-			keyMap[43]=859; // Ctrl+Shift+Open Bracket
-			keyMap[44]=573; // Ctrl+Equals
+			int Magix = 0;
+			keyMap[Magix++]=38; // Up
+			keyMap[Magix++]=40; // Down
+			keyMap[Magix++]=37; // Left
+			keyMap[Magix++]=39; // Right
+			keyMap[Magix++]=90; // Z
+			keyMap[Magix++]=88; // X
+			keyMap[Magix++]=61; // Equals
+			keyMap[Magix++]=45; // Minus
+			keyMap[Magix++]=73; // I
+			keyMap[Magix++]=75; // K
+			keyMap[Magix++]=74; // J
+			keyMap[Magix++]=76; // L
+			keyMap[Magix++]=91; // Open Bracket
+			keyMap[Magix++]=93; // Close Bracket
+			keyMap[Magix++]=222; // Quote
+			keyMap[Magix++]=59; // Semicolon
+			keyMap[Magix++]=556; // Ctrl+Comma
+			keyMap[Magix++]=591; // Ctrl+O
+			keyMap[Magix++]=19; // Pause
+			keyMap[Magix++]=594; // Ctrl+R
+			keyMap[Magix++]=593; // Ctrl+Q
+			keyMap[Magix++]=2058; // Alt+Enter
+			keyMap[Magix++]=561; // Ctrl+1
+			keyMap[Magix++]=562; // Ctrl+2
+			keyMap[Magix++]=563; // Ctrl+3
+			keyMap[Magix++]=564; // Ctrl+4
+			keyMap[Magix++]=2625; // Ctrl+Alt+A
+			keyMap[Magix++]=2608; // Ctrl+Alt+0
+			keyMap[Magix++]=2617; // Ctrl+Alt+9
+			keyMap[Magix++]=2616; // Ctrl+Alt+8
+			keyMap[Magix++]=2615; // Ctrl+Alt+7
+			keyMap[Magix++]=605; // Ctrl+Close Bracket
+			keyMap[Magix++]=603; // Ctrl+Open Bracket
+			keyMap[Magix++]=560; // Ctrl+0
+			keyMap[Magix++]=569; // Ctrl+9
+			keyMap[Magix++]=568; // Ctrl+8
+			keyMap[Magix++]=567; // Ctrl+7
+			keyMap[Magix++]=595; // Ctrl+S
+			keyMap[Magix++]=588; // Ctrl+L
+			keyMap[Magix++]=577; // Ctrl+A
+			keyMap[Magix++]=2097; // Alt+1
+			keyMap[Magix++]=2098; // Alt+2
+			keyMap[Magix++]=2099; // Alt+3
+			keyMap[Magix++]=2100; // Alt+4
+			keyMap[Magix++]=704; // Ctrl+Back Quote
+			keyMap[Magix++]=604; // Ctrl+Back Slash
+			keyMap[Magix++]=829; // Ctrl+Shift+Equals
+			keyMap[Magix++]=557; // Ctrl+Minus
+			keyMap[Magix++]=861; // Ctrl+Shift+Close Bracket
+			keyMap[Magix++]=859; // Ctrl+Shift+Open Bracket
+			keyMap[Magix++]=573; // Ctrl+Equals
+			keyMap[Magix++]=32; // Space
 		}
 
 		static Cartridge cart = null;
