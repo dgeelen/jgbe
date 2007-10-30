@@ -621,8 +621,14 @@ public final class VideoController {
 		int condbits[] = { 0x08, 0x30, 0x20, 0x00 };
 		int flag = 0;
 
-// 		if ((R_LY < 0x91) && (R_LY == R_LYC)) //gnuboy
 		if ((R_LY == R_LYC))
+		/* GBUBoy does this:
+		 *	if ((R_LY < 0x91) && (R_LY == R_LYC))
+		 * This is possibly incorrect, since (I think) it should be possible
+		 * to have the LYC=LY Coincidence Interrupt in the offscreen area.
+		 * Therefore I think this is better, otherwise for example the 
+		 * AIR Pocket OP Demo won't work.
+		 */
 		{
 			R_STAT |= 0x04;
 			if (0!=(R_STAT & 0x40)) flag = IF_STAT;
