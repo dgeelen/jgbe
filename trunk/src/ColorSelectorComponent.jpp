@@ -1,3 +1,5 @@
+#include "global.inc"
+
 import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.event.*;
@@ -6,6 +8,7 @@ import javax.swing.colorchooser.*;
 import java.awt.event.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
+import java.awt.geom.Line2D;
 import java.util.*;
 
 public class ColorSelectorComponent extends AbstractColorChooserPanel
@@ -39,6 +42,8 @@ public class ColorSelectorComponent extends AbstractColorChooserPanel
 	private HexRGBColorSelectorComponent HRGBCSC = new HexRGBColorSelectorComponent(this);
 	private ExtendedHSVColorSelectorComponent EHSVSC = new ExtendedHSVColorSelectorComponent(this);
 
+	private boolean updating = false;
+
 	public ColorSelectorComponent()
 	{
 		buildChooser();
@@ -61,7 +66,8 @@ public class ColorSelectorComponent extends AbstractColorChooserPanel
 
 	public void updateChooser()
 	{
-		updateColors(this, getColorFromModel().getRed(), getColorFromModel().getGreen(), getColorFromModel().getBlue());
+		if (!updating)
+			updateColors(this, getColorFromModel().getRed(), getColorFromModel().getGreen(), getColorFromModel().getBlue());
 	}
 
 	protected void buildChooser()
@@ -75,21 +81,51 @@ public class ColorSelectorComponent extends AbstractColorChooserPanel
 		add(pnlHSVRGBCS, BorderLayout.EAST);
 	}
 
+	int hackhack = 0;
 	/*
 	 * 0 <= r, g, b <= 255
 	 */
 	public void updateColors(JPanel caller, int r, int g, int b)
 	{
+		updating = true;
+		//PRINTLN("ctor update rgb");
+		//if (hackhack != 0) {
+		//	int[] x = null;
+		//	x[0]=1;
+		//}
 		getColorSelectionModel().setSelectedColor(new Color(r,g,b));
 
-		if (!caller.equals(RGBCSC))
+		//if (!caller.equals(RGBCSC))
 			RGBCSC.updateColors(r, g, b);
-		if (!caller.equals(HSVCSC))
+		//if (!caller.equals(HSVCSC))
 			HSVCSC.updateColors(r, g, b);
-		if (!caller.equals(EHSVSC))
+		//if (!caller.equals(EHSVSC))
 			EHSVSC.updateColors(r, g, b);
-		if (!caller.equals(HRGBCSC))
+		//if (!caller.equals(HRGBCSC))
 			HRGBCSC.updateColors(r, g, b);
+
+		updating = false;
+	}
+
+	public void updateColors(JPanel caller, double h, double s, double v)
+	{
+		updating = true;
+
+		//PRINTLN("ctor update hsv");
+		Color col = ColorConverter.hsvToColor(h, s, v);
+
+		getColorSelectionModel().setSelectedColor(col);
+
+		//if (!caller.equals(RGBCSC))
+			RGBCSC.updateColors(h, s, v);
+		//if (!caller.equals(HSVCSC))
+			HSVCSC.updateColors(h, s, v);
+		//if (!caller.equals(EHSVSC))
+			EHSVSC.updateColors(h, s, v);
+		//if (!caller.equals(HRGBCSC))
+			HRGBCSC.updateColors(h, s, v);
+
+		updating = false;
 	}
 }
 
@@ -220,6 +256,23 @@ class RGBColorSelectorComponent extends JPanel implements ChangeListener
 		updateSpinners();
 		changing = false;
 	}
+
+	public void updateColors(double h, double s, double v)
+	{
+		changing = true;
+
+		//PRINTLN("updateColors!xxx!  h="+h +"  s"+s+"  v"+v);
+
+		int[] rgb = ColorConverter.hsvToRgb(h,s,v);
+		//PRINTLN("updateColors!xxx!  r="+rgb[0] +"  g"+rgb[1]+"  b"+rgb[2]);
+
+		rgbSliders[0].setValue(rgb[0]);
+		rgbSliders[1].setValue(rgb[1]);
+		rgbSliders[2].setValue(rgb[2]);
+		updateSliders();
+		updateSpinners();
+		changing = false;
+	}
 }
 
 class HSVColorSelectorComponent extends JPanel implements ChangeListener
@@ -324,26 +377,22 @@ class HSVColorSelectorComponent extends JPanel implements ChangeListener
 	{
 		if (!changing)
 		{
-			Color color;
-
+			//PRINTLN("stateChanged!  h="+hsvSliders[0].getValue() +"  s"+hsvSliders[1].getValue()+"  v"+hsvSliders[2].getValue());
 			if (e.getSource() instanceof JSlider)
 			{
-		  	color = ColorConverter.hsvToColor(hsvSliders[0].getValue(),
-		  	                                  hsvSliders[1].getValue(),
-		  	                                  hsvSliders[2].getValue());
+		  	creator.updateColors(this,
+		  	                             (double)hsvSliders[0].getValue(),
+		  	                             (double)hsvSliders[1].getValue(),
+		  	                             (double)hsvSliders[2].getValue());
 
 			}
 			else
 			{
-				color = ColorConverter.hsvToColor(((Integer)hsvSpinners[0].getValue()).intValue(),
-				                                  ((Integer)hsvSpinners[1].getValue()).intValue(),
-		  	                                  ((Integer)hsvSpinners[2].getValue()).intValue());
+				creator.updateColors(this,
+				                             ((Double)hsvSpinners[0].getValue()).doubleValue(),
+				                             ((Double)hsvSpinners[1].getValue()).doubleValue(),
+		  	                             ((Double)hsvSpinners[2].getValue()).doubleValue());
 			}
-
-			creator.updateColors(this,
-			                     color.getRed(),
-			                     color.getGreen(),
-                           color.getBlue());
 		}
 	}
 
@@ -353,10 +402,22 @@ class HSVColorSelectorComponent extends JPanel implements ChangeListener
 	public void updateColors(int r, int g, int b)
 	{
 		changing = true;
-		float[] rgb = ColorConverter.rgbToHsv(r, g, b);
+		double[] rgb = ColorConverter.rgbToHsv(r, g, b);
 		hsvSliders[0].setValue((int)rgb[0]);
 		hsvSliders[1].setValue((int)rgb[1]);
 		hsvSliders[2].setValue((int)rgb[2]);
+		updateSliders();
+		updateSpinners();
+		changing = false;
+	}
+
+	public void updateColors(double h, double s, double v)
+	{
+		//PRINTLN("updateColors!hsv!  h="+h +"  s"+s+"  v"+v);
+		changing = true;
+		hsvSliders[0].setValue((int)h);
+		hsvSliders[1].setValue((int)s);
+		hsvSliders[2].setValue((int)v);
 		updateSliders();
 		updateSpinners();
 		changing = false;
@@ -409,7 +470,7 @@ class HexRGBColorSelectorComponent extends JPanel implements ActionListener
 
 	private void updateTextField(int r, int g, int b)
 	{
-		String text = Integer.toHexString(r) + Integer.toHexString(g) + Integer.toHexString(b);
+		String text = STRFORMAT("%02x%02x%02x", r, g, b);
 		rgbHex.setText(text);
 	}
 
@@ -419,11 +480,23 @@ class HexRGBColorSelectorComponent extends JPanel implements ActionListener
 		updateTextField(r, g, b);
 		changing = false;
 	}
+
+	public void updateColors(double h, double s, double v)
+	{
+		changing = true;
+
+		int[] rgb = ColorConverter.hsvToRgb(h,s,v);
+		updateTextField(rgb[0], rgb[1], rgb[2]);
+		changing = false;
+	}
 }
 
 class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 {
-	private float cAngle = 0f;
+	private float  cAngle = 0f;
+	private double cHue   = 0f;
+	private double cValue = 0f;
+	private double cSat   = 0f;
 	ColorSelectorComponent creator;
 
 	public ExtendedHSVColorSelectorComponent(ColorSelectorComponent creator)
@@ -439,7 +512,20 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 	 */
 	public void updateColors(int r, int g, int b)
 	{
-		cAngle = ColorConverter.rgbToHsv(r, g, b)[0];
+		double[] hsv = ColorConverter.rgbToHsv(r, g, b);
+		cHue   = hsv[0];
+		cAngle = (float)hsv[0];
+		cSat   = hsv[1];
+		cValue = hsv[2];
+		repaint();
+	}
+
+	public void updateColors(double h, double s, double v)
+	{
+		cAngle = (float)h;
+		cHue   = h;
+		cSat   = s;
+		cValue = v;
 		repaint();
 	}
 
@@ -455,6 +541,8 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 		int height = (int)getSize().getHeight() - bh;
 		int min = (width < height)?width:height;
 		int dist = (int)Point2D.distance(centerX, centerY, e.getX(), e.getY());
+		int r1 = min/2;
+		int radius = (int)(min * (1 - ColorSelectorComponent.WHEEL_WIDTH)) / 2;
 
 		boolean inCircle = ((int)(min*ColorSelectorComponent.WHEEL_WIDTH* 2) <= dist) &&
                         (dist <= min/2);
@@ -469,7 +557,40 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 			if (cAngle < 0) cAngle += 360;
 			cAngle -= 180;
 			if (cAngle < 0) cAngle += 360;
+		} else {
+			int[] xs = new int[3];
+			int[] ys = new int[3];
+
+			xs[0] = centerX + getX(Math.IEEEremainder(cAngle +   0f, 360f), radius);
+			ys[0] = centerY + getY(Math.IEEEremainder(cAngle +   0f, 360f), radius);
+
+			xs[1] = centerX + getX(Math.IEEEremainder(cAngle + 120f, 360f), radius);
+			ys[1] = centerY + getY(Math.IEEEremainder(cAngle + 120f, 360f), radius);
+
+			xs[2] = centerX + getX(Math.IEEEremainder(cAngle + 240f, 360f), radius);
+			ys[2] = centerY + getY(Math.IEEEremainder(cAngle + 240f, 360f), radius);
+
+
+			double max_v_dist = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], xs[2], ys[2]);
+			double tr_v = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], e.getX(), e. getY());
+			tr_v /= max_v_dist;
+
+			double max_s_dist = Point2D.distance(xs[0], ys[0], xs[1], ys[1]);
+			double tr_s = Line2D.ptLineDist(xs[1], ys[1], xs[1] - (ys[0] - ys[1]), ys[1] + (xs[0] - xs[1]), e.getX(), e.getY());
+			tr_s -= tr_v * max_s_dist / 2;
+			tr_v = 1 - tr_v;
+			tr_s /= tr_v * max_s_dist;
+
+			//tr_v = 1 - tr_v;
+			//tr_s = 1 - tr_s;
+			//PRINTLN("v = " + tr_v);
+			//PRINTLN("s = " + tr_s);
+			cSat = tr_s * ColorSelectorComponent.MAX_SATURATION;
+			cValue = tr_v * ColorSelectorComponent.MAX_VALUE;
 		}
+
+		cHue = cAngle;
+		creator.updateColors(this, cHue, cSat, cValue);
 
 		repaint();
 	}
@@ -601,19 +722,27 @@ class ColorConverter
                              v / ColorSelectorComponent.MAX_VALUE);
 	}
 
+	public static Color hsvToColor(double h, double s, double v)
+	{
+		return Color.getHSBColor((float)(h / ColorSelectorComponent.MAX_HUE),
+                             (float)(s / ColorSelectorComponent.MAX_SATURATION),
+                             (float)(v / ColorSelectorComponent.MAX_VALUE));
+	}
+
 	/**
 	 * 0 <= r, g, b < 256
 	 * return [h, s, v]
 	 * 0 <= h <= 360
 	 * 0 <= s, v <= 100
 	 */
-	public static float[] rgbToHsv(int r, int g, int b)
+	public static double[] rgbToHsv(int r, int g, int b)
 	{
-		float[] result = new float[3]; // [h,s,v]
-    Color.RGBtoHSB(r, g, b, result);
-    result[0] *= ColorSelectorComponent.MAX_HUE;
-    result[1] *= ColorSelectorComponent.MAX_SATURATION;
-    result[2] *= ColorSelectorComponent.MAX_VALUE;
+		double[] result = new double[3]; // [h,s,v]
+		float[] temp = new float[3];
+    Color.RGBtoHSB(r, g, b, temp);
+    result[0] = temp[0] * ColorSelectorComponent.MAX_HUE;
+    result[1] = temp[1] * ColorSelectorComponent.MAX_SATURATION;
+    result[2] = temp[2] * ColorSelectorComponent.MAX_VALUE;
 		return result;
 	}
 
@@ -631,8 +760,21 @@ class ColorConverter
                                v / ColorSelectorComponent.MAX_VALUE);
 
     result[2] = color & 0xff;
-    result[1] = (color >> 0xff) & 0xff;
-    result[0] = (color >> 0xffff) & 0xff;
+    result[1] = (color >> 8) & 0xff;
+    result[0] = (color >> 16) & 0xff;
+    return result;
+	}
+
+	public static int[] hsvToRgb(double h, double s, double v)
+	{
+		int[] result = new int[3];
+		int color = Color.HSBtoRGB((float)(h / ColorSelectorComponent.MAX_HUE),
+                               (float)(s / ColorSelectorComponent.MAX_SATURATION),
+                               (float)(v / ColorSelectorComponent.MAX_VALUE));
+
+    result[2] = color & 0xff;
+    result[1] = (color >> 8) & 0xff;
+    result[0] = (color >> 16) & 0xff;
     return result;
 	}
 }
