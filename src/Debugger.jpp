@@ -586,8 +586,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		}
 		for(int i=0; i<16; ++i) {
 			if (i==7) pc=gui.cpu.PC;
-			instrs.setValueAt(deasm.simple_disasm(pc), i,0);
-// 			instrs.setValueAt(deasm.disassemble(pc), i,0);
+// 			instrs.setValueAt(deasm.simple_disasm(pc), i,0);
+			instrs.setValueAt(deasm.disassemble(pc), i,0);
 			pc+=deasm.instructionLength(pc);
 		}
 	}
@@ -833,6 +833,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						runner.setBreakPoint(v);
 						runner.resume();
 					}
+					else if(l.equalsIgnoreCase("bp")){ //break on PC=$XXXX
+						/* FIXME: add bpl(ist), bpd(elete), bpe(nable), bpd(isable)
+						 *        and support more than one breakpoint
+						 */
+						runner.setBreakPoint(v);
+					}
 					else if(l.equalsIgnoreCase("r")){ //run until PC=$XXXX
 						runner.suspend();
 						runner.setBreakPoint(v);
@@ -871,6 +877,14 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					else if (l.equalsIgnoreCase("halted")) {
 						gui.cpu.halted = (v!=0);
 						update();
+					}
+					else if (l.equalsIgnoreCase("disasm")) {
+						int pc = gui.cpu.PC;
+						while( v > pc ) {
+// 							PRINTF(deasm.simple_disasm(pc) + "  |  ");
+							PRINTLN(deasm.disassemble(pc));
+							pc+=deasm.instructionLength(pc);
+						}
 					}
 					else {
 // 						PRINTLN("Cannot assign `"+v+"' to `"+l+"'");
