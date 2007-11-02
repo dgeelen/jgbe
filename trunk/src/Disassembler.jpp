@@ -68,6 +68,7 @@ public class Disassembler
 		}
 
 		public static final String disassemble(int PC) {
+			try {
 			int instr=cpu.read(PC);
 			int immediate=-1;
 			int i=-1;
@@ -86,6 +87,8 @@ public class Disassembler
 			i=op.indexOf("IMM08");
 			if(i>-1) {
 				immediate= cpu.read(PC+1);
+				if(op.indexOf("JR")>-1)
+					immediate = (PC + 2) + (((immediate&0x80)!=0) ? (- ((immediate ^ 0xff)+1)) : immediate);
 				s=STRFORMAT(op.substring(0,i)+"$%02x"+op.substring(i+5),immediate);
 				bytecount=2;
 			}
@@ -177,7 +180,11 @@ public class Disassembler
 			for(i=0; i<3-bytecount; ++i){
 				prefix+=STRFORMAT("    ", cpu.read(PC+i));
 			}
-			return prefix + s + (new String(whitespace, 0, 18 - s.length())) + "// "+op ;
+			return prefix + op + (new String(whitespace, 0, 18 - op.length())) + "// " +s;
+			}
+			catch (Exception e) {
+				return "";
+			}
 		}
 
 		public static final String simple_disasm(int PC) {
