@@ -87,7 +87,7 @@ public final class CPU {
 			}
 			singleton = this;
 			#ifndef USE_JAVA_MOBILE
-				deasm = new Disassembler(this);
+				deasm = new Disassembler(this, Disassembler.SIMPLE_DISASSEMBLY);
 			#endif
 			VC = new VideoController(this, 160, 144);
 			AC = new AudioController(this);
@@ -951,7 +951,7 @@ public final class CPU {
 			PRINTF( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
 			PRINTF( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
 			#ifndef USE_JAVA_MOBILE
-				PRINTLN( "  "+deasm.simple_disasm( PC ) );
+				PRINTLN( "  "+deasm.disassemble( PC ) );
 			#endif
 		}
 

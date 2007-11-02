@@ -23,6 +23,12 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	public JTable instrs;
 	public JComboBox cmds;
 
+	//Options
+	public MenuItemArrayGroup disassemblerRadioGroup;
+	public JRadioButtonMenuItem radioButtonSimpleDisasm;
+	public JRadioButtonMenuItem radioButtonExtendedDisasm;
+	public JPopupMenu popup;
+
 	private JScrollBar memScroller;
 
 	private Disassembler deasm;
@@ -45,7 +51,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			PRINTLN("Error opening logfile:" + e.getMessage());
 			logwriter = null;
 		}
-		deasm= new Disassembler(gui.cpu);
+		deasm= new Disassembler(gui.cpu, Disassembler.SIMPLE_DISASSEMBLY);
 		oldRegVal=new int[11];
 		parser=new RDParser();
 
@@ -437,6 +443,38 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		regs2.addMouseListener(this);
 		mem.addMouseListener(this);*/
 
+		//Options popup
+		popup = new JPopupMenu();
+		disassemblerRadioGroup = new MenuItemArrayGroup();
+		radioButtonSimpleDisasm = new JRadioButtonMenuItem( "Simple disassembler" );
+		radioButtonSimpleDisasm.setSelected(true);
+		radioButtonExtendedDisasm = new JRadioButtonMenuItem( "Extended disassembler" );
+		radioButtonSimpleDisasm.setMnemonic(KeyEvent.VK_S);
+		radioButtonExtendedDisasm.setMnemonic(KeyEvent.VK_E);
+		disassemblerRadioGroup.add(radioButtonSimpleDisasm);
+		disassemblerRadioGroup.add(radioButtonExtendedDisasm);
+		disassemblerRadioGroup.addActionListener( this );
+		disassemblerRadioGroup.addToMenu(popup);
+
+		//Add listener to components that can bring up popup menus.
+		MouseListener popupListener = new PopupListener();
+		instrs.addMouseListener(popupListener);
+	}
+	
+	class PopupListener extends MouseAdapter {
+		public void mousePressed(MouseEvent e) {
+			maybeShowPopup(e);
+		}
+
+		public void mouseReleased(MouseEvent e) {
+			maybeShowPopup(e);
+		}
+
+		private void maybeShowPopup(MouseEvent e) {
+			if (e.isPopupTrigger()) {
+				popup.show(e.getComponent(), e.getX(), e.getY());
+			}
+		}
 	}
 
 	synchronized public void update() {
@@ -586,7 +624,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		}
 		for(int i=0; i<16; ++i) {
 			if (i==7) pc=gui.cpu.PC;
-// 			instrs.setValueAt(deasm.simple_disasm(pc), i,0);
 			instrs.setValueAt(deasm.disassemble(pc), i,0);
 			pc+=deasm.instructionLength(pc);
 		}
@@ -744,6 +781,14 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	}
 
 	public void actionPerformed( ActionEvent e ) {
+		if( e.getSource() instanceof JRadioButtonMenuItem ) {
+			if( e.getSource().equals( radioButtonSimpleDisasm ))
+				deasm = new Disassembler(gui.cpu, Disassembler.SIMPLE_DISASSEMBLY);
+			else
+				deasm = new Disassembler(gui.cpu, Disassembler.EXTENDED_DISASSEMBLY);
+			update();
+			return;
+		}
 		JComboBox f = ( JComboBox )( e.getSource() );
 		if(f==cmds && e.getActionCommand().equals("comboBoxEdited") ) {
 			int i=0;
