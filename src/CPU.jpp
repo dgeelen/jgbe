@@ -1,3 +1,80 @@
+/*
+ * Batman Timing Fixing:
+ *                      VBlank handler   @ $0c9c (JMP)
+ *                      LCD-STAT handler @ $0e0d (JMP)
+ *                      Timer handler    @ $2ff8 (CALL)
+ *                      Serial handler   @ $---- (RETI)
+ *                      Joypad handler   @ $---- (RETI)
+ *   
+ *      6681 SCY access from 0x0e5b
+ *   176
+ *   
+ * STAT Handler ($0e0d - $0e61):
+ *            $0e0d $f5                 PUSH AF                                                 PUSH $01b0
+ *            $0e0e $f0 $9a             LDH  A, [n]                                             LDH  A, [$ff9a]
+ *            $0e10 $cb $5f             BIT  3, A                                               BIT  3, $01
+ *        .-- $0e12 $20 $0a             JR   NZ, IMM08                                          JR   NZ, $e1e
+ *        |   $0e14 $cb $7f             BIT  7, A                                               BIT  7, $01
+ *     .--+-- $0e16 $28 $0e             JR   Z, IMM08                                           JR   Z, $e26
+ *     |  |   $0e18 $f0 $97             LDH  A, [n]                                             LDH  A, [$ff97]
+ *     |  |   $0e1a $e0 $43             LDH  [n], A                                             LDH  [$ff43], $01
+ *     |  |   $0e1c $f1                 POP  AF                                                 POP  $01b0
+ *  .--+--+-> $0e1d $d9                 RETI                                                    RETI
+ *  |  |  '-> $0e1e $f0 $40             LDH  A, [n]                                             LDH  A, [$ff40]
+ *  |  |      $0e20 $e6 $fd             AND  IMM08                                              AND  $fd
+ *  |  |      $0e22 $e0 $40             LDH  [n], A                                             LDH  [$ff40], $01
+ *  |  |      $0e24 $f1                 POP  AF                                                 POP  $01b0
+ *  |  |      $0e25 $d9                 RETI                                                    RETI
+ *  |  '----> $0e26 $cb $77             BIT  6, A                                               BIT  6, $01
+ *  '-------- $0e28 $28 $f3             JR   Z, IMM08                                           JR   Z, $e1d
+ *            $0e2a $e5                 PUSH HL                                                 PUSH $014d
+ *            $0e2b $fa $b8 $c0         LD   A, [IMM16]   // Fetch WRAM0[$c0b8]                 LD   A, [$c0b8]
+ *            $0e2e $a7                 AND  A            //                                    AND  $01
+ *       .--- $0e2f $20 $1e             JR   NZ, IMM08    // Test WRAM0[$c0b8]==0               JR   NZ, $e4f
+ *       |    $0e31 $fa $ba $c0         LD   A, [IMM16]   // Fetch WRAM0[$c0ba]                 LD   A, [$c0ba]
+ *       |    $0e34 $fe $90             CP   IMM08        //                                    CP   $90
+ *    .--+--- $0e36 $30 $1b             JR   NC, IMM08    // Test WRAM0[$c0ba]>144              JR   NC, $e53
+ *    |  |    $0e38 $21 $bb $c0         LD   HL, IMM16    // HL=$c0bb                           LD   HL, $c0bb
+ *    |  |    $0e3b $fa $b9 $c0         LD   A, [IMM16]   // Fetch WRAM0[$c0b9]                 LD   A, [$c0b9]
+ *    |  |    $0e3e $86                 ADD  A, [HL]      // A=A+[$c0bb]                        ADD  A, [$014d]
+ *    |  |    $0e3f $ea $b9 $c0         LD   [IMM16], A   // [$c0b9]=[$c0b9]+[$c0bb]    !       LD   [$c0b9], $01
+ *    |  |    $0e42 $23                 INC  HL           // HL=$c0bc                           INC  $014d
+ *    |  |    $0e43 $fa $ba $c0         LD   A, [IMM16]   // A=[$c0ba]                          LD   A, [$c0ba]
+ *    |  |    $0e46 $8e                 ADC  A, [HL]      // A=A+[$c0bc]+C                      ADC  A, [$014d]
+ *    |  |    $0e47 $ea $ba $c0         LD   [IMM16], A   // [$c0ba]=[$c0ba]+[$c0bc]+C  !       LD   [$c0ba], $01
+ *    |  |    $0e4a $21 $45 $ff         LD   HL, IMM16    // HL=$ff45 (SCY)                     LD   HL, $ff45
+ * .--|--+--- $0e4d $18 $09             JR   IMM08                                              JR   $e58
+ * |  |  '--> $0e4f $3d                 DEC  A                                                  DEC  $01
+ * |  |       $0e50 $ea $b8 $c0         LD   [IMM16], A   // [$c0b8]=[$c0b8]-1                  LD   [$c0b8], $01
+ * |  '-----> $0e53 $21 $45 $ff         LD   HL, IMM16    // HL=$ff45                           LD   HL, $ff45
+ * |          $0e56 $3e $90             LD   A, IMM08     // A=144                              LD   A, $90
+ * '--------> $0e58 $96                 SUB  A, [HL]      // A=144-LYC                          SUB  A, [$014d]
+ *            $0e59 $e0 $42             LDH  [n], A       // Update ScrollY                     LDH  [$ff42], $01
+ *            $0e5b $21 $45 $ff         LD   HL, IMM16                                          LD   HL, $ff45
+ *            $0e5e $34                 INC  [HL]                                               INC  [$014d]
+ *            $0e5f $e1                 POP  HL                                                 POP  $014d
+ *            $0e60 $f1                 POP  AF                                                 POP  $01b0
+ *            $0e61 $d9                 RETI                                                    RETI
+ *
+ * From $0e2b:
+ * byte A = [$c0b8]
+ * if( [$c0b8] == 0 ) {
+ *   A = [$c0ba] - 144
+ *   if( A < 0 ) { // [$c0ba] < 144
+ *     [$c0b9] = [$c0b9] + [$c0bb] // sets Carry
+ *     [$c0ba] = [$c0ba] + [$c0bc] + Carry
+ *     A = [$c0ba]
+ *   }
+ * }
+ * else {
+ *   [$c0b8] = [$c0b8] - 1;
+ * }
+ * SetSrollY:
+ *   ScrollY = A - CurrentScanLine
+ *
+ *
+ */
+
 #include "Global.inc"
 #include "SaveLoad.inc"
 #include "CPU.inc"
@@ -749,6 +826,7 @@ public final class CPU {
 						VC.stat_trigger();
 						break;
 					case 0xff42: // SCY
+						PRINTF("SCY access from 0x%04x, value=0x%02x=%d\n", PC, value, value);
 						VC.SCY = value;
 						break;
 					case 0xff43: // SCX
@@ -759,7 +837,7 @@ public final class CPU {
 						break;
 					case 0xff45: // LYC
 						VC.LYC = value;
-						//PRINTF("Setting LYC=%d ($%02x)\n",value,value);
+						PRINTF("Setting LYC=%d ($%02x)\n",value,value);
 						break;
 					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
 						//NOTE: CPU may only access HRAM during this DMA,
@@ -987,11 +1065,24 @@ public final class CPU {
 			return 0; // No interrupts to service
 		}
 
+		static long iBlaaaaat=0;
+		static long iBlastart=System.nanoTime();
+		static long iBlastopt=System.nanoTime();
 		public static void interrupt(int i) { //execute interrupt #i
 			IME = false;
 
 			DO_PUSH_OLD(PC);
 			PC = i;
+			PRINTF("Interrupt 0x%02x\n",i);
+			if(i==0x40) {
+				++iBlaaaaat;
+				if(iBlaaaaat>5*60) {
+					iBlastopt=System.nanoTime();
+					PRINTLN("VBLANK per second:"+ (((float)iBlaaaaat))/(((float)(iBlastopt-iBlastart))/1000000000.0));
+					iBlastart=iBlastopt;
+					iBlaaaaat=0;
+				}
+			}
 		}
 
 		public static void triggerInterrupt(int i) { // request interrupt with bit nr #i
