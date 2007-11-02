@@ -106,6 +106,7 @@ public class Disassembler
 					//part 1
 					if(op.charAt(i+1)=='[') { // ++i; j--; }; //TODO:Verify this does what I want
 						immediate=regval(op.substring(i+2,op.indexOf("]",i+2)));
+// 						immediate = (immediate>-1) ? cpu.read( immediate&0xffff ) : immediate;
 						++i;
 					}
 					else {
@@ -126,7 +127,7 @@ public class Disassembler
 						++i;
 					}
 					else {
-						immediate=regval(op.substring(i+1,j));
+						immediate=-1; //regval(op.substring(i+1,j));
 					}
 					if(immediate>-1) {
 						if(immediate>0xffff) {
@@ -161,6 +162,7 @@ public class Disassembler
 				bytecount=2;
 				if(op.indexOf("LDH")>-1) immediate|=0xff00;
 				s=STRFORMAT(s.substring(0,i+1)+"$%04x"+s.substring(i+2),immediate);
+// 				s=STRFORMAT(s.substring(0,i+1)+"$%02x"+s.substring(i+2),cpu.read(immediate|0xff00));
 			}
 			i=op.indexOf("dd");
 			if(i>-1) { //specialcase
