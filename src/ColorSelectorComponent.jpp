@@ -382,8 +382,7 @@ class HexRGBColorSelectorComponent extends JPanel implements ActionListener
 
 		this.creator = creator;
 		setLayout(new BorderLayout(3, 0));
-		add(rgbHex, BorderLayout.CENTER);
-		add(new JLabel("Hex:"), BorderLayout.WEST);
+		add(rgbHex, BorderLayout.NORTH);
 		setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "RGB Hex Colors"));
 	}
 
@@ -396,8 +395,10 @@ class HexRGBColorSelectorComponent extends JPanel implements ActionListener
 			try
 			{
 				int hex = Integer.parseInt(hexStr, 16);
-				Color color = new Color(hex);
-				creator.updateColors(this, color.getRed(), color.getGreen(), color.getBlue());
+				int r = (hex >> 16) & 0xFF;
+				int g = (hex >> 8) & 0xFF;
+				int b = hex & 0xFF;
+				creator.updateColors(this, r, g, b);
 			}
 			catch (Exception ex)
 			{
@@ -520,12 +521,16 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 		}
 
     // Draw circle pointer
-    int cr = (int)((r1 - r2) * 0.2);
+    float cw = 0.2f;
+    float cr = ((r1 - r2) * cw);
     g.setColor(Color.BLACK);
-    g.drawOval(x - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + (int)getX(cAngle, (int)(((r1 + r2) / 2f))),
-               y - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + (int)getY(cAngle, (int)(((r1 + r2) / 2f))),
-               cr,
-               cr);
+    g.setStroke(new BasicStroke(2.0f));
+    // Magic 5... (5 * cw)
+    g.drawOval(x + (int)(5 * cw) - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + getX(cAngle, (int)(((r1 + r2) / 2f))),
+               y + (int)(5 * cw) - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + getY(cAngle, (int)(((r1 + r2) / 2f))),
+               (int)cr,
+               (int)cr);
+
 		drawTriangle(g, x, y, r2, cAngle);
 	}
 
