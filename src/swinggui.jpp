@@ -36,6 +36,10 @@ class MenuItemArray extends ArrayList {
 		FOREACH(JMenuItem, ab, this)
 			m.add(ab);
 	}
+	public void addToMenu(JPopupMenu m) {
+		FOREACH(JMenuItem, ab, this)
+			m.add(ab);
+	}
 	public boolean contains(Object b) {
 		return (b instanceof JMenuItem) && super.contains(b);
 	}
