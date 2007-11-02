@@ -4,13 +4,17 @@ import java.io.*;
 
 public class Disassembler
 {
+		public static final int SIMPLE_DISASSEMBLY = 0;
+		public static final int EXTENDED_DISASSEMBLY = 1;
+		private static int disasmmode = 0;
 		private static Cartridge cart;
 		private static CPU cpu;
 		#include "opcodes.inc"
 		private static final String file_name = "instrs.txt";
 		private static final char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
-		public Disassembler(CPU cpu) {
+		public Disassembler(CPU cpu, int i) {
 			this.cpu=cpu;
+			disasmmode = i;
 		}
 		// Opcode: opcode to disassemble
 		// BC:     whether opcode was after BC
@@ -68,6 +72,18 @@ public class Disassembler
 		}
 
 		public static final String disassemble(int PC) {
+			switch(disasmmode) {
+				case 0:
+					return simple_disassemble(PC);
+				case 1:
+					return extended_disassemble(PC);
+				default:
+					ASSERT(false);
+					return "";
+			}
+		}
+		
+		private static final String extended_disassemble(int PC) {
 			try {
 			int instr=cpu.read(PC);
 			int immediate=-1;
@@ -189,7 +205,7 @@ public class Disassembler
 			}
 		}
 
-		public static final String simple_disasm(int PC) {
+		private static final String simple_disassemble(int PC) {
 			try {
 				int instr=cpu.read(PC);
 				int immediate=-1;
