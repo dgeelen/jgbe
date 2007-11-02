@@ -748,14 +748,12 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			csize = (fulls ? fsframe: frame.getContentPane()).getSize();
 			if (grfx.interpolation == 0) {
 				psize = new Dimension(VC.nscale*160, VC.nscale*144);
-				grfx.setSize(psize);
-				grfx.setPreferredSize(psize);
 				if (!fulls) {
 					Dimension fsize = frame.getSize(); // frame size, including borders
 					Dimension bsize = new Dimension(); // screen panel size, plus border size
 					bsize.width = MAX(psize.width + (fsize.width - csize.width), frame.getPreferredSize().width);
 					bsize.height = MAX(psize.height + (fsize.height - csize.height), frame.getPreferredSize().height);
-					frame.getContentPane().setSize(psize);
+
 					frame.setSize(bsize);
 				}
 			} else {
