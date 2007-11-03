@@ -17,9 +17,9 @@ import java.awt.image.BufferedImage;
 
 #include "keyConfigDialog.inc"
 
-class MenuItemArray extends ArrayList {
-	public void add(JMenuItem b) {
-		super.add(b);
+class MenuItemArray extends VECTOR(JMenuItem) {
+	public boolean add(JMenuItem b) {
+		return super.add(b);
 	}
 	public void add(JMenuItem b, int mnemonic) {
 		super.add(b);
@@ -50,9 +50,10 @@ class MenuItemArray extends ArrayList {
 
 class MenuItemArrayGroup extends MenuItemArray {
 	private ButtonGroup grp = new ButtonGroup();
-	public void add(JMenuItem b) {
-		super.add(b);
+	public boolean add(JMenuItem b) {
+		boolean bbb = super.add(b);
 		grp.add(b);
+		return bbb;
 	}
 	public void add(JMenuItem b, int mnemonic) {
 		super.add(b);
