@@ -1372,9 +1372,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			String adVendor = "None";
 			String adDescription = "None";
 			String adVersion = "None";
-			int adBufferSize = 2048;
-			int adOutputInterval = 1024;
-			int adSampleRate = 44100;
+			int adSampleRate = 44100;   // Default for most soundcards
+			int adOutputInterval = 735; // 44100/60, once per frame
+			int adBufferSize = 1024;    // no need to have a much bigger buffer than the output interval
 			try {
 				String filename = FHandler.JGBEDir("") + "jgbe.conf";
 				BufferedReader in = new BufferedReader(new FileReader(filename));
