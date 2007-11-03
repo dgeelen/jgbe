@@ -1,4 +1,4 @@
-#include "global.inc"
+#include "Global.inc"
 
 import javax.swing.*;
 import javax.swing.text.*;
