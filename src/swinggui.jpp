@@ -1362,6 +1362,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			loading = true;
 			boolean runbiosonreset = false;
 			boolean[] soundchannelactive = new boolean[4];
+			for(int i=0; i<4; ++i) soundchannelactive[i] = true;
 			boolean usecheats = true;
 			int colorType = 0;
 			biosfilename = "";
