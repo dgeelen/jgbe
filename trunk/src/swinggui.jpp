@@ -17,6 +17,63 @@ import java.awt.image.BufferedImage;
 
 #include "keyConfigDialog.inc"
 
+class GlobalExceptionCatcher implements Thread.UncaughtExceptionHandler {
+	GlobalExceptionCatcher() {}
+	public void uncaughtException(Thread t, Throwable e) { //Note: still dies on OutOfMemory error :-(
+		JFrame errMsg = new JFrame("Internal Error!");
+		errMsg.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		JPanel iconAndText = new JPanel();
+		JPanel iconAndTextAndTextField = new JPanel();
+		BoxLayout bl;
+		bl = new BoxLayout(iconAndText, BoxLayout.X_AXIS);
+		iconAndText.setLayout(bl);
+		iconAndTextAndTextField.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT );
+		bl = new BoxLayout(iconAndTextAndTextField, BoxLayout.PAGE_AXIS);
+		iconAndTextAndTextField.setLayout(bl);
+		iconAndText.add( new JLabel(UIManager.getIcon("OptionPane.errorIcon")) );
+		JPanel spacer = new JPanel();
+		iconAndText.add( spacer );
+		iconAndText.add( new JLabel("<HTML><BODY>"+
+		                            "There was an error within the emulator itself, this should not happen.<BR>"+
+		                            "Please go to `http://code.google.com/p/jgbe/issues/' and submit a bug report with<BR>"+
+		                            "the full text of the error message (as shown in the textfield below), and<BR>"+
+		                            "(if possible) the steps neccesary to reproduce the error. Doing so will help<BR>"+
+		                            "us fix this bug and improve JGBE.<BR>"+
+		                            "</BODY></HTML>"
+		                            ));
+		JTextArea tf = new JTextArea();
+		tf.setEditable(false);
+		iconAndTextAndTextField.add(iconAndText);
+		spacer = new JPanel();
+		bl = new BoxLayout(spacer, BoxLayout.X_AXIS);
+		spacer.setLayout(bl);
+		spacer.add(new JLabel("Error message:"));
+		spacer.add(new JPanel());
+		iconAndTextAndTextField.add( spacer );
+		tf.setBorder(BorderFactory.createLoweredBevelBorder());
+		iconAndTextAndTextField.add(new JScrollPane(tf));
+		String s = "Type of error: \"" + e.toString() + "\"\n" + "Stacktrace:\n";
+		StackTraceElement[] ste = e.getStackTrace();
+		for(int i=0; i<ste.length; ++i)
+			s += ste[i] + "\n";
+		tf.setText(s);
+		errMsg.getContentPane().add( iconAndTextAndTextField );
+		errMsg.pack();
+		errMsg.setSize(new Dimension(640,480));
+		Point     p = new Point();
+		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+		p.setLocation((d.getWidth()/2) - (errMsg.getWidth()/2), (d.getHeight()/2)-(errMsg.getHeight()/2));
+		errMsg.setLocation(p);
+		errMsg.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		errMsg.addWindowListener(new WindowAdapter() {
+		                         	public void windowClosing(WindowEvent we) {
+		                         		System.exit(-1);
+		                         	}
+		                         });
+		errMsg.setVisible( true );
+	}
+}
+
 class MenuItemArray extends VECTOR(JMenuItem) {
 	public boolean add(JMenuItem b) {
 		return super.add(b);
@@ -1623,6 +1680,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 		public static void starter(swinggui gui, String[] args) {
+			Thread.setDefaultUncaughtExceptionHandler(new GlobalExceptionCatcher());
 			gui.loadRCFiles();
 			boolean sound=true, debug=false, lastcart=false;
 			String romfile="", logfile="";
@@ -1695,7 +1753,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				isApplet = true;
 				final swinggui gui=this;
 				String[] args = getParameter("params").split(" ");
-
 				starter(gui, args);
 			} catch (Exception e) {
 				// prevent browser crash on unchecked exception
