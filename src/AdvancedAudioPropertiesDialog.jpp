@@ -90,8 +90,8 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 				if(((Mixer.Info)(this.mixers.get(i))).equals(ad.getMixerInfo())) outputDevices.setSelectedIndex(i);
 			}
 			/* Set a set of predetermined samplingRates (which may or may not be supported by any line),
-				* instead of asking the current mixer which samplingRates it supports
-				*/
+			 * instead of asking the current mixer which samplingRates it supports
+			 */
 			samplingRates.add(new Integer(   8000));
 			samplingRates.add(new Integer(  11025));
 			samplingRates.add(new Integer(  22050));
