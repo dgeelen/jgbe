@@ -330,6 +330,11 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 	}
 
 	protected boolean UseCheats=true;
+
+	public void useCheats(boolean b) {
+		UseCheats = b;
+	}
+	
 	public void ToggleCheats(Cartridge cart) {
 		UseCheats = !UseCheats;
 		applyCheatCodes(cart);
