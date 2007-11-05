@@ -68,6 +68,8 @@ public class AudioDriver implements IAudioListener {
 				stop();
 				SourceDataLine sdl = (SourceDataLine)m.getLine(di);
 				audioSource = sdl;
+				audioBuffer = new byte[audioBufferSize];
+				audioBufferIndex = audioBufferSize - (channels * sampleSize);
 				start();
 				ac.setSampleRate(sampleRate);
 				return true;
