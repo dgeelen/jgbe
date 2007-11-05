@@ -497,7 +497,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 	private double cHue   = 0f;
 	private double cValue = 0f;
 	private double cSat   = 0f;
-	private boolean dragging = false;
+	private boolean circleDragging = false;
 	ColorSelectorComponent creator;
 
 	public ExtendedHSVColorSelectorComponent(ColorSelectorComponent creator)
@@ -536,24 +536,20 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 		int x = getCenterX() - e.getX();
 		int y = getCenterY() - e.getY();
 
-		System.out.print(cAngle);
-		System.out.print(" ");
-		System.out.print(getAngle(x,y));
-		
 		if (isInCircle(e.getX(), e.getY()) && (cAngle - 1 <= getAngle(x, y)) && (getAngle(x, y) <= cAngle + 1))
 		{
-		  dragging = true;
+		  circleDragging = true;
 		}
 	}
 
 	public void mouseReleased(MouseEvent e)
 	{
-		dragging = false;
+		circleDragging = false;
 	}
 	
 	public void mouseDragged(MouseEvent e)
 	{
-	  if (dragging)
+	  if (circleDragging)
 	  {
 			int x = getCenterX() - e.getX();
 			int y = getCenterY() - e.getY();
