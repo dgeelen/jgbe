@@ -533,13 +533,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 	
 	public void mousePressed(MouseEvent e)
 	{
-		int x = getCenterX() - e.getX();
-		int y = getCenterY() - e.getY();
-
-		if (isInCircle(e.getX(), e.getY()) && (cAngle - 1 <= getAngle(x, y)) && (getAngle(x, y) <= cAngle + 1))
-		{
-		  circleDragging = true;
-		}
+		circleDragging = isInCircle(e.getX(), e.getY());
 	}
 
 	public void mouseReleased(MouseEvent e)
