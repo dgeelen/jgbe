@@ -109,7 +109,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 // 			samplingRates.add(new Integer(2822400));
 
 			useStereo = new JCheckBox("Stereo output");
-			useStereo.setSelected(true);
+			useStereo.setSelected( ad.getChannels() == 2 );
 			samplingRateSlider = new JSlider(0, samplingRates.size()-1);
 			samplingRateSlider.setPaintTicks(true);
 			samplingRateSlider.setSnapToTicks(true);
