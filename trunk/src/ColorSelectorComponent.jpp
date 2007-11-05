@@ -491,12 +491,13 @@ class HexRGBColorSelectorComponent extends JPanel implements ActionListener
 	}
 }
 
-class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
+class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener, MouseMotionListener
 {
 	private float  cAngle = 0f;
 	private double cHue   = 0f;
 	private double cValue = 0f;
 	private double cSat   = 0f;
+	private boolean dragging = false;
 	ColorSelectorComponent creator;
 
 	public ExtendedHSVColorSelectorComponent(ColorSelectorComponent creator)
@@ -505,6 +506,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 		setPreferredSize(new Dimension(300, 300));
 		setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Extended HSV Colors"));
 		addMouseListener(this);
+		addMouseMotionListener(this);
 	}
 
 	/*
@@ -528,47 +530,108 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 		cValue = v;
 		repaint();
 	}
-
-	public void mouseClicked(MouseEvent e)
+	
+	public void mousePressed(MouseEvent e)
 	{
-		// Check whether click was whithin color circle
+		int x = getCenterX() - e.getX();
+		int y = getCenterY() - e.getY();
+
+		System.out.print(cAngle);
+		System.out.print(" ");
+		System.out.print(getAngle(x,y));
+		
+		if (isInCircle(e.getX(), e.getY()) && (cAngle - 1 <= getAngle(x, y)) && (getAngle(x, y) <= cAngle + 1))
+		{
+		  dragging = true;
+		}
+	}
+
+	public void mouseReleased(MouseEvent e)
+	{
+		dragging = false;
+	}
+	
+	public void mouseDragged(MouseEvent e)
+	{
+	  if (dragging)
+	  {
+			int x = getCenterX() - e.getX();
+			int y = getCenterY() - e.getY();
+	  	cAngle = getAngle(x, y);
+	  	cHue = cAngle;
+			creator.updateColors(this, cHue, cSat, cValue);
+	  	repaint();
+	  }
+	}
+
+	private int getCenterX()
+	{
+		return (int)(getSize().getWidth() / 2);
+	}
+
+	private int getCenterY()
+	{
+		return (int)(getSize().getHeight() / 2);
+	}
+	
+	private int getMin()
+	{
 		Insets bi = getInsets();
-		int centerX = (int)(getSize().getWidth() / 2);
-		int centerY = (int)(getSize().getHeight() / 2);
 		int bw = bi.left + bi.right;
 		int bh = bi.top + bi.bottom;
 		int width = (int)getSize().getWidth() - bw;
 		int height = (int)getSize().getHeight() - bh;
-		int min = (width < height)?width:height;
-		int dist = (int)Point2D.distance(centerX, centerY, e.getX(), e.getY());
-		int r1 = min/2;
-		int radius = (int)(min * (1 - ColorSelectorComponent.WHEEL_WIDTH)) / 2;
+		return (width < height)?width:height;
+	}
+	
+	private int getRadius()
+	{
+		return (int)(getMin() * (1 - ColorSelectorComponent.WHEEL_WIDTH)) / 2;
+	}
 
-		boolean inCircle = ((int)(min*ColorSelectorComponent.WHEEL_WIDTH* 2) <= dist) &&
-                        (dist <= min/2);
+	private boolean isInCircle(int x, int y)
+	{
+		// Check whether click was whithin color circle
+		int dist = (int)Point2D.distance(getCenterX(), getCenterY(), x, y);
+		return ((int)(getMin()*ColorSelectorComponent.WHEEL_WIDTH* 2) <= dist) &&
+           (dist <= getMin()/2);
+	}
+	
+	public int getMaxRadius()
+	{
+		return getMin()/2;
+	}
 
-		if (inCircle)
+	public float getAngle(int x, int y)
+	{
+		float angle = (float)Math.toDegrees(Math.atan2(y, x));
+		if (angle < 0) angle += 360;
+		angle -= 180;
+		if (angle < 0) angle += 360;
+		return angle;
+	}
+
+	public void mouseClicked(MouseEvent e)
+	{
+  	if (isInCircle(e.getX(), e.getY()))
 		{
 			boolean mx = false;
 			boolean my = false;
-			int x = centerX - e.getX();
-			int y = centerY - e.getY();
-			cAngle = (float)Math.toDegrees(Math.atan2(y, x));
-			if (cAngle < 0) cAngle += 360;
-			cAngle -= 180;
-			if (cAngle < 0) cAngle += 360;
+			int x = getCenterX() - e.getX();
+			int y = getCenterY() - e.getY();
+			cAngle = getAngle(x, y);
 		} else {
 			int[] xs = new int[3];
 			int[] ys = new int[3];
 
-			xs[0] = centerX + getX(Math.IEEEremainder(cAngle +   0f, 360f), radius);
-			ys[0] = centerY + getY(Math.IEEEremainder(cAngle +   0f, 360f), radius);
+			xs[0] = getCenterX() + getX(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
+			ys[0] = getCenterY() + getY(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
 
-			xs[1] = centerX + getX(Math.IEEEremainder(cAngle + 120f, 360f), radius);
-			ys[1] = centerY + getY(Math.IEEEremainder(cAngle + 120f, 360f), radius);
+			xs[1] = getCenterX() + getX(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
+			ys[1] = getCenterY() + getY(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
 
-			xs[2] = centerX + getX(Math.IEEEremainder(cAngle + 240f, 360f), radius);
-			ys[2] = centerY + getY(Math.IEEEremainder(cAngle + 240f, 360f), radius);
+			xs[2] = getCenterX() + getX(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
+			ys[2] = getCenterY() + getY(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
 
 
 			double max_v_dist = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], xs[2], ys[2]);
@@ -641,6 +704,15 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 			g.fillPolygon(xs, ys, 4);
 		}
 
+		// Draw circle pointer
+		g.setColor(Color.WHITE);
+		g.setStroke(new BasicStroke(2.0f));
+		g.drawLine(x + getX(cAngle, r1),
+		           y + getY(cAngle, r1),
+							 x + getX(cAngle, r2),
+							 y + getY(cAngle, r2));
+
+/* *
     // Draw circle pointer
     float cw = 0.2f;
     float cr = ((r1 - r2) * cw);
@@ -651,7 +723,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
                y + (int)(5 * cw) - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + getY(cAngle, (int)(((r1 + r2) / 2f))),
                (int)cr,
                (int)cr);
-
+/**/
 		drawTriangle(g, x, y, r2, cAngle);
 	}
 
@@ -704,8 +776,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener
 	}
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
-	public void mouseReleased(MouseEvent e) {}
-	public void mousePressed(MouseEvent e) {}
+	public void mouseMoved(MouseEvent e) {}
 }
 
 class ColorConverter
