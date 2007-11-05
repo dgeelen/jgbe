@@ -41,7 +41,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		dialog= new JDialog(owner, "Advanced Audio Properties", true);
 /*		dialog.setSize(new Dimension(640,480));
 		dialog.setPreferredSize(new Dimension(640,480));*/
-		
+		dialog.setResizable(false);
 		/* Setting Components */
 		if(ad != null) {
 			outputDevices = new JComboBox();
@@ -172,7 +172,6 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		}
 		dialog.addComponentListener(this);
 		dialog.setLocationRelativeTo(null);
-		dialog.setResizable(true);
 		dialog.pack();
 
 		Dimension d = owner.getSize();
