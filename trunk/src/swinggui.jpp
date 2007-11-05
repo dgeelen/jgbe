@@ -901,6 +901,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			else if (e.getSource().equals( menuitemEnableCheats)) {
 				cheatcodes.ToggleCheats(cart);
 				addOSDLine("Cheats codes are now " + (cheatcodes.UseCheats?"enabled":"disabled") );
+				configStateChanged = true;
 			}
 			else if (e.getSource().equals( menuitemConfigKeys )) {
 				keyConfigDialog k=new keyConfigDialog(frame, keyMap);
@@ -1169,7 +1170,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				addOSDLine("Remote Keys: "+(cpu.useRemoteKeys?"Enabled":"Disabled"));
 			}
 			else if(e.getSource().equals( menuitemShowAdvancedAudioPropertiesDialog )) {
+				pauseEmulation(false);
 				advancedAudioPropertiesDialog.showWindow();
+				resumeEmulation(false);
 			}
 			else if (savestateRadioGroup.contains(e.getSource())) {
 				int idx = savestateRadioGroup.getSelectedIndex();
@@ -1479,7 +1482,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					LOAD_INT_VAL(adBufferSize);
 					LOAD_INT_VAL(adOutputInterval);
 					LOAD_INT_VAL(adSampleRate);
-
+					LOAD_BOOL_VAL(usecheats);
+					
 					/* LOAD PAL */
 					if (property.equalsIgnoreCase("ColorType")) {
 						try {
@@ -1515,7 +1519,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 			actionPerformed(new ActionEvent(menuitemColorSchemes[colorType], 0, ""));
 			scaleRadioGroup.setSelectedIndex(VC.nscale-1);
-			if(!usecheats) cheatcodes.ToggleCheats(cart); //by default on
+			cheatcodes.useCheats(usecheats);
 			menuitemEnableCheats.setState(usecheats);
 
 			audioDriver.setMixerInfo(adName, adVendor, adDescription, adVersion);
@@ -1545,7 +1549,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				cart = tcart;
 				CPU.loadCartridge(cart);
 				updateCartName(filename);
+				boolean b = (cheatcodes==null) ? false : cheatcodes.UseCheats;
 				cheatcodes = new CheatCodeEditor(frame, curcartname);
+				cheatcodes.useCheats(b);
 				cheatcodes.applyCheatCodes(cart);
 				addOSDLine("loaded Rom: " + curcartname);
 			}
@@ -1711,13 +1717,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
+			gui.loadConfig();
+			
 			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
 			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
 			gui.loadKeyBinds();
 
 			cheatcodes.applyCheatCodes(cart);
 
-			gui.loadConfig();
 			//Audio Properties Dialog
 			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, gui.audioDriver, gui);
 // 			advancedAudioPropertiesDialog.showWindow();
