@@ -498,6 +498,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 	private double cValue = 0f;
 	private double cSat   = 0f;
 	private boolean circleDragging = false;
+	private boolean triangleDragging = false;
 	ColorSelectorComponent creator;
 
 	public ExtendedHSVColorSelectorComponent(ColorSelectorComponent creator)
@@ -530,17 +531,30 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 		cValue = v;
 		repaint();
 	}
-	
+
 	public void mousePressed(MouseEvent e)
 	{
 		circleDragging = isInCircle(e.getX(), e.getY());
+		triangleDragging = isInTriangle(e.getX(), e.getY());
+		mouseDragged(e);
 	}
 
 	public void mouseReleased(MouseEvent e)
 	{
 		circleDragging = false;
+		triangleDragging = false;
 	}
-	
+
+	// 1-2 = line, 3 = point
+	private Point getPointClosestToLine(int x1, int y1, int x2, int y2, int x3, int y3)
+	{
+		double u = ((x3-x1)*(x2-x1)) + ((y3-y1)*(y2-y1));
+		u /= Point2D.distanceSq(x1, y1, x2, y2);
+		if (u <= 0) return new Point(x1, y1);
+		if (u >= 1) return new Point(x2, y2);
+		return new Point((int)Math.round(x1 + u * (x2-x1)), (int)Math.round(y1 + u * (y2-y1)) );
+	}
+
 	public void mouseDragged(MouseEvent e)
 	{
 	  if (circleDragging)
@@ -552,6 +566,66 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 			creator.updateColors(this, cHue, cSat, cValue);
 	  	repaint();
 	  }
+
+		if (triangleDragging) {
+			int x = e.getX();
+			int y = e.getY();
+
+			int[] xs = new int[3];
+			int[] ys = new int[3];
+
+			xs[0] = getCenterX() + getX(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
+			ys[0] = getCenterY() + getY(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
+
+			xs[1] = getCenterX() + getX(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
+			ys[1] = getCenterY() + getY(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
+
+			xs[2] = getCenterX() + getX(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
+			ys[2] = getCenterY() + getY(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
+
+			int haxx = 0;
+			if (!isInTriangle(x, y)) {
+				Point[] p = new Point[3];
+				double[] d = new double[3];
+				for (int i = 0; i < 3; ++i) {
+					p[i] = getPointClosestToLine(xs[i], ys[i], xs[(i+1)%3], ys[(i+1)%3], x, y);
+					d[i] = p[i].distance(x, y);
+				}
+
+				for (int i = 0; i < 3; ++i) {
+					if (d[i] <= d[(i+1)%3] && d[i] <= d[(i+2)%3]) {
+						x = p[i].x;
+						y = p[i].y;
+						haxx |= 1 << i;
+					}
+				}
+			}
+
+			double max_v_dist = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], xs[2], ys[2]);
+			double tr_v = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], x, y);
+			tr_v /= max_v_dist;
+
+			double max_s_dist = Point2D.distance(xs[0], ys[0], xs[1], ys[1]);
+			double tr_s = Line2D.ptLineDist(xs[1], ys[1], xs[1] - (ys[0] - ys[1]), ys[1] + (xs[0] - xs[1]), x, y);
+			tr_s -= tr_v * max_s_dist / 2;
+			tr_v = 1 - tr_v;
+			tr_s /= tr_v * max_s_dist;
+
+			//tr_v = 1 - tr_v;
+			//tr_s = 1 - tr_s;
+			//PRINTLN("v = " + tr_v);
+			//PRINTLN("s = " + tr_s);
+			cSat = tr_s * ColorSelectorComponent.MAX_SATURATION;
+			cValue = tr_v * ColorSelectorComponent.MAX_VALUE;
+
+			if (0 != (haxx & 1)) cValue = 100;
+			if (0 != (haxx & 2)) cSat = 0;
+			if (0 != (haxx & 4)) cSat = 100;
+
+			cHue = cAngle;
+			creator.updateColors(this, cHue, cSat, cValue);
+			repaint();
+		}
 	}
 
 	private int getCenterX()
@@ -563,7 +637,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 	{
 		return (int)(getSize().getHeight() / 2);
 	}
-	
+
 	private int getMin()
 	{
 		Insets bi = getInsets();
@@ -573,7 +647,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 		int height = (int)getSize().getHeight() - bh;
 		return (width < height)?width:height;
 	}
-	
+
 	private int getRadius()
 	{
 		return (int)(getMin() * (1 - ColorSelectorComponent.WHEEL_WIDTH)) / 2;
@@ -586,7 +660,33 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 		return ((int)(getMin()*ColorSelectorComponent.WHEEL_WIDTH* 2) <= dist) &&
            (dist <= getMin()/2);
 	}
-	
+
+	private boolean isInTriangle(int x, int y)
+	{
+		int[] xs = new int[3];
+		int[] ys = new int[3];
+
+		xs[0] = getCenterX() + getX(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
+		ys[0] = getCenterY() + getY(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
+
+		xs[1] = getCenterX() + getX(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
+		ys[1] = getCenterY() + getY(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
+
+		xs[2] = getCenterX() + getX(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
+		ys[2] = getCenterY() + getY(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
+
+		Polygon p = new Polygon(xs, ys, 3);
+
+		//PRINTLN("--");
+		//PRINTLN("x="+xs[0]+"  y="+ys[0]);
+		//PRINTLN("x="+xs[1]+"  y="+ys[1]);
+		//PRINTLN("x="+xs[2]+"  y="+ys[2]);
+		//PRINTLN("x="+x+"  y="+y);
+
+		//PRINTLN("r=" + p.contains(x, y));
+		return p.contains(x, y);
+	}
+
 	public int getMaxRadius()
 	{
 		return getMin()/2;
@@ -603,49 +703,7 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 
 	public void mouseClicked(MouseEvent e)
 	{
-  	if (isInCircle(e.getX(), e.getY()))
-		{
-			boolean mx = false;
-			boolean my = false;
-			int x = getCenterX() - e.getX();
-			int y = getCenterY() - e.getY();
-			cAngle = getAngle(x, y);
-		} else {
-			int[] xs = new int[3];
-			int[] ys = new int[3];
 
-			xs[0] = getCenterX() + getX(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
-			ys[0] = getCenterY() + getY(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
-
-			xs[1] = getCenterX() + getX(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
-			ys[1] = getCenterY() + getY(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
-
-			xs[2] = getCenterX() + getX(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
-			ys[2] = getCenterY() + getY(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
-
-
-			double max_v_dist = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], xs[2], ys[2]);
-			double tr_v = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], e.getX(), e. getY());
-			tr_v /= max_v_dist;
-
-			double max_s_dist = Point2D.distance(xs[0], ys[0], xs[1], ys[1]);
-			double tr_s = Line2D.ptLineDist(xs[1], ys[1], xs[1] - (ys[0] - ys[1]), ys[1] + (xs[0] - xs[1]), e.getX(), e.getY());
-			tr_s -= tr_v * max_s_dist / 2;
-			tr_v = 1 - tr_v;
-			tr_s /= tr_v * max_s_dist;
-
-			//tr_v = 1 - tr_v;
-			//tr_s = 1 - tr_s;
-			//PRINTLN("v = " + tr_v);
-			//PRINTLN("s = " + tr_s);
-			cSat = tr_s * ColorSelectorComponent.MAX_SATURATION;
-			cValue = tr_v * ColorSelectorComponent.MAX_VALUE;
-		}
-
-		cHue = cAngle;
-		creator.updateColors(this, cHue, cSat, cValue);
-
-		repaint();
 	}
 
 	public void paintComponent(Graphics g2)
@@ -702,19 +760,45 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 							 x + getX(cAngle, r2),
 							 y + getY(cAngle, r2));
 
-/* *
+		drawTriangle(g, x, y, r2, cAngle);
+
+		int[] xs = new int[4];
+		int[] ys = new int[4];
+
+		xs[0] = getCenterX() + getX(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
+		ys[0] = getCenterY() + getY(Math.IEEEremainder(cAngle +   0f, 360f), getRadius());
+
+		xs[1] = getCenterX() + getX(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
+		ys[1] = getCenterY() + getY(Math.IEEEremainder(cAngle + 120f, 360f), getRadius());
+
+		xs[2] = getCenterX() + getX(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
+		ys[2] = getCenterY() + getY(Math.IEEEremainder(cAngle + 240f, 360f), getRadius());
+
+		xs[3] = (xs[0] + xs[1]) / 2;
+		ys[3] = (ys[0] + ys[1]) / 2;
     // Draw circle pointer
-    float cw = 0.2f;
-    float cr = ((r1 - r2) * cw);
-    g.setColor(Color.BLACK);
+    int cw = 2;
+
+		double max_v_dist = Line2D.ptLineDist(xs[0], ys[0], xs[1], ys[1], xs[2], ys[2]);
+
+		double max_s_dist = (cSat - 50) * 2;
+
+		max_s_dist *= cValue;
+		max_s_dist /= -100;
+
+    x = xs[2];
+    y = ys[2];
+    x += (int)Math.round(cValue * (xs[3] - xs[2]) / 100);
+    y += (int)Math.round(cValue * (ys[3] - ys[2]) / 100);
+    x += (int)Math.round(max_s_dist * (xs[3] - xs[0]) / 100);
+    y += (int)Math.round(max_s_dist * (ys[3] - ys[0]) / 100);
+    g.setColor(Color.WHITE);
     g.setStroke(new BasicStroke(2.0f));
     // Magic 5... (5 * cw)
-    g.drawOval(x + (int)(5 * cw) - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + getX(cAngle, (int)(((r1 + r2) / 2f))),
-               y + (int)(5 * cw) - (int)(Math.sqrt(cr*cr + cr*cr) / 2) + getY(cAngle, (int)(((r1 + r2) / 2f))),
-               (int)cr,
-               (int)cr);
-/**/
-		drawTriangle(g, x, y, r2, cAngle);
+    g.drawOval(x - cw,
+               y - cw,
+               cw*2,
+               cw*2);
 	}
 
 	public void drawTriangle(Graphics2D g, int x, int y, int radius, float angle)
