@@ -389,9 +389,9 @@ class HSVColorSelectorComponent extends JPanel implements ChangeListener
 			else
 			{
 				creator.updateColors(this,
-				                             ((Double)hsvSpinners[0].getValue()).doubleValue(),
-				                             ((Double)hsvSpinners[1].getValue()).doubleValue(),
-		  	                             ((Double)hsvSpinners[2].getValue()).doubleValue());
+                                     (double)((Integer)hsvSpinners[0].getValue()).intValue(),
+                                     (double)((Integer)hsvSpinners[1].getValue()).intValue(),
+                                     (double)((Integer)hsvSpinners[2].getValue()).intValue());
 			}
 		}
 	}
