@@ -71,6 +71,9 @@ silence: all
 run: all
 	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -debug
 
+userrun: all
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui
+	
 debug: all
 	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound -debug
 
