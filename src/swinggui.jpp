@@ -1519,6 +1519,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 			actionPerformed(new ActionEvent(menuitemColorSchemes[colorType], 0, ""));
 			scaleRadioGroup.setSelectedIndex(VC.nscale-1);
+			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
 			cheatcodes.useCheats(usecheats);
 			menuitemEnableCheats.setState(usecheats);
 
