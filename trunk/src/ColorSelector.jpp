@@ -40,12 +40,12 @@ public class ColorSelector extends JFrame implements MouseListener, ChangeListen
 
 		colorchooser = new JColorChooser();
 		colorchooser.getSelectionModel().addChangeListener(this);
-		
+
 		// Set AbstractColorChooserPanel priority
     AbstractColorChooserPanel[] panels = colorchooser.getChooserPanels();
     AbstractColorChooserPanel[] panels2 = new AbstractColorChooserPanel[panels.length + 1];
     panels2[0] = new ColorSelectorComponent();
-    
+
     for(int i = 0; i < panels.length; ++i)
     {
       colorchooser.removeChooserPanel(panels[i]);
@@ -53,7 +53,7 @@ public class ColorSelector extends JFrame implements MouseListener, ChangeListen
     }
 
     colorchooser.setChooserPanels(panels2);
-    
+
 		colorabletypes = new JPanel();
 		colorsBackground = new JPanel();
 		colorsBackground.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Background:"));
