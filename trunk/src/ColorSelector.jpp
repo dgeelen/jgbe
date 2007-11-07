@@ -128,7 +128,11 @@ public class ColorSelector extends JFrame implements MouseListener, ChangeListen
 		for(int i=0; i<12; ++i) {
 			if(e.getSource().equals( colorPanes[i] )) {
 				currentColorPane = i;
-				colorchooser.setColor(colorPanes[currentColorPane].getBackground());
+				if (e.getButton() == MouseEvent.BUTTON1)
+					colorchooser.setColor(colorPanes[currentColorPane].getBackground());
+				else
+					stateChanged(new ChangeEvent(colorchooser.getSelectionModel()));
+
 				updateColorPanes();
 			}
 		}
