@@ -651,14 +651,19 @@ public final class CPU {
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
 						VC.STAT = (VC.STAT&7)|(value&0x78); //lower 3bits are readonly
-						if (!VC.isCGB && ((VC.STAT & 2)!=0)) /* DMG STAT write bug => interrupt */
-						//FIXME: if this bug *ALWAYS* triggers an interrupt, regardless of the state of
-						//       STAT, use triggerInterrupt(1) instead of VC.modeChanged()
-							VC.modeChanged(VC.STAT&0x03);
-
-// 						VC.stat_trigger(); //FIXME: No longer used in new timing code
-// 						                     NOTE: I think this is not needed, because all that stat_trigger() does is
-// 						                           trigger the STAT interrupt, which has been handled by modeChanged()
+						if (!VC.isCGB && ((VC.STAT & 2)==0) && ((VC.LCDC&0x80)!=0)) {
+							/* DMG STAT write bug => interrupt
+							* In certain situations, writing to the STAT register ($ff41) seems to cause bit 1
+							* of the IF register ($ff0f) to be set (and thus cause interrupt $48 to occur, if
+							* it is enabled). Due to programming bugs, at least two games (Roadrash, Legend of
+							* Zerd) insist on this quirk, and are incompatible with the GBC. As far as has been
+							* figured out, the bug happens everytime ANYTHING (including 00) is written to the
+							* STAT register ($ff41) while the gameboy is either in HBLANK or VBLANK mode. It
+							* doesn't seem to happen when the gameboy is in OAM or VRAM mode, or when the display
+							* is disabled. (Info from Martin Korth.)
+							*/
+							triggerInterrupt(1);
+							}
 						break;
 					case 0xff42: // SCY
 						VC.SCY = value;
