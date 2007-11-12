@@ -123,7 +123,7 @@ $(JARDIR)/jgbe.jar: $(AJAVAFILES) $(CLASSFILES)
 	@echo "[packing] jgbe.jar"
 	@echo "Manifest-Version: 1.2" > $(CLASSDIR)/MANIFEST.MF.in
 	@echo "Main-Class: swinggui" >> $(CLASSDIR)/MANIFEST.MF.in
-	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jgbe.jar *.class icon.gif VeraMono.ttf $(BOOTROM)
+	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jgbe.jar *.class icon.gif jgbe_logo.png VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.jar $(JARDIR)/jgbe.jar
 
@@ -136,7 +136,7 @@ jarzip: $(CLASSFILES)
 	@echo "Created-By: 1.5.0_12 (Sun Microsystems Inc.)\r\n" >> $(CLASSDIR)/META-INF/MANIFEST.MF
 	@echo "Main-Class: swinggui" >> $(CLASSDIR)/META-INF/MANIFEST.MF
 	@echo "" >> $(CLASSDIR)/META-INF/MANIFEST.MF
-	@cd $(CLASSDIR) && zip -r -9 jgbe.zip META-INF *.class icon.gif VeraMono.ttf $(BOOTROM)
+	@cd $(CLASSDIR) && zip -r -9 jgbe.zip META-INF *.class icon.gif jgbe_logo.png VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
 
