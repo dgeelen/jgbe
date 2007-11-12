@@ -376,7 +376,7 @@ public final class CPU {
 				}
 				else {
 					b = cartridge.MM_ROM[0][index];
-				  //PRINTLN("reading from non-BIOS rom");
+					//PRINTLN("reading from non-BIOS rom");
 				}
 			}
 			else if(index < 0x8000) { //16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -791,9 +791,9 @@ public final class CPU {
 		public static void reset(boolean bios) {
 			if(cartridge == null) return; //Do nothing if no cartridge is inserted
 			BIOS_enabled = bios;
- 			VC.reset();
- 			cartridge.CurrentRAMBank=0;
- 			cartridge.CurrentROMBank=1;
+			VC.reset();
+			cartridge.CurrentRAMBank=0;
+			cartridge.CurrentROMBank=1;
 			refreshMemMap();
 
 			PC = BIOS_enabled?0x00:0x100;
@@ -946,8 +946,8 @@ public final class CPU {
 			if (CHECK_INTS) {
 				checkInterrupts();
 				halted = false;
- 				//return 4;/* FIXME(?) For break on interrupt *//* note: 4 should be allright. RST takes 16 cycles */
- 				return 5; //According to MESS "Taking an interrupt seems to take around 20 clock cycles."
+				//return 4;/* FIXME(?) For break on interrupt *//* note: 4 should be allright. RST takes 16 cycles */
+				return 5; //According to MESS "Taking an interrupt seems to take around 20 clock cycles."
 			}
 
 			if (delayed_halt && IME) {
@@ -1180,7 +1180,7 @@ public final class CPU {
 						CASES_CB_SHOP(0x28, SRA)
 						CASES_CB_SHOP(0x38, SRL)
 						CASES_CB_SWAP
- 						default:
+						default:
 						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
 						PC -= 2;
 						return 0;
@@ -1281,7 +1281,7 @@ public final class CPU {
 					AC.render(cycles>>1); //render enough sound bytes for cycles Cycles
 					VC.render( cycles>>1 );
 				}
-			 	else {
+				else {
 					AC.render(cycles); //render enough sound bytes for cycles Cycles
 					VC.render( cycles );
 				}
