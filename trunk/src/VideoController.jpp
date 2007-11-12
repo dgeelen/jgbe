@@ -681,6 +681,7 @@ public final class VideoController {
 				blitImage();
 				if((LCDC&0x80)!=0) cpu.triggerInterrupt(0);
 			}
+			if((LCDC&0x80)==0) return;     // don't generate interrupts when LCD is disabled
 			if ((LY==LYC) && ((mode&0x2)==0) && ((STAT&(1<<6)) !=0)) // Only generate LY==LYC coincidence interrupt in mode 0 or 1
 				cpu.triggerInterrupt(1);
 			if ((mode == 2) && ((STAT&(1<<5)) !=0)) // Mode 2 OAM Interrupt

@@ -436,12 +436,12 @@ public final class CPU {
 						b = AC.read(index);
 						break;
 					case 0xff40: // LCDC register
-						//FIXME: Needs verification: (see VC.render() notes on disabling the LCD)
-						//       (I don't really believe this though ...)
-						b = ((VC.LCDC&0x80)==0) ? 0 : VC.LCDC;
+						b = VC.LCDC;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
-						b = VC.STAT;
+						//FIXME: Needs verification: (see VC.render() notes on disabling the LCD)
+						//       (I don't really believe this though ...)
+						b = ((VC.LCDC&0x80)==0) ? (VC.STAT&0x7c)|0x00 : VC.STAT; //Stay in hblank when disabled
 						break;
 					case 0xff42: // SCY
 						b = VC.SCY;
@@ -450,7 +450,9 @@ public final class CPU {
 						b = VC.SCX;
 						break;
 					case 0xff44: // LY
-						b = VC.LY;
+						//FIXME: Needs verification: (see VC.render() notes on disabling the LCD)
+						//       (I don't really believe this though ...)
+						b = ((VC.LCDC&0x80)==0) ? 0 : VC.LY; //Stay on scanline 0 when disabled
 						break;
 					case 0xff45: // LYC
 						b = VC.LYC;
