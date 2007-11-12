@@ -144,8 +144,7 @@ public final class CPU {
 			SL_BOOL(speedswitch);
 			SL_INT(DIVcntdwn);
 			SL_INT(TIMAcntdwn);
-			int LCDCcntdwn=0;
-			SL_IF_VERSION( -1, 14) SL_INT(LCDCcntdwn);
+			SL_IF_VERSION( -1, 14) SL_SKIP(INT, 1); //SL_INT(LCDCcntdwn);
 			SL_UINT16(PC);
 			SL_UINT16(SP);
 			SL_UINT8(IE);
