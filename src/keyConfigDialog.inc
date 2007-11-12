@@ -1,5 +1,5 @@
 #ifndef USE_JAVA_MOBILE
-#define nrOfShortCuts 36
+#define nrOfShortCuts 37
 class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
 	private JDialog dialog;
 	private JFrame owner;
@@ -87,6 +87,7 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 			INPUTBOX(shortCuts, "Increase FrameSkip");
 			INPUTBOX(shortCuts, "Decrease FrameSkip");
 			INPUTBOX(shortCuts, "Original Colors");
+			INPUTBOX(shortCuts, "GB Pocket/Light Colors");
 			INPUTBOX(shortCuts, "Black and White Colors");
 			INPUTBOX(shortCuts, "Greyscale Colors");
 			INPUTBOX(shortCuts, "Custom Colors");

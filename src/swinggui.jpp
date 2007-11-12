@@ -473,15 +473,17 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuVideo.add( menuFrameSkip) ;
 
 			menuColorScheme = new JMenu("Color scheme");
-			menuitemColorSchemes = new JCheckBoxMenuItem[4];
+			menuitemColorSchemes = new JCheckBoxMenuItem[5];
 			menuitemColorSchemes[0] = new JCheckBoxMenuItem("GameBoy LCD", false);
 			menuitemColorSchemes[0].setMnemonic(KeyEvent.VK_L);
-			menuitemColorSchemes[1] = new JCheckBoxMenuItem("Black and White", false);
-			menuitemColorSchemes[1].setMnemonic(KeyEvent.VK_B);
-			menuitemColorSchemes[2] = new JCheckBoxMenuItem("Graytones", false);
-			menuitemColorSchemes[2].setMnemonic(KeyEvent.VK_G);
-			menuitemColorSchemes[3] = new JCheckBoxMenuItem("Custom", false);
-			menuitemColorSchemes[3].setMnemonic(KeyEvent.VK_C);
+			menuitemColorSchemes[1] = new JCheckBoxMenuItem("GameBoy Pocket/Light", false);
+			menuitemColorSchemes[1].setMnemonic(KeyEvent.VK_P);
+			menuitemColorSchemes[2] = new JCheckBoxMenuItem("Black and White", false);
+			menuitemColorSchemes[2].setMnemonic(KeyEvent.VK_B);
+			menuitemColorSchemes[3] = new JCheckBoxMenuItem("Graytones", false);
+			menuitemColorSchemes[3].setMnemonic(KeyEvent.VK_G);
+			menuitemColorSchemes[4] = new JCheckBoxMenuItem("Custom", false);
+			menuitemColorSchemes[4].setMnemonic(KeyEvent.VK_C);
 			for (int i = 0; i < menuitemColorSchemes.length; ++i) {
 				menuColorScheme.add(menuitemColorSchemes[i]);
 				menuitemColorSchemes[i].addActionListener(this);
@@ -633,6 +635,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemColorSchemes[1].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemColorSchemes[2].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemColorSchemes[3].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemColorSchemes[4].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSaveState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemLoadState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEnableSound.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -1132,7 +1135,17 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				configStateChanged = true;
 				SELECT_COLOR_MENU( 0 );
 			}
-			else if(e.getSource().equals( menuitemColorSchemes[1] )) {
+			else if(e.getSource().equals( menuitemColorSchemes[1] )) { /* Palette for GameBoy Pocket/Light */
+				int[][] c={ {0xC4,0xCF,0xA1},	// WHITE
+										{0x8B,0x95,0x6D},  // LIGHTGRAY
+										{0x6B,0x73,0x53},  // DARKGRAY
+										{0x41,0x41,0x41}}; // BLACK
+				cpu.VC.setGrayShades(c);
+				cs.setVisible( false );
+				configStateChanged = true;
+				SELECT_COLOR_MENU( 1 );
+			}
+			else if(e.getSource().equals( menuitemColorSchemes[2] )) {
 				int[][] c={ {0xf8, 0xf8, 0xf8},	// WHITE
 										{0xa8, 0xa8, 0xa8},  // LIGHTGRAY
 										{0x60, 0x60, 0x60},  // DARKGRAY
@@ -1140,9 +1153,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				cpu.VC.setGrayShades(c);
 				cs.setVisible( false );
 				configStateChanged = true;
-				SELECT_COLOR_MENU( 1 );
+				SELECT_COLOR_MENU( 2 );
 			}
-			else if(e.getSource().equals( menuitemColorSchemes[2] )) {
+			else if(e.getSource().equals( menuitemColorSchemes[3] )) {
 				int[][] c={ {0xc5, 0xc5, 0xc5},	// WHITE
 										{0x9a, 0x9a, 0x9a},  // LIGHTGRAY
 										{0x61, 0x61, 0x61},  // DARKGRAY
@@ -1150,13 +1163,13 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				cpu.VC.setGrayShades(c);
  				cs.setVisible( false );
 				configStateChanged = true;
-				SELECT_COLOR_MENU( 2 );
+				SELECT_COLOR_MENU( 3 );
 			}
-			else if (e.getSource().equals( menuitemColorSchemes[3] )) {
+			else if (e.getSource().equals( menuitemColorSchemes[4] )) {
 				if ( !cpu.isCGB() ) {
 					if (!loading) cs.setVisible( true );
 					configStateChanged = true;
-					SELECT_COLOR_MENU( 3 );
+					SELECT_COLOR_MENU( 4 );
 				}
 				else {
 					JOptionPane.showMessageDialog(frame,
@@ -1662,6 +1675,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			keyMap[Magix++]=569; // Ctrl+9
 			keyMap[Magix++]=568; // Ctrl+8
 			keyMap[Magix++]=567; // Ctrl+7
+			keyMap[Magix++]=566; // Ctrl+6
 			keyMap[Magix++]=595; // Ctrl+S
 			keyMap[Magix++]=588; // Ctrl+L
 			keyMap[Magix++]=577; // Ctrl+A
