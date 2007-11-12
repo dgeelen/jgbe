@@ -18,40 +18,6 @@ import java.util.Arrays;
 
 #include "keyConfigDialog.inc"
 
-class LogoPanel extends JPanel {
-	public Image logo = null;
-	public LogoPanel(Image logo) {
-		this.logo = logo;
-		if(this.logo != null)
-			while((this.logo.getWidth(null)==-1) || (this.logo.getHeight(null)==-1)) YIELD;
-	}
-	private Image scaledLogo = null;
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		if((logo != null)) {
-			if((scaledLogo==null) || ((scaledLogo!=null) && !((scaledLogo.getHeight(null) == getHeight()) || (scaledLogo.getWidth(null) == getWidth())))) {
-				double imgaspect = (((double)logo.getWidth(null))/((double)logo.getHeight(null))); // Image aspect
-				double wndaspect = (((double)getWidth()) / ((double)getHeight()));                         // Display aspect
-				if( imgaspect > wndaspect ) { // Image wider than window
-					scaledLogo = logo.getScaledInstance(getWidth(), (int)(getWidth()/imgaspect), Image.SCALE_AREA_AVERAGING);
-				} else
-				if( imgaspect < wndaspect  ) { // Image narrower than window
-					scaledLogo = logo.getScaledInstance((int)(getHeight()*imgaspect), getHeight(), Image.SCALE_AREA_AVERAGING);
-				} else
-					scaledLogo = logo.getScaledInstance(getWidth(), getHeight(), Image.SCALE_AREA_AVERAGING);
-			}
-			if(scaledLogo != null) {
-				while((scaledLogo.getWidth(null)==-1) || (scaledLogo.getHeight(null)==-1)) YIELD;
-				Dimension size = new Dimension(scaledLogo.getWidth(null), scaledLogo.getHeight(null));
-				int x = (getWidth() - size.width)/2;
-				int y = (getHeight() - size.height)/2;
-				g.drawImage(scaledLogo, x, y, this);
-				return;
-			}
-		} else scaledLogo = null;
-	}
-}
-
 class GlobalExceptionCatcher implements Thread.UncaughtExceptionHandler {
 	GlobalExceptionCatcher() {}
 	public void uncaughtException(Thread t, Throwable e) { //Note: still dies on OutOfMemory error :-(
@@ -358,8 +324,32 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 
 			Image menuimage = null;
+			Image scaledLogo = null;
 			public void paintComponent(Graphics g) {
 				super.paintComponent(g);
+
+				if((logo != null)) {
+					if((scaledLogo==null) || ((scaledLogo!=null) && !((scaledLogo.getHeight(null) == getHeight()) || (scaledLogo.getWidth(null) == getWidth())))) {
+						double imgaspect = (((double)logo.getWidth(null))/((double)logo.getHeight(null))); // Image aspect
+						double wndaspect = (((double)getWidth()) / ((double)getHeight()));                         // Display aspect
+						if( imgaspect > wndaspect ) { // Image wider than window
+							scaledLogo = logo.getScaledInstance(getWidth(), (int)(getWidth()/imgaspect), Image.SCALE_AREA_AVERAGING);
+						} else
+						if( imgaspect < wndaspect  ) { // Image narrower than window
+							scaledLogo = logo.getScaledInstance((int)(getHeight()*imgaspect), getHeight(), Image.SCALE_AREA_AVERAGING);
+						} else
+							scaledLogo = logo.getScaledInstance(getWidth(), getHeight(), Image.SCALE_AREA_AVERAGING);
+					}
+					if(scaledLogo != null) {
+						while((scaledLogo.getWidth(null)==-1) || (scaledLogo.getHeight(null)==-1)) YIELD;
+						Dimension size = new Dimension(scaledLogo.getWidth(null), scaledLogo.getHeight(null));
+						int x = (getWidth() - size.width)/2;
+						int y = (getHeight() - size.height)/2;
+						g.drawImage(scaledLogo, x, y, this);
+						return;
+					}
+				} else scaledLogo = null;
+				
 				if (interpolation == 0) {
 					g.drawImage(cpu.VC.getImage(),0,0, this);
 				} else {
@@ -1279,15 +1269,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					enableFullScreen.setState(false);
 					componentResized(null);
 				}
-
-				if(splashScreen != null) {
-					long dur = System.nanoTime() - startUpTime;
-					if(dur > ((long)5 * (long)1000000000)) {
-						splashScreen.setVisible(false);
-						splashScreen.dispose();
-						splashScreen=null;
-					}
-				}
 			}
 			if (configStateChanged ) saveConfig();
 		}
@@ -1651,6 +1632,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 		private void tryToLoadROM(String filename) {
+			//Disable Logo
+			logo = null;
 			pauseEmulation(false);
 			Cartridge tcart=new Cartridge(filename);
 			if (menuitemUseBIOS.getState())
@@ -1800,8 +1783,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			getContentPane().add(label);
 		}
 
-		static JFrame splashScreen = null;
-		static long startUpTime=0;
+		static Image logo = null;
 		public static void starter(swinggui gui, String[] args) {
 			Thread.setDefaultUncaughtExceptionHandler(new GlobalExceptionCatcher());
 			
@@ -1824,27 +1806,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			if(!lastcart) {
 				Toolkit toolkit = Toolkit.getDefaultToolkit();
-				splashScreen = new JFrame();
 				URL imgurl = gui.getClass().getResource("jgbe_logo.png");
-				Image logo = null;
+				gui.logo = null;
 				if(imgurl!=null) {
 					logo = toolkit.getImage(imgurl);
-					splashScreen.setUndecorated(true);
-					splashScreen.setContentPane(new LogoPanel(logo));
-					splashScreen.setResizable(false);
-					splashScreen.pack();
-					Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-					Point     p = new Point();
-					splashScreen.setSize(new Dimension(logo.getWidth(null), logo.getHeight(null)));
-					p.setLocation((d.getWidth()/2) - (splashScreen.getWidth()/2), (d.getHeight()/2)-(splashScreen.getHeight()/2));
-					splashScreen.setLocation(p);
-					splashScreen.setAlwaysOnTop(true);
-					splashScreen.setVisible(true);
-					startUpTime = System.nanoTime();
+					while((gui.logo.getWidth(null)==-1) || (gui.logo.getHeight(null)==-1)) YIELD;
 				}
 				else {
 					PRINTLN("Can't load JGBE logo!");
-					splashScreen = null;
 				}
 			}
 			
