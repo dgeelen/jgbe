@@ -49,6 +49,9 @@ public final class CPU {
 		public static int IE=0;         ///< Interrupt Enable (allowed interrupts)
 		public static boolean IME=true; ///< Interrupt Master Enable
 		public static boolean halted=false;
+		public static boolean delayed_halt=false;
+		public static boolean halt_fail_inc_pc=false;
+
 		public static int hw_ilines=0;  ///< gnuboy magix
 		//IO
 		public static int KeyStatus=0; //bitmask, low 4=direction, upper 4=start,select,a,b, inverted from GameBoy POV
@@ -149,6 +152,8 @@ public final class CPU {
 			SL_UINT8(IE);
 			SL_BOOL(IME);
 			SL_BOOL(halted);
+			SL_IF_VERSION(16, -1) SL_BOOL(delayed_halt);
+			SL_IF_VERSION(16, -1) SL_BOOL(halt_fail_inc_pc);
 			SL_IF_VERSION( 0,  2) SL_SKIP(UINT8, 1); //SL_UINT8(DirectionKeyStatus);
 			SL_IF_VERSION( 0,  2) SL_SKIP(UINT8, 1); //SL_UINT8(ButtonKeyStatus);
 			SL_IF_VERSION(11, -1) SL_UINT8(KeyStatus);
@@ -842,6 +847,8 @@ public final class CPU {
 			playbackHistoryIndex = -1;
 			keyHistoryEnabled = false;
 			first_save_string = Version.str;
+			delayed_halt = false;
+			halt_fail_inc_pc = false;
 
 			for (int i = 0; i < 0x80; ++i) IOP[i] = 0;
 			for (int i = 0; i < 0x7f; ++i) HRAM[i] = 0;
@@ -908,6 +915,7 @@ public final class CPU {
 			IME = false;
 			DO_PUSH_OLD(PC);
 			PC = i;
+			IOP[0x0f] &= ~i;
 		}
 
 		public static void triggerInterrupt(int i) { // request interrupt with bit nr #i
@@ -958,6 +966,11 @@ public final class CPU {
 				halted = false;
  				//return 4;/* FIXME(?) For break on interrupt *//* note: 4 should be allright. RST takes 16 cycles */
  				return 5; //According to MESS "Taking an interrupt seems to take around 20 clock cycles."
+			}
+
+			if (delayed_halt && IME) {
+				delayed_halt = false;
+				halted = true;
 			}
 
 			if (halted) return 1; //Halt duration is a multiple of 4 cycles, so return 1 here
@@ -1018,6 +1031,12 @@ public final class CPU {
 			int op = FETCH;
 			cycles = Tables.cycles[op];
 
+			if (halt_fail_inc_pc) {
+				// failed to increment PC after halt
+				halt_fail_inc_pc = false;
+				--PC;
+			}
+
 #define break return cycles
 			switch ( op ) {
 				case 0x00: break;                                   // NOP
@@ -1066,43 +1085,15 @@ public final class CPU {
 				case 0x75: WRITE_V(R16RHL, L); break;               // LD   (HL), L
 				case 0x77: WRITE_V(R16RHL, A); break;               // LD   (HL), A
 				case 0x36: WRITE_V(R16RHL, IMM8); break;            // LD   (HL), n
-				case 0x76: halted = true; break;                    // HALT
-				/* FIXME: For GB,GBP, and SGB games HALT should repeat
-				 * the instruction byte after the HALT instruction:
-				 * 
-				 * ---8<------------------------------------------------
-				 *  WARNING: The instruction immediately following the
-				 *           HALT instruction is "skipped" when interrupts are
-				 *           disabled (DI) on the GB,GBP, and SGB. As a result,
-				 *           always put a NOP after the HALT instruction. This
-				 *           instruction skipping doesn't occur when interrupts
-				 *           are enabled (EI).
-				 *           This "skipping" does not seem to occur on the
-				 *           GameBoy Color even in regular GB mode. ($143=$00)
-				 *
-				 * EXAMPLES from Martin Korth who documented this problem:
-				 *	(assuming interrupts disabled for all examples)
-				 *
-				 * 1) This code causes the 'a' register to be incremented TWICE.
-				 *			76          halt
-				 *			3C          inc  a
-				 *
-				 * 2) The next example is a bit more difficult. The following code
-				 *			76          halt
-				 *			FA 34 12    ld   a,(1234)
-				 *
-				 *	is effectively executed as
-				 *
-				 *			76          halt
-				 *			FA FA 34    ld   a,(34FA)
-				 *			12          ld   (de),a
-				 *
-				 * 3) Finally an interesting side effect
-				 *			76          halt
-				 *			76          halt
-				 *
-				 * --->8------------------------------------------------
-				 */
+				case 0x76: {                                        // HALT
+					if (IME) {
+						halted = true;
+					} else {
+						delayed_halt = true;
+						if (!isCGB() && (IOP[0x0f]&IE) > 0)
+							halt_fail_inc_pc = true;
+					}
+				}; break;
 				case 0xd9: IME = true; DO_RET; break;               // RETI
 				case 0xc1: R16WBC_V(POP); break;                    // POP  BC
 				case 0xd1: R16WDE_V(POP); break;                    // POP  DE
