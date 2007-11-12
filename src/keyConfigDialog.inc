@@ -1,5 +1,5 @@
 #ifndef USE_JAVA_MOBILE
-#define nrOfShortCuts 37
+#define nrOfShortCuts 38
 class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
 	private JDialog dialog;
 	private JFrame owner;
@@ -93,6 +93,7 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 			INPUTBOX(shortCuts, "Custom Colors");
 			INPUTBOX(shortCuts, "Save state");
 			INPUTBOX(shortCuts, "Load state");
+			INPUTBOX(shortCuts, "Save To Oldest State");
 			INPUTBOX(shortCuts, "Toggle Sound on/off");
 			INPUTBOX(shortCuts, "Toggle Soundchannel 1 on/off");
 			INPUTBOX(shortCuts, "Toggle Soundchannel 2 on/off");
