@@ -1,0 +1,253 @@
+NOTE: There is also a lot of info in docs/gb.c, which was taken from the MESS emulator. (Possibly a MAME derivative?)
+
+
+ LCD is ON:
+ Modes cycle from 1 to 3, until screen renderer goes off the screen (indicated by LY register when it is equal to 144),
+ then mode 0 is enabled. LY is still increased every 114 cycles.
+
+
+ LCD is OFF:
+ When LCD is switched OFF, probably when something writes 0 to 7th bit of LCD control register, some actions that would
+ happen  normally, don`t happen anymore.
+   Includes:
+     LY updates (LY = 0 at that moment)
+     Modes don`t change (stays at H-Blank?)
+
+
+ Period Lengths: (NOTE: the modes seem to be out of order here)
+ Mode       Divided      Real
+ 0 V-Blank  1140         4560
+ 1 OAM      19.25-20.75  77-83
+ 2 VRAM     42.25-43.75  169-175
+ 3 H-Blank  50.25-51.75  201-207
+
+ 114 ( thats 456 in real ) cycles needed to render one line. After H-Blank LY increases by 1, then loops to OAM again.
+
+ Random calculations:
+	4194304 cycles / second (4mhz)
+	screen refreshes every 70224 cycles
+	VBlank lasts 4560 cycles
+	mode 0-2-3 timings are 201/207 - 77/83 - 169/175, totalling 456 cycles
+	                         204   -   80  -   172  ,           456
+
+	this means (2^22) / 70224 = 59.7275005696 screen updates / sec
+  So we should use 70224 as base for our calculations, assuming everything
+  resets after a VBlank.
+
+  Mode0: HBlank
+  Mode1: VBlank
+  Mode2: OAM access
+  Mode3: OAM and VRAM access
+
+  So a scanline is 456 cycles? 144 * 456 = 65664 + 4560 = 70224
+  Rendering a scanline starts in mode3 (reading OAM/VRAM),
+  then goes to mode0 (HBlank),
+  then goes to mode
+ Mode 0  ___000___000___000___000___000___000________________000
+ Mode 1  ____________________________________11111111111111_____
+ Mode 2  2_____2_____2_____2_____2_____2___________________2____
+ Mode 3  _33____33____33____33____33____33__________________3___
+
+
+ More FAQ:
+ Horizontal lines which contain sprites have less H-Blank time available than lines with no sprites.
+ No H-Blank time is available during an active HDMA:
+
+ Complete horizontal line timing = 108.7 탎ec
+ V-Blank = 1.09 msec
+ Mode 2 = 19.31 탎ec (~20 machine cycles) (actually this seems to by 81 cycles, so here they calculate div4)
+ Mode 3 = Variable between 41.37 탎ec - 70.69 탎ec (173.5 - 296.5 cycles --> 12.3 cycles/sprite)
+ Mode 0 = H-Blank = 108.7 탎ec - 19.31 - Mode 3
+
+ Mode 0 minimum = 18.72 탎ec (10 sprites on a line) (about (456/108.7)*18.72 = 78.5310027599 cycles)
+ Mode 0 maximum = 48.64 탎ec (no sprites on a line) (about (456/108.7)*18.72 = 204.0463661454 cycles)
+
+ So that's about (204-78)/10 = 12.6 cycles/sprite. If we take 12 cycles/sprites, then it divides nicely
+ by 4.
+
+ Each video line contains mode 2, mode 3 and mode 0 in that order. GBC palettes can be written during
+ every mode except mode 3. An LYC interrupt occurs at the start of mode 2. An H-Blank interrupt occurs
+ at the start of mode 0.
+
+ 'Summary': (note: out dated by docs/gb.c)
+ 456 cycles on a line, of which 81 mode2. Leaves 375 for mode 3/0
+ mode 3 min/max is 174/297 respectively. (297-174)=>12.3 cycles / sprite
+ mode 0 min/max should be 79/204 cycles.
+   456 - 81 = 375 - 174 = 201
+              375 - 297 = 78
+ Close enough?
+
+
+
+/****                                   ****
+ ****                                   ****
+ **                                       **
+ ** OLD CODE: GNUBoy's adapted lcdc_trans **
+ **                                       **
+ ****                                   ****
+ ****                                   ****
+#define R_LCDC VC.LCDC
+#define R_STAT VC.STAT
+#define R_LY VC.LY
+		public static void lcdc_trans() {
+			if(true) return; //disableing this in favor of VC.render( int cycles );
+			/** TODO: put this logic inside VideoController? */
+			/* Mode 0  ___000___000___000___000___000___000________________000
+			 * Mode 1  ____________________________________11111111111111_____
+			 * Mode 2  2_____2_____2_____2_____2_____2___________________2____
+			 * Mode 3  _33____33____33____33____33____33__________________3___
+			 * /
+			if (0==(R_LCDC & 0x80))
+			{
+				ASSERT(LCDCcntdwn <= 0);
+				switch (R_STAT & 3)
+				{
+				case 0:
+				case 1:
+					++R_LY; //FIXME: WRONG!!!!
+					VC.stat_change(2);
+					LCDCcntdwn += 40*2;
+					break;
+				case 2:
+					VC.stat_change(3);
+					LCDCcntdwn += 86*2;
+					break;
+				case 3:
+					VC.stat_change(0);
+					LCDCcntdwn += 102*2 - hblank_dma();
+					break;
+				}
+				return;
+			}
+			ASSERT(LCDCcntdwn <= 0);
+			while (LCDCcntdwn <= 0)
+			{
+				switch ((R_STAT & 3))
+				{
+				case 1:
+					if (0==(hw_ilines & IF_VBLANK))
+					{
+						LCDCcntdwn += 218*2;
+						hw_interrupt(IF_VBLANK, IF_VBLANK);
+						break;
+					}
+					if (R_LY == 0)
+					{
+						//lcd_begin();
+						VC.stat_change(2);
+						LCDCcntdwn += 40*2;
+						break;
+					}
+					else if (R_LY < 152)
+						LCDCcntdwn += 228*2;
+					else if (R_LY == 152)
+						LCDCcntdwn += 28*2;
+					else
+					{
+						R_LY = -1;
+						LCDCcntdwn += 200*2;
+					}
+					++R_LY;
+					VC.stat_trigger();
+					break;
+				case 2:
+					if (R_LY < 144)
+						VC.renderScanLine();
+					VC.stat_change(3);
+					LCDCcntdwn += 86*2;
+					break;
+				case 3:
+					VC.stat_change(0);
+					LCDCcntdwn += 102*2 - hblank_dma();
+					break;
+				case 0:
+					if (++R_LY >= 144)
+					{
+						if (halted)
+						{
+							hw_interrupt(IF_VBLANK, IF_VBLANK);
+							LCDCcntdwn += 228*2;
+						}
+						else LCDCcntdwn += 10*2;
+						VC.stat_change(1);
+						break;
+					}
+					VC.stat_change(2);
+					LCDCcntdwn += 40*2;
+					break;
+				}
+				//ASSERT(C > 0);
+			}
+		}
+**/
+
+/****                                     ****
+ ****                                     ****
+ **                                         **
+ ** OLD CODE: GNUBoy's adapted stat_trigger **
+ **                                         **
+ ****                                     ****
+ ****                                     ****
+	#define R_LY LY
+	#define R_LYC LYC
+	#define R_STAT STAT
+	#define R_LCDC LCDC
+	protected void stat_trigger()
+	{
+		ASSERT(false); // This function is disabled
+		int condbits[] = { 0x08, 0x30, 0x20, 0x00 };
+		int flag = 0;
+
+		if ((R_LY == R_LYC))
+		/* GBUBoy does this:
+		 *	if ((R_LY < 0x91) && (R_LY == R_LYC))
+		 * This is possibly incorrect, since (I think) it should be possible
+		 * to have the LYC=LY Coincidence Interrupt in the offscreen area.
+		 * Therefore I think this is better, otherwise for example the 
+		 * AIR Pocket OP Demo won't work.
+		 * /
+		{
+			R_STAT |= 0x04;
+			if (0!=(R_STAT & 0x40)) flag = IF_STAT;
+		}
+		else R_STAT &= ~0x04;
+
+		if (0!=(R_STAT & condbits[R_STAT&3])) flag = IF_STAT;
+
+		if (0==(R_LCDC & 0x80)) flag = 0;
+
+		CPU.hw_interrupt(flag, IF_STAT);
+	}
+**/
+
+/****                                    ****
+ ****                                    ****
+ **                                        **
+ ** OLD CODE: GNUBoy's adapted stat_change **
+ **                                        **
+ ****                                    ****
+ ****                                    ****
+	/*
+	* stat_change is called when a transition results in a change to the
+	* LCD STAT condition (the low 2 bits of R_STAT).  It raises or lowers
+	* the VBLANK interrupt line appropriately and calls stat_trigger to
+	* update the STAT interrupt line.
+	* /
+	protected void stat_change(int stat)
+	{
+		ASSERT(false); // This function is disabled
+		stat &= 3;
+		R_STAT = (R_STAT & 0x7C) | stat;
+
+		// NOTE: Maybe this clears VBlank interrupt requested flag after a while when
+		//       the VBlank period is over, and the interrupt has not been handled yet.
+		//       I don't know if this is correct or not, at least the pandocs don't
+		//       mention this behaviour, and instead say an interrupt will 'wait' until
+		//       it is allowed by both IME and IE
+		if (stat != 1) CPU.hw_interrupt(0, IF_VBLANK); 
+		/* hw_interrupt((stat == 1) ? IF_VBLANK : 0, IF_VBLANK); * /
+		if(stat == 1)
+			blitImage();
+		stat_trigger();
+	}
+**/
