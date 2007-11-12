@@ -1,0 +1,52 @@
+#summary Game compatibility listing
+
+= Introduction =
+
+Here we try to maintain a list of games that we know work with JGBE, and more importantly, those that don't function properly, if at all. Currently the list is not very extensive (we have tested many more games without adding them to the list), but with your help we hope to have a comprehensive list here pretty soon. :-)
+
+
+= Nice ASCII-art list =
+{{{
+    :                                                                      :
+.---'---[ Earthworm Jim (U) [!].gb ]---------------------------------------'---.
+| MD5    : 0d24eeff28040ff2a8f63de5bc8cbea2                                    |
+| Status : BUG PLAYABLE                                                        |
+| Notes  : Player dies once immediately after starting level 1                 |
+'---.----------------------------------------------------------------------.---'
+    |                                                                      |
+.---'---[ F-1 Race (JUE) (V1.0) [!].gb ]-----------------------------------'---.
+| MD5    : 3ad6a2e9c2872cd8f92d86e18332262c                                    |
+| Status : PARTIALLY                                                           |
+| Notes  : 'Grand Prix' and 'Time Trials' modes do not seem to work (lots of   |
+|          messages about the RAM being disabled, then returns to main menu),  |
+|          but the 'Multi Game' mode does work.                                |
+'---.----------------------------------------------------------------------.---'
+    :                                                                      :
+.---'---[ F-1 Race (JUE) (V1.1) [!].gb ]-----------------------------------'---.
+| MD5    : 8ac5c061641b2a8b4c44b46ef693aeef                                    |
+| Status : PARTIALLY                                                           |
+| Notes  : Identical behaviour as 3ad6a2e9c2872cd8f92d86e18332262c             |
+'---.----------------------------------------------------------------------.---'
+    :                                                                      :
+.---'---[ Final Fantasy Adventure (U) [!].gb ]-----------------------------'---.
+| MD5    : 24cd3bdf490ef2e1aa6a8af380eccd78                                    |
+| Status : PLAYABLE                                                            |
+'---.----------------------------------------------------------------------.---'
+    |                                                                      |
+.---'---[ Smurfs, The (UE) (V1.0) (M4) [!].gb ]----------------------------'---.
+| MD5    : 4528d42eae39a3fa756eefa29d52ef55                                    |
+| Status : PLAYABLE                                                            |
+'---.----------------------------------------------------------------------.---'
+    :                                                                      :
+.---'---[ Smurfs, The (UE) (V1.1) (M3) [S][!].gb ]-------------------------'---.
+| MD5    : a574e5f7119b31e5112221c3a0ada813                                    |
+| Status : PLAYABLE                                                            |
+'---.----------------------------------------------------------------------.---'
+    :                                                                      :
+.---'---[ Teenage Mutant Ninja Turtles III - Radical Rescue (U).gb ]-------'---.
+| MD5    : e6104df1feb1318ff1764c791eb4ce0e                                    |
+| Status : PLAYABLE                                                            |
+| Notes  : Confirmed finishable                                                |
+'---.----------------------------------------------------------------------.---'
+    :                                                                      :
+}}}
