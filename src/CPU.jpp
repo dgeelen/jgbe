@@ -43,7 +43,6 @@ public final class CPU {
 
 		public static int DIVcntdwn = 0;
 		public static int TIMAcntdwn = 0;
-		public static int LCDCcntdwn = 40; //gnuboy says 40
 
 		public static int PC=0;         ///< Program counter
 		public static int SP=0;         ///< Stack Pointer
@@ -143,7 +142,8 @@ public final class CPU {
 			SL_BOOL(speedswitch);
 			SL_INT(DIVcntdwn);
 			SL_INT(TIMAcntdwn);
-			SL_INT(LCDCcntdwn);
+			int LCDCcntdwn=0;
+			SL_IF_VERSION( -1, 14) SL_INT(LCDCcntdwn);
 			SL_UINT16(PC);
 			SL_UINT16(SP);
 			SL_UINT8(IE);
@@ -283,100 +283,7 @@ public final class CPU {
 			--IOP[0x55];
 			--hblank_dma_state;
 
-			return 0;
-		}
-
-#define R_LCDC VC.LCDC
-#define R_STAT VC.STAT
-#define R_LY VC.LY
-		public static void lcdc_trans() {
-			/** TODO: put this logic inside VideoController? */
-			/* Mode 0  ___000___000___000___000___000___000________________000
-			 * Mode 1  ____________________________________11111111111111_____
-			 * Mode 2  2_____2_____2_____2_____2_____2___________________2____
-			 * Mode 3  _33____33____33____33____33____33__________________3___
-			 */
-			if (0==(R_LCDC & 0x80))
-			{
-				ASSERT(LCDCcntdwn <= 0);
-				switch (R_STAT & 3)
-				{
-				case 0:
-				case 1:
-					++R_LY; //FIXME: WRONG!!!!
-					VC.stat_change(2);
-					LCDCcntdwn += 40*2;
-					break;
-				case 2:
-					VC.stat_change(3);
-					LCDCcntdwn += 86*2;
-					break;
-				case 3:
-					VC.stat_change(0);
-					LCDCcntdwn += 102*2 - hblank_dma();
-					break;
-				}
-				return;
-			}
-			ASSERT(LCDCcntdwn <= 0);
-			while (LCDCcntdwn <= 0)
-			{
-				switch ((R_STAT & 3))
-				{
-				case 1:
-					if (0==(hw_ilines & IF_VBLANK))
-					{
-						LCDCcntdwn += 218*2;
-						hw_interrupt(IF_VBLANK, IF_VBLANK);
-						break;
-					}
-					if (R_LY == 0)
-					{
-						//lcd_begin();
-						VC.stat_change(2);
-						LCDCcntdwn += 40*2;
-						break;
-					}
-					else if (R_LY < 152)
-						LCDCcntdwn += 228*2;
-					else if (R_LY == 152)
-						LCDCcntdwn += 28*2;
-					else
-					{
-						R_LY = -1;
-						LCDCcntdwn += 200*2;
-					}
-					++R_LY;
-					VC.stat_trigger();
-					break;
-				case 2:
-					if (R_LY < 144)
-						VC.renderScanLine();
-					VC.stat_change(3);
-					LCDCcntdwn += 86*2;
-					break;
-				case 3:
-					VC.stat_change(0);
-					LCDCcntdwn += 102*2 - hblank_dma();
-					break;
-				case 0:
-					if (++R_LY >= 144)
-					{
-						if (halted)
-						{
-							hw_interrupt(IF_VBLANK, IF_VBLANK);
-							LCDCcntdwn += 228*2;
-						}
-						else LCDCcntdwn += 10*2;
-						VC.stat_change(1);
-						break;
-					}
-					VC.stat_change(2);
-					LCDCcntdwn += 40*2;
-					break;
-				}
-				//ASSERT(C > 0);
-			}
+			return 8;
 		}
 
 		public static void refreshMemMap() {
@@ -497,8 +404,6 @@ public final class CPU {
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
 					case 0xff00: // FF00 - P1/JOYP - Joypad (R/W)
-						//PRINTF("DEBUG: CPU.read(): YOYP (PC=0x%04x)\n", PC);
-
 						b=(IOP[index-0xff00]&0x30)|0xc0;
 						if((b&(1<<4))==0) { // Direction keys, 0=select
 							b|=(KeyStatus&0x0f);
@@ -531,7 +436,9 @@ public final class CPU {
 						b = AC.read(index);
 						break;
 					case 0xff40: // LCDC register
-						b = VC.LCDC;
+						//FIXME: Needs verification: (see VC.render() notes on disabling the LCD)
+						//       (I don't really believe this though ...)
+						b = ((VC.LCDC&0x80)==0) ? 0 : VC.LCDC;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
 						b = VC.STAT;
@@ -587,7 +494,7 @@ public final class CPU {
 					case 0xff70: // SVBK - CGB Mode Only - WRAM Bank
 						b = CurrentWRAMBank;
 						break;
-					/** some 'undocemented' stuff... */
+					/** some 'undocumented' stuff... */
 					case 0xff6c: // Undocumented (FEh) - bit 0 (Read/Write)
 						PRINTF("WARNING: CPU.read(): Read from *undocumented* IO port $%04x\n",index);
 						b = IOP[index-0xff00] | 0xfe;
@@ -745,8 +652,13 @@ public final class CPU {
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)
 						VC.STAT = (VC.STAT&7)|(value&0x78); //lower 3bits are readonly
 						if (!VC.isCGB && ((VC.STAT & 2)!=0)) /* DMG STAT write bug => interrupt */
-							triggerInterrupt(1);
-						VC.stat_trigger();
+						//FIXME: if this bug *ALWAYS* triggers an interrupt, regardless of the state of
+						//       STAT, use triggerInterrupt(1) instead of VC.modeChanged()
+							VC.modeChanged(VC.STAT&0x03);
+
+// 						VC.stat_trigger(); //FIXME: No longer used in new timing code
+// 						                     NOTE: I think this is not needed, because all that stat_trigger() does is
+// 						                           trigger the STAT interrupt, which has been handled by modeChanged()
 						break;
 					case 0xff42: // SCY
 						VC.SCY = value;
@@ -759,7 +671,6 @@ public final class CPU {
 						break;
 					case 0xff45: // LYC
 						VC.LYC = value;
-						//PRINTF("Setting LYC=%d ($%02x)\n",value,value);
 						break;
 					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
 						//NOTE: CPU may only access HRAM during this DMA,
@@ -910,7 +821,6 @@ public final class CPU {
 			speedswitch = false;
 			DIVcntdwn = 0;
 			TIMAcntdwn = 0;
-			LCDCcntdwn = 0;
 			IE=0;         ///< Interrupt Enable (allowed interrupts)
 			IME=true; ///< Interrupt Master Enable
 			halted=false;
@@ -989,7 +899,6 @@ public final class CPU {
 
 		public static void interrupt(int i) { //execute interrupt #i
 			IME = false;
-
 			DO_PUSH_OLD(PC);
 			PC = i;
 		}
@@ -1040,9 +949,8 @@ public final class CPU {
 			if (CHECK_INTS) {
 				checkInterrupts();
 				halted = false;
-				//return 12; // 12 cycles for this?
-// 				return 12+execute();
- 				return 4;/* FIXME(?) For break on interrupt *//* note: 4 should be allright. RST takes 16 cycles */
+ 				//return 4;/* FIXME(?) For break on interrupt *//* note: 4 should be allright. RST takes 16 cycles */
+ 				return 5; //According to MESS "Taking an interrupt seems to take around 20 clock cycles."
 			}
 
 			if (halted) return 1; //Halt duration is a multiple of 4 cycles, so return 1 here
@@ -1356,9 +1264,18 @@ public final class CPU {
 			TotalCycleCount += res;
 			lastException = ((res!=0) ? 0 : 1);
 			last_memory_access=last_memory_access_internal;
-			if (res > 0) {
+			elapseTime(res);
+			return res;
+		}
+
+		/* Elapse time should be called whenever an event happens that consumes time.
+		 * It will update all relevant timers. Input is the ammount of time that supposedly
+		 * has elapsed, in 'real' cpu cycles.
+		 */
+		public static void elapseTime(int cycles) {
+			if (cycles > 0) {
 				//clockfreq = 4194304hz
-				DIVcntdwn -= res;
+				DIVcntdwn -= cycles;
 				if (DIVcntdwn < 0) {
 					DIVcntdwn += 256; // == 4194304/16384
 					++IOP[0x04];
@@ -1366,7 +1283,7 @@ public final class CPU {
 				}
 				int tac = IOP[0x07];
 				if ((tac&4)!=0) {
-					TIMAcntdwn -= res;
+					TIMAcntdwn -= cycles;
 					if (TIMAcntdwn < 0) {
 						if ((tac&3)==0) TIMAcntdwn += 1024; // == 4194304/4096
 						if ((tac&3)==1) TIMAcntdwn +=   16; // == 4194304/262144
@@ -1380,21 +1297,18 @@ public final class CPU {
 					}
 				}
 
-				if (doublespeed) {
-					LCDCcntdwn -= res>>1; // more instrs per vblank int
-					AC.render(res>>1); //render enough sound bytes for res Cycles
+				if (doublespeed) { // more instrs per vblank int
+					AC.render(cycles>>1); //render enough sound bytes for cycles Cycles
+					VC.render( cycles>>1 );
 				}
 			 	else {
-					LCDCcntdwn -= res;
-					AC.render(res); //render enough sound bytes for res Cycles
+					AC.render(cycles); //render enough sound bytes for cycles Cycles
+					VC.render( cycles );
 				}
-
-				if (LCDCcntdwn < 0)
-					lcdc_trans();
 			}
 
 			if (LinkCableStatus != 0) {
-				LINKcntdwn -= res;
+				LINKcntdwn -= cycles;
 				if (LINKcntdwn < 0) {
 					LINKcntdwn += (4096 / LINKmulti);
 					// == 4194304/(1024*LINKmulti) (normal speed 8k bits/sec is 1k bytes/sec)
@@ -1465,8 +1379,6 @@ public final class CPU {
 
 				}
 			}
-
-			return res;
 		}
 
 		public int exception() {
