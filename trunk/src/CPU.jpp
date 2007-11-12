@@ -52,7 +52,6 @@ public final class CPU {
 		public static boolean delayed_halt=false;
 		public static boolean halt_fail_inc_pc=false;
 
-		public static int hw_ilines=0;  ///< gnuboy magix
 		//IO
 		public static int KeyStatus=0; //bitmask, low 4=direction, upper 4=start,select,a,b, inverted from GameBoy POV
 		public static int GUIKeyStatus=0;
@@ -173,7 +172,7 @@ public final class CPU {
 			SL_IF_VERSION( 9, -1) SL_LONG(TotalInstrCount);
 			SL_IF_VERSION( 9, -1) SL_LONG(TotalCycleCount);
 
-			SL_IF_VERSION( 4, -1) SL_UINT8(hw_ilines);
+			SL_IF_VERSION( 4, 16) SL_SKIP(UINT8, 1); //SL_UINT8(hw_ilines);
 
 			SL_IF_VERSION( 7, -1) SL_UINT8(hblank_dma_state);
 
@@ -842,7 +841,6 @@ public final class CPU {
 			lastKeyChange = 0;
 			keyHistory.clear();
 			lastException=0;
-			hw_ilines = 0;
 			hblank_dma_state = 0;
 			playbackHistoryIndex = -1;
 			keyHistoryEnabled = false;
@@ -919,24 +917,9 @@ public final class CPU {
 		}
 
 		public static void triggerInterrupt(int i) { // request interrupt with bit nr #i
-			hw_interrupt((1<<i), (1<<i));
-			hw_interrupt(0, (1<<i));
-		}
+			IOP[0x0f] |= (1<<i);
 
-#define R_IF IOP[0x0f]
-		public static void hw_interrupt(int i, int mask)
-		{
-			int oldif = R_IF;
-			i &= 0x1F & mask;
-			R_IF |= i & (hw_ilines ^ i);
-
-			/* FIXME - is this correct? not sure the docs understand... */
-			if ((0!=(R_IF & (R_IF ^ oldif) & IE)) && IME) halted = false;
-			/* if ((i & (hw.ilines ^ i) & R_IE) && cpu.ime) cpu.halt = 0; */
-			/* if ((i & R_IE) && cpu.ime) cpu.halt = 0; */
-
-			hw_ilines &= ~mask;
-			hw_ilines |= i;
+			if (halted && IME && ((1<<i) & IE) != 0) halted = false;
 		}
 
 		public static void pressButton(int i) {
