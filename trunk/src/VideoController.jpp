@@ -669,19 +669,22 @@ public final class VideoController {
 		ASSERT(LCDCcntdwn > 0);
 	}
 
+	// NOTE: we keep generating interrupts even when the LCD is off
+	//       this appeared to be needed to some games (like smurfs 1)
+	//       and the info suggesting otherwise was not trustworthy
 	public void modeChanged(int mode) {
 		// First mask the old mode bits out of STAT, and insert new ones.
-		// STAT is a 7 bit register, so leave the top bit zero 
+		// STAT is a 7 bit register, so leave the top bit zero
 		// We also clear the Coincidence flag at this point
 		int stat = (STAT & 0x78) | (mode & 0x03);
-		if(LY==LYC) 
+		if(LY==LYC)
 			stat |= (1<<2);                // Set Coincidence flag
 		if((mode^(STAT&0x03))!=0) {      // Interrupts are only generated on actual changes in mode
 			if (mode == 1) {               // VBlank interrupt is generated always when LCD is on (int 0x40)
 				blitImage();
-				if((LCDC&0x80)!=0) cpu.triggerInterrupt(0);
+				cpu.triggerInterrupt(0);
 			}
-			if((LCDC&0x80)==0) return;     // don't generate interrupts when LCD is disabled
+
 			if ((LY==LYC) && ((mode&0x2)==0) && ((STAT&(1<<6)) !=0)) // Only generate LY==LYC coincidence interrupt in mode 0 or 1
 				cpu.triggerInterrupt(1);
 			if ((mode == 2) && ((STAT&(1<<5)) !=0)) // Mode 2 OAM Interrupt
