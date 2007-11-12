@@ -14,6 +14,7 @@ import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 #include "keyConfigDialog.inc"
 
@@ -228,6 +229,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 }
 
 public final class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener, MouseMotionListener {
+		private IntVector saveStateOrder = new IntVector();
 		private static DrawingArea grfx;
 		private int lastmousex;
 		private int lastmousey;
@@ -255,6 +257,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		JMenuItem menuitemOpenROM;
 		JMenuItem menuitemSaveState;
 		JMenuItem menuitemLoadState;
+		JMenuItem menuitemSaveOldestState;
 		JMenuItem menuitemIncFrameSkip;
 		JMenuItem menuitemDecFrameSkip;
 		JCheckBoxMenuItem menuitemEnableSound;
@@ -528,11 +531,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuState.setMnemonic(KeyEvent.VK_S);
 			menuitemSaveState = new JMenuItem( "Save State", KeyEvent.VK_S );
 			menuitemLoadState = new JMenuItem( "Load State", KeyEvent.VK_L );
+			menuitemSaveOldestState = new JMenuItem( "Save To Oldest State", KeyEvent.VK_O );
 
 			menuitemSaveState.addActionListener( this );
 			menuitemLoadState.addActionListener( this );
+			menuitemSaveOldestState.addActionListener( this );
+
 			menuState.add( menuitemSaveState );
 			menuState.add( menuitemLoadState );
+			menuState.add( menuitemSaveOldestState );
 			menuState.addSeparator();
 			savestateRadioGroup = new MenuItemArrayGroup();
 			for (int i = 0; i < 10; ++i) {
@@ -672,6 +679,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemColorSchemes[4].setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemSaveState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemLoadState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemSaveOldestState.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemEnableSound.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			for (int i = 0; i < 4; ++i)
 				soundChannelGroup.get(i).setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -1057,6 +1065,28 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				if(cpu.keyHistoryEnabled) addOSDLine("Note: Speedrun in progress");
 				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
 				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
+			}
+			else if(e.getSource().equals( menuitemSaveOldestState )) {
+				if (!CPU.canRun()) return;
+				pauseEmulation(false);
+				selectedState = saveStateOrder.get(0);
+				saveStateOrder.remove(0);
+				saveStateOrder.add(selectedState);
+				addOSDLine("Saving To Oldest State " + selectedState);
+				try {
+					String stname = FHandler.JGBEDir("savestates");
+					stname += curcartname + ".st" + selectedState;
+					DataOutputStream dostream = FHandler.getDataOutputStream(stname);
+					CPU.saveState(dostream);
+					dostream.close();
+				}
+				catch (java.io.IOException ioe) {
+					PRINTLN("Error saving state! ");
+					PRINTLN(ioe.getMessage());
+				};
+				menuitemSpeedRunRecord.setState(cpu.keyHistoryEnabled);
+				menuitemSpeedRunPlay.setState(cpu.playbackHistoryIndex != -1);
+				resumeEmulation(false);
 			}
 			else if(e.getSource().equals( menuitemPause )) {
 				if(cpuRunner.isRunning())
@@ -1595,6 +1625,31 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			enableFullScreen.setEnabled(true);
 		}
 
+		private void updateSaveStateOrder() {
+			saveStateOrder.clear();
+			long[] modTimes = new long[10];
+			try {
+				for (int i = 0; i < 10; ++i) {
+					String stname = FHandler.JGBEDir("savestates");
+					stname += curcartname + ".st" + i;
+					File sf = new File(stname);
+					long modTime = sf.lastModified();
+					//PRINTLN(modTime);
+					ASSERT(modTime >= 0);
+					modTime = modTime & 0xFFFFFFF0;
+					//PRINTLN(modTime);
+					modTimes[i] = modTime + i;
+				}
+			} catch (Exception e) {
+				saveStateOrder = null;
+			}
+			Arrays.sort(modTimes);
+			for (int i = 0; i < 10; ++i) {
+				saveStateOrder.add((int)(modTimes[i] & 0xF));
+				//PRINTLN(modTimes[i] & 0xF);
+			}
+		}
+
 		private void tryToLoadROM(String filename) {
 			pauseEmulation(false);
 			Cartridge tcart=new Cartridge(filename);
@@ -1610,6 +1665,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				cheatcodes = new CheatCodeEditor(frame, curcartname);
 				cheatcodes.useCheats(b);
 				cheatcodes.applyCheatCodes(cart);
+				updateSaveStateOrder();
 				addOSDLine("loaded Rom: " + curcartname);
 			}
 			else { //error loading file as ROM
@@ -1721,6 +1777,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			keyMap[Magix++]=566; // Ctrl+6
 			keyMap[Magix++]=595; // Ctrl+S
 			keyMap[Magix++]=588; // Ctrl+L
+			keyMap[Magix++]=851; // Ctrl+Shift+S
 			keyMap[Magix++]=577; // Ctrl+A
 			keyMap[Magix++]=2097; // Alt+1
 			keyMap[Magix++]=2098; // Alt+2
