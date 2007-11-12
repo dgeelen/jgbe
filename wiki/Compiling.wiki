@@ -30,7 +30,7 @@ with preprocessors.
 Targets:
  * jikes     - configures makefile to use jikes as compiler
  * javac     - configures makefile to use javac as compiler
- * gcj       - configures makefile to use gcj as compiler
+ * gcj       - configures makefile to use gcj as compiler (currently broken)
 
 Compiling with jikes should work under cygwin.
 
