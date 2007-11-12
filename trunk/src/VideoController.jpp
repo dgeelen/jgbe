@@ -40,7 +40,7 @@ public final class VideoController {
 	protected int LCDC=0;
 	protected int STAT=0;
 	private int LCDCcntdwn=0;
-	
+
 	protected int curBGY;
 	protected int curWNDY;
 
@@ -475,7 +475,7 @@ public final class VideoController {
 			}
 			curDrawImg ^= 1;
 			if (listener != null) listener.updateVideoImage(getImage());
-  }
+	}
 		curBGY = 0;
 		curWNDY = 0;
 
@@ -954,7 +954,7 @@ public final class VideoController {
 		}
 		return Math.min(count, 10);
 	}
-	
+
 	private void renderScanlineSprites() {
 		boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
