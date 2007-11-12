@@ -1747,30 +1747,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		static long startUpTime=0;
 		public static void starter(swinggui gui, String[] args) {
 			Thread.setDefaultUncaughtExceptionHandler(new GlobalExceptionCatcher());
-			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			splashScreen = new JFrame();
-			URL imgurl = gui.getClass().getResource("jgbe_logo.png");
-			Image logo = null;
-			if(imgurl!=null) {
-				logo = toolkit.getImage(imgurl);
-				splashScreen.setUndecorated(true);
-				splashScreen.setContentPane(new LogoPanel(logo));
-				splashScreen.setResizable(false);
-				splashScreen.pack();
-				Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-				Point     p = new Point();
-				splashScreen.setSize(new Dimension(logo.getWidth(null), logo.getHeight(null)));
-				p.setLocation((d.getWidth()/2) - (splashScreen.getWidth()/2), (d.getHeight()/2)-(splashScreen.getHeight()/2));
-				splashScreen.setLocation(p);
-				splashScreen.setAlwaysOnTop(true);
-				splashScreen.setVisible(true);
-				startUpTime = System.nanoTime();
-			}
-			else {
-				PRINTLN("Can't load JGBE logo!");
-				splashScreen = null;
-			}
-			gui.loadRCFiles();
+			
 			boolean sound=true, debug=false, lastcart=false;
 			String romfile="", logfile="";
 			for (int i = 0; i < args.length; ++i) {
@@ -1787,6 +1764,34 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				if ((args[i].equals("-lastcart"))) //TODO: FIXME: Invert this (current behaviour is a work-around)
 					lastcart=true;
 			}
+
+			if(!lastcart) {
+				Toolkit toolkit = Toolkit.getDefaultToolkit();
+				splashScreen = new JFrame();
+				URL imgurl = gui.getClass().getResource("jgbe_logo.png");
+				Image logo = null;
+				if(imgurl!=null) {
+					logo = toolkit.getImage(imgurl);
+					splashScreen.setUndecorated(true);
+					splashScreen.setContentPane(new LogoPanel(logo));
+					splashScreen.setResizable(false);
+					splashScreen.pack();
+					Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+					Point     p = new Point();
+					splashScreen.setSize(new Dimension(logo.getWidth(null), logo.getHeight(null)));
+					p.setLocation((d.getWidth()/2) - (splashScreen.getWidth()/2), (d.getHeight()/2)-(splashScreen.getHeight()/2));
+					splashScreen.setLocation(p);
+					splashScreen.setAlwaysOnTop(true);
+					splashScreen.setVisible(true);
+					startUpTime = System.nanoTime();
+				}
+				else {
+					PRINTLN("Can't load JGBE logo!");
+					splashScreen = null;
+				}
+			}
+			
+			gui.loadRCFiles();
 			if(lastcart && (gui.rcFiles.size() > 0))
 				romfile = (String)gui.rcFiles.get(0);
 
