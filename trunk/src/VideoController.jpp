@@ -30,15 +30,17 @@ public final class VideoController {
 
 	protected boolean isCGB;
 
+	//Note: all these variables are actually initialised in reset()
 	protected int LY=0;
 	protected int LYC=0;
 	protected int SCX=0;
 	protected int SCY=0;
 	protected int WX=0;
 	protected int WY=0;
-	protected int LCDC=0x80; //init with screen on?
-	protected int STAT=0; // FF41 - STAT - LCDC Status (R/W)
-
+	protected int LCDC=0;
+	protected int STAT=0;
+	private int LCDCcntdwn=0;
+	
 	protected int curBGY;
 	protected int curWNDY;
 
@@ -134,8 +136,12 @@ public final class VideoController {
 		SCY=0;
 		WX=0;
 		WY=0;
-		LCDC=0x91; // 0?
-		STAT=0; // FF41 - STAT - LCDC Status (R/W)
+		LCDC=0x91; // init with screen on, tile data from 8000-8FFF, bg active
+		// We init in STAT in mode 1, with LY==LYC (since both are 0), and LCDCcntdwn=-1; then we call
+		// render(0), this will ensure that we go to mode 2, witch corrects everything else (I hope).
+		STAT=0x05; // FF41 - STAT - LCDC Status (R/W)
+		LCDCcntdwn=0;
+		render(0);
 		BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
 		OBPI=0;              //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
 		anydirty = true;                // see updatepatpix()
@@ -166,6 +172,7 @@ public final class VideoController {
 		drawImg=new Image[2];
 #endif
 		scale();
+		reset(); // Initialise all variables
 	}
 
 
@@ -183,6 +190,10 @@ public final class VideoController {
 		SL_UINT8(WX);
 		SL_UINT8(WY);
 		SL_UINT8(LCDC);
+		SL_IF_VERSION(15, -1) {
+			SL_INT(LCDCcntdwn);
+			SL_INT(mode3duration);
+		}
 		SL_UINT8(STAT);
 
 		SL_UINT8(BGPI);
@@ -611,78 +622,75 @@ public final class VideoController {
 		//alldirty = false;
 	}
 
-#define R_LY LY
-#define R_LYC LYC
-#define R_STAT STAT
-#define R_LCDC LCDC
 
-	protected void stat_trigger()
-	{
-		int condbits[] = { 0x08, 0x30, 0x20, 0x00 };
-		int flag = 0;
-
-		if ((R_LY == R_LYC))
-		/* GBUBoy does this:
-		 *	if ((R_LY < 0x91) && (R_LY == R_LYC))
-		 * This is possibly incorrect, since (I think) it should be possible
-		 * to have the LYC=LY Coincidence Interrupt in the offscreen area.
-		 * Therefore I think this is better, otherwise for example the 
-		 * AIR Pocket OP Demo won't work.
-		 */
-		{
-			R_STAT |= 0x04;
-			if (0!=(R_STAT & 0x40)) flag = IF_STAT;
+	/****
+	 * Note: Please refer to (and update) docs/notes_on_video_timing.txt when
+	 * making changes to render() and modeChanged()
+	 ****/
+	private int mode3duration=0;
+	public void render(int cycles) { // Renders in real clock cycles
+		ASSERT(cycles<=6*4); // Longest instruction lasts 24 cycles, so we should get called at least that often
+		LCDCcntdwn -= cycles;
+		if(LCDCcntdwn <= 0 ) {
+				switch( STAT & 0x03 ) {
+					case 0: //Currently in HBlank, next is mode 1 or 2
+						++LY; //FIXME: Not sure about when exactly to increase LY *AND* check LY==LYC,
+						      //       it seems like the coincidence bit gets set at the very start of
+						      //       the line, and is cleared right before the end of the line.
+						LCDCcntdwn += (LY==144) ? 456 : 80;
+						modeChanged( (LY==144)? 1 : 2 );
+						break;
+					case 1: //Currently in VBlank, next is mode 2
+						if((++LY) == 154) {
+							LY=0;
+							LCDCcntdwn += 80;
+							modeChanged(2);
+						}
+						else {
+							LCDCcntdwn += 456; //(LY==153)? 4 : 456; // FIXME: according to MESS and GNUBoy scanline 153 should only last
+							                                         //        only a few cycles (~4 cycles and 56 respectively)
+							if ((LY==LYC) && ((STAT&(1<<6)) !=0))    // We're in VBlank so it should be enough to do only the coincidence interrupt
+								cpu.triggerInterrupt(1);
+						}
+						break;
+					case 2: //Currently reading OAM, next is mode 3 (which last longer depending on #sprites on scanline)
+						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
+						LCDCcntdwn += mode3duration; //mode 3 duration + reading of X nr of sprites
+						modeChanged(3);
+						break;
+					case 3: //Currently reading both OAM and VRAM, next is mode 0 (which lasts shorter depending on mode3's length)
+						LCDCcntdwn +=  376 - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
+						modeChanged(0);
+						if(LY<144) CPU.elapseTime(CPU.hblank_dma());
+						renderScanLine();
+						break;
+				}
 		}
-		else R_STAT &= ~0x04;
-
-		if (0!=(R_STAT & condbits[R_STAT&3])) flag = IF_STAT;
-
-		if (0==(R_LCDC & 0x80)) flag = 0;
-
-		CPU.hw_interrupt(flag, IF_STAT);
-	}
-
-	/*
-	* stat_change is called when a transition results in a change to the
-	* LCD STAT condition (the low 2 bits of R_STAT).  It raises or lowers
-	* the VBLANK interrupt line appropriately and calls stat_trigger to
-	* update the STAT interrupt line.
-	*/
-
-	protected void stat_change(int stat)
-	{
-		stat &= 3;
-		R_STAT = (R_STAT & 0x7C) | stat;
-
-		if (stat != 1) CPU.hw_interrupt(0, IF_VBLANK);
-		/* hw_interrupt((stat == 1) ? IF_VBLANK : 0, IF_VBLANK); */
-		if(stat == 1)
-			blitImage();
-		stat_trigger();
+		ASSERT(LCDCcntdwn > 0);
 	}
 
 	public void modeChanged(int mode) {
-/*	TEST: it no verk :(
-		STAT &=0xfc;
-		STAT |=(mode&0x03);*/
-
-		STAT &= ~(1<<2);
-		if (LY==LYC)
-			STAT |= (1<<2);
-		if ((mode == 0) && (LY==LYC) && ((STAT&(1<<6))!=0)) // LYC=LY Coincidence Interrupt
-			cpu.triggerInterrupt(1);
-		if ((mode == 2) && ((STAT&(1<<5))!=0)) // Mode 2 OAM Interrupt
-			cpu.triggerInterrupt(1);
-		if ((mode == 1) && ((STAT&(1<<4))!=0)) // Mode 1 V-Blank Interrupt
-			cpu.triggerInterrupt(1);
-		if ((mode == 0) && ((STAT&(1<<3))!=0)) // Mode 0 H-Blank Interrupt
-			cpu.triggerInterrupt(1);
-		if (mode == 1) {
-			blitImage();
-			cpu.triggerInterrupt(0);
+		// First mask the old mode bits out of STAT, and insert new ones.
+		// STAT is a 7 bit register, so leave the top bit zero 
+		// We also clear the Coincidence flag at this point
+		int stat = (STAT & 0x78) | (mode & 0x03);
+		if(LY==LYC) 
+			stat |= (1<<2);                // Set Coincidence flag
+		if((mode^(STAT&0x03))!=0) {      // Interrupts are only generated on actual changes in mode
+			if (mode == 1) {               // VBlank interrupt is generated always when LCD is on (int 0x40)
+				blitImage();
+				if((LCDC&0x80)!=0) cpu.triggerInterrupt(0);
+			}
+			if ((LY==LYC) && ((mode&0x2)==0) && ((STAT&(1<<6)) !=0)) // Only generate LY==LYC coincidence interrupt in mode 0 or 1
+				cpu.triggerInterrupt(1);
+			if ((mode == 2) && ((STAT&(1<<5)) !=0)) // Mode 2 OAM Interrupt
+				cpu.triggerInterrupt(1);
+			if ((mode == 1) && ((STAT&(1<<4)) !=0)) // Mode 1 V-Blank Interrupt
+				cpu.triggerInterrupt(1);
+			if ((mode == 0) && ((STAT&(1<<3)) !=0)) // Mode 0 H-Blank Interrupt
+				cpu.triggerInterrupt(1);
 		}
-		if (mode == 0)
-			renderScanLine();
+		STAT=stat;
 	}
 
 	public int read(int index) {
@@ -926,6 +934,23 @@ public final class VideoController {
 			DRAWPIX(curX++, TilePal, PatLine[t]);
 	}
 
+	private int getSpriteCountOnScanline(int i) { //NOTE: Assume max sprites/scanline == 10
+		boolean spr8x16 = ((LCDC&(1<<2))!=0);
+		int count = 0;
+		for (int spr = 0; spr < 40; ++spr) {
+			int sprY    = OAM[(spr*4) + 0];
+			int sprX    = OAM[(spr*4) + 1];
+			int sprNum  = OAM[(spr*4) + 2];
+			int sprAttr = OAM[(spr*4) + 3];
+
+			int ofsY = i - sprY + 16;
+			//check if sprite is visible on this scanline
+			if ((ofsY >= 0) && (ofsY < (spr8x16 ? 16 : 8)) &&  (sprX > 0) && (sprX < 168))
+				++count;
+		}
+		return Math.min(count, 10);
+	}
+	
 	private void renderScanlineSprites() {
 		boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
