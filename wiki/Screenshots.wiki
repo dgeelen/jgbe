@@ -10,7 +10,7 @@ Here we try to show some of the features of JGBE that we think make it worth whi
     http://img212.imageshack.us/img212/4779/jgbesml1dt4.png
   * JGBE^1^ passing the 'emulator test' in the Demotronic Final Demo
     http://img135.imageshack.us/img135/6425/jgbepasstestdemotronicag2.png
-  * JGBE^2^ emulating : _[http://en.wikipedia.org/wiki/Pok%C3%A9mon_Yellow]_
+  * JGBE^2^ emulating : _[http://en.wikipedia.org/wiki/Pok%C3%A9mon_Yellow Pok'emon Yellow]_
     http://img206.imageshack.us/img206/2225/jgbepyip1.png
 
 ===notes:===
