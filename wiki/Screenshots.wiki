@@ -1,0 +1,9 @@
+#summary Screenshots of JGBE in action
+
+= Abstract =
+Here we try to show some of the features of JGBE that we think make it worth while.
+
+= Screenshots =
+
+  # JGBE emulating one of the more popular games: _[http://en.wikipedia.org/wiki/Super_Mario_Land Super Mario Land 1]_
+    http://img212.imageshack.us/img212/4779/jgbesml1dt4.png
