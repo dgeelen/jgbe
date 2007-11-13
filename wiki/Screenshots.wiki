@@ -11,3 +11,9 @@ Here we try to show some of the features of JGBE that we think make it worth whi
 
 
   # JGBE is running under Linux, Sun Java version 1.6.0. (Scaling set to 3x)
+
+  * JGBE^2^ emulating : _[http://en.wikipedia.org/wiki/Pok%C3%A9mon_Yellow]_
+    http://img206.imageshack.us/img206/2225/jgbepyip1.png
+
+
+  # JGBE is running under Windows XP SP2, Sun Java version 1.6.0. (Scaling set to 4x)
