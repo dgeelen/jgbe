@@ -1,4 +1,5 @@
 #summary Screenshots of JGBE in action
+#labels Featured
 
 = Abstract =
 Here we try to show some of the features of JGBE that we think make it worth while.
