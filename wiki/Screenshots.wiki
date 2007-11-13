@@ -5,5 +5,8 @@ Here we try to show some of the features of JGBE that we think make it worth whi
 
 = Screenshots =
 
-  # JGBE emulating one of the more popular games: _[http://en.wikipedia.org/wiki/Super_Mario_Land Super Mario Land 1]_
+  * JGBE^1^ emulating one of the more popular games: _[http://en.wikipedia.org/wiki/Super_Mario_Land Super Mario Land 1]_
     http://img212.imageshack.us/img212/4779/jgbesml1dt4.png
+
+
+  # 1 JGBE is running under Linux, Sun Java version 1.6.0
