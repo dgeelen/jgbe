@@ -9,4 +9,4 @@ Here we try to show some of the features of JGBE that we think make it worth whi
     http://img212.imageshack.us/img212/4779/jgbesml1dt4.png
 
 
-  # 1 JGBE is running under Linux, Sun Java version 1.6.0
+  # JGBE is running under Linux, Sun Java version 1.6.0
