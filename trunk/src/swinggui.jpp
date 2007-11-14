@@ -210,7 +210,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		private int[] keyMap = new int[16+nrOfShortCuts]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
 		VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
-		int osdTime = 0;
+		private static int titleUpdateCountDown = 0;
 		static public String curcartname;
 		static public String biosfilename;
 		static public DataOutputStream speedRunPlayWithOutputVideoStream;
@@ -411,7 +411,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 		public void addOSDLine(String line) {
 			osdLines.add(line);
-			osdTime = 200;
 		}
 
 		public swinggui() {
@@ -1247,7 +1246,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 						if (e.getSource().equals(menuItems[i]))
 						tryToLoadROM((String)rcFiles.get(i));
 				}
-				//PRINTLN("timer!");
+
+				if((--titleUpdateCountDown) <= 0) {
 				long ctime = System.nanoTime();
 				long timeLapse =  ctime - FPSTimeMillis;
 				FPSTimeMillis = ctime;
@@ -1256,18 +1256,19 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				long ncycles = CPU.TotalCycleCount - FPSCPUCycles;
 				FPSCPUCycles = CPU.TotalCycleCount;
 				double emuspeed =  ((int)((((float)ncycles)/((4194304*timeLapse*(CPU.doublespeed?2:1))/1000000000.0f))*10000.0f))/100.0;
-				frame.setTitle("JGBE V"+Version.str+" - "+((int)(afps*100))/100.0+" fps / "+emuspeed+"% - "+ CPU.TotalCycleCount);
-				//cpu.AC.srendered = 0;
+				
+				frame.setTitle(Format142.strformat( "JGBE V"+Version.str+" - %05.02f fps / %06.02f%%",new double[] {(((int)(afps*100))/((double)100)), (double)emuspeed}));
 				fps = 0;
+				titleUpdateCountDown=4;
+				}
+				
 				if (deactcount > 0 && --deactcount == 0 && enableFullScreen.getState()) {
 					--deactcount;
 					enableFullScreen.setState(false);
 					componentResized(null);
 				}
-				//--osdTime;
 				if((osdLines.size()>0)) {
 					osdLines.remove(0);
-// 					osdTime = 15;
 				}
 			}
 			if (configStateChanged ) saveConfig();
@@ -1847,8 +1848,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			if (!sound)
 				gui.cpu.AC.isMuted = true;
 
-			Timer timer = new Timer(500, gui);
-			timer.setInitialDelay(1000);
+			Timer timer = new Timer(250, gui);
+			timer.setInitialDelay(250);
 			timer.start();
 
 			if (cart != null)
