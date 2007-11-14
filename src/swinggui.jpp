@@ -362,15 +362,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 					g.drawImage(cpu.VC.getImage(),0,0, getWidth(),getHeight(), this);
 				}
-				if (osdTime > 0) {
+				if (osdLines.size() > 0) {
 					while (osdLines.size() > 3*VC.nscale) //Made this 3 by user request
 						osdLines.remove(0);
 					g.setColor(new Color(255,255,255));
-					--osdTime;
-					if ((osdTime == 0) && (osdLines.size()>0)) {
-						osdLines.remove(0);
-						osdTime = 15;
-					}
 					for (int i = 0; i < osdLines.size(); ++i) {
 						//FIXME: Make proper Font Outlines (Difficulty: Very Hard)
 						String s=(String)osdLines.get(i);
@@ -1269,6 +1264,11 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					enableFullScreen.setState(false);
 					componentResized(null);
 				}
+				//--osdTime;
+				if((osdLines.size()>0)) {
+					osdLines.remove(0);
+// 					osdTime = 15;
+				}
 			}
 			if (configStateChanged ) saveConfig();
 		}
@@ -1847,7 +1847,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			if (!sound)
 				gui.cpu.AC.isMuted = true;
 
-			Timer timer = new Timer(1000, gui);
+			Timer timer = new Timer(500, gui);
 			timer.setInitialDelay(1000);
 			timer.start();
 
