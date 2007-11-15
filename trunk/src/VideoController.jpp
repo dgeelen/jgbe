@@ -632,63 +632,62 @@ public final class VideoController {
 	int STAT_statemachine_state = 0;
 	int mode3duration = 0;
 	public void render(int cycles) { // Renders in real clock cycles
-		ASSERT(cycles<=6*4); // Longest instruction lasts 24 cycles, so we should get called at least that often
-		LCDCcntdwn-=cycles;
-		while(LCDCcntdwn<=0) {
-			switch(STAT_statemachine_state) {
+		ASSERT(cycles <= 6*4); // Longest instruction lasts 24 cycles, so we should get called at least that often
+		LCDCcntdwn -= cycles;
+		while (LCDCcntdwn <= 0) {
+			switch (STAT_statemachine_state) {
 				case 0: // currently in mode 2, switch to mode 3
 						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
-						LCDCcntdwn+=mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
+						LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
 						STAT = (STAT & 0x7C) | 3;
-						if((STAT&(1<<5))!=0) CPU.triggerInterrupt(1);
-						STAT_statemachine_state++;
+						++STAT_statemachine_state;
 					break;
 				case 1: // currently in mode 3, switch to mode 0
-					LCDCcntdwn +=  376 - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
+					LCDCcntdwn += 372 - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
 					STAT &= 0x7C; //switch to mode 0: STAT = (STAT & 0x7C) | 0;
-					if((STAT&(1<<3))!=0) CPU.triggerInterrupt(1);
-					if(LY<144) CPU.elapseTime(CPU.hblank_dma());
-					STAT_statemachine_state++;
+					if ((STAT&(1<<3))!=0) CPU.triggerInterrupt(1);
+					if (LY<144) CPU.elapseTime(CPU.hblank_dma());
+					++STAT_statemachine_state;
 					renderScanLine();
 					break;
 				case 2: // currently in mode 0, nearing the end, time to increase LY
 					LY++;
-					STAT = (STAT & (~4)); // Unset LY==LYC
-					LCDCcntdwn+=4; // only 4 more cycles of mode 0 remain at this point
-					STAT_statemachine_state++;
+					STAT = (STAT & (~(1 << 2))); // Unset LY==LYC
+					LCDCcntdwn += 4; // only 4 more cycles of mode 0 remain at this point
+					++STAT_statemachine_state;
 					break;
 				case 3: // currently in mode 0, switch to mode [2 or 1]
-					if(LY<144) { // switch to mode 2
-						LCDCcntdwn+=80;
+					if (LY<144) { // switch to mode 2
+						LCDCcntdwn += 80;
 						STAT = (STAT & 0x7C) | 2;
-						if(LY==LYC) {         // This is checked while changing to the new scanline
-							STAT = STAT | 4;    // Set LY=LYC
-							if((STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+						if (LY == LYC) {         // This is checked while changing to the new scanline
+							STAT = STAT | (1 << 2);    // Set LY=LYC
+							if ((STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+							if ((STAT&(1<<5))!=0) CPU.triggerInterrupt(1);
 						}
 						STAT_statemachine_state=0;
 					}
 					else { // switch to mode 1
 						STAT = (STAT & 0x7C) | 1;
-						STAT_statemachine_state++;
+						++STAT_statemachine_state;
 						CPU.triggerInterrupt(0);
-						if((STAT&(1<<4))!=0) CPU.triggerInterrupt(1);
+						if ((STAT&(1<<4))!=0) CPU.triggerInterrupt(1);
 						blitImage();
 					}
 					break;
 				case 4: // currently in mode 1(VBlank), beginning of the scanline
-					if(LY==LYC) {
+					if (LY==LYC) {
 						STAT = STAT | 4;       // Set LY=LYC (even for LY==153)
 						if((STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
 					}
-					if(LY==153) LY=0;
+					if (LY==153) LY=0;
 					LCDCcntdwn += 452;       // end 4 cycles before the end so we can increase LY just before the next scanline
-					STAT_statemachine_state++;
+					++STAT_statemachine_state;
 					break;
 				case 5: // currently in mode 1(VBlank), nearing 'scanline' end
-					if(LY==0) { // We're on scanline 153, time for mode 2
-						LCDCcntdwn+=84; // only 4 more cycles of this scanline remain at this point
-						STAT = (STAT&0xfc) | 2;
-						STAT_statemachine_state=0;
+					if (LY==0) { // We're on scanline 153, time for mode 2
+						LCDCcntdwn += 4; // only 4 more cycles of this scanline remain at this point
+						++STAT_statemachine_state;
 					}
 					else { // Stay in VBlank
 						LY++;
@@ -696,6 +695,12 @@ public final class VideoController {
 						LCDCcntdwn+=4; // only 4 more cycles of this scanline remain at this point
 						STAT_statemachine_state=4;
 					}
+					break;
+				case 6: // Time to go to back to mode 2
+					STAT = (STAT&0xfc) | 2;
+					if ((STAT&(1<<5))!=0) CPU.triggerInterrupt(1);
+					if ((LY==LYC)&&(STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+					STAT_statemachine_state = 0;
 					break;
 				default:
 					ASSERT(false); //We should never get here!
