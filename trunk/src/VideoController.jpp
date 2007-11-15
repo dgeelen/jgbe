@@ -137,11 +137,10 @@ public final class VideoController {
 		WX=0;
 		WY=0;
 		LCDC=0x91; // init with screen on, tile data from 8000-8FFF, bg active
-		// We init in STAT in mode 1, with LY==LYC (since both are 0), and LCDCcntdwn=-1; then we call
-		// render(0), this will ensure that we go to mode 2, witch corrects everything else (I hope).
-		STAT=0x05; // FF41 - STAT - LCDC Status (R/W)
-		LCDCcntdwn=0;
-		render(0);
+		STAT=0x04; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
+		STAT_statemachine_state=0;
+		LCDCcntdwn=80;
+
 		BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
 		OBPI=0;              //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
 		anydirty = true;                // see updatepatpix()
@@ -192,7 +191,10 @@ public final class VideoController {
 		SL_UINT8(LCDC);
 		SL_IF_VERSION(15, -1) {
 			SL_INT(LCDCcntdwn);
-			SL_SKIP(INT,1); //mode3duration
+			SL_INT(mode3duration);
+		}
+		SL_IF_VERSION(18, -1) {
+			SL_INT(STAT_statemachine_state);
 		}
 		SL_UINT8(STAT);
 
@@ -627,11 +629,78 @@ public final class VideoController {
 	 * Note: Please refer to (and update) docs/notes_on_video_timing.txt when
 	 * making changes to render() and modeChanged()
 	 ****/
+	int STAT_statemachine_state = 0;
+	int mode3duration = 0;
 	public void render(int cycles) { // Renders in real clock cycles
 		ASSERT(cycles<=6*4); // Longest instruction lasts 24 cycles, so we should get called at least that often
 		LCDCcntdwn-=cycles;
 		while(LCDCcntdwn<=0) {
-			LCDCcntdwn+=456;
+			switch(STAT_statemachine_state) {
+				case 0: // currently in mode 2, switch to mode 3
+						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
+						LCDCcntdwn+=mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
+						STAT = (STAT & 0x7C) | 3;
+						if((STAT&(1<<5))!=0) CPU.triggerInterrupt(1);
+						STAT_statemachine_state++;
+					break;
+				case 1: // currently in mode 3, switch to mode 0
+					LCDCcntdwn +=  376 - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
+					STAT &= 0x7C; //switch to mode 0: STAT = (STAT & 0x7C) | 0;
+					if((STAT&(1<<3))!=0) CPU.triggerInterrupt(1);
+					if(LY<144) CPU.elapseTime(CPU.hblank_dma());
+					STAT_statemachine_state++;
+					renderScanLine();
+					break;
+				case 2: // currently in mode 0, nearing the end, time to increase LY
+					LY++;
+					STAT = (STAT & (~4)); // Unset LY==LYC
+					LCDCcntdwn+=4; // only 4 more cycles of mode 0 remain at this point
+					STAT_statemachine_state++;
+					break;
+				case 3: // currently in mode 0, switch to mode [2 or 1]
+					if(LY<144) { // switch to mode 2
+						LCDCcntdwn+=80;
+						STAT = (STAT & 0x7C) | 2;
+						if(LY==LYC) {         // This is checked while changing to the new scanline
+							STAT = STAT | 4;    // Set LY=LYC
+							if((STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+						}
+						STAT_statemachine_state=0;
+					}
+					else { // switch to mode 1
+						STAT = (STAT & 0x7C) | 1;
+						STAT_statemachine_state++;
+						CPU.triggerInterrupt(0);
+						if((STAT&(1<<4))!=0) CPU.triggerInterrupt(1);
+						blitImage();
+					}
+					break;
+				case 4: // currently in mode 1(VBlank), beginning of the scanline
+					if(LY==LYC) {
+						STAT = STAT | 4;       // Set LY=LYC (even for LY==153)
+						if((STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+					}
+					if(LY==153) LY=0;
+					LCDCcntdwn += 452;       // end 4 cycles before the end so we can increase LY just before the next scanline
+					STAT_statemachine_state++;
+					break;
+				case 5: // currently in mode 1(VBlank), nearing 'scanline' end
+					if(LY==0) { // We're on scanline 153, time for mode 2
+						LCDCcntdwn+=84; // only 4 more cycles of this scanline remain at this point
+						STAT = (STAT&0xfc) | 2;
+						STAT_statemachine_state=0;
+					}
+					else { // Stay in VBlank
+						LY++;
+						STAT = (STAT & (~4)); // Unset LY==LYC
+						LCDCcntdwn+=4; // only 4 more cycles of this scanline remain at this point
+						STAT_statemachine_state=4;
+					}
+					break;
+				default:
+					ASSERT(false); //We should never get here!
+					break;
+			}
 		}
 		ASSERT(LCDCcntdwn > 0);
 	}
