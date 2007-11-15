@@ -210,6 +210,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		private int[] keyMap = new int[16+nrOfShortCuts]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
 		VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
+		int osdTimer = 1;
 		private static int titleUpdateCountDown = 0;
 		static public String curcartname;
 		static public String biosfilename;
@@ -349,7 +350,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 						return;
 					}
 				} else scaledLogo = null;
-				
+
 				if (interpolation == 0) {
 					g.drawImage(cpu.VC.getImage(),0,0, this);
 				} else {
@@ -411,6 +412,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 		public void addOSDLine(String line) {
 			osdLines.add(line);
+			osdTimer=4*2;
 		}
 
 		public swinggui() {
@@ -701,7 +703,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			catch (Exception ex) {
 				System.out.println(ex);
 			}
-			
+
 			frame = new JFrame( "JGameBoy Emulator V"+Version.str);
 			fsframe = new JFrame( "JGameBoy Emulator V"+Version.str);
 
@@ -1256,20 +1258,20 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				long ncycles = CPU.TotalCycleCount - FPSCPUCycles;
 				FPSCPUCycles = CPU.TotalCycleCount;
 				double emuspeed =  ((int)((((float)ncycles)/((4194304*timeLapse*(CPU.doublespeed?2:1))/1000000000.0f))*10000.0f))/100.0;
-				
+
 				frame.setTitle(Format142.strformat( "JGBE V"+Version.str+" - %05.02f fps / %06.02f%%",new double[] {(((int)(afps*100))/((double)100)), (double)emuspeed}));
 				fps = 0;
 				titleUpdateCountDown=4;
 				}
-				
+
 				if (deactcount > 0 && --deactcount == 0 && enableFullScreen.getState()) {
 					--deactcount;
 					enableFullScreen.setState(false);
 					componentResized(null);
 				}
-				if((osdLines.size()>0)) {
+				if((osdTimer==0)&&(osdLines.size()>0)) {
 					osdLines.remove(0);
-				}
+				} else --osdTimer;
 			}
 			if (configStateChanged ) saveConfig();
 		}
@@ -1551,7 +1553,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					LOAD_INT_VAL(adOutputInterval);
 					LOAD_INT_VAL(adSampleRate);
 					LOAD_BOOL_VAL(usecheats);
-					
+
 					/* LOAD PAL */
 					if (property.equalsIgnoreCase("ColorType")) {
 						try {
@@ -1787,7 +1789,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		static Image logo = null;
 		public static void starter(swinggui gui, String[] args) {
 			Thread.setDefaultUncaughtExceptionHandler(new GlobalExceptionCatcher());
-			
+
 			boolean sound=true, debug=false, lastcart=false;
 			String romfile="", logfile="";
 			for (int i = 0; i < args.length; ++i) {
@@ -1817,7 +1819,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					PRINTLN("Can't load JGBE logo!");
 				}
 			}
-			
+
 			gui.loadRCFiles();
 			if(lastcart && (gui.rcFiles.size() > 0))
 				romfile = (String)gui.rcFiles.get(0);
@@ -1833,7 +1835,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
 			gui.loadConfig();
-			
+
 			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
 			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
 			gui.loadKeyBinds();
