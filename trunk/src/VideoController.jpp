@@ -700,6 +700,7 @@ public final class VideoController {
 					STAT = (STAT&0xfc) | 2;
 					if ((STAT&(1<<5))!=0) CPU.triggerInterrupt(1);
 					if ((LY==LYC)&&(STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+					LCDCcntdwn += 80;
 					STAT_statemachine_state = 0;
 					break;
 				default:
