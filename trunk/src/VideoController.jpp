@@ -192,7 +192,7 @@ public final class VideoController {
 		SL_UINT8(LCDC);
 		SL_IF_VERSION(15, -1) {
 			SL_INT(LCDCcntdwn);
-			SL_INT(mode3duration);
+			SL_SKIP(INT,1); //mode3duration
 		}
 		SL_UINT8(STAT);
 
@@ -627,74 +627,13 @@ public final class VideoController {
 	 * Note: Please refer to (and update) docs/notes_on_video_timing.txt when
 	 * making changes to render() and modeChanged()
 	 ****/
-	private int mode3duration=0;
 	public void render(int cycles) { // Renders in real clock cycles
 		ASSERT(cycles<=6*4); // Longest instruction lasts 24 cycles, so we should get called at least that often
-		LCDCcntdwn -= cycles;
-		if(LCDCcntdwn <= 0 ) {
-				switch( STAT & 0x03 ) {
-					case 0: //Currently in HBlank, next is mode 1 or 2
-						++LY; //FIXME: Not sure about when exactly to increase LY *AND* check LY==LYC,
-						      //       it seems like the coincidence bit gets set at the very start of
-						      //       the line, and is cleared right before the end of the line.
-						LCDCcntdwn += (LY==144) ? 456 : 80;
-						modeChanged( (LY==144)? 1 : 2 );
-						break;
-					case 1: //Currently in VBlank, next is mode 2
-						if((++LY) == 154) {
-							LY=0;
-							LCDCcntdwn += 80;
-							modeChanged(2);
-						}
-						else {
-							LCDCcntdwn += 456; //(LY==153)? 4 : 456; // FIXME: according to MESS and GNUBoy scanline 153 should only last
-							                                         //        only a few cycles (~4 cycles and 56 respectively)
-							if ((LY==LYC) && ((STAT&(1<<6)) !=0))    // We're in VBlank so it should be enough to do only the coincidence interrupt
-								cpu.triggerInterrupt(1);
-						}
-						break;
-					case 2: //Currently reading OAM, next is mode 3 (which last longer depending on #sprites on scanline)
-						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
-						LCDCcntdwn += mode3duration; //mode 3 duration + reading of X nr of sprites
-						modeChanged(3);
-						break;
-					case 3: //Currently reading both OAM and VRAM, next is mode 0 (which lasts shorter depending on mode3's length)
-						LCDCcntdwn +=  376 - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
-						modeChanged(0);
-						if(LY<144) CPU.elapseTime(CPU.hblank_dma());
-						renderScanLine();
-						break;
-				}
+		LCDCcntdwn-=cycles;
+		while(LCDCcntdwn<=0) {
+			LCDCcntdwn+=456;
 		}
 		ASSERT(LCDCcntdwn > 0);
-	}
-
-	// NOTE: we keep generating interrupts even when the LCD is off
-	//       this appeared to be needed to some games (like smurfs 1)
-	//       and the info suggesting otherwise was not trustworthy
-	public void modeChanged(int mode) {
-		// First mask the old mode bits out of STAT, and insert new ones.
-		// STAT is a 7 bit register, so leave the top bit zero
-		// We also clear the Coincidence flag at this point
-		int stat = (STAT & 0x78) | (mode & 0x03);
-		if(LY==LYC)
-			stat |= (1<<2);                // Set Coincidence flag
-		if((mode^(STAT&0x03))!=0) {      // Interrupts are only generated on actual changes in mode
-			if (mode == 1) {               // VBlank interrupt is generated always when LCD is on (int 0x40)
-				blitImage();
-				cpu.triggerInterrupt(0);
-			}
-
-			if ((LY==LYC) && ((mode&0x2)==0) && ((STAT&(1<<6)) !=0)) // Only generate LY==LYC coincidence interrupt in mode 0 or 1
-				cpu.triggerInterrupt(1);
-			if ((mode == 2) && ((STAT&(1<<5)) !=0)) // Mode 2 OAM Interrupt
-				cpu.triggerInterrupt(1);
-			if ((mode == 1) && ((STAT&(1<<4)) !=0)) // Mode 1 V-Blank Interrupt
-				cpu.triggerInterrupt(1);
-			if ((mode == 0) && ((STAT&(1<<3)) !=0)) // Mode 0 H-Blank Interrupt
-				cpu.triggerInterrupt(1);
-		}
-		STAT=stat;
 	}
 
 	public int read(int index) {
