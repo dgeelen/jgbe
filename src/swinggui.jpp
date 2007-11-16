@@ -748,10 +748,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			frame.setResizable(false);
 			frame.pack();
-			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-			Point     p = new Point();
-			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
-			frame.setLocation(p);
 
 			/* DND */
 			JavaCrossplatformnessIsAMyth transferhandler = new JavaCrossplatformnessIsAMyth();
@@ -759,6 +755,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 		public void showGUI() {
+			Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+			Point     p = new Point();
+			p.setLocation((d.getWidth()/2) - (frame.getWidth()/2), (d.getHeight()/2)-(frame.getHeight()/2));
+			frame.setLocation(p);
 			frame.setVisible( true );
 		}
 
@@ -871,6 +871,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			if (fulls)
 				mainMenuBar.setBounds(new Rectangle(mainMenuBar.getPreferredSize()));
 			grfx.repaint();
+			saveConfig();
 		}
 
 		public void pauseEmulation(boolean verbose) {
@@ -909,12 +910,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				keepAspectRatio.setEnabled(idx != 0);
 				grfx.interpolation = idx;
 				componentResized(null);
+				configStateChanged=true;
 			}
 			else if (e.getSource().equals(keepAspectRatio)) {
 				componentResized(null);
+				configStateChanged=true;
 			}
 			else if (e.getSource().equals(enableFullScreen)) {
 				componentResized(null);
+				configStateChanged=true;
 			}
 			else if (e.getSource().equals( menuitemIncFrameSkip )) {
 				++VC.fskip;
@@ -1423,7 +1427,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		}
 
 		public void saveConfig() {
-			if(!loading) try {
+			if(!loading && cheatcodes!=null) try {
 				String filename = FHandler.JGBEDir("") + "jgbe.conf";
 				BufferedWriter out = new BufferedWriter(new FileWriter(filename));
 				String str;
@@ -1453,7 +1457,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					adOutputInterval = audioDriver.getOutputInterval();
 					adSampleRate     = audioDriver.getSampleRate();
 				}
-
+				int interpolationRadioGroupsetSelectedIndex=interpolationRadioGroup.getSelectedIndex();
+				boolean keepAspectRatiosetEnabled=keepAspectRatio.isEnabled();
+				boolean keepAspectRatiosetState=keepAspectRatio.getState();
+				boolean enableFullScreensetEnabled=enableFullScreen.isEnabled();
+				boolean enableFullScreensetState=enableFullScreen.getState();
+				boolean menuitemMixFramesetState=CPU.VC.MixFrames;
+				Dimension fsize = frame.getSize();
+				int fsizewidth = fsize.width;
+				int fsizeheight = fsize.height;
 				#define SAVE_VAL(x) str=#x + " = " + (x); out.write(str, 0, str.length()); out.newLine()
 
 				str = "\
@@ -1480,6 +1492,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				SAVE_VAL( adOutputInterval);
 				SAVE_VAL( adSampleRate    );
 
+				SAVE_VAL( interpolationRadioGroupsetSelectedIndex );
+				SAVE_VAL( keepAspectRatiosetEnabled );
+				SAVE_VAL( keepAspectRatiosetState );
+				SAVE_VAL( enableFullScreensetEnabled );
+				SAVE_VAL( enableFullScreensetState );
+				SAVE_VAL( menuitemMixFramesetState );
+				SAVE_VAL( fsizewidth );
+				SAVE_VAL( fsizeheight );
+				
 				/* SAVE PAL */
 				str = "ColorType = ";
 				for (int i = 0; i < menuitemColorSchemes.length; ++i)
@@ -1518,6 +1539,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			int adSampleRate = 44100;   // Default for most soundcards
 			int adOutputInterval = 735; // 44100/60, once per frame
 			int adBufferSize = 2048;    // no need to buffer big enough to avoid underruns
+			int interpolationRadioGroupsetSelectedIndex=0;
+			boolean keepAspectRatiosetEnabled=false;
+			boolean keepAspectRatiosetState=true;
+			boolean enableFullScreensetEnabled=true;
+			boolean enableFullScreensetState=false;
+			boolean menuitemMixFramesetState=false;
+			Dimension fsize = frame.getSize();
+			int fsizewidth = fsize.width;
+			int fsizeheight = fsize.height;
 			try {
 				String filename = FHandler.JGBEDir("") + "jgbe.conf";
 				BufferedReader in = new BufferedReader(new FileReader(filename));
@@ -1567,6 +1597,16 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					LOAD_INT_VAL(adSampleRate);
 					LOAD_BOOL_VAL(usecheats);
 
+					LOAD_INT_VAL(interpolationRadioGroupsetSelectedIndex);
+					LOAD_BOOL_VAL(keepAspectRatiosetEnabled);
+					LOAD_BOOL_VAL(keepAspectRatiosetState);
+					LOAD_BOOL_VAL(enableFullScreensetEnabled);
+					LOAD_BOOL_VAL(enableFullScreensetState);
+					LOAD_BOOL_VAL(menuitemMixFramesetState);
+
+					LOAD_INT_VAL( fsizewidth );
+					LOAD_INT_VAL( fsizeheight );
+
 					/* LOAD PAL */
 					if (property.equalsIgnoreCase("ColorType")) {
 						try {
@@ -1612,14 +1652,19 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			audioDriver.setOutputInterval(adOutputInterval);
 			audioDriver.setSampleRate(adSampleRate);
 
+			interpolationRadioGroup.setSelectedIndex(interpolationRadioGroupsetSelectedIndex);
+			keepAspectRatio.setEnabled(keepAspectRatiosetEnabled);
+			keepAspectRatio.setState(keepAspectRatiosetState);
+			enableFullScreen.setEnabled(enableFullScreensetEnabled);
+			enableFullScreen.setState(enableFullScreensetState);
+			menuitemMixFrame.setState(menuitemMixFramesetState);
+			CPU.VC.MixFrames=menuitemMixFramesetState;
+			fsize = new Dimension(fsizewidth, fsizeheight);
+			frame.setPreferredSize(fsize);
+			frame.pack();
+			frame.setPreferredSize(new Dimension(0,0));
+			actionPerformed(new ActionEvent(interpolationRadioGroup.get(interpolationRadioGroupsetSelectedIndex), 0, ""));
 			loading = false;
-
-			// FIXME: save/load these
-			interpolationRadioGroup.setSelectedIndex(0);
-			keepAspectRatio.setState(true);
-			keepAspectRatio.setEnabled(false);
-			enableFullScreen.setState(false);
-			enableFullScreen.setEnabled(true);
 		}
 
 		private void updateSaveStateOrder() {
