@@ -22,7 +22,8 @@ Here we try to maintain a list of games that we know work with JGBE, and more im
 |           - changing rooms blanks the screen completely, not half way.       |
 |           - falling objects should not make sound.                           |
 |           - When starting stage 1, the intro text appears to be cut off on   |
-|             the top. KIGB does this too.                                     | '---.----------------------------------------------------------------------.---'
+|             the top. KIGB does this too.                                     |
+'---.----------------------------------------------------------------------.---'
     |                                                                      |
 .---'---[ Apocalypse Now Demo (PD) [a1].gb ]-------------------------------'---.
 | MD5    : b5458c8dad082ab6cb98081c7cd3a61b                                    |
