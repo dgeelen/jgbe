@@ -761,7 +761,7 @@ public final class CPU {
 						CurrentWRAMBank=MAX(value&0x07, 1);
 						refreshMemMap();
 						break;
-					/** some 'undocemented' stuff... */
+					/** some 'undocumented' stuff... */
 					case 0xff6c: // Undocumented (FEh) - bit 0 (Read/Write)
 					case 0xff72: // Undocumented (00h) - Bit 0-7 (Read/Write)
 					case 0xff73: // Undocumented (00h) - Bit 0-7 (Read/Write)
