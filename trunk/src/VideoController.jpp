@@ -67,7 +67,8 @@ public final class VideoController {
 	private int palColors[][] = new int[8*4*2][3];
 #else
 	#define BLITPIXTYPE int
-	private BLITPIXTYPE blitImg[][] =new BLITPIXTYPE[144][160]; // [y][x]
+	private BLITPIXTYPE blitImg[][]      = new BLITPIXTYPE[144][160]; // [y][x]
+	private BLITPIXTYPE blitImg_prev[][] = new BLITPIXTYPE[144][160]; // [y][x]
 	private BLITPIXTYPE palColors[] = new BLITPIXTYPE[8*4*2];
 #endif
 	private int patpix[][][] = new int[4096][][];   // see updatepatpix()
@@ -85,6 +86,7 @@ public final class VideoController {
 	public int nscale = 3;
 	private int cfskip = 0;
 	public int fskip = 1; // 1 is off
+	public boolean MixFrames; // Mix together last N frames
 
 	public void setGrayShade(int i, int j, Color c) {
 		GrayColors[i][j][0] = c.getRed();
@@ -295,6 +297,10 @@ public final class VideoController {
 }
 #endif
 
+/* Note: see http://www.compuphase.com/graphic/scale3.htm */
+#define AVERAGE(a, b)   ( ((((a) ^ (b)) & 0xfffefefe) >> 1) + ((a) & (b)) )
+
+
 	static long lastms;
 	private void blitImage() {
 		cfskip--;
@@ -304,8 +310,21 @@ public final class VideoController {
 			//Graphics g = drawImg[curDrawImg^1].getGraphics();
 	#ifndef USE_JAVA_MOBILE
 			WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
+// 			WritableRaster wr_prev = ((BufferedImage)drawImg[curDrawImg^0]).getRaster();
 			drawData = ((DataBufferInt)wr.getDataBuffer()).getData();
+// 			drawData_prev = ((DataBufferInt)wr_prev.getDataBuffer()).getData();
 	#endif
+
+			/* Mix-Frame mode */
+			if(MixFrames)
+				for(int y=0; y<144; ++y) {
+					for(int x=0; x<160; ++x) {
+						//int z=blitImg[y][x];
+						blitImg[y][x] = AVERAGE(blitImg[y][x], blitImg_prev[y][x]);
+						blitImg_prev[y][x] = blitImg[y][x];
+					}
+				}
+			
 			if (scale == 1) {
 				for (int y = 0; y < 144; ++y) {
 					BLITPIXTYPE[] blitLine = blitImg[y];
