@@ -235,6 +235,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		JMenuItem menuitemReset;
 		JMenu menuColorScheme;
 		JCheckBoxMenuItem[] menuitemColorSchemes;
+		JCheckBoxMenuItem menuitemMixFrame;
 
 		JMenu menuSoundChannels;
 		MenuItemArray soundChannelGroup;
@@ -455,8 +456,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuFile.add( menuitemExit );
 
 			enableFullScreen = new JCheckBoxMenuItem("Full Screen");
+			enableFullScreen.setMnemonic(KeyEvent.VK_F);
 			enableFullScreen.addActionListener(this);
 			menuVideo.add(enableFullScreen);
+
+			menuitemMixFrame = new JCheckBoxMenuItem("Mix Frame");
+			menuitemMixFrame.setMnemonic(KeyEvent.VK_M);
+			menuitemMixFrame.addActionListener( this );
+			menuVideo.add(menuitemMixFrame);
 
 			menuVideo.addSeparator();
 
@@ -651,6 +658,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemReset.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			menuitemExit.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			enableFullScreen.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
+			menuitemMixFrame.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			for (int i = 0; i < 4; ++i)
 				scaleRadioGroup.get(i).setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
 			keepAspectRatio.setAccelerator(NEXT_KEYSTROKE_FROM_KEYMAP);
@@ -1171,6 +1179,11 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			else if(e.getSource().equals( menuitemEmuSpeedNormal )) {
 				CPU.AC.setSpeed(1.0);
 				addOSDLine("EmuSpeed: 100%");
+			}
+			else if(e.getSource().equals( menuitemMixFrame )) {
+				CPU.VC.MixFrames=!CPU.VC.MixFrames;
+				addOSDLine((CPU.VC.MixFrames?"Enabled":"Disabled")+" Mix Frame mode");
+				configStateChanged=true;
 			}
 			#define SELECT_COLOR_MENU(x) for(int i=0; i<menuitemColorSchemes.length; ++i) \
 			                             	menuitemColorSchemes[i].setState(false); \
@@ -1745,15 +1758,16 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			keyMap[Magix++]=594; // Ctrl+R
 			keyMap[Magix++]=593; // Ctrl+Q
 			keyMap[Magix++]=2058; // Alt+Enter
+			keyMap[Magix++]=589; // Ctrl+M
 			keyMap[Magix++]=561; // Ctrl+1
 			keyMap[Magix++]=562; // Ctrl+2
 			keyMap[Magix++]=563; // Ctrl+3
 			keyMap[Magix++]=564; // Ctrl+4
 			keyMap[Magix++]=2625; // Ctrl+Alt+A
-			keyMap[Magix++]=2608; // Ctrl+Alt+0
-			keyMap[Magix++]=2617; // Ctrl+Alt+9
-			keyMap[Magix++]=2616; // Ctrl+Alt+8
-			keyMap[Magix++]=2615; // Ctrl+Alt+7
+			keyMap[Magix++]=305; // Shift+1
+			keyMap[Magix++]=306; // Shift+2
+			keyMap[Magix++]=307; // Shift+3
+			keyMap[Magix++]=308; // Shift+4
 			keyMap[Magix++]=605; // Ctrl+Close Bracket
 			keyMap[Magix++]=603; // Ctrl+Open Bracket
 			keyMap[Magix++]=560; // Ctrl+0
