@@ -680,11 +680,17 @@ public final class CPU {
 						VC.LY = 0; // can only be set to 0
 						break;
 					case 0xff45: // LYC
-						// This possibly could be maybe correct
-						// At least it fixes flickering in donkey kong
-						// by generating interrupts when changing LYC to the current scanline
+						// We're not sure if this is correct or not, but at least it fixes flickering
+						// in donkey kong by allowing to generate an STAT interrupt as soon as LY equals
+						// LYC, instead of on the next mode0->mode2 transition.
+						// The pandocs state that:
+						//   "The gameboy permanently compares the value of the LYC and LY registers.
+						//    When both values are identical, the coincident bit in the STAT register
+						//    becomes set, and (if enabled) a STAT interrupt is requested."
+						// But they make a habit of writing 'permanently' where they mean 'continually'.
+						VC.STAT &= ~(1<<2); // Clear Coincidence bit
 						if (VC.LYC != value && VC.LY==value && (VC.STAT&(1<<6))!=0) {
-							VC.STAT |= (1<<2);
+							VC.STAT |= (1<<2); // Set Coincidence bit
 							CPU.triggerInterrupt(1);
 						}
 						VC.LYC = value;
