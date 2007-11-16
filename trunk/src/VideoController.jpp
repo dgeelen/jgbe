@@ -627,7 +627,7 @@ public final class VideoController {
 
 	/****
 	 * Note: Please refer to (and update) docs/notes_on_video_timing.txt when
-	 * making changes to render() and modeChanged()
+	 * making changes to render()
 	 ****/
 	int STAT_statemachine_state = 0;
 	int mode3duration = 0;
@@ -662,7 +662,9 @@ public final class VideoController {
 						STAT = (STAT & 0x7C) | 2;
 						if (LY == LYC) {         // This is checked while changing to the new scanline
 							STAT = STAT | (1 << 2);    // Set LY=LYC
-							if ((STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+							if ((STAT&(1<<6))!=0) {
+								CPU.triggerInterrupt(1);
+							}
 							if ((STAT&(1<<5))!=0) CPU.triggerInterrupt(1);
 						}
 						STAT_statemachine_state=0;
@@ -678,28 +680,31 @@ public final class VideoController {
 				case 4: // currently in mode 1(VBlank), beginning of the scanline
 					if (LY==LYC) {
 						STAT = STAT | 4;       // Set LY=LYC (even for LY==153)
-						if((STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+						if((STAT&(1<<6))!=0) {
+							CPU.triggerInterrupt(1);
+						}
 					}
 					if (LY==153) LY=0;
 					LCDCcntdwn += (isCGB ? 456 : 452);       // end 4 cycles before the end so we can increase LY just before the next scanline
 					++STAT_statemachine_state;
 					break;
 				case 5: // currently in mode 1(VBlank), nearing 'scanline' end
+					LCDCcntdwn += (isCGB ? 0 : 4); // only 4 more cycles of this scanline remain at this point
 					if (LY==0) { // We're on scanline 153, time for mode 2
-						LCDCcntdwn += (isCGB ? 0 : 4); // only 4 more cycles of this scanline remain at this point
 						++STAT_statemachine_state;
 					}
-					else { // Stay in VBlank
-						LY++;
+					else {       // Stay in VBlank
+						++LY;
 						STAT = (STAT & (~4)); // Unset LY==LYC
-						LCDCcntdwn += (isCGB ? 0 : 4); // only 4 more cycles of this scanline remain at this point
-						STAT_statemachine_state=4;
+						--STAT_statemachine_state;
 					}
 					break;
 				case 6: // Time to go to back to mode 2
 					STAT = (STAT&0xfc) | 2;
 					if ((STAT&(1<<5))!=0) CPU.triggerInterrupt(1);
-					if ((LY==LYC)&&(STAT&(1<<6))!=0) CPU.triggerInterrupt(1);
+					if ((LY==LYC)&&(STAT&(1<<6))!=0) {
+						CPU.triggerInterrupt(1);
+					}
 					LCDCcntdwn += 80;
 					STAT_statemachine_state = 0;
 					break;
