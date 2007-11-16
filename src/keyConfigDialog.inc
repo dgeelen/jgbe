@@ -1,5 +1,5 @@
 #ifndef USE_JAVA_MOBILE
-#define nrOfShortCuts 38
+#define nrOfShortCuts 39
 class keyConfigDialog implements ComponentListener, ActionListener, KeyListener {
 	private JDialog dialog;
 	private JFrame owner;
@@ -75,6 +75,7 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 			INPUTBOX(shortCuts, "Reset Gameboy");
 			INPUTBOX(shortCuts, "Exit Emulator");
 			INPUTBOX(shortCuts, "Fullscreen");
+			INPUTBOX(shortCuts, "Mix Frame");
 			INPUTBOX(shortCuts, "Scale 1x");
 			INPUTBOX(shortCuts, "Scale 2x");
 			INPUTBOX(shortCuts, "Scale 3x");
