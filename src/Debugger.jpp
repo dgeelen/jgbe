@@ -243,16 +243,18 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			if((this.Colors!=null)) setBackground(this.Colors[row]);
 			else setBackground(Color.WHITE);
 
+			String s = "";
+			String brep="";
 			if((table==regs1)||(table==regs2)||(table==hwregs)) {
-				String s = (String)table.getValueAt(row, column);
-				int i= s.indexOf('$');
+				int i= ((String)table.getValueAt(row, column)).indexOf('$');
 				if( i>-1) {
+					s=(String)table.getValueAt(row, column);
 					s=s.substring(i);
 					i=parser.StrToInt(s);
-					String brep = Integer.toBinaryString(i);
+					brep = Integer.toBinaryString(i);
 					while(brep.length() < ((regs2 == table) ? 16 : 8 )) brep="0"+brep;
-					setToolTipText(STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i));
-				} else
+					s=STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i);
+				}
 				if( table == regs2 && column == 2) {
 					int intstat=(gui.cpu.IOP[0x0f]&0x1f)|((gui.cpu.IE&0x1f)<<5)|(gui.cpu.IME?1<<10:0);
 					s = "<HTML><PRE>";
@@ -274,8 +276,36 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					s+=                ((gui.cpu.IOP[0x0f] & (1<< 0)) !=0 ? ", pending":"");
 					s+=" <BR>";
 					s+="</PRE></HTML>";
-					setToolTipText(s);
-				} else setToolTipText("");
+				} else
+				if( table == hwregs && row == 0 && column == 0) { // LCDC
+					int j=gui.cpu.VC.LCDC;
+					s = "<HTML><PRE>";
+					s+=" "+STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i)+"<BR>";
+					s+=" ----------------------------------------- <BR>";
+					s+= " LCD Display                   : " + (((j&(1<<7))!=0)?"Enabled":"Disabled") + " <BR>";
+					s+= " Window Tile Map Address       : " + (((j&(1<<6))!=0)?"9C00-9FFF":"9800-9BFF") + " <BR>";
+					s+= " Display Window                : " + (((j&(1<<5))!=0)?"Yes":"No") + " <BR>";
+					s+= " BG & Window Tile Data Address : " + (((j&(1<<4))!=0)?"8000-8FFF":"8800-97FF") + " <BR>";
+					s+= " BG Tile Map Display Address   : " + (((j&(1<<3))!=0)?"9800-9BFF":"9C00-9FFF") + " <BR>";
+					s+= " Sprite Size                   : " + (((j&(1<<2))!=0)?"8x16":"8x8") + " <BR>";
+					s+= " Display Sprites               : " + (((j&(1<<1))!=0)?"Yes":"No") + " <BR>";
+					s+= " Display Background            : " + (((j&(1<<0))!=0)?"Yes":"No") + " <BR>";
+					s+="</PRE></HTML>";
+				} else
+				if( table == hwregs && row == 0 && column == 1) { // STAT
+					int j=gui.cpu.VC.STAT;
+					s = "<HTML><PRE>";
+					s+= " "+STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i)+"<BR>";
+					s+= " ----------------------------------------------------------------- <BR>";
+					s+= " LY=LYC Coincidence Interrupt : " + (((j&(1<<6))!=0)?"Enabled":"Disabled") + " <BR>";
+					s+= " Mode 2 OAM Interrupt         : " + (((j&(1<<5))!=0)?"Enabled":"Disabled") + " <BR>";
+					s+= " Mode 1 V-Blank Interrupt     : " + (((j&(1<<4))!=0)?"Enabled":"Disabled") + " <BR>";
+					s+= " Mode 0 H-Blank Interrupt     : " + (((j&(1<<3))!=0)?"Enabled":"Disabled") + " <BR>";
+					s+= " Coincidence Flag             : " + (((j&(1<<2))!=0)?"Set":"Unset") + " <BR>";
+					s+= " Mode Flag                    : " + (j&3) + " ("+( (((j&3)==0)? "H-Blank" : (((j&3)==1)? "V-Blank" : (((j&3)==2)? "Searching OAM-RAM" : "Transfering Data to LCD Driver"))) ) + ") <BR>";
+					s+="</PRE></HTML>";
+				}
+				setToolTipText(s);
 			}
 			else {
 				setToolTipText("");
