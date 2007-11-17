@@ -817,7 +817,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		
 		public void focusLost(FocusEvent e) {
 			focus_pause = cpuRunner.isRunning();
-			pauseEmulation(false);
+			PRINTLN(cs.isVisible());
+			if(!cs.isVisible()) // We like to keep the emu running when selecting colors
+				pauseEmulation(false);
 		}
 
 		boolean fulls = false;
