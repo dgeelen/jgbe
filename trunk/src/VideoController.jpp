@@ -307,19 +307,15 @@ public final class VideoController {
 		if (cfskip < 0) {
 			cfskip += fskip;
 			if (scale != nscale) scale();
-			//Graphics g = drawImg[curDrawImg^1].getGraphics();
 	#ifndef USE_JAVA_MOBILE
 			WritableRaster wr = ((BufferedImage)drawImg[curDrawImg^1]).getRaster();
-// 			WritableRaster wr_prev = ((BufferedImage)drawImg[curDrawImg^0]).getRaster();
 			drawData = ((DataBufferInt)wr.getDataBuffer()).getData();
-// 			drawData_prev = ((DataBufferInt)wr_prev.getDataBuffer()).getData();
 	#endif
 
 			/* Mix-Frame mode */
 			if(MixFrames)
 				for(int y=0; y<144; ++y) {
 					for(int x=0; x<160; ++x) {
-						//int z=blitImg[y][x];
 						blitImg[y][x] = AVERAGE(blitImg[y][x], blitImg_prev[y][x]);
 						blitImg_prev[y][x] = blitImg[y][x];
 					}
