@@ -194,7 +194,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	}
 }
 
-public final class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener, MouseMotionListener {
+public final class swinggui extends JApplet implements ActionListener, ItemListener, KeyListener, ComponentListener, WindowListener, MouseMotionListener, FocusListener {
 		private IntVector saveStateOrder = new IntVector();
 		private static DrawingArea grfx;
 		private int lastmousex;
@@ -742,6 +742,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			frame.addWindowListener(this);
 			fsframe.addWindowListener(this);
 			mainMenuBar.addMouseMotionListener(this);
+			grfx.addFocusListener(this);
 			fsframe.addMouseMotionListener(this);
 			for (int i = 0; i < mainMenuBar.getMenuCount(); ++i)
 				mainMenuBar.getMenu(i).addMouseMotionListener(this);
@@ -809,9 +810,17 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 		}
 
+		boolean focus_pause = false;
+		public void focusGained(FocusEvent e) {
+			if(focus_pause) resumeEmulation(false);
+		}
+		
+		public void focusLost(FocusEvent e) {
+			focus_pause = cpuRunner.isRunning();
+			pauseEmulation(false);
+		}
 
 		boolean fulls = false;
-
 		public void componentHidden(ComponentEvent e) {}
 		public void componentMoved(ComponentEvent e) {}
 		public void componentShown(ComponentEvent e) {}
