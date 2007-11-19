@@ -199,6 +199,28 @@ public final class VideoController {
 			SL_INT(STAT_statemachine_state);
 		}
 		SL_UINT8(STAT);
+		SL_IF_VERSION(-1, 17) {
+			// OLD savestates may crash JGBE (currently, savestate version 18),
+			// this probably fuxx0rs timing, but should prevent crashes
+			switch(STAT&3) {
+				case 0:
+					LCDCcntdwn=204;
+					STAT_statemachine_state=2;
+					break;
+				case 1:
+					LCDCcntdwn=0;
+					STAT_statemachine_state=3;
+					break;
+				case 2:
+					LCDCcntdwn=80;
+					STAT_statemachine_state=0;
+					break;
+				case 3:
+					LCDCcntdwn=172;
+					STAT_statemachine_state=1;
+					break;
+			}
+		}
 
 		SL_UINT8(BGPI);
 		SL_ARR(UINT8, BGPD, 8*4*2);
