@@ -687,7 +687,7 @@ public final class VideoController {
 					else { // switch to mode 1
 						STAT = (STAT & 0x7C) | 1;
 						++STAT_statemachine_state;
-						CPU.triggerInterrupt(0);
+						if((LCDC&0x80)!=0) CPU.triggerInterrupt(0);      //This appears to be required for SML2 (The Smurfs 1 still works)
 						if ((STAT&(1<<4))!=0) CPU.triggerInterrupt(1);
 						blitImage();
 					}
