@@ -736,12 +736,14 @@ public final class VideoController {
 			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
 		else if(index < 0xa000) {
+// 			return ((((STAT&3)!=3)||((LCDC&0x80)==0)) ? VRAM[index-0x8000+CurrentVRAMBank] : 0xff);
 			return VRAM[index-0x8000+CurrentVRAMBank];
 		}
 		else if(index<0xfe00) {
 			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
 		else if(index<0xfea0) {
+// 			return ((((STAT&2)==0)||((LCDC&0x80)==0)) ? OAM[index-0xfe00] : 0xff);
 			return OAM[index-0xfe00];
 		}
 		else {
@@ -755,16 +757,19 @@ public final class VideoController {
 			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
 		else if(index < 0xa000) {
-			VRAM[index-0x8000+CurrentVRAMBank]=value;
-			patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
-			anydirty = true;
-			//alldirty = true;
+// 			if(((STAT&3)!=3)||((LCDC&0x80)==0)) {
+				VRAM[index-0x8000+CurrentVRAMBank]=value;
+				patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
+				anydirty = true;
+// 			}
 		}
 		else if(index<0xfe00) {
 			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
 		else if(index<0xfea0) {
-			OAM[index-0xfe00]=value;
+// 			if(((STAT&2)==0)||((LCDC&0x80)==0)) {
+				OAM[index-0xfe00]=value;
+// 			}
 		}
 		else {
 			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
