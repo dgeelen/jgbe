@@ -270,6 +270,7 @@ public final class CPU {
 		}
 
 		public static int hblank_dma() {
+			ASSERT((VC.STAT&2)==0);
 			if (hblank_dma_state < (1<<7)) return 0;
 
 			int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
