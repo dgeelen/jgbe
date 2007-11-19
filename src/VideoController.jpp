@@ -678,6 +678,7 @@ public final class VideoController {
 						LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
 						STAT = (STAT & 0x7C) | 3;
 						++STAT_statemachine_state;
+						renderScanLine(); //Test: What if the VC renders the BG internally in mode 2?
 					break;
 				case 1: // currently in mode 3, switch to mode 0
 					LCDCcntdwn += (isCGB ? 376 : 372) - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
@@ -685,7 +686,7 @@ public final class VideoController {
 					if ((STAT&(1<<3))!=0) CPU.triggerInterrupt(1);
 					if (LY<144) CPU.elapseTime(CPU.hblank_dma());
 					++STAT_statemachine_state;
-					renderScanLine();
+// 					renderScanLine(); //Now renders in mode 2->3 transition
 					break;
 				case 2: // currently in mode 0, nearing the end, time to increase LY
 					LY++;
