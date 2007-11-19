@@ -25,14 +25,14 @@
 .---'---[ Armageddon Video Trailer (GBTK Video) (PD).gb ]------------------'---.
 | MD5    : bff88c7ccc6e21f79d7dec9a4e2ea299                                    |
 | Status : PLAYABLE BUG                                                        |
-| Notes  : Restarts after a while with mis-aligned image                       |
+| Notes  : Restarts after a while with mis-aligned image (Cartidge bug maybe?) |
 '---.----------------------------------------------------------------------.---'
     |                                                                      |
 .---'---[ Big Scroller Demo (PD).gb ]--------------------------------------'---.
 | MD5    : d6d839eaac2d01ff3db44caebeaa6882                                    |
 | Status : PLAYABLE                                                            |
-| Notes  : Screen blinks like crazy, this is normal. This Demo appears to      |
-|          require inter-frame blending (kigb 'mix-frame' mode)                |
+| Notes  : This demo requires inter-frame blending ('mix-frame' mode),         |
+|          other wise the screen will blink like crazy. (this is normal)       |
 '---.----------------------------------------------------------------------.---'
     |                                                                      |
 .---'---[ Castelian (U).gb ]-----------------------------------------------'---.
