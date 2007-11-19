@@ -20,7 +20,19 @@ import java.util.Arrays;
 
 class GlobalExceptionCatcher implements Thread.UncaughtExceptionHandler {
 	GlobalExceptionCatcher() {}
-	public void uncaughtException(Thread t, Throwable e) { //Note: still dies on OutOfMemory error :-(
+	public void uncaughtException(Thread t, Throwable ee) { //Note: still dies on OutOfMemory error :-(
+		final Throwable e=ee;
+		if(swinggui.cpuRunner.hasThread(t)) {
+			/* The exception occured in the runner thread, but this is
+			 * a required thread (because it is used by grfx.focusGained/focusLost)
+			 * Any exception occuring in the Debugger is handled in the debugger,
+			 * so we only need to handle the GUI runner here.
+			 */
+			swinggui.cpuRunner = null;
+		} else
+			swinggui.pauseEmulation(false);
+		SwingUtilities.invokeLater( new Runnable() {
+		public void run() {
 		JFrame errMsg = new JFrame("Internal Error!");
 		errMsg.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		JPanel iconAndText = new JPanel();
@@ -72,6 +84,7 @@ class GlobalExceptionCatcher implements Thread.UncaughtExceptionHandler {
 		                         	}
 		                         });
 		errMsg.setVisible( true );
+		}});
 	}
 }
 
@@ -146,6 +159,10 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	// 1 means suspend->running requested
 	// 2 means running
 	// 3 means running->suspended requested
+	public boolean hasThread(Thread t) {
+		return cpurunthread.equals(t);
+	}
+	
 	synchronized public void suspend() {
 		while (threadStatus != 0) {
 			threadStatus = 3;
@@ -175,18 +192,24 @@ class SimpleCPURunner implements CPURunner, Runnable {
 		while (true) {
 			// suspended
 			while (threadStatus == 0) { YIELD; };
+			
 			// suspend -> running
 			if (threadStatus == 1) threadStatus = 2;
+			
 			// running
 			while ((threadStatus == 2) && (CPU.nextinstruction()!=0)) {};
-
+			
 			if (threadStatus == 2) { // CPU returned exception
 				threadStatus = 3;
-				JOptionPane.showMessageDialog(null,
-				                              "Encountered an invalid instruction, perhaps ROM is broken?",
-				                              "Invalid Instruction",
-				                              JOptionPane.INFORMATION_MESSAGE);
+				SwingUtilities.invokeLater( new Runnable() {
+				                            public void run() {
+				                            	JOptionPane.showMessageDialog(null,
+				                            	"Encountered an invalid instruction, perhaps ROM is broken?",
+				                            	"Invalid Instruction",
+				                            	JOptionPane.INFORMATION_MESSAGE);
+				                            }});
 			}
+
 			// running -> suspended
 			if (threadStatus == 3) threadStatus = 0;
 			// suspended
@@ -208,9 +231,9 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		private boolean isApplet;
 		private int selectedState = 0;
 		private int[] keyMap = new int[16+nrOfShortCuts]; // first 8: player 1, next 8: player 2, etc, last N-4*8 = shortcuts
-		VECTOR(String) osdLines = new VECTOR(String)();
+		static VECTOR(String) osdLines = new VECTOR(String)();
 		VECTOR(String) rcFiles = new VECTOR(String)();
-		int osdTimer = 1;
+		static int osdTimer = 1;
 		private static int titleUpdateCountDown = 0;
 		static public String curcartname;
 		static public String biosfilename;
@@ -266,7 +289,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 		static CheatCodeEditor cheatcodes;
 		static AdvancedAudioPropertiesDialog advancedAudioPropertiesDialog;
-		CPURunner cpuRunner;
+		static CPURunner cpuRunner;
 
 		protected ColorSelector cs;
 
@@ -411,7 +434,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 		}
 
-		public void addOSDLine(String line) {
+		public static void addOSDLine(String line) {
 			osdLines.add(line);
 			osdTimer=4*2;
 		}
@@ -817,7 +840,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		
 		public void focusLost(FocusEvent e) {
 			focus_pause = cpuRunner.isRunning();
-			if(!cs.isVisible()) // We like to keep the emu running when selecting colors
+			if(!cs.isVisible() && cpuRunner != null) // We like to keep the emu running when selecting colors
 				pauseEmulation(false);
 		}
 
@@ -884,14 +907,14 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			saveConfig();
 		}
 
-		public void pauseEmulation(boolean verbose) {
+		static public void pauseEmulation(boolean verbose) {
 			if(cpuRunner!=null) {
 				cpuRunner.suspend();
 				if(verbose) addOSDLine("Paused gameboy");
 			}
 		}
 
-		public void resumeEmulation(boolean verbose) {
+		static public void resumeEmulation(boolean verbose) {
 			if((cpuRunner!=null)&&(cart!=null)) {
 				cpuRunner.resume();
 				if(verbose) addOSDLine("Unpaused gameboy");

@@ -74,6 +74,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		private int instrstop=-1;
 		private int breakinstr=-1;
 
+		public boolean hasThread(Thread t) {
+			return cpurunthread.equals(t);
+		}
+
 		synchronized public void suspend() {
 			while (threadStatus != 0) {
 				threadStatus = 3;
