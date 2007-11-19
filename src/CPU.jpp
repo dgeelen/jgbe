@@ -700,12 +700,11 @@ public final class CPU {
 						//NOTE: CPU may only access HRAM during this DMA,
 						//      so there is no need to do special timing
 						last_memory_access=last_memory_access_internal;
+						//ASSERT((VC.STAT&2)==0);
 						for(int i=0; i<0xa0; ++i){
 							write(0xfe00|i, read(i+(value<<8)));
 						}
 						last_memory_access_internal=last_memory_access;
-						//cycles += 50;
-// 						LCDCcntdwn-=2*160; //FIXME: This for SML2           ***HAXHAXHAX***
 						} break;
 					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
 					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
