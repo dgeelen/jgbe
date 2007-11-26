@@ -1,13 +1,17 @@
-SRCDIR  :=./src
-DEPSDIR :=./.deps
-CLASSDIR:=./classes
-JARDIR  :=./jar
+SRCDIR   :=./src
+DEPSDIR  :=./.deps
+CLASSDIR :=./classes
+JARDIR   :=./jar
+BUILDDIR :=./build
+ROMSRCDIR:=$(SRCDIR)/test-rom
 
-JPPFILES  :=$(shell ls $(SRCDIR)/*.jpp)
-GJAVAFILES:=$(JPPFILES:.jpp=.java)
-AJAVAFILES:=$(shell ls $(SRCDIR)/*.java) $(GJAVAFILES)
-AJAVAFILES:=$(shell echo $(AJAVAFILES) | sort | uniq)
-CLASSFILES:=$(AJAVAFILES:$(SRCDIR)/%.java=$(CLASSDIR)/%.class)
+JPPFILES     :=$(shell ls $(SRCDIR)/*.jpp)
+GJAVAFILES   :=$(JPPFILES:.jpp=.java)
+AJAVAFILES   :=$(shell ls $(SRCDIR)/*.java) $(GJAVAFILES)
+AJAVAFILES   :=$(shell echo $(AJAVAFILES) | sort | uniq)
+CLASSFILES   :=$(AJAVAFILES:$(SRCDIR)/%.java=$(CLASSDIR)/%.class)
+ROM_ASMFILES :=$(shell ls $(ROMSRCDIR)/*.asm)
+ROM_OBJFILES :=$(ROM_ASMFILES:$(ROMSRCDIR)/%.asm=$(BUILDDIR)/%.o)
 MAKEFILES :=Makefile Makefile.inc Makefile.config $(shell cat Makefile.inc 2> /dev/null | sed "s:-include ::")
 BOOTROM   :=$(shell find -iname boot.rom | head -1)
 
@@ -23,6 +27,10 @@ SRCPATH  :=$(SRCDIR)
 JAVA_XCB_HACK := $(shell ls LIBXCB_ALLOW_SLOPPY_LOCK > /dev/null 2>&1 /dev/null && echo "LIBXCB_ALLOW_SLOPPY_LOCK=1")
 AOSS:=$(shell which aoss 2> /dev/null)
 JAVA_BIN := $(JAVA_XCB_HACK) $(AOSS) java
+
+GB_ASM  := rgbasm
+GB_LINK := xlink 
+GB_FIX  := rgbfix
 
 -include Makefile.config
 -include Makefile.inc
@@ -126,7 +134,7 @@ $(JARDIR)/jgbe.jar: $(AJAVAFILES) $(CLASSFILES)
 	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jgbe.jar *.class icon.gif jgbe_logo.png VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.jar $(JARDIR)/jgbe.jar
-
+	
 jar: $(JARDIR)/jgbe.jar
 
 jarzip: $(CLASSFILES)
@@ -139,6 +147,42 @@ jarzip: $(CLASSFILES)
 	@cd $(CLASSDIR) && zip -r -9 jgbe.zip META-INF *.class icon.gif jgbe_logo.png VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
+
+
+# # # # # # # # # # #
+#  T e s t   R o m  #
+# # # # # # # # # # #
+
+$(BUILDDIR)/%.o: $(ROMSRCDIR)/%.asm
+	@echo "[asm -> o  ] $* $< $@ "
+	@mkdir -p $(BUILDDIR)
+	@$(GB_ASM) -i$(ROMSRCDIR)/ -o$@ $<
+	@rm -f $(BUILDDIR)/linkfile
+
+$(BUILDDIR)/linkfile: # TODO: Better automatic generation
+	@echo "# Linkfile for testrom.gb" > $@
+	@echo "[Objects]" >> $@
+# 	@echo $(ROM_OBJFILES) | sed 's: :\n:g' | tac >> $@
+# 	@echo -ne "./build/test.o\n./build/memory.o\n" >> $@
+	@echo -ne "./build/test.o\n" >> $@
+	@echo "[Libraries]" >> $@
+	@echo "[Output]" >> $@
+	@echo "$(BUILDDIR)/testrom.gb.in" >> $@
+
+$(BUILDDIR)/testrom.gb.in: $(ROM_OBJFILES) $(BUILDDIR)/linkfile
+	@echo "[linking   ]"
+	@$(GB_LINK) -m$(BUILDDIR)/testrom.map -tg $(BUILDDIR)/linkfile
+
+$(BUILDDIR)/testrom.gb: $(BUILDDIR)/testrom.gb.in
+	@echo "[validating]"
+	@rm -f $(BUILDDIR)/testrom.gb
+	@cp $(BUILDDIR)/testrom.gb.in $(BUILDDIR)/testrom.gb
+	@$(GB_FIX) -p -tTESTROM -v $(BUILDDIR)/testrom.gb
+
+testrom: $(BUILDDIR)/testrom.gb
+	@echo "[done      ]"
+
+# # # # # # # # # # #
 
 clean:
 	rm -f $(CLASSDIR)/*.class
