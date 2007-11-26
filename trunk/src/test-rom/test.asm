@@ -55,10 +55,16 @@
 ; start at address $100 by using the following SECTION assembler
 ; command:
 
-        SECTION "Org $100",HOME[$100]
 
-        nop
-        jp      begin
+SECTION "hack",HOME[$d2]
+jp begin
+
+SECTION "Org $100",HOME[$100]
+	ld a, [$ff41]
+	db $18               ; jr 
+
+;        nop
+;        jp      begin
 
 ;  To include the standard ROM header information we
 ; can just use the macro ROM_HEADER. We defined this macro
