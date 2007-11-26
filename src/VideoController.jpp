@@ -87,6 +87,7 @@ public final class VideoController {
 	private int cfskip = 0;
 	public int fskip = 1; // 1 is off
 	public boolean MixFrames; // Mix together last N frames
+	public boolean allow_writes_in_mode_2_3=false;
 
 	public void setGrayShade(int i, int j, Color c) {
 		GrayColors[i][j][0] = c.getRed();
@@ -759,15 +760,29 @@ public final class VideoController {
 			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
 		else if(index < 0xa000) {
-// 			return ((((STAT&3)!=3)||((LCDC&0x80)==0)) ? VRAM[index-0x8000+CurrentVRAMBank] : 0xff);
-			return VRAM[index-0x8000+CurrentVRAMBank];
+// 			return ((((STAT&3)!=3)||((LCDC&0x80)==0)) ? VRAM[index-0x8000+CurrentVRAMBank] : 0xff); // Optimized version
+			if(((STAT&3)!=3)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {                                                     // Debug version
+				return VRAM[index-0x8000+CurrentVRAMBank];
+			}
+			else {
+				PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
+				return 0xff;
+			}
+// 			return VRAM[index-0x8000+CurrentVRAMBank];                                              // Allow all version
 		}
 		else if(index<0xfe00) {
 			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
 		}
 		else if(index<0xfea0) {
-// 			return ((((STAT&2)==0)||((LCDC&0x80)==0)) ? OAM[index-0xfe00] : 0xff);
-			return OAM[index-0xfe00];
+// 			return ((((STAT&2)==0)||((LCDC&0x80)==0)) ? OAM[index-0xfe00] : 0xff);                  // Optimized version
+			if(((STAT&2)==0)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {                                                     // Allow all version
+				return OAM[index-0xfe00];
+			}
+			else {
+				PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
+				return 0xff;
+			}
+// 			return OAM[index-0xfe00];                                                               // Debug version
 		}
 		else {
 			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
@@ -780,19 +795,25 @@ public final class VideoController {
 			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
 		else if(index < 0xa000) {
-// 			if(((STAT&3)!=3)||((LCDC&0x80)==0)) {
+			if(((STAT&3)!=3)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {
 				VRAM[index-0x8000+CurrentVRAMBank]=value;
 				patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
 				anydirty = true;
-// 			}
+			}
+			else {
+				PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
+			}
 		}
 		else if(index<0xfe00) {
 			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
 		}
 		else if(index<0xfea0) {
-// 			if(((STAT&2)==0)||((LCDC&0x80)==0)) {
+			if(((STAT&2)==0)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {
 				OAM[index-0xfe00]=value;
-// 			}
+ 			}
+ 			else {
+ 				PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
+ 			}
 		}
 		else {
 			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
