@@ -259,6 +259,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		JMenu menuColorScheme;
 		JCheckBoxMenuItem[] menuitemColorSchemes;
 		JCheckBoxMenuItem menuitemMixFrame;
+		JCheckBoxMenuItem menuitemIgnoreSTAT;
 
 		JMenu menuSoundChannels;
 		MenuItemArray soundChannelGroup;
@@ -667,6 +668,12 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuOther.add(menuitemSpeedRunPlay);
 			menuOther.add(menuitemSpeedRunPlayWithOutput);
 
+			menuitemIgnoreSTAT = new JCheckBoxMenuItem("Ignore mode2/3 writelock", false);
+			menuitemIgnoreSTAT.setMnemonic(KeyEvent.VK_I);
+			menuitemIgnoreSTAT.addActionListener(this);
+			menuitemIgnoreSTAT.setAccelerator(KeyStroke.getKeyStroke(73,2)); // CTRL+I
+			menuOther.add(menuitemIgnoreSTAT);
+			
 			mainMenuBar.add( menuOther) ;
 
 			return mainMenuBar;
@@ -927,7 +934,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			           + " (an instance of " + getClassName( source ) + ")";
 				PRINTLN(s);*/
 			boolean configStateChanged = false;
-			if (e.getSource().equals( menuitemExit)) {
+			if (e.getSource().equals( menuitemIgnoreSTAT )) {
+				VC.allow_writes_in_mode_2_3 = menuitemIgnoreSTAT.getState();
+			}
+			else if (e.getSource().equals( menuitemExit)) {
 				windowClosed(null);
 			}
 			else if (scaleRadioGroup.contains(e.getSource())) {
