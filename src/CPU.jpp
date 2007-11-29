@@ -639,6 +639,20 @@ public final class CPU {
 					case 0xff06: // TMA
 					case 0xff07: // TAC
 						IOP[index-0xff00] = value;
+						switch(value&3) {
+							case 0:
+								TIMAcntdwn = 1024; // == 4194304/4096
+								break;
+							case 1:
+								TIMAcntdwn = 16; // == 4194304/262144
+								break;
+							case 2:
+								TIMAcntdwn = 64; // == 4194304/65536
+								break;
+							case 3:
+								TIMAcntdwn = 256; // == 4194304/16384
+								break;
+							}
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
 						IOP[0x0f] = value;
@@ -842,8 +856,9 @@ public final class CPU {
 			CurrentWRAMBank=1;
 			doublespeed = false;
 			speedswitch = false;
-			DIVcntdwn = 0;
-			TIMAcntdwn = 0;
+			DIVcntdwn = 0; //FIXME: Possibly set to initial value
+			TIMAcntdwn = 0;//This should get set with the proper value as soon as TIMA is activated
+
 			IE=0;         ///< Interrupt Enable (allowed interrupts)
 			IME=true; ///< Interrupt Master Enable
 			halted=false;
@@ -1277,7 +1292,7 @@ public final class CPU {
 				int tac = IOP[0x07];
 				if ((tac&4)!=0) {
 					TIMAcntdwn -= cycles;
-					if (TIMAcntdwn < 0) {
+					while (TIMAcntdwn <= 0) {
 						if ((tac&3)==0) TIMAcntdwn += 1024; // == 4194304/4096
 						if ((tac&3)==1) TIMAcntdwn +=   16; // == 4194304/262144
 						if ((tac&3)==2) TIMAcntdwn +=   64; // == 4194304/65536
