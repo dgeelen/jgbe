@@ -8,7 +8,7 @@ Here we try to show some of the features of JGBE that we think make it worth whi
 
   * JGBE^1^ emulating one of the more popular games: _[http://en.wikipedia.org/wiki/Super_Mario_Land Super Mario Land 1]_
     http://img212.imageshack.us/img212/4779/jgbesml1dt4.png
-  * JGBE^1^ passing the 'emulator test' in the Demotronic Final Demo
+  * JGBE^1^ passing the 'emulator test' in the [http://www.pouet.net/prod.php?which=7175 Demotronic Final Demo]
     http://img135.imageshack.us/img135/6425/jgbepasstestdemotronicag2.png
   * JGBE^2^ emulating : _[http://en.wikipedia.org/wiki/Pok%C3%A9mon_Yellow Pokémon Yellow]_
     http://img206.imageshack.us/img206/2225/jgbepyip1.png
