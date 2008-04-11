@@ -817,33 +817,34 @@ public final class CPU {
 
 		public static void reset(boolean bios) {
 			if(cartridge == null) return; //Do nothing if no cartridge is inserted
-			BIOS_enabled = bios;
+			BIOS_enabled = bios; // NOTE: bios parameter is not used anymore
 			VC.reset();
 			cartridge.CurrentRAMBank=0;
 			cartridge.CurrentROMBank=1;
 			refreshMemMap();
 
-			PC = BIOS_enabled?0x00:0x100;
+			PC = BIOS_enabled?0x00:0x100; // Right... perhaps we should re-evaluate BIOS_enabled...
 			VC.isCGB = BIOS_enabled?false:isCGB();
 
 			//AF=$01B0
-			A=VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
-			F=0xb0;
+			A=BIOS_enabled ? 0x00 : (VC.isCGB?0x11:0x01); // CGB sets this to 0x11 instead of 0x01 for GB
+			F=BIOS_enabled ? 0x00 : 0xb0;
 			//BC=$0013
 			B=0x00;
-			C=0x13;
+			C=BIOS_enabled ? 0x00 : 0x13;
 			//DE=$00D8
 			D=0x00;
-			E=0xd8;
+			E=BIOS_enabled ? 0x00 : 0xd8;
 			//HL=$014D
-			H=0x01;
-			L=0x4d;
+			H=BIOS_enabled ? 0x00 : 0x01;
+			L=BIOS_enabled ? 0x00 : 0x4d;
 			TotalInstrCount=0;
 			TotalCycleCount=0;
 
 			//Stack Pointer=$FFFE
-			SP=0xfffe;
+			SP=BIOS_enabled ? 0x0000 : 0xfffe;
 
+			//NOTE: I'm not sure what to init the audiocontroller to when the BIOS is active, so let's leave it like this
 			write(0xff05, 0x00); // [$FF05] = $00   ; TIMA
 			write(0xff06, 0x00); // [$FF06] = $00   ; TMA
 			write(0xff07, 0x00); // [$FF07] = $00   ; TAC
