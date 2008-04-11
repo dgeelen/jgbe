@@ -667,6 +667,7 @@ public final class CPU {
 						AC.write(index, value);
 						break;
 					case 0xff40: // LCDC register
+						if( ((value&0x80)!=0) && ((VC.LCDC&0x80)==0) ) VC.restart();
 						VC.LCDC = value;
 						break;
 					case 0xff41: // FF41 - STAT - LCDC Status (R/W)

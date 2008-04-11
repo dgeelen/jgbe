@@ -131,6 +131,13 @@ public final class VideoController {
 		return GrayColors[i];
 	}
 
+	public void restart() { // LCD off -> on
+		LY=0;
+		STAT=0x04; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
+		STAT_statemachine_state=0;
+		LCDCcntdwn=80;
+	}
+
 	public void reset() {
 		CurrentVRAMBank=0;
 		LY=0;
@@ -139,7 +146,7 @@ public final class VideoController {
 		SCY=0;
 		WX=0;
 		WY=0;
-		LCDC=0x91; // init with screen on, tile data from 8000-8FFF, bg active
+		LCDC=CPU.BIOS_enabled?0x00:0x91; // init with screen on, tile data from 8000-8FFF, bg active
 		STAT=0x04; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
 		STAT_statemachine_state=0;
 		LCDCcntdwn=80;
