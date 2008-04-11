@@ -688,13 +688,13 @@ public final class VideoController {
 				case 0: // currently in mode 2, switch to mode 3
 						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
 						LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
-						STAT = (STAT & 0x7C) | 3;
+						STAT = (STAT & 0xFC) | 3;
 						++STAT_statemachine_state;
 						renderScanLine(); //Test: What if the VC renders the BG internally in mode 2?
 					break;
 				case 1: // currently in mode 3, switch to mode 0
 					LCDCcntdwn += (isCGB ? 376 : 372) - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
-					STAT &= 0x7C; //switch to mode 0: STAT = (STAT & 0x7C) | 0;
+					STAT &= 0xFC; //switch to mode 0: STAT = (STAT & 0x7C) | 0;
 					if ((STAT&(1<<3))!=0) CPU.triggerInterrupt(1);
 					if (LY<144) CPU.elapseTime(CPU.hblank_dma());
 					++STAT_statemachine_state;
@@ -709,7 +709,7 @@ public final class VideoController {
 				case 3: // currently in mode 0, switch to mode [2 or 1]
 					if (LY<144) { // switch to mode 2
 						LCDCcntdwn += 80;
-						STAT = (STAT & 0x7C) | 2;
+						STAT = (STAT & 0xFC) | 2;
 						if (LY == LYC) {         // This is checked while changing to the new scanline
 							STAT = STAT | (1 << 2);    // Set LY=LYC
 							if ((STAT&(1<<6))!=0) {
@@ -720,7 +720,7 @@ public final class VideoController {
 						STAT_statemachine_state=0;
 					}
 					else { // switch to mode 1
-						STAT = (STAT & 0x7C) | 1;
+						STAT = (STAT & 0xFC) | 1;
 						++STAT_statemachine_state;
 						if((LCDC&0x80)!=0) CPU.triggerInterrupt(0);      //This appears to be required for SML2 (The Smurfs 1 still works)
 						if ((STAT&(1<<4))!=0) CPU.triggerInterrupt(1);
