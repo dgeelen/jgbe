@@ -56,12 +56,17 @@
 ; command:
 
 
+SECTION "VBlank",HOME[$40]
+jp vblank_handler;
+
 SECTION "hack",HOME[$d2]
-jp begin
+	di
+	ld   [$ff80], A                ; Will be read by vblank_handler
+	jp   begin
 
 SECTION "Org $100",HOME[$100]
-	ld a, [$ff41]
-	db $18               ; jr 
+	ld   A, [$ff41]
+	db   $18               ; jr
 
 ;        nop
 ;        jp      begin
@@ -107,7 +112,6 @@ TileData:
 ; which causes the the following code to be executed next.
 
 begin:
-
 ; First, it's a good idea to Disable Interrupts
 ; using the following command. We won't be using
 ; interrupts in this example so we can leave them off.
@@ -127,8 +131,9 @@ begin:
 ; read the section on Registers.)
 ;
 
-        ld      sp,$ffff
-
+;         ld      sp,$ffff
+	ld sp, $d000
+	
 ;  Next we shall turn the Liquid Crystal Display (LCD)
 ; off so that we can copy data to video RAM. We can
 ; copy data to video RAM while the LCD is on but it
@@ -234,6 +239,13 @@ begin:
         ld      a,LCDCF_ON|LCDCF_BG8000|LCDCF_BG9800|LCDCF_BGON|LCDCF_OBJ16|LCDCF_OBJOFF
         ld      [rLCDC],a       ; Turn screen on
 
+
+; Enable VBlank interrupt
+	ld a, [$ffff]
+	or a, 1
+	ld [$ffff], a
+	ei
+
 ; Since we have accomplished our goal, we now have nothing
 ; else to do. As a result, we just Jump to a label that
 ; causes an infinite loop condition to occur.
@@ -267,6 +279,33 @@ StopLCD:
 
         ret
 
+vblank_handler:
+	ld   a, [$ff80]
+	ld   hl, $9800 + (160/8) -1     ; top right most char (?)
+nextchar:
+	ld   b, a
+	and  a, $0f
+	add  a, $30
+	ldd  [hl], a
+	ld   a, b
+	ld   b, 4
+lp8:
+	rra
+	dec  b
+	jr   nz, lp8
+	and  a, $0f
+	add  a, $30
+	ldd  [hl], a
+	
+	; a div 10 ?
+;	or   a
+;	jr   z, done
+;	b=a
+;	ldd  [hl], b
+;	jr   nextchar
+	
+done:
+	reti
 
 ;* End of File *
 
