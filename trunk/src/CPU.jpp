@@ -765,6 +765,7 @@ public final class CPU {
 							IOP[0x53] = 0x1F & (dst >> 8);
 							IOP[0x54] = dst & 0xF0;
 							IOP[0x55] = 0xff; // indicate we have finished
+// 							elapseTime();// Add elapsed time to counters (CPU was stalled, not time!) //FIXME:WIP
 						} else {
 							hblank_dma_state = value;
 							IOP[0x55] = value & 0x7f;
