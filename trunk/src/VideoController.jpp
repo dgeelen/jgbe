@@ -18,31 +18,31 @@ public final class VideoController {
 #ifdef USE_JAVA_MOBILE
 	private Graphics listener = null;
 #else
-	private IVideoListener listener = null;
-	private Image drawImg[] = new Image[2];
-	private int drawData[];
+	private static IVideoListener listener = null;
+	private static Image drawImg[] = new Image[2];
+	private static int drawData[];
 #endif
-	private int curDrawImg = 0;
+	private static int curDrawImg = 0;
 
 	private int CurrentVRAMBank=0;
-	protected int VRAM[]=new int[0x4000]; //8k per bank, 2 banks, flattened;
-	protected int OAM[] =new int[0xa0];   //Sprite Attribute Table;
+	protected static int VRAM[]=new int[0x4000]; //8k per bank, 2 banks, flattened;
+	protected static int OAM[] =new int[0xa0];   //Sprite Attribute Table;
 
-	protected boolean isCGB;
+	protected static boolean isCGB;
 
 	//Note: all these variables are actually initialised in reset()
-	protected int LY=0;
-	protected int LYC=0;
-	protected int SCX=0;
-	protected int SCY=0;
-	protected int WX=0;
-	protected int WY=0;
-	protected int LCDC=0;
-	protected int STAT=0;
-	private int LCDCcntdwn=0;
+	protected static int LY=0;
+	protected static int LYC=0;
+	protected static int SCX=0;
+	protected static int SCY=0;
+	protected static int WX=0;
+	protected static int WY=0;
+	protected static int LCDC=0;
+	protected static int STAT=0;
+	private static int LCDCcntdwn=0;
 
-	protected int curBGY;
-	protected int curWNDY;
+	protected static int curBGY;
+	protected static int curWNDY;
 
 	protected int[][][] Scalerx4 = new int[0x100][4][4];
 
@@ -63,17 +63,17 @@ public final class VideoController {
 	/* caching vars */
 #ifdef USE_JAVA_MOBILE
 	#define BLITPIXTYPE int[]
-	private int blitImg[][][]=new int[144][160][3]; // [y][x]
-	private int palColors[][] = new int[8*4*2][3];
+	private static int blitImg[][][] = new static int[144][160][3]; // [y][x]
+	private static int palColors[][] = new static int[8*4*2][3];
 #else
 	#define BLITPIXTYPE int
-	private BLITPIXTYPE blitImg[][]      = new BLITPIXTYPE[144][160]; // [y][x]
-	private BLITPIXTYPE blitImg_prev[][] = new BLITPIXTYPE[144][160]; // [y][x]
-	private BLITPIXTYPE palColors[] = new BLITPIXTYPE[8*4*2];
+	private static BLITPIXTYPE blitImg[][]      = new BLITPIXTYPE[144][160]; // [y][x]
+	private static BLITPIXTYPE blitImg_prev[][] = new BLITPIXTYPE[144][160]; // [y][x]
+	private static BLITPIXTYPE palColors[]      = new BLITPIXTYPE[8*4*2];
 #endif
-	private int patpix[][][] = new int[4096][][];   // see updatepatpix()
-	private boolean patdirty[] = new boolean[1024]; // see updatepatpix()
-	private boolean anydirty = true;                // see updatepatpix()
+	private static int patpix[][][] = new int[4096][][];   // see updatepatpix()
+	private static boolean patdirty[] = new boolean[1024]; // see updatepatpix()
+	private static boolean anydirty = true;                // see updatepatpix()
 // 	private boolean alldirty = true;                // see updatepatpix()
 
 	private CPU cpu; // dont think we need this... //yes we do, we need interrupts
@@ -82,11 +82,11 @@ public final class VideoController {
 	private long ptick;
 	private long ftick;
 
-	private int scale = 3;
-	public int nscale = 3;
-	private int cfskip = 0;
-	public int fskip = 1; // 1 is off
-	public boolean MixFrames; // Mix together last N frames
+	private static int scale = 3;
+	public static int nscale = 3;
+	private static int cfskip = 0;
+	public static int fskip = 1; // 1 is off
+	public static boolean MixFrames; // Mix together last N frames
 	public boolean allow_writes_in_mode_2_3=false;
 
 	public void setGrayShade(int i, int j, Color c) {
@@ -266,7 +266,7 @@ public final class VideoController {
 	}
 #endif
 
-	private void scale() {
+	private static void scale() {
 		scale = nscale;
 		int width = scale*MIN_WIDTH;
 		int height = scale*MIN_HEIGHT;
@@ -277,7 +277,7 @@ public final class VideoController {
 	}
 
 #ifndef USE_JAVA_MOBILE
-	public Image getImage() {
+	public static Image getImage() {
 		return drawImg[curDrawImg]; // display image not being drawn to
 	}
 #endif
@@ -332,7 +332,7 @@ public final class VideoController {
 
 
 	static long lastms;
-	private void blitImage() {
+	private static void blitImage() {
 		cfskip--;
 		if (cfskip < 0) {
 			cfskip += fskip;
@@ -350,7 +350,7 @@ public final class VideoController {
 						blitImg_prev[y][x] = blitImg[y][x];
 					}
 				}
-			
+
 			if (scale == 1) {
 				for (int y = 0; y < 144; ++y) {
 					BLITPIXTYPE[] blitLine = blitImg[y];
@@ -635,7 +635,7 @@ public final class VideoController {
 	 *  patpix[2048..3072-1] hold patterns flipped y-wise
 	 *  patpix[3072..3072-1] hold patterns flipped x-wise and y-wise
 	 */
-	private void updatepatpix() {
+	private static void updatepatpix() {
 		if (!anydirty/* && !alldirty*/)
 			return;
 
@@ -670,23 +670,27 @@ public final class VideoController {
 	}
 
 
-	/****
+	/*****
 	 * Note: Please refer to (and update) docs/notes_on_video_timing.txt when
 	 * making changes to render()
-	 * 
-	 * ps: Still not sure about what mode(s) to be in when LCD is off, 
+	 *
+	 * ps: Still not sure about what mode(s) to be in when LCD is off,
 	 *     and neither do I know if we should generate any interrupts when
-	 *     the LCD is off (if at all).
+	 *     the LCD is off (if at all)
+	 *
+	 * ps:   Prehistorik Man does some funky shit at d600 (sub scanline render?).
 	 ****/
-	int STAT_statemachine_state = 0;
-	int mode3duration = 0;
-	public void render(int cycles) { // Renders in real clock cycles
+	static int STAT_statemachine_state = 0;
+	static int mode3duration = 0;
+	public static void render(int cycles) { // Renders in real clock cycles
 		ASSERT(cycles <= 6*4); // Longest instruction lasts 24 cycles, so we should get called at least that often
 		LCDCcntdwn -= cycles;
 		while (LCDCcntdwn <= 0) {
 			switch (STAT_statemachine_state) {
 				case 0: // currently in mode 2, switch to mode 3
+						//Note: check if this can change before mode 3 (I think not -> Video memory should be locked)
 						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
+
 						LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
 						STAT = (STAT & 0xFC) | 3;
 						++STAT_statemachine_state;
@@ -859,7 +863,7 @@ public final class VideoController {
 
 #define DRAWPIX_S(x, pal, col) DRAWPIX(x, (pal << 2), col)
 
-	public void renderScanLine() {
+	public static void renderScanLine() {
 		/* FF40 - LCDC - LCD Control (R/W)
 		* Bit 7 - LCD Display Enable             (0=Off, 1=On)
 		* Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
@@ -913,7 +917,7 @@ public final class VideoController {
 
 	//private int lbgTileY = -1;
 
-	private void calcBGTileBuf() {
+	private static void calcBGTileBuf() {
 		/*	not really 100% correct...
 				if (lbgTileY==bgTileY)
 			return;
@@ -942,7 +946,7 @@ public final class VideoController {
 		}
 	}
 
-	private void renderScanlineBG() {
+	private static void renderScanlineBG() {
 		int bufMap = 0;
 		int cnt = windX;
 		if (cnt == 0) return;
@@ -979,7 +983,7 @@ public final class VideoController {
 			DRAWPIX(curX++, TilePal, PatLine[t]);
 	}
 
-	private void calcWindTileBuf() {
+	private static void calcWindTileBuf() {
 		int tileMap = WindowTileMap + (bgTileY*32);
 		int attrMap = tileMap + 0x2000;
 		int bufMap = 0;
@@ -1004,7 +1008,7 @@ public final class VideoController {
 		}
 	}
 
-	private void renderScanlineWindow() {
+	private static void renderScanlineWindow() {
 		int bufMap = 0;
 		int curX = MAX(windX,0);
 		int cnt = 160-curX;
@@ -1037,7 +1041,7 @@ public final class VideoController {
 			DRAWPIX(curX++, TilePal, PatLine[t]);
 	}
 
-	private int getSpriteCountOnScanline(int i) { //NOTE: Assume max sprites/scanline == 10
+	private static int getSpriteCountOnScanline(int i) { //NOTE: Assume max sprites/scanline == 10
 		boolean spr8x16 = ((LCDC&(1<<2))!=0);
 		int count = 0;
 		for (int spr = 0; spr < 40; ++spr) {
@@ -1054,7 +1058,7 @@ public final class VideoController {
 		return Math.min(count, 10);
 	}
 
-	private void renderScanlineSprites() {
+	private static void renderScanlineSprites() {
 		boolean spr8x16 = ((LCDC&(1<<2))!=0);
 
 		for (int spr = 0; spr < 40; ++spr) {
