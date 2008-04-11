@@ -673,6 +673,10 @@ public final class VideoController {
 	/****
 	 * Note: Please refer to (and update) docs/notes_on_video_timing.txt when
 	 * making changes to render()
+	 * 
+	 * ps: Still not sure about what mode(s) to be in when LCD is off, 
+	 *     and neither do I know if we should generate any interrupts when
+	 *     the LCD is off (if at all).
 	 ****/
 	int STAT_statemachine_state = 0;
 	int mode3duration = 0;
