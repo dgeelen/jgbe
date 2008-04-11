@@ -446,6 +446,7 @@ public final class CPU {
 						//FIXME: Needs verification: (see VC.render() notes on disabling the LCD)
 						//       (I don't really believe this though ...)
 						b = ((VC.LCDC&0x80)==0) ? (VC.STAT&0x7c)|0x00 : VC.STAT; //Stay in hblank when disabled
+						b = VC.STAT;
 						break;
 					case 0xff42: // SCY
 						b = VC.SCY;
@@ -454,9 +455,12 @@ public final class CPU {
 						b = VC.SCX;
 						break;
 					case 0xff44: // LY
-						//FIXME: Needs verification: (see VC.render() notes on disabling the LCD)
-						//       (I don't really believe this though ...)
+						/* FIXME: Needs verification: (see VC.render() notes on disabling the LCD)
+						 *       (I don't really believe this though as it appears to break at least
+						 *       Escape From Camp Deadly and Street Fighter II ...)
+						 */
 						b = ((VC.LCDC&0x80)==0) ? 0 : VC.LY; //Stay on scanline 0 when disabled
+// 						b = VC.LY;
 						break;
 					case 0xff45: // LYC
 						b = VC.LYC;
