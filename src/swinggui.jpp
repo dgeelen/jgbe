@@ -1136,7 +1136,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 			else if(e.getSource().equals( menuitemReset )) {
 				pauseEmulation(false);
-				cpu.reset();
+				cpu.reset(menuitemUseBIOS.getState());
 				resumeEmulation(false);
 				addOSDLine("Reset gameboy");
 			}
@@ -1151,7 +1151,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					menuitemSpeedRunPlay.setState(false);
 					addOSDLine("Now recording speedrun");
 					pauseEmulation(false);
-					cpu.reset();
+					cpu.reset(false);
 					cpu.keyHistoryEnabled = true;
 					resumeEmulation(false);
 				}
@@ -1163,7 +1163,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				pauseEmulation(false);
 				IntVector hist = cpu.keyHistory;
 				cpu.keyHistory = new IntVector();
-				cpu.reset();
+				cpu.reset(false);
 				cpu.keyHistory = hist;
 				cpu.playbackHistoryIndex = 0;
 				cpu.keyHistoryEnabled = false;
