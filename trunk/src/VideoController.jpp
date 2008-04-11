@@ -133,7 +133,7 @@ public final class VideoController {
 
 	public void restart() { // LCD off -> on
 		LY=0;
-		STAT=0x04; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
+		STAT=STAT&0xFC;//*KIGB=0x85(?)*/0x85 /*used to be: 0x04*/; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
 		STAT_statemachine_state=0;
 		LCDCcntdwn=80;
 	}
@@ -147,7 +147,7 @@ public final class VideoController {
 		WX=0;
 		WY=0;
 		LCDC=CPU.BIOS_enabled?0x00:0x91; // init with screen on, tile data from 8000-8FFF, bg active
-		STAT=0x04; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
+		STAT=/*KIGB=0x85(?)*/0x85 /*used to be: 0x04*/; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
 		STAT_statemachine_state=0;
 		LCDCcntdwn=80;
 
