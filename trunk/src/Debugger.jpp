@@ -976,7 +976,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				update();
 			}
 			if(s.equalsIgnoreCase("reset")) {
-				gui.cpu.reset();
+				gui.cpu.reset(false);
 				update();
 			}
 			if(s.equalsIgnoreCase("so")) {

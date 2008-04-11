@@ -100,7 +100,7 @@ public final class CPU {
 		public static void loadCartridge(Cartridge acartridge) {
 			cartridge = acartridge;
 
-			reset();
+			reset(false);
 
 			//for (int i = 0; i < 0x4000; ++i)
 			//	rccachea[0][i] = CPURecompiler.doRecompile(i);
