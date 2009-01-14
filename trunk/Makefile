@@ -92,6 +92,12 @@ debugserver: all
 remotedebug.%: all
 	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound -debug -log 'tcp://127.0.0.1' -rdo $*
 
+debuglog: all
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound -debug -log statelog.txt
+
+runlog: all
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound -log statelog.txt
+
 oglfun: all
 	cd $(CLASSDIR) && $(JAVA_BIN) -Dsun.java2d.opengl=True swinggui -lastcart
 
