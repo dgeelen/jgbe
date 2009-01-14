@@ -6,45 +6,99 @@ import javax.microedition.lcdui.*;
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.game.GameCanvas;
 import com.samsung.util.AudioClip;
-import java.util.*;
+import java.util.Vector;
+import java.util.Enumeration;
+import java.util.Random;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.DataInputStream;
 import javax.microedition.rms.RecordStore;
 
-public class jmgbe extends MIDlet {
+public class jmgbe extends MIDlet implements CommandListener {
+	Display display;
 	jmgbeCanvas gCanvas;
+	
+	static final Command backCommand = new Command("Back", Command.BACK, 0);
+	static final Command exitCommand = new Command("Exit", Command.STOP, 2);
+	Vector filemenu;
+	Vector curitems;
+	
+	public void displayFileMenu()
+	{
+		List menulist = new List("Browse...", Choice.IMPLICIT);
+		IVFSNode vn = (IVFSNode)filemenu.lastElement();
+		if (!vn.isDir()) return;
+		
+		curitems = new Vector();
+		Enumeration e = vn.getChildren();
+		while (e.hasMoreElements()) {
+			IVFSNode cn = (IVFSNode)e.nextElement();
+			menulist.append(cn.getName(), null);
+			curitems.addElement(cn);
+		}
+		if (filemenu.size() > 1)
+			menulist.addCommand(backCommand);
+		menulist.setCommandListener(this);
+		display.setCurrent(menulist);
+	}
 
+	public void commandAction(Command c, Displayable d) {
+		String label = c.getLabel();
+		PRINTLN("Command: " + label);
+		if (label.equals("Exit")) {
+			destroyApp(true);
+		} else if (label.equals("Back")) {
+			filemenu.removeElementAt(filemenu.size()-1);
+			displayFileMenu();
+		} else {
+			List down = (List)display.getCurrent();
+			IVFSNode cn = (IVFSNode)curitems.elementAt(down.getSelectedIndex());
+			PRINTLN("Chosen: " + cn.getName());
+			if (cn.isDir()) {
+				filemenu.addElement(cn);
+				displayFileMenu();
+			} else if (cn.isFile()) {
+				gCanvas.loadCartridge(cn);
+				display.setCurrent(gCanvas);
+			}
+		}
+	}
+	
 	public jmgbe() {
 		gCanvas = new jmgbeCanvas(this);
 	}
 
 	public void startApp() {
-		Display display = Display.getDisplay(this);
-/*		
-		Form form = new Form("Hello World");
 		display = Display.getDisplay(this);
-		display.setCurrent(form);
-		form.append("Hello world");
+/*
 		try {
-			form.append("1\n");
-			AudioClip clip = new AudioClip();
-			form.append("2\n");
-			Thread.sleep(3000);
-			form.append("3\n");
-			clip = new AudioClip(2, "q.wav");
-			form.append("4\n");
-			Thread.sleep(3000);
-			form.append("5\n");
-			//clip.play(0, 10);
-			//Thread.sleep(10000);
-		} catch (Throwable e) {
-			form.append(e.getMessage());
-		}
-*/		
+			IVFSNode rsnode = new VFSRecStore("Record-JMGBE-Store", "jmgbe-store", "Da Fox && HackyKid && Satan", "JMGBE-Store");
+			//IVFSNode rsnode = new VFSRecStore("Record-JMGBE-Local", "jmgbe-store");
+			if (true || !rsnode.getChildren().hasMoreElements()) {
+				IVFSNode jarnode = new VFSJarFile("tetris.gb" , "tetris.gb");
+				IVFSNode newnode = rsnode.createDir("roms").createFile("tetris.gb");
 
-		display.setCurrent(gCanvas);
+				InputStream is = jarnode.getInputStream();
+				OutputStream os = newnode.getOutputStream();
+				byte[] buffer = new byte[1024];
+				int read = is.read(buffer);
+				while (read > 0) {
+					os.write(buffer, 0, read);
+					read = is.read(buffer);
+				}
+				os.flush();
+			}
+		} catch (Throwable e) { PRINTLN(e.toString()); }
+*/		
+		IVFSNode root = VFSRoot.getRoot();
+		filemenu = new Vector();
+		filemenu.addElement(root);
+		displayFileMenu();
+
+		//display.setCurrent(gCanvas);
 		//gCanvas.run();
 	}
 
@@ -85,50 +139,24 @@ class jmgbeCanvas extends Canvas implements Runnable, IVideoListener {
 	};
 	
 	public jmgbeCanvas(jmgbe p){
-		try {
-			//RecordStore rs = RecordStore.openRecordStore("jmgbe", true, RecordStore.AUTHMODE_ANY, true);
-			RecordStore rs = RecordStore.openRecordStore("jmgbe-store-data", "Da Fox && HackyKid && Satan", "JMGBE-Store");
-			PRINTLN("rs size:" + rs.getSize());
-			PRINTLN("rs size:" + rs.getSizeAvailable());
-			//mstr = "rs avail:" + rs.getSizeAvailable();
-			String ri = "";
-			try {
-				ri = new String(rs.getRecord(2));
-			} catch (Throwable e) {	};
-			if (ri.length() == 0) {
-				PRINTLN("rs get:" + ri);
-				ri += ":test:";
-				//rs.setRecord(1, ri.getBytes(), 0, ri.length());
-				int rid= -1;
-				rid = rs.addRecord(ri.getBytes(), 0, ri.length());
-				PRINTLN("set:"+ rid);
-				mstr = "set:"+rid;
-			} else {
-				mstr = "get:"+ri;
-			}
-		} catch (Throwable e) {
-			PRINTLN("e:" + e.toString());
-			mstr = "e:" + e.getMessage();
-		}
-		
-		IVFSNode root = VFSRoot.getRoot();
-		Vector carts = new Vector();
-		listAll(root, carts);
-		
-		PRINTLN("carts: " + carts.size());
-		
 		//super( true );
 		parent = p;
 		setFullScreenMode(true);
 		PRINTFREEMEM("pre cartridge");
-		cartridge = new Cartridge(((IVFSNode)carts.elementAt(0)).getInputStream());
 		System.gc();
 		PRINTFREEMEM("pre CPU");
 		cpu = new CPU();
 		PRINTFREEMEM("pre CPU");
 		cpu.VC.addListener(this);
-		cpu.loadCartridge(cartridge);
 
+	}
+	
+	public void loadCartridge(IVFSNode node)
+	{
+		cpu.loadCartridge(null);
+		System.gc();
+		cartridge = new Cartridge(node.getInputStream());
+		cpu.loadCartridge(cartridge);
 	}
 	
 	int fctr = 0;
@@ -248,6 +276,7 @@ class jmgbeCanvas extends Canvas implements Runnable, IVideoListener {
 					PRINTFREEMEM("pre gc");
 					System.gc();
 					PRINTFREEMEM("post gc");
+					Thread.sleep(10000);
 				}
 			};
 			parent.notifyDestroyed();

@@ -7,13 +7,12 @@ import java.util.Vector;
 
 public class VFSJarFile implements IVFSNode {
 	private String path;
-	VFSJarFile() {
-		path = "";
-	}
+	private String name;
 
-	VFSJarFile(String path_)
+	VFSJarFile(String name, String path)
 	{
-		path = path_;
+		this.path = path;
+		this.name = name;
 	}
 
 	public boolean exists()
@@ -34,6 +33,11 @@ public class VFSJarFile implements IVFSNode {
 	public String getURL()
 	{
 		return "jar://" + path;
+	}
+
+	public String getName()
+	{
+		return name;
 	}
 
 	/* for files */
