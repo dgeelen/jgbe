@@ -43,7 +43,7 @@ public class VFSJar implements IVFSNode {
 	public InputStream getInputStream()
 	{
 		if (!isFile()) return null;
-		return this.getClass().getResourceAsStream("/" + path);
+		return this.getClass().getResourceAsStream(path);
 	}
 
 	public OutputStream getOutputStream()
@@ -52,29 +52,25 @@ public class VFSJar implements IVFSNode {
 	}
 
 	/* for dirs */
-	/* for dirs */
 	public Enumeration getChildren()
 	{
 		if (!isDir()) return null;
 		Vector children = new Vector();
 
-		if (path == "/" ) {
-			try {
-				//BufferedReader br = new BufferedReader(new InputStreamReader(FHandler.getDataInputStream("/carts")));
-				DataInputStream br = new DataInputStream(this.getClass().getResourceAsStream("/carts"));
-				while (true) {
-					String cart = "";
-					char c;
+		try {
+			DataInputStream br = new DataInputStream(this.getClass().getResourceAsStream(path + "vfsjar.idx"));
+			while (true) {
+				String child = "";
+				char c;
+				c = (char)br.readByte();
+				while (c != '\r' && c != '\n') {
+					child += c;
 					c = (char)br.readByte();
-					while (c != '\r' && c != '\n') {
-						cart += c;
-						c = (char)br.readByte();
-					}
-					if (cart.length() > 0)
-						children.addElement(new VFSJar(cart, cart));
 				}
-			} catch (Throwable e) {
+				if (child.length() > 0)
+					children.addElement(new VFSJar(child, path + child));
 			}
+		} catch (Throwable e) {
 		}
 		return children.elements();
 	}

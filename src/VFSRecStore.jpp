@@ -156,11 +156,6 @@ public class VFSRecStore implements IVFSNode {
 	private int rid;
 	private RecordStore recstore;
 
-	private byte[] getByteArray() throws Throwable
-	{
-		return recstore.getRecord(rid);
-	}
-
 	private void setDirList(Vector v)
 	{
 		Enumeration e = v.elements();
@@ -185,7 +180,7 @@ public class VFSRecStore implements IVFSNode {
 	{
 		Vector ret = new Vector();
 		try {
-			DataInputStream di = new DataInputStream(new ByteArrayInputStream(getByteArray()));
+			DataInputStream di = new DataInputStream(new ByteArrayInputStream(recstore.getRecord(rid)));
 			try {
 				while (true) {
 					int id = di.readInt();
@@ -208,30 +203,33 @@ public class VFSRecStore implements IVFSNode {
 		return ret;
 	}
 
-	public void initFromRecordStores(String name, RecordStore rootstore, RecordStore datastore) throws Throwable
+	private void initFromRecordStores(String name, RecordStore rootstore, RecordStore datastore) throws Throwable
 	{
-		int data_id = -1;
+		int data_id;
 		RecordEnumeration enum_root = rootstore.enumerateRecords( null, null, false );
 		try {
-			while( enum_root.hasNextElement() ){
-				int id = enum_root.nextRecordId();
-				byte[] data = rootstore.getRecord( id );
-				DataInputStream dis = new DataInputStream(new ByteArrayInputStream( data ));
-				data_id = dis.readInt();
-			}
+			if (!enum_root.hasNextElement())
+				throw new IOException("No root id found");
+			int root_id = enum_root.nextRecordId();
+			if (enum_root.hasNextElement())
+				throw new IOException("No unique root id record");
+			byte[] data = rootstore.getRecord(root_id);
+			if (data.length != 4)
+				throw new IOException("Invalid root id record");
+			DataInputStream dis = new DataInputStream(new ByteArrayInputStream( data ));
+			data_id = dis.readInt();
+			dis.close();
 		} finally {
 			enum_root.destroy();
 		}
 
-		if (data_id == -1)
-			throw new IOException("No root id found");
-
-		this.name = name + "/";
+		if (!name.endsWith("/")) name += "/";
+		this.name = name;
 		this.recstore = datastore;
 		this.rid = data_id;
 	}
 
-	/* initialises root node */
+	/* initialises from the recordstores identified by rsname/pubname/appname */
 	public VFSRecStore(String name, String rsname, String pubname, String appname) throws Throwable
 	{
 		RecordStore rootstore = RecordStore.openRecordStore(rsname + "-root", pubname, appname);
@@ -239,47 +237,27 @@ public class VFSRecStore implements IVFSNode {
 		initFromRecordStores(name, rootstore, datastore);
 	}
 
+	/* initialises from self-owned recordstores, which are created if it doesn't exist yet */
 	public VFSRecStore(String name, String rsname) throws Throwable
 	{
 		RecordStore rootstore = RecordStore.openRecordStore(rsname + "-root", true, RecordStore.AUTHMODE_ANY, true);
 		RecordStore datastore = RecordStore.openRecordStore(rsname + "-data", true, RecordStore.AUTHMODE_ANY, true);
 
-		RecordStore rs_root = rootstore;
-		RecordStore rs_data = datastore;
-
-		RecordEnumeration enum_root = rs_root.enumerateRecords( null, null, false );
-		int data_id = -1;
-		try {
-		    while( enum_root.hasNextElement() ){
-			int id = enum_root.nextRecordId();
-			byte[] data = rs_root.getRecord( id );
-			DataInputStream dis = new DataInputStream(new ByteArrayInputStream( data ));
-			data_id = dis.readInt();
-		    }
-		} finally {
-			enum_root.destroy(); // always clean it up!
-		}
-
-		if (data_id == -1) {
+		if (rootstore.getNumRecords() == 0 && datastore.getNumRecords() == 0) {
+			// Create initial root id and record if the stores are empty
 			byte[] newroot = new byte[0];
-			data_id = rs_data.addRecord(newroot, 0, newroot.length);
+			int data_id = datastore.addRecord(newroot, 0, newroot.length);
 			DirectByteArrayOutputStream bo = new DirectByteArrayOutputStream();
 			DataOutputStream dos = new DataOutputStream(bo);
 			dos.writeInt(data_id);
 			dos.flush();
-			rs_root.addRecord(bo.getByteArray(), 0, bo.size());
+			rootstore.addRecord(bo.getByteArray(), 0, bo.size());
 		}
 
 		initFromRecordStores(name, rootstore, datastore);
 	}
-/*
-	public VFSRecStore(String name, String rsname, String pubname, String appname) throws Throwable
-	{
-		RecordStore rootstore = RecordStore.openRecordStore(rsname + "-root", pubname, appname);
-		initFromRecordStore();
-	}
-*/
 
+	/* initialises from specified '-data' recordstore and a record id */
 	public VFSRecStore(String name, RecordStore rs, int rid)
 	{
 		this.name = name;
@@ -304,7 +282,7 @@ public class VFSRecStore implements IVFSNode {
 
 	public String getURL()
 	{
-		return "file://";
+		return "recs://"+rid;
 	}
 
 	public String getName()
@@ -315,6 +293,7 @@ public class VFSRecStore implements IVFSNode {
 	/* for files */
 	public InputStream getInputStream()
 	{
+		if (!isFile()) return null;
 		try {
 			return new VFSRecStoreInputStream(recstore, rid);
 		} catch (Throwable e) {
@@ -324,6 +303,7 @@ public class VFSRecStore implements IVFSNode {
 
 	public OutputStream getOutputStream()
 	{
+		if (!isFile()) return null;
 		try {
 			return new VFSRecStoreOutputStream(recstore, rid);
 		} catch (Throwable e) {
@@ -334,6 +314,7 @@ public class VFSRecStore implements IVFSNode {
 	/* for dirs */
 	public Enumeration getChildren()
 	{
+		if (!isDir()) return null;
 		Vector children = new Vector();
 		Vector list = getDirList();
 		Enumeration e = list.elements();
