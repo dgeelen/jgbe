@@ -105,7 +105,10 @@ public class jmgbe extends MIDlet implements CommandListener {
 		filemenu.addElement(root);
 		displayFileMenu();
 /*/
-		loadCartridge(MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb"));
+		IVFSNode cartnode = null;
+		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb");
+		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Store/roms/sml1.gb");
+		loadCartridge(cartnode);
 //*/
 		//display.setCurrent(gCanvas);
 		//gCanvas.run();
