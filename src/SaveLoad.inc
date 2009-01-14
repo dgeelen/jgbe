@@ -24,6 +24,13 @@ import java.io.*;
 		var = distream.readUnsignedByte(); \
 }
 
+#define SL_UINT8B(var) {\
+	if (SL_SAVE) \
+		dostream.writeByte(B2I((var)&0xff)); \
+	else \
+		var = I2B(distream.readUnsignedByte()); \
+}
+
 #define SL_UINT16(var) {\
 	if (SL_SAVE) \
 		dostream.writeShort((var)&0xffff); \

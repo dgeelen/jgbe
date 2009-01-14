@@ -94,7 +94,7 @@ public final class FHandler {
 			return distream;
 		}
 #else
-		return null;
+		return new DataInputStream(new FHandler().getClass().getResourceAsStream(fname));
 #endif
 	}
 

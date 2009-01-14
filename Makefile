@@ -158,11 +158,14 @@ jarzip: $(CLASSFILES)
 $(JARDIR)/jmgbe.jar: $(CLASSFILES) $(SRCDIR)/MANIFEST.MF.jmgbe.in
 	@echo "[packing] jgmbe.jar"
 	@cp "$(SRCDIR)/MANIFEST.MF.jmgbe.in" "$(CLASSDIR)/MANIFEST.MF.in"
-	cd $(CLASSDIR) && "/cygdrive/c/Program Files/Java/WTK25/bin/preverify.exe" -d . -target CLDC1.1 -classpath "$(shell cygpath -pml "$(CLASSPATH)")" .
+#	cd $(CLASSDIR) && "/cygdrive/c/Program Files/Java/WTK25/bin/preverify.exe" -d . -target CLDC1.0 -classpath "$(shell cygpath -pml "$(CLASSPATH)")" .
+	cd $(CLASSDIR) && "/cygdrive/c/Program Files/Java/WTK25/bin/preverify.exe" -d . -target CLDC1.0 -classpath "$(shell cygpath -pml "$(CLASSPATH)")" `ls *.class | sed "s:\.class::g"`
+	@mkdir -p $(CLASSDIR)/META-INF
 	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jmgbe.jar *.class sml1.gb
 	@mkdir -p $(JARDIR)
-	@mv $(CLASSDIR)/jmgbe.jar $(JARDIR)/jmgbe.jar
-	
+	@rm $(JARDIR)/jmgbe.jar || true
+	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/jmgbe.jar jmgbe.jar || true
+#	@mv $(CLASSDIR)/jmgbe.jar $(JARDIR)/jmgbe.jar
 	
 $(JARDIR)/jmgbe.jad: $(JARDIR)/jmgbe.jar
 	@echo [creating] jmgbe.jad 
@@ -172,7 +175,7 @@ $(JARDIR)/jmgbe.jad: $(JARDIR)/jmgbe.jar
 jad: $(JARDIR)/jmgbe.jad
 	
 jademu: $(JARDIR)/jmgbe.jad
-	@cd $(JARDIR) && /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:64M -Xdescriptor:./jmgbe.jad -Xdomain:maximum -classpath "jmgbe.jar;$(CLASSPATH)"
+	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./jmgbe.jad -Xdomain:maximum -classpath "jmgbe.jar;$(CLASSPATH)"
 	
 
 

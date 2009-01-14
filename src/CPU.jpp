@@ -42,7 +42,7 @@ public final class CPU {
 
 		public static int[] IOP = new int[0x80]; //IO Ports
 		public static int[] HRAM = new int[0x7f]; //HighRAM
-		public static int[][] WRAM = new int[0x08][0x1000]; //8x4k InternalRAM
+		public static BTYPE[][] WRAM = new BTYPE[0x08][0x1000]; //8x4k InternalRAM
 		public static int CurrentWRAMBank=1;
 
 		public static boolean doublespeed = false;
@@ -147,11 +147,11 @@ public final class CPU {
 			SL_ARR(UINT8, HRAM, 0x7f);
 			SL_IF_VERSION( 0,  0) {
 				for (int i = 0; i < 8; ++i) {
-					SL_ARR(UINT8, WRAM[i], 0x1000);
+					SL_ARR(UINT8B, WRAM[i], 0x1000);
 					//SL_SKIP(UINT8, 0x10000 - 0x1000);
 				}
 			}
-			SL_IF_VERSION( 1, -1) SL_ARR_2D(UINT8, WRAM, 0x08, 0x1000);
+			SL_IF_VERSION( 1, -1) SL_ARR_2D(UINT8B, WRAM, 0x08, 0x1000);
 			SL_INT(CurrentWRAMBank);
 			SL_BOOL(doublespeed);
 			SL_BOOL(speedswitch);
@@ -277,8 +277,8 @@ public final class CPU {
 #endif
 		}
 
-		public static int[][] rMemMap = new int[0x10][];
-		public static int[][] wMemMap = new int[0x10][];
+		public static BTYPE[][] rMemMap = new BTYPE[0x10][];
+		public static BTYPE[][] wMemMap = new BTYPE[0x10][];
 
 		public static boolean isCGB() {
 			//PRINTLN("** <INSERT DESCRIPTIVE TEXT HERE> ** [0x0143] = " + read(0x0143));
@@ -352,9 +352,9 @@ public final class CPU {
 
 		public static int read(int index) {
 			last_memory_access_internal=index;
-			int mm[]=rMemMap[index>>12];
+			BTYPE mm[]=rMemMap[index>>12];
 			if (mm!=null)
-				return mm[index&0x0FFF];
+				return B2I(mm[index&0x0FFF]);
 			return read_slow(index);
 		}
 
@@ -380,6 +380,7 @@ public final class CPU {
 
 			if (index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 				if (index < 0x100) {
+			PRINTLN("read_slow:"+index);
 					b = cartridge.BIOS_ROM[index];
 				    //PRINTLN("reading from BIOS rom");
 				}
@@ -407,10 +408,10 @@ public final class CPU {
 				b=cartridge.read(index);
 			}
 			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
-				b=WRAM[0][index-0xc000];
+				b=B2I(WRAM[0][index-0xc000]);
 			}
 			else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-				b=WRAM[CurrentWRAMBank][index-0xd000];
+				b=B2I(WRAM[CurrentWRAMBank][index-0xd000]);
 			}
 			else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
 				b=read(index-0x2000);
@@ -562,9 +563,9 @@ public final class CPU {
 		// has arguments swapped for recompiler use (stack order and stuff)
 		public static void write_fast1(int value, int index) {
 			last_memory_access_internal=index;
-			int mm[]=wMemMap[index>>12];
+			BTYPE mm[]=wMemMap[index>>12];
 			if (mm!=null) {
-				mm[index&0x0FFF] = value;
+				mm[index&0x0FFF] = I2B(value);
 				return;
 			}
 			write_slow(index, value);
@@ -572,9 +573,9 @@ public final class CPU {
 
 		public static void write(int index, int value) {
 			last_memory_access_internal=index;
-			int mm[]=wMemMap[index>>12];
+			BTYPE mm[]=wMemMap[index>>12];
 			if (mm!=null) {
-				mm[index&0x0FFF] = value;
+				mm[index&0x0FFF] = I2B(value);
 				return;
 			}
 			write_slow(index, value);
@@ -612,10 +613,10 @@ public final class CPU {
 				cartridge.write(index, value);
 			}
 			else if(index < 0xd000) { //4KB Work RAM Bank 0 (WRAM)
-				WRAM[0][index-0xc000]=value;
+				WRAM[0][index-0xc000]=I2B(value);
 			}
 			else if(index < 0xe000) { //4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-				WRAM[CurrentWRAMBank][index-0xd000]=value;
+				WRAM[CurrentWRAMBank][index-0xd000]=I2B(value);
 			}
 			else if(index < 0xfe00) { //Same as C000-DDFF (ECHO)    (typically not used)
 				write(index-0x2000, value);

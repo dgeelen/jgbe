@@ -3,7 +3,7 @@ import java.io.*;
 
 public class Bios {
 
-	public Bios(String fname, int[] location) {
+	public Bios(String fname, BTYPE[] location) {
 		try {
 			loadFromFile(fname, location);
 		}
@@ -11,19 +11,19 @@ public class Bios {
 // 			PRINTLN("Bios could not be loaded (message: " + ioe.getMessage() + ").");
 // 			PRINTLN("Emulator will go on like nothing happened.");
 			PRINTLN("Using BIOS stub");
-			location[0]=0xc3;
-			location[1]=0x00;
-			location[2]=0x01;
+			location[0]=I2B(0xc3);
+			location[1]=I2B(0x00);
+			location[2]=I2B(0x01);
 		}
 	}
 
-	public void loadFromFile(String fname, int[] location) throws Throwable {
+	public void loadFromFile(String fname, BTYPE[] location) throws Throwable {
 		// filesize in bytes
 		long fsize = 256;
 		DataInputStream distream = FHandler.getDataInputStream(fname);
 		PRINTFREEMEM("bios");
 		for (int i = 0; i < fsize; ++i) {
-			location[i] = distream.readUnsignedByte();
+			location[i] = I2B(distream.readUnsignedByte());
 		}
 		PRINTFREEMEM("after load bios");
 	}
