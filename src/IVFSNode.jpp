@@ -1,0 +1,23 @@
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Enumeration;
+
+public interface IVFSNode {
+	public boolean exists();
+
+	public boolean isFile();
+	public boolean isDir();
+
+	public String getURL();
+	public String getName();
+
+	/* for files */
+	public InputStream getInputStream();
+	public OutputStream getOutputStream();
+
+	/* for dirs */
+	public Enumeration getChildren();
+	public IVFSNode createFile(String name);
+	public IVFSNode createDir(String name);
+	public void delete(String name);
+};

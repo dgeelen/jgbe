@@ -1,0 +1,348 @@
+#include "Global.inc"
+
+import java.io.InputStream;
+import java.io.DataInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Vector;
+import java.lang.Integer;
+
+import javax.microedition.rms.RecordStore;
+import javax.microedition.rms.RecordEnumeration;
+
+class VFSRecStoreInputStream extends InputStream {
+	private int rid;
+	private int nextid;
+	private RecordStore recstore;
+	private DataInputStream dis;
+
+	private void fillBuffer() throws Throwable
+	{
+		if (dis != null) dis.close();
+		dis = new DataInputStream(new ByteArrayInputStream(recstore.getRecord(rid)));
+		nextid = dis.readInt();
+		PRINTLN("got chunk, next:" + nextid);
+	}
+
+	public VFSRecStoreInputStream(RecordStore recstore, int rid) throws IOException
+	{
+		try {
+			this.recstore = recstore;
+			this.rid = rid;
+			this.dis = null;
+			fillBuffer();
+		} catch (Throwable e) {
+			throw new IOException(e.toString());
+		}
+
+	}
+
+	public int read() throws IOException
+	{
+		try {
+			int b = dis.read();
+			//PRINTLN("read: "+b);
+			if (b == -1 && nextid != -1) {
+				rid = nextid;
+				fillBuffer();
+				b = read();
+			}
+			return b;
+		} catch (Throwable e) {
+			PRINTLN("read failed: " + e.toString());
+			throw new IOException(e.toString());
+		}
+	}
+};
+
+class VFSRecStoreOutputStream extends OutputStream {
+	private int rid;
+	private int nextid;
+	private RecordStore recstore;
+	private byte[] buffer;
+	private int wofs;
+
+	private void setNextID(int nid) throws IOException
+	{
+		DirectByteArrayOutputStream bos = new DirectByteArrayOutputStream(10);
+		DataOutputStream dos = new DataOutputStream(bos);
+		dos.writeInt(nid);
+		dos.flush();
+		dos.close();
+
+		if (wofs == -1) wofs = bos.size();
+		byte[] boa = bos.getByteArray();
+		for (int i = 0; i < bos.size(); ++i) {
+			buffer[i]=boa[i];
+		}
+	}
+
+	public VFSRecStoreOutputStream(RecordStore recstore, int rid) throws IOException
+	{
+		this.recstore = recstore;
+		this.rid = rid;
+		this.buffer = new byte[10*1024];
+		this.wofs = -1;
+		setNextID(-1);
+	}
+
+	public void write(int b) throws IOException
+	{
+		try {
+			if (wofs < buffer.length) {
+				buffer[wofs++] = (byte)(b > 127 ? (byte)b-256 : (byte)b);
+			} else {
+				int nid = recstore.addRecord(new byte[0], 0, 0);
+				setNextID(nid);
+				flush();
+				rid = nid;
+				wofs = -1;
+				setNextID(-1);
+				write(b);
+			}
+		} catch (Throwable e) {
+			throw new IOException(e.toString());
+		}
+	}
+
+	public void flush() throws IOException
+	{
+		try {
+			recstore.setRecord(rid, buffer, 0, wofs);
+			PRINTLN("Flushed " + wofs + " bytes to " + rid);
+		} catch (Throwable e) {
+			throw new IOException(e.toString());
+		}
+	}
+};
+
+public class VFSRecStore implements IVFSNode {
+	private String name;
+	private int rid;
+	private RecordStore recstore;
+
+	private byte[] getByteArray() throws Throwable
+	{
+		return recstore.getRecord(rid);
+	}
+
+	private void setDirList(Vector v)
+	{
+		Enumeration e = v.elements();
+		DirectByteArrayOutputStream bos = new DirectByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(bos);
+		try {
+			while (e.hasMoreElements()) {
+				int id = ((Integer)e.nextElement()).intValue();
+				String nname = (String)e.nextElement();
+				dos.writeInt(id);
+				for (int i = 0; i < nname.length(); ++i)
+					dos.writeByte((byte)nname.charAt(i));
+				dos.writeByte(0);
+			}
+			dos.flush();
+			dos.close();
+			recstore.setRecord(rid, bos.getByteArray(), 0, bos.size());
+		} catch (Throwable ex) {}
+	}
+
+	private Vector getDirList()
+	{
+		Vector ret = new Vector();
+		try {
+			DataInputStream di = new DataInputStream(new ByteArrayInputStream(getByteArray()));
+			try {
+				while (true) {
+					int id = di.readInt();
+					String nname = "";
+					char c;
+					c = (char)di.readByte();
+					while (c != 0) {
+						nname += c;
+						c = (char)di.readByte();
+					}
+					if (nname.length() > 0) {
+						ret.addElement(new Integer(id));
+						ret.addElement(nname);
+					}
+				}
+			} finally {
+				di.close();
+			}
+		} catch (Throwable e) {};
+		return ret;
+	}
+
+	public void initFromRecordStores(String name, RecordStore rootstore, RecordStore datastore) throws Throwable
+	{
+		int data_id = -1;
+		RecordEnumeration enum_root = rootstore.enumerateRecords( null, null, false );
+		try {
+			while( enum_root.hasNextElement() ){
+				int id = enum_root.nextRecordId();
+				byte[] data = rootstore.getRecord( id );
+				DataInputStream dis = new DataInputStream(new ByteArrayInputStream( data ));
+				data_id = dis.readInt();
+			}
+		} finally {
+			enum_root.destroy();
+		}
+
+		if (data_id == -1)
+			throw new IOException("No root id found");
+
+		this.name = name + "/";
+		this.recstore = datastore;
+		this.rid = data_id;
+	}
+
+	/* initialises root node */
+	public VFSRecStore(String name, String rsname, String pubname, String appname) throws Throwable
+	{
+		RecordStore rootstore = RecordStore.openRecordStore(rsname + "-root", pubname, appname);
+		RecordStore datastore = RecordStore.openRecordStore(rsname + "-data", pubname, appname);
+		initFromRecordStores(name, rootstore, datastore);
+	}
+
+	public VFSRecStore(String name, String rsname) throws Throwable
+	{
+		RecordStore rootstore = RecordStore.openRecordStore(rsname + "-root", true, RecordStore.AUTHMODE_ANY, true);
+		RecordStore datastore = RecordStore.openRecordStore(rsname + "-data", true, RecordStore.AUTHMODE_ANY, true);
+
+		RecordStore rs_root = rootstore;
+		RecordStore rs_data = datastore;
+
+		RecordEnumeration enum_root = rs_root.enumerateRecords( null, null, false );
+		int data_id = -1;
+		try {
+		    while( enum_root.hasNextElement() ){
+			int id = enum_root.nextRecordId();
+			byte[] data = rs_root.getRecord( id );
+			DataInputStream dis = new DataInputStream(new ByteArrayInputStream( data ));
+			data_id = dis.readInt();
+		    }
+		} finally {
+			enum_root.destroy(); // always clean it up!
+		}
+
+		if (data_id == -1) {
+			byte[] newroot = new byte[0];
+			data_id = rs_data.addRecord(newroot, 0, newroot.length);
+			DirectByteArrayOutputStream bo = new DirectByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(bo);
+			dos.writeInt(data_id);
+			dos.flush();
+			rs_root.addRecord(bo.getByteArray(), 0, bo.size());
+		}
+
+		initFromRecordStores(name, rootstore, datastore);
+	}
+/*
+	public VFSRecStore(String name, String rsname, String pubname, String appname) throws Throwable
+	{
+		RecordStore rootstore = RecordStore.openRecordStore(rsname + "-root", pubname, appname);
+		initFromRecordStore();
+	}
+*/
+
+	public VFSRecStore(String name, RecordStore rs, int rid)
+	{
+		this.name = name;
+		this.recstore = rs;
+		this.rid = rid;
+	}
+
+	public boolean exists()
+	{
+		return true;
+	};
+
+	public boolean isFile()
+	{
+		return !isDir();
+	}
+
+	public boolean isDir()
+	{
+		return name.endsWith("/");
+	}
+
+	public String getURL()
+	{
+		return "file://";
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	/* for files */
+	public InputStream getInputStream()
+	{
+		try {
+			return new VFSRecStoreInputStream(recstore, rid);
+		} catch (Throwable e) {
+			return null;
+		}
+	}
+
+	public OutputStream getOutputStream()
+	{
+		try {
+			return new VFSRecStoreOutputStream(recstore, rid);
+		} catch (Throwable e) {
+			return null;
+		}
+	}
+
+	/* for dirs */
+	public Enumeration getChildren()
+	{
+		Vector children = new Vector();
+		Vector list = getDirList();
+		Enumeration e = list.elements();
+		try {
+			while (e.hasMoreElements()) {
+				int id = ((Integer)e.nextElement()).intValue();
+				String nname = (String)e.nextElement();
+				children.addElement(new VFSRecStore(nname, recstore, id));
+			}
+		} catch (Throwable ex) {}
+		return children.elements();
+	}
+
+	public IVFSNode createFile(String name)
+	{
+		try {
+			Enumeration e = getChildren();
+			while (e.hasMoreElements()) {
+				IVFSNode node = (IVFSNode)e.nextElement();
+				if (node.getName().equals(name))
+					return node;
+			}
+
+			int nid = recstore.addRecord(new byte[0], 0, 0);
+
+			Vector dirlist = getDirList();
+			dirlist.addElement(new Integer(nid));
+			dirlist.addElement(name);
+			setDirList(dirlist);
+			return new VFSRecStore(name, recstore, nid);
+		} catch (Throwable ex) {
+			return null;
+		}
+	}
+
+	public IVFSNode createDir(String name)
+	{
+		return createFile(name + "/");
+	}
+
+	public void delete(String name)
+	{
+	}
+};

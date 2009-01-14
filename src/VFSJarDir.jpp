@@ -6,13 +6,12 @@ import java.util.Vector;
 
 public class VFSJarDir implements IVFSNode {
 	private String path;
-	VFSJarDir() {
-		path = "";
-	}
+	private String name;
 
-	VFSJarDir(String path_)
+	VFSJarDir(String name, String path)
 	{
-		path = path_;
+		this.path = path;
+		this.name = name;
 	}
 
 	public boolean exists()
@@ -35,6 +34,11 @@ public class VFSJarDir implements IVFSNode {
 		return "jar://" + path;
 	}
 
+	public String getName()
+	{
+		return name;
+	}
+
 	/* for files */
 	public InputStream getInputStream()
 	{
@@ -52,21 +56,23 @@ public class VFSJarDir implements IVFSNode {
 	{
 		Vector children = new Vector();
 
-		try {
-			//BufferedReader br = new BufferedReader(new InputStreamReader(FHandler.getDataInputStream("/carts")));
-			DataInputStream br = new DataInputStream(this.getClass().getResourceAsStream("/carts"));
-			while (true) {
-				String cart = "";
-				char c;
-				c = (char)br.readByte();
-				while (c != '\r' && c != '\n') {
-					cart += c;
+		if (path == "" ) {
+			try {
+				//BufferedReader br = new BufferedReader(new InputStreamReader(FHandler.getDataInputStream("/carts")));
+				DataInputStream br = new DataInputStream(this.getClass().getResourceAsStream("/carts"));
+				while (true) {
+					String cart = "";
+					char c;
 					c = (char)br.readByte();
+					while (c != '\r' && c != '\n') {
+						cart += c;
+						c = (char)br.readByte();
+					}
+					if (cart.length() > 0)
+						children.addElement(new VFSJarFile(cart, cart));
 				}
-				if (cart.length() > 0)
-					children.addElement(new VFSJarFile(cart));
+			} catch (Throwable e) {
 			}
-		} catch (Throwable e) {
 		}
 		return children.elements();
 	}

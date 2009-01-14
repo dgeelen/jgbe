@@ -6,9 +6,13 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 public class VFSRoot implements IVFSNode {
-	public VFSRoot()
+	private String name;
+	private Vector children;
+
+	public VFSRoot(String name)
 	{
-		children = new Vector();
+		this.children = new Vector();
+		this.name = name;
 	}
 
 	public boolean exists()
@@ -31,6 +35,11 @@ public class VFSRoot implements IVFSNode {
 		return "rootvfs://";
 	}
 
+	public String getName()
+	{
+		return name;
+	}
+
 	/* for files */
 	public InputStream getInputStream()
 	{
@@ -41,8 +50,6 @@ public class VFSRoot implements IVFSNode {
 	{
 		return null;
 	}
-
-	private Vector children;
 
 	/* for dirs */
 	public Enumeration getChildren()
@@ -66,16 +73,26 @@ public class VFSRoot implements IVFSNode {
 
 	public void addNode(IVFSNode newnode)
 	{
-		children.addElement(newnode);
+		if (newnode != null)
+			children.addElement(newnode);
 	}
 
 	static IVFSNode getRoot()
 	{
-		VFSRoot root = new VFSRoot();
+		VFSRoot root = new VFSRoot("root/");
 #ifdef USE_JAVA_MOBILE
-		root.addNode(new VFSJarDir());
+		root.addNode(new VFSJarDir("jar/", ""));
 		if (System.getProperty("microedition.io.file.FileConnection.version") != null)
-			root.addNode(new VFS_JSR75());
+			root.addNode(new VFS_JSR75("filesystem/", ""));
+		try {
+			root.addNode(new VFSRecStore("Record-JMGBE-Store", "jmgbe-store", "Da Fox && HackyKid && Satan", "JMGBE-Store"));
+		} catch (Throwable e) { PRINTLN(e.getMessage()); }
+		try {
+			root.addNode(new VFSRecStore("Record-JMGBE", "jmgbe-store", "Da Fox && HackyKid && Satan", "Java Mobile GameBoy Emulator"));
+		} catch (Throwable e) { PRINTLN(e.getMessage()); }
+		try {
+			root.addNode(new VFSRecStore("Record-JMGBE-Local", "jmgbe-store"));
+		} catch (Throwable e) { PRINTLN(e.getMessage()); }
 #endif
 		return root;
 	}

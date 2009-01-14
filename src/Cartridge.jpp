@@ -45,7 +45,7 @@ public final class Cartridge {
 			loadFromStream();
 		}
 		catch (java.io.IOException e) {
-			PRINTLN("error loading cartridge from file!: " + e.getMessage());
+			PRINTLN("error loading cartridge from file!: " + e.toString());
 			err_msg = e.getMessage();
 			if(err_msg == null) err_msg = "Java Error messages are useless! (UNKNOWN_ERROR)";
 		}
@@ -231,6 +231,9 @@ public final class Cartridge {
 		}
 		PRINTF("\n");
 
+		distream.close(); // lets be nice :-p
+		distream = null;
+
 		// initing RAM
 		for (int i = 0; i < ram_mm_size; ++i)
 			MM_RAM[i] = new BTYPE[MEMMAP_SIZE];
@@ -241,9 +244,6 @@ public final class Cartridge {
 		//	MM_ROM[i] = dummy_mm;
 		//for (int i = ram_mm_size; i < MAX_RAM_MM; ++i)
 		//	MM_RAM[i] = dummy_mm;
-
-		distream.close(); // lets be nice :-p
-		distream = null;
 	}
 
 	public int read(int index) {
