@@ -1384,10 +1384,10 @@ public final class CPU {
 					}
 					break;
 				default:
-					if ((op & 0xC0) == 0x80) {
+					/*if ((op & 0xC0) == 0x80) {
 						executeALU(op);
 						return cycles;
-					} else {
+					} else */{
 						PRINTF( "UNKNOWN INSTRUCTION: $%02x (" + op + ")\n" , op );
 						localPC -= 1; // we failed to execute the instruction, so restore PC
 						return 0;
@@ -1411,6 +1411,14 @@ public final class CPU {
 #endif
 
 		public static int nextinstruction() {
+			/*
+			if (KeyStatus != GUIKeyStatus) {
+					KeyStatus = GUIKeyStatus;
+					keyHistory.add(lastKeyChange);
+					keyHistory.add(KeyStatus);
+					lastKeyChange = 0;
+			}
+			/*/
 			if (playbackHistoryIndex == -1) {
 				if (KeyStatus != GUIKeyStatus) {
 					keyBounce = 1000;
@@ -1439,6 +1447,7 @@ public final class CPU {
 				playbackHistoryIndex = -1;
 				keyHistoryEnabled = true;
 			}
+			//*/
 			int res = 4*execute();
 			SP &= 0xffff;
 			//if (getPC() > 0xffff || getPC() < 0) setPC(getPC()&0xffff);
