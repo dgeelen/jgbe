@@ -43,6 +43,7 @@ public final class CPU {
 		public static int[] IOP = new int[0x80]; //IO Ports
 		public static int[] HRAM = new int[0x7f]; //HighRAM
 		public static BTYPE[][] WRAM = new BTYPE[0x08][0x1000]; //8x4k InternalRAM
+		public static BTYPE[] FWRAM = WRAM[0]; // first WRAM bank
 		public static int CurrentWRAMBank=1;
 
 		public static boolean doublespeed = false;
@@ -51,7 +52,38 @@ public final class CPU {
 		public static int DIVcntdwn = 0;
 		public static int TIMAcntdwn = 0;
 
-		public static int PC=0;         ///< Program counter
+		public static int globalPC = 0;
+		public static int localPC = 0;
+
+		public static int getPC() {
+			return globalPC + localPC;
+		}
+
+		public static void setPC(int newPC) {
+			globalPC = newPC;
+			localPC = 0;
+		}
+
+		public static void pushPC() {
+			int pc = globalPC + localPC;
+			if (SP > 0xC001 && (SP >> 13) == 6) {
+				FWRAM[--SP - 0xC000] = I2B(pc>>8);
+				FWRAM[--SP - 0xC000] = I2B(pc&0xff);
+			} else {
+				write(--SP, pc >> 8);
+				write(--SP, pc & 0xFF);
+			}
+		}
+
+		public static void popPC() {
+			if (SP < 0xCFFF && (SP >> 13) == 6) {
+				setPC(B2I(FWRAM[SP++ - 0xC000]) + B2I(FWRAM[SP++ - 0xC000])<<8);
+			} else {
+				setPC(read(SP++) + (read(SP++) << 8));
+			}
+		}
+
+		//public static int PC=0;         ///< Program counter
 		public static int SP=0;         ///< Stack Pointer
 		public static int IE=0;         ///< Interrupt Enable (allowed interrupts)
 		public static boolean IME=true; ///< Interrupt Master Enable
@@ -158,7 +190,9 @@ public final class CPU {
 			SL_INT(DIVcntdwn);
 			SL_INT(TIMAcntdwn);
 			SL_IF_VERSION( -1, 14) SL_SKIP(INT, 1); //SL_INT(LCDCcntdwn);
-			SL_UINT16(PC);
+			int pc = getPC();
+			SL_UINT16(pc);
+			setPC(pc);
 			SL_UINT16(SP);
 			SL_UINT8(IE);
 			SL_BOOL(IME);
@@ -847,7 +881,7 @@ public final class CPU {
 			cartridge.CurrentROMBank=1;
 			refreshMemMap();
 
-			PC = BIOS_enabled?0x00:0x100; // Right... perhaps we should re-evaluate BIOS_enabled...
+			setPC(BIOS_enabled?0x00:0x100); // Right... perhaps we should re-evaluate BIOS_enabled...
 			VC.isCGB = BIOS_enabled?false:isCGB();
 
 			//AF=$01B0
@@ -923,9 +957,9 @@ public final class CPU {
 			flags += (( F & ( 1 <<0 ) ) == ( 1 <<0 ) )?"1 ":"0 ";
 			PRINTLN( "---CPU Status for cycle "+TotalCycleCount+" , instruction "+TotalInstrCount+"---" );
 			PRINTF( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
-			PRINTF( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",PC,SP );
+			PRINTF( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",getPC(),SP );
 			#ifndef USE_JAVA_MOBILE
-				PRINTLN( "  "+deasm.disassemble( PC ) );
+				PRINTLN( "  "+deasm.disassemble( getPC() ) );
 			#endif
 		}
 
@@ -963,8 +997,7 @@ public final class CPU {
 
 		public static void interrupt(int i) { //execute interrupt #i
 			IME = false;
-			DO_PUSH_OLD(PC);
-			PC = i;
+			pushPC();
 			IOP[0x0f] &= ~i;
 		}
 
@@ -1098,6 +1131,7 @@ public final class CPU {
 		}
 
 		public static int execute() {
+			int op, imm8a, imm8b;
 			int cycles;
 			TVARS;
 
@@ -1115,51 +1149,6 @@ public final class CPU {
 
 			if (halted) return 1; //Halt duration is a multiple of 4 cycles, so return 1 here
 
-#ifdef ENABLE_RECOMPILER
-			if (PC < 0x4000) {
-				if (rccache0[PC] == null) {
-// 					PRINTF("recompiling @ PC=$%02x\n", PC);
-					rccache0[PC] = CPURecompiler.doRecompile(PC);
-					if (rccache0[PC]==null)
-						rccache0[PC] = dummyrc;
-				}
-				// else
-				if (rccache0[PC] != dummyrc)
-				{
-					//PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
-					return rccache0[PC].execute();
-					//rccache[PC] = CPURecompiler.Recompile(PC);
-				}
-			}
-			else if (PC < 0x8000) {
-				if (rccachex[PC-0x4000] == null) {
-// 					PRINTF("recompiling @ PC=$%02x\n", PC);
-					rccachex[PC-0x4000] = CPURecompiler.doRecompile(PC);
-					if (rccachex[PC-0x4000]==null)
-						rccachex[PC-0x4000] = dummyrc;
-				}
-				// else
-				if (rccachex[PC-0x4000] != dummyrc)
-				{
-					//PRINTF("executing recompiled block starting at PC=0x%02x\n", PC);
-					return rccachex[PC-0x4000].execute();
-					//rccache[PC] = CPURecompiler.Recompile(PC);
-				}
-			}
-
-			/*else if ((PC < 0x4000) && (CPURecompiler.blockidcounter < 100)) {
-				++rccnt[PC];
-				if (rccnt[PC] > 0xff) {
-					rccnt[PC] = -0xffffff;
-					rccache[PC] = CPURecompiler.doRecompile(PC);
-					if (rccache[PC] != null) {
-						for (int i = 0; i < 0x4000; ++i)
-							rccnt[i] = MIN(0, rccnt[i]);
-					}
-				}
-			}*/
-#endif
-
 			if (keyBounce > 0) {
 				--keyBounceWaitNext;
 				if(keyBounceWaitNext < 0) {//wait some instructions
@@ -1168,13 +1157,22 @@ public final class CPU {
 					--keyBounce;
 				}
 			}
-			int op = FETCH;
+
+			if (false) {
+			} else {
+				int pc = localPC + globalPC;
+				op=read(pc++);
+				imm8a = read(pc);
+				imm8b = read(pc+1);
+				setPC(pc);
+			}
+
 			cycles = Tables.cycles[op];
 
 			if (halt_fail_inc_pc) {
 				// failed to increment PC after halt
 				halt_fail_inc_pc = false;
-				--PC;
+				--localPC;
 			}
 
 //#define break return cycles
@@ -1182,10 +1180,10 @@ public final class CPU {
 				case 0x00: break;                                   // NOP
 				case 0xf3: IME=false; break;                        // DI
 				case 0xfb: IME=true; break;                         // IE
-				case 0xea: WRITE_V(IMM16, A); break;                // LD   (nn), A
-				case 0xfa: A = READ_V(IMM16); break;                // LD   A   , (nn)
-				case 0xe0: WRITE_S(IMM8 | 0xff00, A); break;        // LDH  (n) , A
-				case 0xf0: A = READ_S(IMM8 | 0xff00); break;        // LDH  A   , (n)
+				case 0xea: localPC+=2; WRITE_V(IMM16, A); break;                // LD   (nn), A
+				case 0xfa: localPC+=2; A = READ_V(IMM16); break;                // LD   A   , (nn)
+				case 0xe0: ++localPC; WRITE_S(IMM8a | 0xff00, A); break;        // LDH  (n) , A
+				case 0xf0: ++localPC; A = READ_S(IMM8a | 0xff00); break;        // LDH  A   , (n)
 				case 0xe2: WRITE_S(C | 0xff00, A); break;           // LDH  (C) , A
 				case 0xf2: A = READ_S(C | 0xff00); break;           // LDH  A   , (C)
 				case 0xf9: SP = R16RHL; break;                      // LD   SP  , HL
@@ -1224,7 +1222,7 @@ public final class CPU {
 				case 0x74: WRITE_V(R16RHL, H); break;               // LD   (HL), H
 				case 0x75: WRITE_V(R16RHL, L); break;               // LD   (HL), L
 				case 0x77: WRITE_V(R16RHL, A); break;               // LD   (HL), A
-				case 0x36: WRITE_V(R16RHL, IMM8); break;            // LD   (HL), n
+				case 0x36: ++localPC; WRITE_V(R16RHL, IMM8a); break;            // LD   (HL), n
 				case 0x76: {                                        // HALT
 					if (IME) {
 						halted = true;
@@ -1247,30 +1245,32 @@ public final class CPU {
 				case 0x19: DO_ADD_HL(D, E); break;                  // ADD  HL  , DE
 				case 0x29: DO_ADD_HL(H, L); break;                  // ADD  HL  , HL
 				case 0x39: DO_ADD_HL((SP>>8), (SP&0xff)); break;    // ADD  HL  , SP
-				case 0xe9: PC = R16RHL; break;                      // JP   HL
+				case 0xe9: setPC(R16RHL); break;                      // JP   HL
 				case 0x2f: A ^= 0xff; F |= (FN|FH); break;          // CPL
 				case 0x07: DO_SHOP_R(RLC, A); F &= FC; break;       // RLA
 				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RL
 				case 0x0f: DO_SHOP_R(RRC, A); F &= FC; break;       // RRA
 				case 0x1f: DO_SHOP_R(RR, A); F &= FC; break;        // RR
-				case 0xc7: DO_PUSH(PC); PC = 0x00; break;           // RST  &0
-				case 0xcf: DO_PUSH(PC); PC = 0x08; break;           // RST  &8
-				case 0xd7: DO_PUSH(PC); PC = 0x10; break;           // RST  &10
-				case 0xdf: DO_PUSH(PC); PC = 0x18; break;           // RST  &18
-				case 0xe7: DO_PUSH(PC); PC = 0x20; break;           // RST  &20
-				case 0xef: DO_PUSH(PC); PC = 0x28; break;           // RST  &28
-				case 0xf7: DO_PUSH(PC); PC = 0x30; break;           // RST  &30
-				case 0xff: DO_PUSH(PC); PC = 0x38; break;           // RST  &38
+				case 0xc7: pushPC(); setPC(0x00); break;           // RST  &0
+				case 0xcf: pushPC(); setPC(0x08); break;           // RST  &8
+				case 0xd7: pushPC(); setPC(0x10); break;           // RST  &10
+				case 0xdf: pushPC(); setPC(0x18); break;           // RST  &18
+				case 0xe7: pushPC(); setPC(0x20); break;           // RST  &20
+				case 0xef: pushPC(); setPC(0x28); break;           // RST  &28
+				case 0xf7: pushPC(); setPC(0x30); break;           // RST  &30
+				case 0xff: pushPC(); setPC(0x38); break;           // RST  &38
 				case 0x37: F &= FZ; F |= FC; break;                 // SCF
 				case 0x3f: F &= (FZ|FC); F ^= FC; break;            // CCF
 				case 0x08: {                                        // LD   (nn), SP
+					localPC+=2;
 					t_acc = IMM16;
 					WRITE_V(t_acc, SP&0xff);
 					WRITE_F((t_acc+1)&0xffff , SP>>8);
 				}; break;
 				case 0xf8:{                                         // LD  HL, SP+dd
+					++localPC;
 					R16WHL(SP);
-					L += (((IMM8)^0x80)-0x80);
+					L += IMM8OFS;
 					F = 0;
 					if (L > 0xff) {
 						L &= 0xff;
@@ -1298,8 +1298,9 @@ public final class CPU {
 					A &= 0xff;
 				};break;
 				case 0xe8:{
+					++localPC;
 					t_acc = SP;
-					SP += (((IMM8)^0x80)-0x80);
+					SP += IMM8OFS;
 					F = ((SP >> 8) != (t_acc >> 8)) ? FH : 0;
 					if ((SP & ~0xffff) != 0) {
 						SP &= 0xffff;
@@ -1309,7 +1310,7 @@ public final class CPU {
 				case 0x10: if (speedswitch) {                       // STOP
 					PRINTLN("Speed switch!");
 					doublespeed = !doublespeed;
-					++PC; // debuggin hax! gnuboy does this too! (fix?)
+					++localPC; // debuggin hax! gnuboy does this too! (fix?)
 					speedswitch = false;
 				}; break;
 				CASES_ALU_OP(0xb8, 0xfe, CP)                        // CP   x            x = r, imm8, (HL)
@@ -1324,9 +1325,9 @@ public final class CPU {
 				CASES_INCDEC16
 				CASES_LD_XX
 				case 0xcb: // prefix instruction
-					op = FETCH;
-					cycles = Tables.cb_cycles[op];
-					switch ( op ) {
+					++localPC;
+					cycles = Tables.cb_cycles[IMM8a];
+					switch ( IMM8a ) {
 						CASES_CB_BITNUM(0x40, BIT)
 						CASES_CB_BITNUM(0x80, RES)
 						CASES_CB_BITNUM(0xc0, SET)
@@ -1339,8 +1340,8 @@ public final class CPU {
 						CASES_CB_SHOP(0x38, SRL)
 						CASES_CB_SWAP
 						default:
-						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x (" + op + ")\n" , op );
-						PC -= 2;
+						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x (" + IMM8a + ")\n" , IMM8a );
+						localPC -= 2;
 						return 0;
 					}
 					break;
@@ -1350,7 +1351,7 @@ public final class CPU {
 						return cycles;
 					} else {
 						PRINTF( "UNKNOWN INSTRUCTION: $%02x (" + op + ")\n" , op );
-						PC -= 1; // we failed to execute the instruction, so restore PC
+						localPC -= 1; // we failed to execute the instruction, so restore PC
 						return 0;
 					}
 			}
@@ -1402,7 +1403,7 @@ public final class CPU {
 			}
 			int res = 4*execute();
 			SP &= 0xffff;
-			PC &= 0xffff;
+			//PC &= 0xffff;
 			++TotalInstrCount;
 			lastKeyChange += res;
 			TotalCycleCount += res;
