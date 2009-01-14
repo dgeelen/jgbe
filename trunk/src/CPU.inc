@@ -140,14 +140,12 @@
 
 #define DO_INC8(r) { \
 	r = (((r)+1)&0xff); \
-	F &= FC; \
-	F |= Tables.incflag[(r)]; \
+	F = (F & FC) | Tables.incflag[(r)] ; \
 }
 
 #define DO_DEC8(r) { \
 	r = (((r)-1)&0xff); \
-	F &= FC; \
-	F |= Tables.decflag[(r)]; \
+	F = (F & FC) | Tables.decflag[(r)] ; \
 }
 
 #define CASES_INCDEC8_R(r) \
@@ -353,6 +351,8 @@ F = FN \
 
 #define CASES_ALU_OP(base, imm, op) \
 	case (imm)   : DO_ ## op ## _V(FETCH); break; \
+
+/*
 	case (base)  : DO_ ## op ## _N(B); break; \
 	case (base)+1: DO_ ## op ## _N(C); break; \
 	case (base)+2: DO_ ## op ## _N(D); break; \
@@ -361,7 +361,7 @@ F = FN \
 	case (base)+5: DO_ ## op ## _N(L); break; \
 	case (base)+6: DO_ ## op ## _V(READ_V(R16RHL)); break; \
 	case (base)+7: DO_ ## op ## _N(A); break; \
-
+*/
 
 #define DO_SET_R(bitnum, r) { r |= (1 << bitnum); }
 #define DO_SET_HL(bitnum) { WRITE_V(R16RHL, READ_V(R16RHL) | (1 << bitnum)); }
