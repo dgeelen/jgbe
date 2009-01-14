@@ -1,0 +1,75 @@
+#include "Global.inc"
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.Vector;
+
+import javax.microedition.io.*;
+import javax.microedition.io.file.*;
+
+public class VFS_JSR75 implements IVFSNode {
+	public VFS_JSR75()
+	{
+	}
+
+	public boolean exists()
+	{
+		return true;
+	};
+
+	public boolean isFile()
+	{
+		return false;
+	}
+
+	public boolean isDir()
+	{
+		return true;
+	}
+
+	public String getURL()
+	{
+		return "file://";
+	}
+
+	/* for files */
+	public InputStream getInputStream()
+	{
+		return null;
+	}
+
+	public OutputStream getOutputStream()
+	{
+		return null;
+	}
+
+	/* for dirs */
+	public Enumeration getChildren()
+	{
+		Vector children = new Vector();
+		if (true) {
+			Enumeration e =  FileSystemRegistry.listRoots();
+			while (e.hasMoreElements()) {
+				String rootName = (String)e.nextElement();
+				System.out.println("mounted root:"+rootName);
+			}
+		} else {
+		}
+		return children.elements();
+	}
+
+	public IVFSNode createFile(String name)
+	{
+		return null;
+	}
+
+	public IVFSNode createDir(String name)
+	{
+		return null;
+	}
+
+	public void delete(String name)
+	{
+	}
+};

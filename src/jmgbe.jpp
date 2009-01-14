@@ -70,15 +70,30 @@ class jmgbeCanvas extends Canvas implements Runnable, IVideoListener {
 	private Thread thread;
 
 	private jmgbe parent;
+	
+	public void listAll(IVFSNode n, Vector v) {
+			PRINTLN(".");
+
+		Enumeration e = n.getChildren();
+		if (e != null) {
+			while (e.hasMoreElements()) {
+				listAll((IVFSNode)e.nextElement(), v);
+			}
+		} else {
+			v.addElement(n);
+		}
+	};
+	
 	public jmgbeCanvas(jmgbe p){
 		try {
-			RecordStore rs = RecordStore.openRecordStore("jmgbe", true, RecordStore.AUTHMODE_ANY, true);
+			//RecordStore rs = RecordStore.openRecordStore("jmgbe", true, RecordStore.AUTHMODE_ANY, true);
+			RecordStore rs = RecordStore.openRecordStore("jmgbe-store-data", "Da Fox && HackyKid && Satan", "JMGBE-Store");
 			PRINTLN("rs size:" + rs.getSize());
 			PRINTLN("rs size:" + rs.getSizeAvailable());
 			//mstr = "rs avail:" + rs.getSizeAvailable();
 			String ri = "";
 			try {
-				ri = new String(rs.getRecord(1));
+				ri = new String(rs.getRecord(2));
 			} catch (Throwable e) {	};
 			if (ri.length() == 0) {
 				PRINTLN("rs get:" + ri);
@@ -93,46 +108,27 @@ class jmgbeCanvas extends Canvas implements Runnable, IVideoListener {
 			}
 		} catch (Throwable e) {
 			PRINTLN("e:" + e.toString());
+			mstr = "e:" + e.getMessage();
 		}
 		
+		IVFSNode root = VFSRoot.getRoot();
 		Vector carts = new Vector();
-		try {
-			//BufferedReader br = new BufferedReader(new InputStreamReader(FHandler.getDataInputStream("/carts")));
-			DataInputStream br = FHandler.getDataInputStream("/carts");
-			while (true) {
-				String cart = "";
-				char c;
-				c = (char)br.readByte();
-				while (c != '\r' && c != '\n') {
-					cart += c;
-					c = (char)br.readByte();
-				}
-				if (cart.length() > 0) 
-					carts.addElement("/" + cart);
-			}
-		} catch (IOException e) {
-		}
+		listAll(root, carts);
 		
 		PRINTLN("carts: " + carts.size());
-		PRINTLN("cart: " + (String)carts.elementAt(0));
 		
 		//super( true );
 		parent = p;
 		setFullScreenMode(true);
-		/*
-		graphics = getGraphics();
-		graphics.setColor( 0,  0, 0 );
-		graphics.fillRect( 0, 0, getWidth(), getHeight() );
-		*/
 		PRINTFREEMEM("pre cartridge");
-		cartridge = new Cartridge((String)carts.elementAt(0));
+		cartridge = new Cartridge(((IVFSNode)carts.elementAt(0)).getInputStream());
 		System.gc();
 		PRINTFREEMEM("pre CPU");
 		cpu = new CPU();
 		PRINTFREEMEM("pre CPU");
 		cpu.VC.addListener(this);
 		cpu.loadCartridge(cartridge);
-	
+
 	}
 	
 	int fctr = 0;
