@@ -1,3 +1,4 @@
+
 static private int LINKmulti = 1;
 static private int LINKdelay = 0; // do not change, use setDelay() instead
 
@@ -5,6 +6,10 @@ static private int LINKcntdwn = 0;
 static private int[] LINKbuf = new int[8];
 static private int LINKind = 0;
 static private int LINKtimeout = 0;
+
+static protected int LinkCableStatus = 0; // 0 = offline, 1 = server , 2 = client
+
+#ifndef USE_JAVA_MOBILE
 
 static void setDelay(int ndelay) throws IOException {
 	for (int i = 0; i < LINKdelay; ++i)
@@ -25,7 +30,6 @@ static protected DataOutputStream LinkCableOut = null;
 
 static protected boolean LinkCableSendReceive=false;
 
-static protected int LinkCableStatus = 0; // 0 = offline, 1 = server , 2 = client
 
 public static final void severLink() {
 	try {
@@ -84,3 +88,4 @@ public static final void clientLink(String target)  throws IOException {
 	}
 	else throw new IOException("WARNING: Can't client while not offline");
 }
+#endif

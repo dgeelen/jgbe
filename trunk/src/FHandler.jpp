@@ -1,7 +1,9 @@
 #include "Global.inc"
 import java.io.*;
+#ifndef USE_JAVA_MOBILE
 import java.util.zip.*;
 import java.awt.Font;
+#endif
 
 public final class FHandler {
 	// workaround for getResourceAsStream not working in static methods
@@ -13,9 +15,9 @@ public final class FHandler {
 	 *  and save states
 	 */
 	private static final String RootJGBEDir() throws IOException {
+		String path = "";
+#ifndef USE_JAVA_MOBILE
 		File file;
-		String path;
-
 		path = System.getenv("JGBEDIR");
 		if (path != null && !path.equals("")) {
 			if (!path.endsWith(File.separator))
@@ -33,11 +35,14 @@ public final class FHandler {
 
 		if (file.exists() || file.mkdir())
 			return path;
+#endif
 
 		throw new IOException("Can't find or create '"+path+"'(user.home)");
 	}
 
 	public static String JGBEDir(String relpath) throws IOException {
+		String path = "";
+#ifndef USE_JAVA_MOBILE
 		// Sanitize relpath
 		if (relpath.length() > 0 && relpath.startsWith(File.separator))
 			relpath = relpath.substring(1);
@@ -48,14 +53,16 @@ public final class FHandler {
 		String rootpath = RootJGBEDir();
 
 		// Create relative dir
-		String path = rootpath + relpath;
+		path = rootpath + relpath;
 		File dir=new File(path);
 		if (!dir.exists() && !dir.mkdirs())
 			throw new IOException("Can't or create '"+relpath+"' in '"+rootpath+"'");
+#endif
 		return path;
 	}
 
 	public static DataInputStream getDataInputStream(String fname) throws IOException {
+#ifndef USE_JAVA_MOBILE
 		int dotPos=0;
 		int dp = fname.indexOf(".");
 		while(dp>=0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
@@ -65,21 +72,15 @@ public final class FHandler {
 		String fext = fname.substring(dotPos);
 		if ( !fext.equals(".zip") ) {
 			// plain files
-#ifndef USE_JAVA_MOBILE
-			FileInputStream fistream = new FileInputStream(fname);
-			BufferedInputStream bistream = new BufferedInputStream(fistream);
-#else
 			PRINTLN("NonStatic.class.getResourceAsStream("+fname+");");
 			Class clazz = Runtime.getRuntime().getClass();
-			InputStream bistream = clazz.getResourceAsStream(fname);
+			InputStream bistream = (InputStream)clazz.getResourceAsStream(fname);
 // 			PRINTLN("bistream="+bistream);
-#endif
 			DataInputStream distream = new DataInputStream(bistream);
 // 			PRINTLN("distream="+distream);
 			return distream;
 		}
 		else {
-#ifndef USE_JAVA_MOBILE
 			// Open the ZIP file
 			FileInputStream fistream = new FileInputStream(fname);
 			ZipInputStream zistream = new ZipInputStream(fistream);
@@ -91,14 +92,14 @@ public final class FHandler {
 			DataInputStream distream = new DataInputStream(bistream);
 
 			return distream;
-#else
-			PRINTLN("FHandler opening zipfile not supported!");
-			return null;
-#endif
 		}
+#else
+		return null;
+#endif
 	}
 
 	public static DataOutputStream getDataOutputStream(String fname) throws IOException {
+#ifndef USE_JAVA_MOBILE
 		int dotPos=0;
 		int dp = fname.indexOf(".");
 		while(dp>0) { //NOTE: Java 1.4.2 does not have 'lastIndexOf'
@@ -108,15 +109,8 @@ public final class FHandler {
 		String fext = fname.substring(dotPos);
 		if ( !fext.equals(".zip") ) {
 			// plain files
-#ifndef USE_JAVA_MOBILE
 			FileOutputStream fostream = new FileOutputStream(fname);
 			BufferedOutputStream bostream = new BufferedOutputStream(fostream);
-#else
-			PRINTLN("NonStatic.class.getResourceAsStream("+fname+");");
-			Class clazz = Runtime.getRuntime().getClass();
-			OutputStream bostream = clazz.getResourceAsStream(fname);
-// 			PRINTLN("bostream="+bostream);
-#endif
 			DataOutputStream dostream = new DataOutputStream(bostream);
 // 			PRINTLN("dostream="+dostream);
 			return dostream;
@@ -125,6 +119,9 @@ public final class FHandler {
 			PRINTLN("FHandler opening zipfile not supported!");
 			return null;
 		}
+#else
+		return null;
+#endif
 	}
 
 	/** @brief creates a buffered input stream from a resource file
@@ -134,18 +131,20 @@ public final class FHandler {
 	 *  @arg filename Name of the file to get a stream of
 	 *  @return the BufferedInputStream of that file
 	 */
+	 /*
 	public static final BufferedInputStream getResourceStream(String filename) throws IOException {
 		Class clazz = fhinstance.getClass(); // workaround...
 		InputStream fistream = clazz.getResourceAsStream(filename);
 		BufferedInputStream bistream = new BufferedInputStream(fistream);
 		return bistream;
 	}
-
+*/
 	/** returns the Bitstream Vera Sans Mono Font, normal style, size 12
 	 *  first look for VeraMono.ttf in the current dir/jar file
 	 *  then ask the system for the "Bitstream Vera Sans Mono" font
 	 *  @return the Font
 	 */
+#ifndef USE_JAVA_MOBILE
 	public static final Font getVeraMonoFont() {
 		try {
 			InputStream bistream = getResourceStream("VeraMono.ttf");
@@ -158,5 +157,6 @@ public final class FHandler {
 			return new Font("Bitstream Vera Sans Mono",0, 12);
 		}
 	}
+#endif
 
 }

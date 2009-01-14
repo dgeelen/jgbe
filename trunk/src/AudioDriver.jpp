@@ -1,3 +1,5 @@
+#ifndef USE_JAVA_MOBILE
+
 #include "Global.inc"
 import java.io.*;
 import javax.sound.sampled.*;
@@ -174,3 +176,6 @@ public class AudioDriver implements IAudioListener {
 		ASSERT(false); //Currently broken
 	}
 }
+#else
+#include "MobileAudioDriver.inc"
+#endif

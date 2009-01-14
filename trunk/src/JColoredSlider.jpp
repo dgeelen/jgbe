@@ -1,3 +1,4 @@
+#ifndef USE_JAVA_MOBILE
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
@@ -128,3 +129,4 @@ class JHueSlider extends JColoredSlider
     ((BasicSliderUI)getUI()).paintThumb(g);
   }
 }
+#endif

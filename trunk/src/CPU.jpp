@@ -2,9 +2,16 @@
 #include "SaveLoad.inc"
 #include "CPU.inc"
 
+#ifdef USE_JAVA_MOBILE
+#define VideoController MobileVideoController
+#endif
+
+#ifndef USE_JAVA_MOBILE
 import java.net.*;
 import java.util.zip.*;
 import java.util.ArrayList;
+#endif
+
 public final class CPU {
 	static class DummyCPURunBlock implements CPURunBlock {
 		public int execute() { ASSERT(false); return 0;};
@@ -81,6 +88,7 @@ public final class CPU {
 		public static int last_memory_access_internal=-1;
 
 		public CPU() {
+			PRINTFREEMEM("CPU() - 1");
 			if (singleton != null) {
 				PRINTLN("WARNING: trying to instantiate second instance of CPU singleton class");
 				//int x[]=null;
@@ -90,10 +98,15 @@ public final class CPU {
 			#ifndef USE_JAVA_MOBILE
 				deasm = new Disassembler(this, Disassembler.SIMPLE_DISASSEMBLY);
 			#endif
+			PRINTFREEMEM("CPU() - 2");
 			VC = new VideoController(this, 160, 144);
+			PRINTFREEMEM("CPU() - 3");
 			AC = new AudioController(this);
+			PRINTFREEMEM("CPU() - 4");
 			keyHistory = new IntVector();
+			PRINTFREEMEM("CPU() - 5");
 			cartridge = null;
+			PRINTFREEMEM("CPU() - 6");
 			//CPU.rccache[0x2cbb] = CPURecompiler.Recompile(0x2cbb);
 		}
 
@@ -203,6 +216,7 @@ public final class CPU {
 		public static void saveState(DataOutputStream dostream)
 		throws IOException
 		{
+#ifndef USE_JAVA_MOBILE
 			int saveversion = SL_SAVE_VERSION; //change when changing savestate format
 			dostream.writeInt(SL_MAGIX);
 			dostream.writeInt(saveversion);
@@ -223,11 +237,13 @@ public final class CPU {
 				dostream.flush();
 				zostream.finish();
 			}
+#endif
 		}
 
 		public static void loadState(DataInputStream distream)
 		throws IOException
 		{
+#ifndef USE_JAVA_MOBILE
 			int loadversion;
 			int magix = distream.readInt();
 			if (magix != SL_MAGIX) {
@@ -258,6 +274,7 @@ public final class CPU {
 				case 1: distream = new DataInputStream(new GZIPInputStream(distream)); break;
 			}
 			stateSaveLoad(false, loadversion, null, distream);
+#endif
 		}
 
 		public static int[][] rMemMap = new int[0x10][];
@@ -1322,6 +1339,7 @@ public final class CPU {
 				}
 			}
 
+#ifndef USE_JAVA_MOBILE
 			if (LinkCableStatus != 0) {
 				LINKcntdwn -= cycles;
 				if (LINKcntdwn < 0) {
@@ -1394,6 +1412,7 @@ public final class CPU {
 
 				}
 			}
+#endif
 		}
 
 		public int exception() {

@@ -2,7 +2,9 @@
 #include "SaveLoad.inc"
 
 import java.io.*;
+#ifndef USE_JAVA_MOBILE
 import java.util.zip.*;
+#endif
 
 public final class Cartridge {
 	// the size of the ROM banks in byte

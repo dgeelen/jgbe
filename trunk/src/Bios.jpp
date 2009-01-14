@@ -1,6 +1,5 @@
 #include "Global.inc"
 import java.io.*;
-import java.util.zip.*;
 
 public class Bios {
 
@@ -8,7 +7,7 @@ public class Bios {
 		try {
 			loadFromFile(fname, location);
 		}
-		catch (IOException ioe) {
+		catch (Throwable ioe) {
 // 			PRINTLN("Bios could not be loaded (message: " + ioe.getMessage() + ").");
 // 			PRINTLN("Emulator will go on like nothing happened.");
 			PRINTLN("Using BIOS stub");
@@ -18,7 +17,7 @@ public class Bios {
 		}
 	}
 
-	public void loadFromFile(String fname, int[] location) throws IOException {
+	public void loadFromFile(String fname, int[] location) throws Throwable {
 		// filesize in bytes
 		long fsize = 256;
 		DataInputStream distream = FHandler.getDataInputStream(fname);

@@ -11,7 +11,9 @@
 #define LINK_CABLE_TCP_PORT 0x4321
 
 #ifdef USE_JAVA_MOBILE
-	#define USE_JAVA_142
+	#ifndef USE_JAVA_142
+		#define USE_JAVA_142
+	#endif
 #endif
 
 #define DEBUG

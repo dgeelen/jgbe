@@ -7,7 +7,7 @@ import javax.microedition.midlet.*;
 import javax.microedition.lcdui.game.GameCanvas;
 import java.util.*;
 
-public class jmgbe extends GameCanvas implements Runnable {
+public class jmgbe extends GameCanvas {
 	private static final int SLEEP_INCREMENT = 10;
 	private static final int SLEEP_INITIAL = 150;
 	private static final int SLEEP_MAX = 300;
@@ -15,7 +15,6 @@ public class jmgbe extends GameCanvas implements Runnable {
 	private Graphics        graphics;
 	private Random          random;
 	private int             sleepTime = SLEEP_INITIAL;
-	private volatile Thread thread;
 	private CPU cpu;
 	private Cartridge cartridge;
 
@@ -24,18 +23,17 @@ public class jmgbe extends GameCanvas implements Runnable {
 		graphics = getGraphics();
 		graphics.setColor( 0,  0, 0 );
 		graphics.fillRect( 0, 0, getWidth(), getHeight() );
+		PRINTFREEMEM("pre CPU");
+		cpu = new CPU();
 		PRINTFREEMEM("pre cartridge");
 		cartridge = new Cartridge("/roms/turtles.gb");
 		PRINTFREEMEM("pre CPU");
-		cpu = new CPU(cartridge);
-		PRINTFREEMEM("pre CPU");
-		cpu.VC.addListener(graphics);
+		//cpu.VC.addListener(graphics);
 	}
 
 	// When the game canvas is hidden, stop the thread.
 
 	protected void hideNotify(){
-		thread = null;
 	}
 
 	// The game loop.
@@ -44,7 +42,7 @@ public class jmgbe extends GameCanvas implements Runnable {
 		int w = getWidth();
 		int h = getHeight() - 1;
 
-		while( thread == Thread.currentThread() ){
+//		while( thread == Thread.currentThread() ){
 // 			int state = getKeyStates();
 // 			if( ( state & DOWN_PRESSED ) != 0 ){}
 
@@ -53,7 +51,7 @@ public class jmgbe extends GameCanvas implements Runnable {
 			// new stars...
 
 			flushGraphics();
-		}
+//		}
 	}
 
 	// When the canvas is shown, start a thread to
@@ -62,8 +60,8 @@ public class jmgbe extends GameCanvas implements Runnable {
 	protected void showNotify(){
 		random = new Random();
 
-		thread = new Thread( this );
-		thread.start();
+		//thread = new Thread( this );
+		//thread.start();
 	}
 }
 #else
