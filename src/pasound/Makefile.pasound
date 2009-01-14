@@ -1,6 +1,14 @@
+# To enable this, put the following in your Makefile.config:
+#
+# JNIINCPATH := $(path to /include/ directory of your jdk)
+# JNIPLATFORM := $(name of the subdirectory of your playform in the /include dir of your jdk)
+# JAVAH := path to javah executable
+# -include src/pasound/Makefile.pasound
+
+
 all: $(CLASSDIR)/libPASoundLine.so
 
-JNICFLAGS:=-I/usr/lib/jvm/java-6-sun-1.6.0.00/include/ -I/usr/lib/jvm/java-6-sun-1.6.0.00/include/linux
+JNICFLAGS:=-I$(JNIINCPATH) -I$(JNIINCPATH)/$(JNIPLATFORM)
 JNILDFLAGS:=-shared -lportaudio
 
 $(CLASSDIR)/libPASoundLine.so: $(SRCDIR)/pasound/pasoundline.o
@@ -13,7 +21,7 @@ $(SRCDIR)/pasound/pasoundline.o: $(SRCDIR)/pasound/pasoundline.c $(SRCDIR)/pasou
 
 $(SRCDIR)/pasound/pasoundline.h: $(CLASSDIR)/PASoundLine.class
 	@echo "[class-> .h   ] PASoundLine"
-	@cd $(CLASSDIR) && javah -jni -o ../$@ PASoundLine
+	@cd $(CLASSDIR) && $(JAVAH) -jni -o ../$@ PASoundLine
 	@touch $@
 
 clean: paclean
