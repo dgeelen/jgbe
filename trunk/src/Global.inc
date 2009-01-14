@@ -19,6 +19,8 @@
 
 #ifdef USE_JAVA_MOBILE
 	#define BTYPE byte
+	//#define B2I(val) ((val)+128)
+	//#define I2B(val) ((byte)((val)-128))
 	#define B2I(val) ((val)+128)
 	#define I2B(val) ((byte)((val)-128))
 #else
@@ -93,7 +95,7 @@
 	#define PRINTF(x...) /*System.out.printf(x)*/
 #endif
 
-#ifndef DEBUG
+#ifdef DEBUG
 	#define PRINTLN(x) System.out.println(x)
 	#define PRINT(x) System.out.print(x)
 #else
