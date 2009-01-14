@@ -1,0 +1,47 @@
+#include "Global.inc"
+#ifndef USE_JAVA_MOBILE
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.LinkedList;
+import java.net.*;
+import java.awt.image.BufferedImage;
+import javax.swing.table.*;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.io.*;
+
+public class DebugServer {
+	DebugServer() {
+	}
+
+	void run() {
+		try {
+			ServerSocket srvr = new ServerSocket(2016);
+			PRINTLN("Awaiting 2 connections");
+			Socket socketa = srvr.accept();
+			BufferedReader readera = new BufferedReader(new InputStreamReader(socketa.getInputStream()));
+			PRINTLN("Awaiting 1 connection");
+			Socket socketb= srvr.accept();
+			BufferedReader readerb = new BufferedReader(new InputStreamReader(socketb.getInputStream()));
+			PRINTLN("All aboard");
+			while(true) {
+				String a = readera.readLine();
+				String b = readerb.readLine();
+				if(!a.equals(b)) {
+					PRINTLN("A: " + a);
+					PRINTLN("B: " + b);
+					break;
+				}
+			}
+		} catch(Exception e) {}
+	}
+	public static void main(String[] args) {
+		DebugServer server = new DebugServer();
+		server.run();
+	}
+}
+#else
+public class DebugServer { } //DUMMY CLASS FOR 1.4.2
+#endif

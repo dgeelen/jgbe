@@ -29,7 +29,7 @@ AOSS:=$(shell which aoss 2> /dev/null)
 JAVA_BIN := $(JAVA_XCB_HACK) $(AOSS) java
 
 GB_ASM  := rgbasm
-GB_LINK := xlink 
+GB_LINK := xlink
 GB_FIX  := rgbfix
 
 -include Makefile.config
@@ -81,9 +81,15 @@ run: all
 
 userrun: all
 	cd $(CLASSDIR) && $(JAVA_BIN) swinggui
-	
+
 debug: all
 	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound -debug
+
+debugserver: all
+	cd $(CLASSDIR) && $(JAVA_BIN) DebugServer
+
+remotedebug.%: all
+	cd $(CLASSDIR) && $(JAVA_BIN) swinggui -lastcart -nosound -debug -log 'tcp://127.0.0.1' -rdo $*
 
 oglfun: all
 	cd $(CLASSDIR) && $(JAVA_BIN) -Dsun.java2d.opengl=True swinggui -lastcart
@@ -134,7 +140,7 @@ $(JARDIR)/jgbe.jar: $(AJAVAFILES) $(CLASSFILES)
 	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jgbe.jar *.class icon.gif jgbe_logo.png VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.jar $(JARDIR)/jgbe.jar
-	
+
 jar: $(JARDIR)/jgbe.jar
 
 jarzip: $(CLASSFILES)
