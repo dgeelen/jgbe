@@ -1,3 +1,4 @@
+#ifndef USE_JAVA_MOBILE
 #include "Global.inc"
 
 import java.awt.event.*;
@@ -41,3 +42,4 @@ public class TimedKeyListener implements KeyListener, ActionListener {
 		kl.keyReleased(releaseEvent);
 	}
 }
+#endif

@@ -1,3 +1,4 @@
+#ifndef USE_JAVA_MOBILE
 #include "Global.inc"
 
 import javax.sound.sampled.*;
@@ -170,3 +171,4 @@ public class PASoundLine implements SourceDataLine {
 		);
 	}
 }
+#endif

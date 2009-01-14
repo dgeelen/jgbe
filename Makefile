@@ -21,7 +21,6 @@ ifeq ($(CLASSPATH),)
 	CLASSPATH:=.
 endif
 
-CLASSPATH:=$(CLASSPATH):/usr/share/bcel/lib/bcel.jar
 SRCPATH  :=$(SRCDIR)
 
 JAVA_XCB_HACK := $(shell ls LIBXCB_ALLOW_SLOPPY_LOCK > /dev/null 2>&1 /dev/null && echo "LIBXCB_ALLOW_SLOPPY_LOCK=1")
@@ -33,7 +32,9 @@ GB_LINK := xlink
 GB_FIX  := rgbfix
 
 -include Makefile.config
+CLASSPATH:="$(CLASSPATH):$(EXTRACLASSPATH)"
 -include Makefile.inc
+
 
 # compiler choose targets
 help:
@@ -153,6 +154,26 @@ jarzip: $(CLASSFILES)
 	@cd $(CLASSDIR) && zip -r -9 jgbe.zip META-INF *.class icon.gif jgbe_logo.png VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
+	
+$(JARDIR)/jmgbe.jar: $(CLASSFILES) $(SRCDIR)/MANIFEST.MF.jmgbe.in
+	@echo "[packing] jgmbe.jar"
+	@cp "$(SRCDIR)/MANIFEST.MF.jmgbe.in" "$(CLASSDIR)/MANIFEST.MF.in"
+	cd $(CLASSDIR) && "/cygdrive/c/Program Files/Java/WTK25/bin/preverify.exe" -d . -target CLDC1.1 -classpath "$(shell cygpath -pml "$(CLASSPATH)")" .
+	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jmgbe.jar *.class sml1.gb
+	@mkdir -p $(JARDIR)
+	@mv $(CLASSDIR)/jmgbe.jar $(JARDIR)/jmgbe.jar
+	
+	
+$(JARDIR)/jmgbe.jad: $(JARDIR)/jmgbe.jar
+	@echo [creating] jmgbe.jad 
+	@cp "$(SRCDIR)/jmgbe.jad.in" "$(JARDIR)/jmgbe.jad"
+	@stat "$(JARDIR)/jmgbe.jar" -c "%s" | sed "s=^=MIDlet-Jar-Size: =" >> "$(JARDIR)/jmgbe.jad"
+
+jad: $(JARDIR)/jmgbe.jad
+	
+jademu: $(JARDIR)/jmgbe.jad
+	@cd $(JARDIR) && /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:64M -Xdescriptor:./jmgbe.jad -Xdomain:maximum -classpath "jmgbe.jar;$(CLASSPATH)"
+	
 
 
 # # # # # # # # # # #
@@ -204,7 +225,7 @@ cleaner: clean
 	rm -f $(GJAVAFILES)
 	rm -f Makefile.inc
 
-$(GJAVAFILES): $(MAKEFILES)
-$(CLASSFILES): $(MAKEFILES)
+#$(GJAVAFILES): $(MAKEFILES)
+#$(CLASSFILES): $(MAKEFILES)
 
 -include $(JPPFILES:$(SRCDIR)/%.jpp=$(DEPSDIR)/%.d)

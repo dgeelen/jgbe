@@ -1,3 +1,5 @@
+#ifndef USE_JAVA_MOBILE
+
 #include "Global.inc"
 
 import javax.swing.*;
@@ -923,3 +925,4 @@ class ColorConverter
     return result;
 	}
 }
+#endif

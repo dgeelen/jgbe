@@ -1,3 +1,4 @@
+#ifndef USE_JAVA_MOBILE
 #include "Global.inc"
 
 import java.awt.Color;
@@ -146,3 +147,4 @@ public class TriGradientPaint implements Paint {
 		return OPAQUE;
 	}
 }
+#endif
