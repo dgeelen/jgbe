@@ -93,8 +93,13 @@
 	#define PRINTF(x...) /*System.out.printf(x)*/
 #endif
 
-#define PRINTLN(x) System.out.println(x)
-#define PRINT(x) System.out.print(x)
+#ifndef DEBUG
+	#define PRINTLN(x) System.out.println(x)
+	#define PRINT(x) System.out.print(x)
+#else
+	#define PRINTLN(x)
+	#define PRINT(x)
+#endif
 
 /* first one nearly 10% faster! (sometimes :-p)*/
 #define MAX(a,b) ((a)<(b)?(b):(a))
