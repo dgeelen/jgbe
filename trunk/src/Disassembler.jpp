@@ -31,7 +31,7 @@ public class Disassembler
 			if(reg.equalsIgnoreCase("DE")) return 0x10000|((cpu.D<<8)|cpu.E);
 			if(reg.equalsIgnoreCase("HL")) return 0x10000|((cpu.H<<8)|cpu.L);
 			if(reg.equalsIgnoreCase("SP")) return 0x10000|(cpu.SP);
-			if(reg.equalsIgnoreCase("PC")) return 0x10000|(cpu.PC);
+			if(reg.equalsIgnoreCase("PC")) return 0x10000|(cpu.getPC());
 			return -1;
 		}
 
@@ -82,7 +82,7 @@ public class Disassembler
 					return "";
 			}
 		}
-		
+
 		private static final String extended_disassemble(int PC) {
 			try {
 			int instr=cpu.read(PC);

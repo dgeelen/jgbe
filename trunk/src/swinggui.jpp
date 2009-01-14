@@ -322,6 +322,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			int DrawingAreaFontSize = 10;
 			Font DrawingAreaFont = new Font("SansSerif", Font.BOLD, DrawingAreaFontSize);
 
+			public void newVideoImage() {
+				updateVideoImage(cpu.VC.getImage());
+			}
+
 			public void updateVideoImage(Image img) {
 				repaint();
 				if( speedRunPlayWithOutputVideoStream != null) {

@@ -167,8 +167,8 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 				address = parser.StrToInt(addr) ^ 0xf000;
 				patch = parser.StrToInt(NewData);
 				oldvalue = parser.StrToInt(OldData)&0xff;
-				oldvalue = ShTables.RRC_val[oldvalue];
-				oldvalue = ShTables.RRC_val[oldvalue];
+				oldvalue = ShTablesRRC.val[0][oldvalue];
+				oldvalue = ShTablesRRC.val[0][oldvalue];
 				oldvalue ^= 0xba;
 				if(address>0x7fff) address=-1;
 // 				PRINTLN("addr="+address+" patch="+patch+" old="+oldvalue);
@@ -334,7 +334,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 	public void useCheats(boolean b) {
 		UseCheats = b;
 	}
-	
+
 	public void ToggleCheats(Cartridge cart) {
 		UseCheats = !UseCheats;
 		applyCheatCodes(cart);

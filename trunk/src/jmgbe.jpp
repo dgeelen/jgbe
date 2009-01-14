@@ -188,7 +188,8 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 		{
 			drawString(mstr, 0, 0);
 			long runms = System.currentTimeMillis() - startms;
-			drawString("fps: " + (fctr++) * 100000 / runms, 0, 11);
+			++fctr;
+			drawString("fps: " + fctr * 100000 / runms + " (" + fctr + ")", 0, 11);
 			String memstate = "" + (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024 + "/" + Runtime.getRuntime().totalMemory()/1024 + " (" + Runtime.getRuntime().freeMemory()/1024 + ")";
 			drawString(memstate, 0, 22);
 		}

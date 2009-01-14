@@ -48,7 +48,7 @@ public class romtester {
 		while (true) {
 			if (logwriter != null) {
 				String out = STRFORMAT("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
-					cpu.PC,
+					cpu.getPC(),
 					cpu.A,
 					cpu.F,
 					cpu.B,
@@ -67,8 +67,8 @@ public class romtester {
 				}
 			}
 			if ((--instrlimit==0) || cpu.nextinstruction()==0) {
-				String s= STRFORMAT("%02x",cpu.read(cpu.PC));
-				String ss= STRFORMAT("%04x",cpu.PC);
+				String s= STRFORMAT("%02x",cpu.read(cpu.getPC()));
+				String ss= STRFORMAT("%04x",cpu.getPC());
 				s=s.toUpperCase();
 				ss=ss.toUpperCase();
 				if (logwriter != null) {

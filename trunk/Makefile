@@ -242,5 +242,6 @@ cleaner: clean
 
 #$(GJAVAFILES): $(MAKEFILES)
 #$(CLASSFILES): $(MAKEFILES)
+#$(CLASSFILES): $(GJAVAFILES)
 
 -include $(JPPFILES:$(SRCDIR)/%.jpp=$(DEPSDIR)/%.d)
