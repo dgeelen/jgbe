@@ -30,7 +30,7 @@ class MeBoyVFS {
 		}
 	}
 
-	static protected IVFSNode getNodeFromPath(String[] pathelems, int pathofs, IVFSNode node) {
+	static public IVFSNode getNodeFromPath(String[] pathelems, int pathofs, IVFSNode node) {
 		if (pathofs == pathelems.length)
 			return node;
 		//PRINTLN("pelem:" +pathelems[pathofs]);
@@ -79,6 +79,10 @@ return result;
 }
 
 #endif
+	static public IVFSNode getNodeFromPath(String path) {
+			String[] pathelems = splitPath(path);
+			return getNodeFromPath(pathelems, 1, vfsroot);
+	}
 
 	public static InputStream getCartFileStream(String cartName, int bankpostfix) {
 		PRINTLN("MeBoyVFS.getInputStream("+cartName+","+bankpostfix+")");
@@ -91,8 +95,7 @@ return result;
 		#else
 			if (bankpostfix != 0)
 				return null;
-			String[] pathelems = splitPath(cartName);
-			IVFSNode cartnode = getNodeFromPath(pathelems, 1, vfsroot);
+			IVFSNode cartnode = getNodeFromPath(cartName);
 			return cartnode.getInputStream();
 		#endif
 	}

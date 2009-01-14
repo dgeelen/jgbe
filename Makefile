@@ -166,7 +166,7 @@ $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(AJAVAFILES) $(CLASSFILES)
 	@echo "[packing] $*.jar"
 	@cp "$(shell cat $(SRCDIR)/$*.jar.info | grep "^manifest=" | sed "s:^[^=]*=::")" "$(CLASSDIR)/MANIFEST.MF.in"
 	@cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::" > $(CLASSDIR)/vfsjar.idx
-	cd $(CLASSDIR) && jar cmf MANIFEST.MF.in $*.jar $(shell cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::") $(shell cat "$(SRCDIR)/$*.jar.info" | grep -v "^[a-z]*=") $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:')
+	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in $*.jar $(shell cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::") $(shell cat "$(SRCDIR)/$*.jar.info" | grep -v "^[a-z]*=") $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:')
 
 	@echo "[obfuscating] $*.jar"
 	@java -jar $(PROGUARDPATH) @proguard.conf -printusage -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
@@ -174,8 +174,8 @@ $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(AJAVAFILES) $(CLASSFILES)
 	
 	@echo "[minimizing] $*.jar"
 	@rm $(JARDIR)/$*.jar || true
-	#@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*-ps.jar || true
-	@mv $(CLASSDIR)/$*-obf.jar $(JARDIR)/$*-ps.jar
+	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*-ps.jar || true
+#	@mv $(CLASSDIR)/$*-obf.jar $(JARDIR)/$*-ps.jar
 	@rm -r jar/kjar_* || true
 
 	

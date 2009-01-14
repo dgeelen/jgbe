@@ -61,16 +61,20 @@ public class jmgbe extends MIDlet implements CommandListener {
 				filemenu.addElement(cn);
 				displayFileMenu();
 			} else if (cn.isFile()) {
-				gCanvas.loadCartridge(cn);
-				filemenu = null;
-				curitems = null;
-				display.setCurrent(gCanvas);
+				loadCartridge(cn);
 			}
 		}
 	}
 
 	public jmgbe() {
 		gCanvas = new jmgbeCanvas(this);
+	}
+
+	public void loadCartridge(IVFSNode cn) {
+		filemenu = null;
+		curitems = null;
+		gCanvas.loadCartridge(cn);
+		display.setCurrent(gCanvas);
 	}
 
 	public void startApp() {
@@ -95,13 +99,29 @@ public class jmgbe extends MIDlet implements CommandListener {
 			}
 		} catch (Throwable e) { PRINTLN(e.toString()); }
 */
+/*
 		IVFSNode root = VFSRoot.getRoot();
 		filemenu = new Vector();
 		filemenu.addElement(root);
 		displayFileMenu();
-
+/*/
+		loadCartridge(MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb"));
+//*/
 		//display.setCurrent(gCanvas);
 		//gCanvas.run();
+	}
+
+	public void notifyTestRun(long startms, long stopms) {
+		long durms = stopms-startms;
+		Form form = new Form("Test run");
+		display.setCurrent(form);
+		int frames = 250*CPU.VC.fskip;
+		form.append("250 * " + CPU.VC.fskip + " frames = " + frames + "\n");
+		form.append("start: " + stopms + "\n");
+		form.append("stop : " + startms + "\n");
+		form.append("dur  : " + durms + "\n");
+		form.append("Drawn fps % = " + 250*100*1000 / durms + "\n");
+		form.append("Real  fps % = " + frames*100*1000 / durms + "\n");
 	}
 
 	public void pauseApp() {
@@ -185,15 +205,21 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 	// When the game canvas is hidden, stop the thread.
 	public void newVideoImage() {
 		graphics.drawRGB(cpu.VC.blitImg, 0, 128, 0, 0, 128, 160, false);
+		++fctr;
+		/*
 		{
 			drawString(mstr, 0, 0);
 			long runms = System.currentTimeMillis() - startms;
-			++fctr;
 			drawString("fps: " + fctr * 100000 / runms + " (" + fctr + ")", 0, 11);
 			String memstate = "" + (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1024 + "/" + Runtime.getRuntime().totalMemory()/1024 + " (" + Runtime.getRuntime().freeMemory()/1024 + ")";
 			drawString(memstate, 0, 22);
 		}
+		*/
 		flushGraphics();
+		if (fctr == 250) {
+			stopms = System.currentTimeMillis();
+			done = true;
+		}
 	}
 /*
 	protected void paint(Graphics graphics) {
@@ -280,29 +306,29 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 	// The game loop.
 	boolean done;
 	long startms;
+	long stopms;
 	public void run(){
+		w = getWidth();
+		h = getHeight() - 1;
+
+		w = 128;
+		h = 159;
+
+		PRINTFREEMEM("pre gc");
+		System.gc();
+		PRINTFREEMEM("pre new (" + w + "," + h + "," + w*(h-40) + ")");
+		PRINTFREEMEM("post new");
+		System.gc();
+		PRINTFREEMEM("post gc");
+
 		startms = System.currentTimeMillis();
 		try {
-			w = getWidth();
-			h = getHeight() - 1;
-
-			w = 128;
-			h = 159;
-
-			PRINTFREEMEM("pre gc");
-			System.gc();
-			PRINTFREEMEM("pre new (" + w + "," + h + "," + w*(h-40) + ")");
-			PRINTFREEMEM("post new");
-			System.gc();
-			PRINTFREEMEM("post gc");
-
-			int fctr = 0;
 
 			done = false;
-			while (!done) {
 				try {
-					//newVideoImage();
-					CPU.nextinstruction();
+					while (!done) {
+						CPU.nextinstruction();
+					};
 				} catch (Throwable e) {
 					System.out.println(e.getMessage());
 					e.printStackTrace();
@@ -311,8 +337,8 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 					PRINTFREEMEM("post gc");
 					Thread.sleep(10000);
 				}
-			};
-			parent.notifyDestroyed();
+			parent.notifyTestRun(startms, stopms);
+			//parent.notifyDestroyed();
 			/*
 			while(true) {
 				// Increment or decrement the scrolling interval
