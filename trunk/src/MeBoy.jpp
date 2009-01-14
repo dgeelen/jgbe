@@ -191,7 +191,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 
 	private boolean readCartNames() {
 		try {
-			InputStream is = getClass().getResourceAsStream("/carts");
+			InputStream is = MeBoyVFS.getCartListStream();
 			DataInputStream dis = new DataInputStream(is);
 
 			numCarts = dis.readInt();

@@ -1,0 +1,122 @@
+#include "Global.inc"
+
+import java.util.Vector;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.io.InputStream;
+import java.io.DataOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+//#define LEGACY_MEBOY_CARTS
+
+class MeBoyVFS {
+#ifndef LEGACY_MEBOY_CARTS
+	static protected IVFSNode vfsroot = VFSRoot.getRoot();
+
+	static protected void getFlattenedList(Vector ret, IVFSNode node, String path) {
+		if (node.isDir()) {
+			Enumeration e = node.getChildren();
+			while (e.hasMoreElements()) {
+				IVFSNode cn = (IVFSNode)e.nextElement();
+				getFlattenedList(ret, cn, path+cn.getName());
+			}
+		} else if (node.isFile()) {
+			ret.addElement(node.getName());
+			ret.addElement(node.getName());
+			ret.addElement(path);
+			//ret.addElement(node.getName());
+		}
+	}
+
+	static protected IVFSNode getNodeFromPath(String[] pathelems, int pathofs, IVFSNode node) {
+		if (pathofs == pathelems.length)
+			return node;
+		//PRINTLN("pelem:" +pathelems[pathofs]);
+
+		if (!node.isDir())
+			return null;
+
+		String pelem = pathelems[pathofs];
+		Enumeration e = node.getChildren();
+		while (e.hasMoreElements()) {
+			IVFSNode cn = (IVFSNode)e.nextElement();
+			//PRINTLN("kid:"+cn.getName());
+			if (cn.getName().equals(pelem) || cn.getName().equals(pelem+"/"))
+				return getNodeFromPath(pathelems, pathofs+1, cn);
+		}
+		return null;
+	}
+
+
+private static String[] splitPath(String original) {
+Vector nodes = new Vector();
+String separator = "/";
+//System.out.println("split start...................");
+// Parse nodes into vector
+int index = original.indexOf(separator);
+while(index>=0) {
+nodes.addElement( original.substring(0, index) );
+original = original.substring(index+separator.length());
+index = original.indexOf(separator);
+}
+// Get the last node
+nodes.addElement( original );
+
+// Create splitted string array
+String[] result = new String[ nodes.size() ];
+if( nodes.size()>0 ) {
+for(int loop=0; loop<nodes.size(); loop++)
+{
+result[loop] = (String)nodes.elementAt(loop);
+//System.out.println(result[loop]);
+}
+
+}
+
+return result;
+}
+
+#endif
+
+	public static InputStream getCartFileStream(String cartName, int bankpostfix) {
+		PRINTLN("MeBoyVFS.getInputStream("+cartName+","+bankpostfix+")");
+		#ifdef LEGACY_MEBOY_CARTS
+			String ifname = "/" + cartName + bankpostfix;
+			PRINTLN("ifname="+ifname);
+			InputStream is = new Object().getClass().getResourceAsStream(ifname);
+			PRINTLN("ret="+is);
+			return is;
+		#else
+			if (bankpostfix != 0)
+				return null;
+			String[] pathelems = splitPath(cartName);
+			IVFSNode cartnode = getNodeFromPath(pathelems, 1, vfsroot);
+			return cartnode.getInputStream();
+		#endif
+	}
+
+	public static InputStream getCartListStream() throws IOException {
+			#ifdef LEGACY_MEBOY_CARTS
+				return new Object().getClass().getResourceAsStream("/carts");
+			#else
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				DataOutputStream dos = new DataOutputStream(bos);
+
+				Vector cl = new Vector();
+				getFlattenedList(cl, vfsroot, "/");
+				PRINTLN(cl.size());
+				dos.writeInt(cl.size()/3);
+				Enumeration e = cl.elements();
+				while (e.hasMoreElements()) {
+					String str = (String)e.nextElement();
+					PRINTLN(str);
+					dos.writeUTF(str);
+				}
+
+				dos.flush();
+				return new ByteArrayInputStream(bos.toByteArray());
+			#endif
+	}
+};
