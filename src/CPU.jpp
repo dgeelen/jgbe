@@ -60,27 +60,36 @@ public final class CPU {
 		}
 
 		public static void setPC(int newPC) {
-			globalPC = newPC;
-			localPC = 0;
+			globalPC = 0;
+			localPC = newPC;
 		}
 
 		public static void pushPC() {
+			DO_PUSH_OLD(getPC());
+			/*
 			int pc = globalPC + localPC;
 			if (SP > 0xC001 && (SP >> 13) == 6) {
 				FWRAM[--SP - 0xC000] = I2B(pc>>8);
 				FWRAM[--SP - 0xC000] = I2B(pc&0xff);
 			} else {
-				write(--SP, pc >> 8);
-				write(--SP, pc & 0xFF);
+				SP=(SP-1)&0xffff; write(SP, pc >> 8);
+				SP=(SP-1)&0xffff; write(SP, pc&0xff);
 			}
+			*/
 		}
 
 		public static void popPC() {
+			setPC(POP);
+			/*
 			if (SP < 0xCFFF && (SP >> 13) == 6) {
-				setPC(B2I(FWRAM[SP++ - 0xC000]) + B2I(FWRAM[SP++ - 0xC000])<<8);
+				setPC(
+					   B2I(FWRAM[SP++ - 0xC000])
+					+ (B2I(FWRAM[SP++ - 0xC000])<<8)
+				);
 			} else {
 				setPC(read(SP++) + (read(SP++) << 8));
 			}
+			*/
 		}
 
 		//public static int PC=0;         ///< Program counter
@@ -1197,10 +1206,10 @@ public final class CPU {
 				case 0xd2: DO_JP_COND((F&FC)==0); break;            // JP   NC  , (nn)
 				case 0xda: DO_JP_COND((F&FC)!=0); break;            // JP   C   , (nn)
 				case 0xcd: DO_CALL_NN; break;                       // CALL (nn)
-				case 0xc4: DO_CALL_COND((F&FZ)==0); break;          // CALL NZ  , (d)
-				case 0xcc: DO_CALL_COND((F&FZ)!=0); break;          // CALL Z   , (d)
-				case 0xd4: DO_CALL_COND((F&FC)==0); break;          // CALL NC  , (d)
-				case 0xdc: DO_CALL_COND((F&FC)!=0); break;          // CALL C   , (d)
+				case 0xc4: DO_CALL_COND((F&FZ)==0); break;          // CALL NZ  , (nn)
+				case 0xcc: DO_CALL_COND((F&FZ)!=0); break;          // CALL Z   , (nn)
+				case 0xd4: DO_CALL_COND((F&FC)==0); break;          // CALL NC  , (nn)
+				case 0xdc: DO_CALL_COND((F&FC)!=0); break;          // CALL C   , (nn)
 				case 0x18: DO_JR_D; break;                          // JR   (d)
 				case 0x20: DO_JR_COND((F&FZ)==0); break;            // JR   NZ  , (d)
 				case 0x28: DO_JR_COND((F&FZ)!=0); break;            // JR   Z   , (d)
@@ -1403,6 +1412,7 @@ public final class CPU {
 			}
 			int res = 4*execute();
 			SP &= 0xffff;
+			if (getPC() > 0xffff || getPC() < 0) setPC(getPC()&0xffff);
 			//PC &= 0xffff;
 			++TotalInstrCount;
 			lastKeyChange += res;

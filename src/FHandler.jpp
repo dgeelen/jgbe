@@ -124,6 +124,7 @@ public final class FHandler {
 #endif
 	}
 
+#ifndef USE_JAVA_MOBILE
 	/** @brief creates a buffered input stream from a resource file
 	 *  it searches for the file in the root of the jar file if the
 	 *  application is started from a jar file, else it will look
@@ -131,20 +132,20 @@ public final class FHandler {
 	 *  @arg filename Name of the file to get a stream of
 	 *  @return the BufferedInputStream of that file
 	 */
-	 /*
+
 	public static final BufferedInputStream getResourceStream(String filename) throws IOException {
 		Class clazz = fhinstance.getClass(); // workaround...
 		InputStream fistream = clazz.getResourceAsStream(filename);
 		BufferedInputStream bistream = new BufferedInputStream(fistream);
 		return bistream;
 	}
-*/
+
 	/** returns the Bitstream Vera Sans Mono Font, normal style, size 12
 	 *  first look for VeraMono.ttf in the current dir/jar file
 	 *  then ask the system for the "Bitstream Vera Sans Mono" font
 	 *  @return the Font
 	 */
-#ifndef USE_JAVA_MOBILE
+
 	public static final Font getVeraMonoFont() {
 		try {
 			InputStream bistream = getResourceStream("VeraMono.ttf");

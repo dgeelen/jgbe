@@ -1,4 +1,5 @@
 #include "Global.inc"
+#ifdef USE_JAVA_MOBILE
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -103,3 +104,4 @@ public class VFS_JSR75 implements IVFSNode {
 	{
 	}
 };
+#endif

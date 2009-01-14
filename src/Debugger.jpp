@@ -165,7 +165,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				boolean keeprunning = true;
 				while ((threadStatus == 2) && keeprunning) {
 					int wval = (watchaddr>=0) ? dbg.gui.cpu.read(watchaddr) : 0;
-					int OldPC=gui.cpu.PC;
+					int OldPC=gui.cpu.getPC();
 					try {
 						cycling -= dbg.gui.cpu.nextinstruction();
 						decRunFor();
@@ -175,7 +175,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						PRINTLN("UNHANDLED ERROR:");
 						t.printStackTrace();
 						PRINTLN("+-------------------------------------------------+");
-						gui.cpu.PC=OldPC;
+						gui.cpu.setPC(OldPC);
 						gui.cpu.printCPUstatus();
 						PRINTLN("+=================================================+");
 						keeprunning = false;
@@ -184,7 +184,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						PRINTLN(""+gui.cpu.TotalCycleCount);
 						String out = STRFORMAT("cycles="+gui.cpu.TotalCycleCount+" PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
 //							gui.cpu.TotalCycleCount,
-							gui.cpu.PC,
+							gui.cpu.getPC(),
 							gui.cpu.A,
 							gui.cpu.F,
 							gui.cpu.B,
@@ -205,7 +205,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					if (dbg.gui.cpu.TotalInstrCount == instrstop) {
 						keeprunning = false;
 					}
-					if (dbg.gui.cpu.PC == stopaddr) {
+					if (dbg.gui.cpu.getPC() == stopaddr) {
 						keeprunning = false;
 					}
 					if ((watchaddr>=0) && (wval != dbg.gui.cpu.read(watchaddr))) {
@@ -220,7 +220,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						(dbg.gui.cpu.H<0) || (dbg.gui.cpu.H>0xff) ||
 						(dbg.gui.cpu.L<0) || (dbg.gui.cpu.L>0xff) ||
 						(dbg.gui.cpu.SP<0) || (dbg.gui.cpu.SP>0xffff) ||
-						(dbg.gui.cpu.PC<0) || (dbg.gui.cpu.PC>0xffff)
+						(dbg.gui.cpu.getPC()<0) || (dbg.gui.cpu.getPC()>0xffff)
 					) {
 						keeprunning = false;
 					}
@@ -228,7 +228,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						keeprunning = false;
 						gui.cpu.printCPUstatus();
 					}
-					if (dbg.gui.cpu.read(dbg.gui.cpu.PC) == breakinstr) {
+					if (dbg.gui.cpu.read(dbg.gui.cpu.getPC()) == breakinstr) {
 						keeprunning = false;
 					}
 					if((bpm>=0)&&(bpm==dbg.gui.cpu.last_memory_access)) {
@@ -665,13 +665,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	}
 
 	private void updateInstructions() {
-		int pc=gui.cpu.PC;
+		int pc=gui.cpu.getPC();
 		for(int i=0; i<7; ++i) {
 			pc = seekBackOneInstruction(pc);
 			instrs.setValueAt(instrs.getValueAt(i+1,0), i,0);
 		}
 		for(int i=0; i<16; ++i) {
-			if (i==7) pc=gui.cpu.PC;
+			if (i==7) pc=gui.cpu.getPC();
 			instrs.setValueAt(deasm.disassemble(pc), i,0);
 			pc+=deasm.instructionLength(pc);
 		}
@@ -729,10 +729,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		oldRegVal[7]=gui.cpu.L;
 
 		m = regs2.getColumnModel();
-		regs2.setValueAt(STRFORMAT("PC=$%04x",gui.cpu.PC), 0,0);
+		regs2.setValueAt(STRFORMAT("PC=$%04x",gui.cpu.getPC()), 0,0);
 		c = m.getColumn(0);
 		c.setCellRenderer( normal );
-		oldRegVal[8]=gui.cpu.PC;
+		oldRegVal[8]=gui.cpu.getPC();
 
 		regs2.setValueAt(STRFORMAT("SP=$%04x",gui.cpu.SP), 0,1);
 		c = m.getColumn(1);
@@ -896,7 +896,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						update();
 					}
 					else if(l.equalsIgnoreCase("pc")){
-						gui.cpu.PC=v&0xFFFF;
+						gui.cpu.setPC(v&0xFFFF);
 						update();
 					}
 					else if(l.equalsIgnoreCase("sp")){
@@ -972,7 +972,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						update();
 					}
 					else if (l.equalsIgnoreCase("disasm")) {
-						int pc = gui.cpu.PC;
+						int pc = gui.cpu.getPC();
 						while( v > pc ) {
 // 							PRINTF(deasm.simple_disasm(pc) + "  |  ");
 							PRINTLN(deasm.disassemble(pc));
@@ -995,7 +995,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			}
 			if(s.equalsIgnoreCase("so")) {
 				if (!runner.isRunning()) {
-					runner.setBreakPoint(gui.cpu.PC + deasm.instructionLength(gui.cpu.PC));
+					runner.setBreakPoint(gui.cpu.getPC() + deasm.instructionLength(gui.cpu.getPC()));
 					runner.resume();
 				}
 			}
@@ -1021,11 +1021,11 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			if(s.equalsIgnoreCase("rc")) {
 				runner.suspend();
 				CPURecompiler.testing = 0;
-				if (CPU.PC < 0x4000) {
-					CPU.rccache0[CPU.PC] = CPURecompiler.doRecompile(CPU.PC);
+				if (CPU.getPC() < 0x4000) {
+					CPU.rccache0[CPU.getPC()] = CPURecompiler.doRecompile(CPU.getPC());
 				}
-				else if (CPU.PC < 0x8000) {
-					CPU.rccachex[CPU.PC-0x4000] = CPURecompiler.doRecompile(CPU.PC);
+				else if (CPU.getPC() < 0x8000) {
+					CPU.rccachex[CPU.getPC()-0x4000] = CPURecompiler.doRecompile(CPU.getPC());
 				}
 			}
 #endif

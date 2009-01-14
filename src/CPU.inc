@@ -275,7 +275,7 @@ F = FN \
 #define DO_LD_16_RI_BC { localPC+=2; C = IMM8a; B = IMM8b; }
 #define DO_LD_16_RI_DE { localPC+=2; E = IMM8a; D = IMM8b; }
 #define DO_LD_16_RI_HL { localPC+=2; L = IMM8a; H = IMM8b; }
-#define DO_LD_16_RI_SP { localPC+=2;  SP = IMM16; }
+#define DO_LD_16_RI_SP { localPC+=2; SP = IMM16; }
 
 #define CASE_LD_16_RI(r) \
 	case (0x01+(RNUM(r)<<4)): DO_LD_16_RI_ ## r ; break;
