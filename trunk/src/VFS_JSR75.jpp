@@ -31,12 +31,12 @@ public class VFS_JSR75 implements IVFSNode {
 
 	public boolean isDir()
 	{
-		return path.equals("") || path.endsWith("/");
+		return path.endsWith("/");
 	}
 
 	public String getURL()
 	{
-		return "file:///"+path;
+		return "file://"+path;
 	}
 
 	public String getName()
@@ -49,7 +49,7 @@ public class VFS_JSR75 implements IVFSNode {
 	{
 		if (!isFile()) return null;
 		try {
-			FileConnection fc = (FileConnection)Connector.open("file:///"+path);
+			FileConnection fc = (FileConnection)Connector.open("file://"+path);
 			return fc.openInputStream();
 		} catch (Throwable e) {
 			return null;
@@ -58,6 +58,7 @@ public class VFS_JSR75 implements IVFSNode {
 
 	public OutputStream getOutputStream()
 	{
+		// TODO: check if file exists and return its outputstream;
 		return null;
 	}
 
@@ -67,26 +68,17 @@ public class VFS_JSR75 implements IVFSNode {
 		if (!isDir()) return null;
 
 		Vector children = new Vector();
-		if (path.equals("")) {
-			Enumeration e =  FileSystemRegistry.listRoots();
+		try {
+			Enumeration e = path.equals("/") ?
+				FileSystemRegistry.listRoots() :
+				((FileConnection)Connector.open("file://"+path)).list();
+
 			while (e.hasMoreElements()) {
-				String rootName = (String)e.nextElement();
-				System.out.println("mounted root:"+rootName);
-				children.addElement(new VFS_JSR75(rootName, rootName));
+				String childname = (String)e.nextElement();
+				children.addElement(new VFS_JSR75(childname, path+childname));
 			}
-		} else  {
-			try {
-				System.out.println("dir:"+path);
-				FileConnection fc = (FileConnection)Connector.open("file:///"+path);
-				Enumeration e = fc.list();
-				while (e.hasMoreElements()) {
-					String nname = (String)e.nextElement();
-					System.out.println("subdir:" + nname);
-					children.addElement(new VFS_JSR75(nname, path+nname));
-				}
-			} catch (Throwable e) {
-			}
-		};
+		} catch (Throwable e) {
+		}
 		return children.elements();
 	}
 

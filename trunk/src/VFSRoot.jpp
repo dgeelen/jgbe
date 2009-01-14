@@ -32,7 +32,7 @@ public class VFSRoot implements IVFSNode {
 
 	public String getURL()
 	{
-		return "rootvfs://";
+		return "vfsroot://";
 	}
 
 	public String getName()
@@ -75,8 +75,8 @@ public class VFSRoot implements IVFSNode {
 	{
 		if (newnode == null)
 			return;
-		if (newnode.isDir() && !newnode.getChildren().hasMoreElements())
-			return;
+		//if (newnode.isDir() && !newnode.getChildren().hasMoreElements())
+		//	return;
 		children.addElement(newnode);
 	}
 
@@ -85,8 +85,9 @@ public class VFSRoot implements IVFSNode {
 		VFSRoot root = new VFSRoot("root/");
 		root.addNode(new VFSJar("jar/", "/"));
 #ifdef USE_JAVA_MOBILE
-		if (System.getProperty("microedition.io.file.FileConnection.version") != null)
-			root.addNode(new VFS_JSR75("filesystem/", ""));
+		if (System.getProperty("microedition.io.file.FileConnection.version") != null) try {
+			root.addNode(new VFS_JSR75("filesystem/", "/"));
+		} catch (Throwable e) { PRINTLN(e.getMessage()); }
 		try {
 			root.addNode(new VFSRecStore("Record-JMGBE-Store", "jmgbe-store", "Da Fox && HackyKid && Satan", "JMGBE-Store"));
 		} catch (Throwable e) { PRINTLN(e.getMessage()); }
