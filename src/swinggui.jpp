@@ -1898,7 +1898,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			Thread.setDefaultUncaughtExceptionHandler(new GlobalExceptionCatcher());
 
 			boolean sound=true, debug=false, lastcart=false;
-			String romfile="", logfile="", remotedebugoffset = "";
+			String romfile="", logfile="", remotedebugoffset = "0";
 			for (int i = 0; i < args.length; ++i) {
 				if (args[i].charAt(0)!='-')
 					romfile = args[i];

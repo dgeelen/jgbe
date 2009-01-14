@@ -17,6 +17,9 @@ public class DebugServer {
 	}
 
 	void run() {
+		String[] historyA = new String[32];
+		String[] historyB = new String[32];
+		int historyIndex = 0;
 		try {
 			ServerSocket srvr = new ServerSocket(2016);
 			PRINTLN("Awaiting 2 connections");
@@ -29,11 +32,18 @@ public class DebugServer {
 			while(true) {
 				String a = readera.readLine();
 				String b = readerb.readLine();
+				historyA[historyIndex] = a;
+				historyB[historyIndex] = b;
+				historyIndex = (historyIndex+1)&(32-1);
 				if(!a.equals(b)) {
 					PRINTLN("A: " + a);
 					PRINTLN("B: " + b);
 					break;
 				}
+			}
+			for (int i = 0; i < 32; ++i) {
+				PRINTLN("A("+i+"): " + historyA[(historyIndex+i)&(32-1)]);
+				PRINTLN("B("+i+"): " + historyB[(historyIndex+i)&(32-1)]);
 			}
 		} catch(Exception e) {}
 	}
