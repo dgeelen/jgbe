@@ -155,16 +155,17 @@ jarzip: $(CLASSFILES)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
 	
-$(JARDIR)/jmgbe.jar: $(CLASSFILES) $(SRCDIR)/MANIFEST.MF.jmgbe.in
+$(JARDIR)/jmgbe.jar: $(AJAVAFILES) $(CLASSFILES) $(SRCDIR)/MANIFEST.MF.jmgbe.in
 	@echo "[packing] jgmbe.jar"
 	@cp "$(SRCDIR)/MANIFEST.MF.jmgbe.in" "$(CLASSDIR)/MANIFEST.MF.in"
 #	cd $(CLASSDIR) && "/cygdrive/c/Program Files/Java/WTK25/bin/preverify.exe" -d . -target CLDC1.0 -classpath "$(shell cygpath -pml "$(CLASSPATH)")" .
-	cd $(CLASSDIR) && "/cygdrive/c/Program Files/Java/WTK25/bin/preverify.exe" -d . -target CLDC1.0 -classpath "$(shell cygpath -pml "$(CLASSPATH)")" `ls *.class | sed "s:\.class::g"`
+#	cd $(CLASSDIR) && "/cygdrive/c/Program Files/Java/WTK25/bin/preverify.exe" -d . -target CLDC1.0 -classpath "$(shell cygpath -pml "$(CLASSPATH)")" `ls *.class | sed "s:\.class::g"`
 	@mkdir -p $(CLASSDIR)/META-INF
-	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jmgbe.jar *.class sml1.gb
+	cd $(CLASSDIR) && jar cmf MANIFEST.MF.in jmgbe.jar $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:') sml1.gb
 	@mkdir -p $(JARDIR)
+	java -jar $(PROGUARDPATH) @proguard.conf -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/jmgbe.jar -outjar $(CLASSDIR)/jmgbe-obf.jar
 	@rm $(JARDIR)/jmgbe.jar || true
-	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/jmgbe.jar jmgbe.jar || true
+	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/jmgbe-obf.jar jmgbe.jar || true
 #	@mv $(CLASSDIR)/jmgbe.jar $(JARDIR)/jmgbe.jar
 	
 $(JARDIR)/jmgbe.jad: $(JARDIR)/jmgbe.jar
@@ -220,6 +221,7 @@ clean:
 	rm -f $(JARDIR)/jgbe.jar
 	rm -f $(CLASSDIR)/jgbe.zip
 	rm -f $(SRCDIR)/svnrev.inc
+	rm -f $(GJAVAFILES)
 	touch $(JPPFILES)
 
 cleaner: clean
