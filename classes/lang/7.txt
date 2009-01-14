@@ -1,0 +1,72 @@
+Nieuw Spel
+Spel Hervatten
+Instellingen
+Logboek tonen
+Bluetooth
+Over MeBoy
+Afsluiten
+Selecteer Spel
+Verwijderen
+Kopiëren
+Terug
+Kan niet hervatten omdat het spel niet geïnstalleerd is
+Frames overslaan
+Keren scherm draaien (x90°)
+Grafische weergave
+Op het scherm laten passen
+In verhoudingen houden
+Geavanceerde grafische weergave
+Geavanceerde schalings modus
+Geluid
+Geluid aanzetten
+Experimentele functies
+Taal
+Anders
+GBC emulatie uitschakelen
+Laat logboek zien in menu
+Max grootte geladen spel in kB
+Opslaan
+Logboek
+Vrij geheugen:
+Pauze
+Hervatten
+Opslaan
+Weergeven/verbergen framerate
+Volledig scherm
+Besturing instellen
+Afsluiten
+Druk op de knop voor
+rechts
+links
+omhoog
+omlaag
+A
+B
+Select
+Start
+Meboy Fout
+Er heeft een fout plaatsgevonden
+Ongeschikt opgeslagen spel.
+Laden van het spel mislukt
+Updaten opgeslagen spel mislukt
+Kan de lijst met spellen niet laden.
+Verstuur spel
+Spellen
+Verstuur opgeslagen spel
+Opgeslagen spellen
+Opgeslagen spel ontvangen
+Annuleren
+Bluetooth overdracht voltooid.
+Bluetooth overdracht mislukt.
+Geen Bluetooth apparaten gevonden.
+Versturen...
+Kan geen verbinding maken met MeBoy op het apparaat.
+Het opgeslagen spel kon niet ontvangen worden, omdat het bijbehorende spel niet geïnstalleerd is.
+Het ontvangen opgeslagen spel kon niet opgeslagen worden.
+Geen van de geïnstalleerde spellen heeft kaart-RAM.
+Zoekend naar naarbije apparaten. Ontvangend apparaat moet in "ontvang opgeslagen spel" modus staan.
+Probeert verbinding te maken met Meboy op het geselecteerde apparaat...
+Wachten op het opgeslagen spel om verstuurd te worden...
+Ongeschikte versie.
+Selecteer apparaat
+Ontvangen...
