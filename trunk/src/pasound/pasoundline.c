@@ -1,3 +1,8 @@
+/* hax for cygwin */
+#ifdef __CYGWIN__
+#define __int64 long long
+#endif
+
 #include "pasoundline.h"
 #include <assert.h>
 #include <stdio.h>
@@ -29,7 +34,7 @@ static int pa_callback( const void *inputBuffer, void *outputBuffer,
                          void *userData );
 
 static struct PAInfo pa;
-void Java_PASoundLine_start(JNIEnv* env, jobject this)
+JNIEXPORT void JNICALL Java_PASoundLine_start(JNIEnv* env, jobject this)
 {
 	assert(singleton_lock == 0);
 	++singleton_lock;
@@ -37,7 +42,7 @@ void Java_PASoundLine_start(JNIEnv* env, jobject this)
 	pa_init();
 }
 
-jint Java_PASoundLine_write(JNIEnv* env, jobject this, jbyteArray b, jint off, jint len)
+JNIEXPORT jint JNICALL Java_PASoundLine_write(JNIEnv* env, jobject this, jbyteArray b, jint off, jint len)
 {
 	assert(singleton_lock == 1);
 	jbyte *buffer = (*env)->GetByteArrayElements(env, b, NULL);
