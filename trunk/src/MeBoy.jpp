@@ -1,3 +1,4 @@
+#ifdef COMPILE_MEBOY
 /*
 
 MeBoy
@@ -882,3 +883,4 @@ public class MeBoy extends MIDlet implements CommandListener {
 		return -1;
 	}
 }
+#endif

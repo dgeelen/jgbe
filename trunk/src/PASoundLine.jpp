@@ -97,7 +97,7 @@ public class PASoundLine implements SourceDataLine {
 	/// Allows a line to engage in data I/O.
 	public native void start();
 
-	/// Stops the line.	
+	/// Stops the line.
 	public void stop() {
 		ASSERT(false);
 		// TODO
@@ -114,7 +114,7 @@ public class PASoundLine implements SourceDataLine {
 		ASSERT(false);
 		// TODO
 	}
- 
+
 	/// Obtains a control of the specified type, if there is any.
 	public Control getControl(Control.Type control) {
 		ASSERT(false);
