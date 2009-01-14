@@ -62,7 +62,7 @@ public final class MobileVideoController {
 	private static int scale = 3;
 	public static int nscale = 3;
 	private static int cfskip = 0;
-	public static int fskip = 3; // 1 is off
+	public static int fskip = 4; // 1 is off
 	public static boolean MixFrames; // Mix together last N frames
 	public boolean allow_writes_in_mode_2_3=false;
 
@@ -256,7 +256,7 @@ public final class MobileVideoController {
 	private void palChange(int palcol, int r, int g, int b) {
 		palColors[palcol] = ((r<<16)|(g<<8)|(b<<0));
 	}
-	
+
 #define DRAWPIX(x, pal, col) { \
 	blitImg[((159 - x) * 128) + ((int) LY * 128 / 144)] = palColors[pal | col]; \
 } \
@@ -578,7 +578,7 @@ public final class MobileVideoController {
 		* Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
 		*/
 		if (cfskip != 0) return;
-		
+
 		if((LCDC&(1<<7))!=0) { //LCD enabled
 			TileData = ((LCDC&(1<<4))==0) ? 0x0800 : 0x0000;
 			BGTileMap = ((LCDC&(1<<3))==0) ? 0x1800 : 0x1c00;
@@ -659,7 +659,7 @@ public final class MobileVideoController {
 		int TilePal = tilebufBG[bufMap++];
 		int vr1 = VRAM[(TileNum*16) + (bgOffsY*2) + 0];
 		int vr2 = VRAM[(TileNum*16) + (bgOffsY*2) + 1];
-		
+
 		#define PATLINE(x) (((vr1>>(7-(x)))&1) | (((vr2>>(7-(x)))&1) << 1))
 
 		int curX = 0;
@@ -788,7 +788,7 @@ public final class MobileVideoController {
 					ofsY &= 7;
 				}
 
-				boolean hflip = ((sprAttr&(1<<5))!=0); 
+				boolean hflip = ((sprAttr&(1<<5))!=0);
 				boolean prio = ((sprAttr&(1<<7))==0);
 
 				int palnr;
@@ -800,10 +800,10 @@ public final class MobileVideoController {
 
 				int vr1 = VRAM[(sprNum*16) + (ofsY*2) + 0];
 				int vr2 = VRAM[(sprNum*16) + (ofsY*2) + 1];
-	
+
 				for (int ofsX = 0; ofsX < 8; ++ofsX) {
 					int rx = sprX - 8 + ofsX;
-					
+
 					// 0 is transparent color
 					int col = PATLINE(hflip ? 7 - ofsX : ofsX);
 					if((col != 0) && (rx >= 0) && (rx < 160)
