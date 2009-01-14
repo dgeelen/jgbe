@@ -1602,7 +1602,31 @@ public final class CPU {
 
 		public int exception() {
 			return lastException;
-		}
+		};
+
+#define THROW(msg) { \
+	throw new RuntimeException(); \
+} \
+
+		// runloop aborts when this is set to false
+		public static boolean keeprunning;
+
+		public static void runlooprun() {
+			do {
+				int i = nextinstruction();
+				if (i == 0) THROW("nextinstruction() returned 0");
+			} while (keeprunning);
+		};
+
+		public static void runloop() {
+			keeprunning = true;
+			runlooprun();
+		};
+
+		public static void runlooponce() {
+			keeprunning = false;
+			runlooprun();
+		};
 
 		#include "linkcable.inc"
 }
