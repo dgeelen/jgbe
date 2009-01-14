@@ -27,7 +27,9 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 import java.io.*;
-import java.util.*;
+//import java.util.*;
+import java.util.Vector;
+import java.util.Enumeration;
 import javax.bluetooth.*;
 import javax.microedition.io.*;
 import javax.microedition.lcdui.*;
@@ -62,20 +64,20 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 	private List suspendgameList;
 	private List deviceList;
 	private Gauge gauge;
-	
+
 	private Vector savegameCartIDs;
 	private Vector savegameFilenames;
-	
+
 	// transmit stuff
 	private boolean iAmSender;
 	private StreamConnectionNotifier notifier;
 	private StreamConnection connection;
 	private DataInputStream is;
 	private DataOutputStream os;
-	
+
 	private boolean poisoned;
-	
-	
+
+
 	public Bluetooth(MeBoy parent) {
 		this.parent = parent;
 		showMain();
@@ -87,9 +89,9 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 
 	public void inquiryCompleted(int discType) {
 		if (poisoned) return;
-		
+
 		discoveryAgentIsInquiring = false;
-		
+
 		if (discType != INQUIRY_COMPLETED) {
 			// probably canceled
 			MeBoy.log("disctype = " + discType);
@@ -103,13 +105,13 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 				parent.cancelBluetooth(MeBoy.literal[60]);
 			return;
 		}
-		
+
 		showDevice();
 	}
 
 	public void servicesDiscovered(int transID, ServiceRecord[] servRecord) {
 		if (poisoned) return;
-		
+
 		for (int i = 0; i < servRecord.length; i++) {
 			DataElement serviceElement = servRecord[i].getAttributeValue(0x0001);
 			Enumeration serviceIDs = (Enumeration) (serviceElement == null ? null : serviceElement.getValue());
@@ -123,7 +125,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 				UUID serviceID = (UUID) (((DataElement) serviceIDs.nextElement()).getValue());
 				if (!serviceID.equals(MeBoyUUID))
 					continue;
-				
+
 				// MeBoy.log("Bluetooth: service found: " + servRecord[i].toString());
 
 				// get URL the "canonical" way
@@ -135,7 +137,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 				long channel = getChannel(servRecord[i].getAttributeValue(0x0004));
 				if (channel <= 0)
 					break;
-				
+
 				connectionURL = "btspp://" + servRecord[i].getHostDevice().getBluetoothAddress() + ":" +
 					channel + ";authenticate=false;encrypt=false";
 				return;
@@ -145,9 +147,9 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 
 	public void serviceSearchCompleted(int transID, int respCode) {
 		if (poisoned) return;
-		
+
 		discoveryAgentIsScanning = false;
-		
+
 		if (connectionURL != null && respCode == DiscoveryListener.SERVICE_SEARCH_COMPLETED) {
 			iAmSender = true;
 			new Thread(this).start();
@@ -160,7 +162,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 	public void showWait(String message) {
 		showWait(message, false);
 	}
-	
+
 	public void showWait(String message, boolean progressBar) {
 		waitForm = new Form(MeBoy.literal[4]);
 		waitForm.append(message);
@@ -172,7 +174,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 		waitForm.addCommand(new Command(MeBoy.literal[57], Command.CANCEL, 0));
 		parent.display.setCurrent(waitForm);
 	}
-	
+
 	private void waitCommand() {
 		parent.cancelBluetooth();
 	}
@@ -209,17 +211,17 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 		savegameCartIDs = new Vector();
 		savegameFilenames = new Vector();
 		parent.addSavegamesToList(savegameList, savegameCartIDs, savegameFilenames);
-		
+
 		if (savegameList.size() == 0) {
 			parent.cancelBluetooth(MeBoy.literal[65]);
 			return;
 		}
-		
+
 		savegameList.addCommand(new Command(MeBoy.literal[10], Command.BACK, 1));
 		savegameList.setCommandListener(this);
 		parent.display.setCurrent(savegameList);
 	}
-	
+
 	private void startInquiry() throws BluetoothStateException, InterruptedException {
 		LocalDevice localDevice = LocalDevice.getLocalDevice();
 		discoveryAgent = localDevice.getDiscoveryAgent();
@@ -243,25 +245,25 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 
 		showWait(MeBoy.literal[66]);
 	}
-	
+
 	private void savegameSelectCommand(Command com) {
 		if (com.getCommandType() == Command.BACK) {
 			showMain();
 			savegameList = null;
 			return;
 		}
-		
+
 		savegameDisplayName = savegameList.getString(savegameList.getSelectedIndex());
 		savegameCartID = (String) savegameCartIDs.elementAt(savegameList.getSelectedIndex());
 		savegameFilename = (String) savegameFilenames.elementAt(savegameList.getSelectedIndex());
 		sendgameMode = "r";
 		savegameList = null;
-		
+
 		try {
 			RecordStore rs = RecordStore.openRecordStore("20R_" + savegameCartID, false);
 			savegameData = rs.getRecord(1);
 			rs.closeRecordStore();
-			
+
 			startInquiry();
 		} catch (Exception e) {
 			parent.cancelBluetooth(e);
@@ -271,38 +273,38 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 
 	private void showSuspendGameSelect() {
 		suspendgameList = new List(MeBoy.literal[55], List.IMPLICIT);
-		
+
 		for (int i = 0; i < parent.suspendName20.length; i++) {
 			suspendgameList.append(parent.suspendName20[i], null);
 		}
-		
+
 		suspendgameList.addCommand(new Command(MeBoy.literal[10], Command.BACK, 1));
 		suspendgameList.setCommandListener(this);
 		parent.display.setCurrent(suspendgameList);
 	}
-	
+
 	private void suspendGameSelectCommand(Command com) {
 		if (com.getCommandType() == Command.BACK) {
 			showMain();
 			suspendgameList = null;
 			return;
 		}
-		
+
 		savegameDisplayName = suspendgameList.getString(suspendgameList.getSelectedIndex());
 		savegameFilename = "";
 		sendgameMode = "s";
 		suspendgameList = null;
-		
+
 		try {
 			RecordStore rs = RecordStore.openRecordStore("20S_" + savegameDisplayName, false);
 			savegameCartID = new String(rs.getRecord(1));
 			savegameData = rs.getRecord(2);
 			rs.closeRecordStore();
-			
+
 			int ix = savegameDisplayName.indexOf(':');
 			if (ix > 0)
 				savegameDisplayName = savegameDisplayName.substring(ix + 2); // : and space
-			
+
 			startInquiry();
 		} catch (Exception e) {
 			parent.cancelBluetooth(e);
@@ -324,7 +326,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 				}
 				deviceList.append(device, null);
 			}
-			
+
 			deviceList.addCommand(new Command(MeBoy.literal[57], Command.CANCEL, 1));
 			deviceList.setCommandListener(this);
 			parent.display.setCurrent(deviceList);
@@ -338,9 +340,9 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 			parent.cancelBluetooth();
 			return;
 		}
-		
+
 		int selectedDevice = deviceList.getSelectedIndex();
-		
+
 		try {
 			RemoteDevice remoteDevice = (RemoteDevice) remoteDevices.elementAt(selectedDevice);
 			discoveryAgentId = discoveryAgent.searchServices(attrSet, uuidSet, remoteDevice, this);
@@ -349,7 +351,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 			parent.cancelBluetooth(e);
 			return;
 		}
-		
+
 		showWait(MeBoy.literal[67]);
 	}
 
@@ -374,12 +376,12 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 			parent.cancelBluetooth();
 		}
 	}
-	
+
 	public void tearDown() {
 		if (poisoned) return;
-		
+
 		poisoned = true;
-		
+
 		if (discoveryAgent != null) {
 			if (discoveryAgentIsScanning)
 				discoveryAgent.cancelServiceSearch(discoveryAgentId);
@@ -387,7 +389,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 				discoveryAgent.cancelInquiry(this);
 			discoveryAgent = null;
 		}
-		
+
 		if (is != null) {
 			try {
 				is.close();
@@ -437,7 +439,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 		else if (s == receiveForm)
 			receiveCommand(com);
 	}
-	
+
 	private void send() throws Exception {
 		connection = (StreamConnection) Connector.open(connectionURL);
 		is = connection.openDataInputStream();
@@ -516,7 +518,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 		if (!mode.equals("r") && !mode.equals("s")) {
 			throw new IOException("invalid mode: " + mode);
 		}
-		
+
 		String gameDisplayName = is.readUTF();
 		String gameFileName = is.readUTF();
 		String gameCartID = is.readUTF();
@@ -563,7 +565,7 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 			parent.cancelBluetooth(e);
 		}
 	}
-	
+
 	// shamelessly stolen from "traud", with minor changes
 	// http://developer.sonyericsson.com/message/73104#73104
 	static long getChannel(DataElement list) {
@@ -591,10 +593,10 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 				}
 			}
 		} catch (Exception ex) {}
-		
+
 		return -1;
 	}
-	
+
 	// Will never return false, but invocation will throw an NoClassDefFoundError if not available.
 	static boolean available() {
 		return true;

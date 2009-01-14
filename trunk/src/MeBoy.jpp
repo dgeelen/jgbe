@@ -27,7 +27,9 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 import java.io.*;
-import java.util.*;
+//import java.util.*;
+import java.util.Vector;
+import java.util.Enumeration;
 import javax.microedition.lcdui.*;
 import javax.microedition.midlet.*;
 import javax.microedition.rms.*;
@@ -54,7 +56,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 	public static int lazyLoadingThreshold = 64; // number of banks, each 0x4000 bytes = 16kB
 	public static int language;
 	private static boolean bluetoothAvailable = false;
-	
+
 	public static int suspendCounter = 1; // next index for saved games
 	public static String[] suspendName10 = new String[0]; // v1-style suspended games
 	public static String[] suspendName20 = new String[0]; // v2-style suspended games
@@ -67,10 +69,10 @@ public class MeBoy extends MIDlet implements CommandListener {
 	private String[] cartID = null;
 	private int numCarts;
 	private boolean fatalError;
-	
+
 	public static String logString = "";
 	private static MeBoy instance;
-	
+
 	// UI components
 	public static Display display;
 	private List mainMenu;
@@ -78,7 +80,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 	private GBCanvas gbCanvas;
 	private List cartList;
 	private List suspendList;
-	
+
 	// Settings
 	private Form settingsForm;
 	private TextField frameSkipField;
@@ -89,27 +91,27 @@ public class MeBoy extends MIDlet implements CommandListener {
 	private ChoiceGroup miscSettingsGroup;
 	private ChoiceGroup soundGroup;
 	private ChoiceGroup languageGroup;
-	
+
 	private Bluetooth bluetooth;
-	
-	
+
+
 	public void startApp() {
 		if (instance == this) {
 			return;
 		}
-		
+
 		try {
 			bluetoothAvailable = Bluetooth.available();
 		} catch (NoClassDefFoundError t) {
 		}
-		
+
 		instance = this;
 		display = Display.getDisplay(this);
 
 		GBCanvas.readSettings();
 
 		readLangIndexFile();
-		
+
 		if (!readLiteralsFile())
 			return;
 		if (!readCartNames())
@@ -136,7 +138,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 				language = 0;
 				return readLiteralsFile();
 			}
-			
+
 			showError("Failed to read the language file.", null, e);
 			fatalError = true;
 			return false;
@@ -147,7 +149,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 	private void readLangIndexFile() {
 		try {
 			InputStreamReader isr = new InputStreamReader(getClass().getResourceAsStream("/lang/index.txt"), "UTF-8");
-			
+
 			String s;
 			languageLookup = new int[20];
 			Vector langVector = new Vector();
@@ -158,19 +160,19 @@ public class MeBoy extends MIDlet implements CommandListener {
 			}
 			languages = new String[languageCount];
 			langVector.copyInto(languages);
-			
+
 			isr.close();
 		} catch (Exception e) {
 			languages = new String[] {"English"};
 			languageLookup = new int[] {0};
 			languageCount = 1;
-			
+
 			if (debug) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	private String next(InputStreamReader isr) throws IOException {
 		StringBuffer sb = new StringBuffer();
 		int c;
@@ -186,18 +188,18 @@ public class MeBoy extends MIDlet implements CommandListener {
 		}
 		return null;
 	}
-	
+
 	private boolean readCartNames() {
 		try {
 			InputStream is = getClass().getResourceAsStream("/carts");
 			DataInputStream dis = new DataInputStream(is);
-			
+
 			numCarts = dis.readInt();
-			
+
 			cartDisplayName = new String[numCarts];
 			cartFileName = new String[numCarts];
 			cartID = new String[numCarts];
-			
+
 			for (int i = 0; i < numCarts; i++) {
 				cartDisplayName[i] = dis.readUTF();
 				cartFileName[i] = dis.readUTF();
@@ -211,34 +213,34 @@ public class MeBoy extends MIDlet implements CommandListener {
 		}
 		return true;
 	}
-	
+
 	public boolean upgradeSavegames() {
 		// upgrade cart ram:
 		for (int i = 0; i < numCarts; i++) {
 			String oldSaveName = cartFileName[i];
 			String newSaveName = cartID[i];
-			
+
 			try {
 				RecordStore rs = RecordStore.openRecordStore(oldSaveName, false);
 				if (rs.getNumRecords() > 0) {
 					byte[] b = rs.getRecord(1);
-					
+
 					RecordStore rs2 = RecordStore.openRecordStore("20R_" + newSaveName, true);
-					
+
 					if (rs2.getNumRecords() == 0) {
 						rs2.addRecord(b, 0, b.length);
 					} else {
 						// Don't overwrite the new-style saveram
 					}
-					
+
 					rs2.closeRecordStore();
-					rs.deleteRecord(1);  // in case of exception, prevent overwriting new 
+					rs.deleteRecord(1);  // in case of exception, prevent overwriting new
 				}
 				rs.closeRecordStore();
 			} catch (Exception e) {
 			}
 		}
-		
+
 		try {
 			// upgrade suspended games:
 			for (int i = 0; i < suspendName10.length; ) {
@@ -256,7 +258,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 		}
 		return true;
 	}
-	
+
 	private boolean upgradeSuspendedGame(int index) throws RecordStoreException {
 		boolean suspendName10Shrunk = false;
 		String suspendName = suspendName10[index];
@@ -353,7 +355,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 						System.arraycopy(oldStyle, oldIndex, newStyle, newIndex, untilNextSkip);
 						newIndex += untilNextSkip;
 						oldIndex += untilNextSkip + 7;
-						
+
 						System.arraycopy(oldStyle, oldIndex, newStyle, newIndex, 131);
 						newIndex += 131;
 						oldIndex += 131;
@@ -403,12 +405,12 @@ public class MeBoy extends MIDlet implements CommandListener {
 		gbCanvas.releaseReferences();
 		gbCanvas = null;
 	}
-	
+
 	private static String formatDetails(String details, Throwable exception) {
 		if (debug && exception != null) {
 			exception.printStackTrace();
 		}
-		
+
 		if (exception != null) {
 			if (details == null || details.length() == 0)
 				details = exception.toString();
@@ -419,7 +421,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 			return " (" + details + ")";
 		return "";
 	}
-	
+
 	public static void showError(String message, String details, Throwable exception) {
 		if (message == null)
 			message = literal[47];
@@ -432,7 +434,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 	public static void showLog() {
 		instance.showMessage(literal[28], logString);
 	}
-	
+
 	public void showMessage(String title, String message) {
 		messageForm = new Form(title);
 		messageForm.append(message);
@@ -440,7 +442,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 		messageForm.addCommand(new Command(literal[10], Command.BACK, 0));
 		display.setCurrent(messageForm);
 	}
-	
+
 	private void messageCommand() {
 		if (fatalError) {
 			destroyApp(true);
@@ -495,7 +497,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 
 	private void showCartList() {
 		cartList = new List(literal[7], List.IMPLICIT);
-		
+
 		for (int i = 0; i < numCarts; i++)
 			cartList.append(cartDisplayName[i], null);
 
@@ -510,7 +512,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 			showMainMenu();
 			return;
 		}
-		
+
 		int ix = cartList.getSelectedIndex();
 		String selectedCartID = cartID[ix];
 		String selectedCartDisplayName = cartDisplayName[ix];
@@ -546,11 +548,11 @@ public class MeBoy extends MIDlet implements CommandListener {
 			showMainMenu();
 			return;
 		}
-		
+
 		String label = com.getLabel();
 		int index = suspendList.getSelectedIndex();
 		String selectedName = suspendName20[index];
-		
+
 		if (label == literal[8]) {
 			try {
 				// update index:
@@ -627,7 +629,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 		graphicsGroup.setSelectedIndex(1, keepProportions);
 		graphicsGroup.setSelectedIndex(2, advancedGraphics);
 		settingsForm.append(graphicsGroup);
-		
+
 		scalingModeField = new TextField(literal[18], Integer.toString(scalingMode), 2, TextField.NUMERIC);
 		settingsForm.append(scalingModeField);
 
@@ -643,14 +645,14 @@ public class MeBoy extends MIDlet implements CommandListener {
 		for (int i = 0; i < languages.length; i++)
 			languageGroup.setSelectedIndex(i, language == languageLookup[i]);
 		settingsForm.append(languageGroup);
-		
+
 		miscSettingsGroup = new ChoiceGroup(literal[23],
 				ChoiceGroup.MULTIPLE, new String[]{literal[24], literal[25]},
 				null);
 		miscSettingsGroup.setSelectedIndex(0, disableColor);
 		miscSettingsGroup.setSelectedIndex(1, showLogItem);
 		settingsForm.append(miscSettingsGroup);
-		
+
 		loadThresholdField = new TextField(literal[26], "" + lazyLoadingThreshold * 16, 5, TextField.NUMERIC);
 		settingsForm.append(loadThresholdField);
 
@@ -666,7 +668,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 			showMainMenu();
 			return;
 		}
-		
+
 		int f = Integer.parseInt(frameSkipField.getString());
 		maxFrameSkip = Math.max(Math.min(f, 59), 0);
 		rotations = Integer.parseInt(rotationField.getString()) & 3;
@@ -683,7 +685,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 
 		int oldLanguage = language;
 		language = languageLookup[languageGroup.getSelectedIndex()];
-		
+
 		GBCanvas.writeSettings();
 		if (oldLanguage != language) {
 			readLiteralsFile();
@@ -692,7 +694,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 		settingsForm = null;
 		showMainMenu();
 	}
-	
+
 	public void addSavegamesToList(List list, Vector cartIDs, Vector filenames) {
 		for (int i = 0; i < numCarts; i++) {
 			try {
@@ -712,7 +714,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 			}
 		}
 	}
-	
+
 	private boolean tearDownBluetooth() {
 		if (bluetooth != null) {
 			bluetooth.tearDown();
@@ -721,24 +723,24 @@ public class MeBoy extends MIDlet implements CommandListener {
 		}
 		return false;
 	}
-	
+
 	// Cancel without message
 	public synchronized void cancelBluetooth() {
 		if (tearDownBluetooth())
 			showMainMenu();
 	}
-	
+
 	// Cancel with custom message
 	public synchronized void cancelBluetooth(String message) {
 		if (tearDownBluetooth())
 			showMessage(literal[4], message);
 	}
-	
+
 	// Cancel with generic message, log exception
 	public synchronized void cancelBluetooth(Exception e) {
 		if (!tearDownBluetooth())
 			return;
-		
+
 		log("BT: " + e);
 		if (debug) {
 			e.printStackTrace();
@@ -747,7 +749,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 			showMessage(literal[4], literal[59]);
 		}
 	}
-	
+
 	// Successfully finished bluetooth operation
 	public synchronized void finishBluetooth() {
 		if (tearDownBluetooth())
@@ -759,7 +761,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 		tearDownBluetooth();
 		if (mode.equals("r")) {
 			// cart ram
-			
+
 			if (gameCartID.length() == 0) {
 				int ix = -1;
 				if (ix == -1 && gameFileName.length() > 0)
@@ -769,7 +771,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 				if (ix > -1)
 					gameCartID = cartID[ix];
 			}
-			
+
 			if (gameCartID.length() > 0 && findMatch(gameCartID, cartID, false) > -1) {
 				addGameRAM(gameCartID, savegame);
 				showMessage(literal[4], literal[58]);
@@ -785,11 +787,11 @@ public class MeBoy extends MIDlet implements CommandListener {
 			}
 		} else {
 			// suspended game
-			
+
 			if (gameCartID.length() > 0 && findMatch(gameCartID, cartID, false) > -1) {
 				try {
 					String suspendName = (MeBoy.suspendCounter++) + ": " + gameDisplayName;
-					
+
 					RecordStore rs = RecordStore.openRecordStore("20S_" + suspendName, true);
 
 					if (rs.getNumRecords() == 0) {
@@ -813,7 +815,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 			}
 		}
 	}
-	
+
 	public void commandAction(Command com, Displayable s) {
 		if (s == messageForm)
 			messageCommand();
@@ -836,17 +838,17 @@ public class MeBoy extends MIDlet implements CommandListener {
 			System.out.println(s);
 		}
 	}
-	
+
 	public static void addGameRAM(String name, byte[] data) {
 		try {
 			RecordStore rs = RecordStore.openRecordStore("20R_" + name, true);
-			
+
 			if (rs.getNumRecords() == 0) {
 				rs.addRecord(data, 0, data.length);
 			} else {
 				rs.setRecord(1, data, 0, data.length);
 			}
-			
+
 			rs.closeRecordStore();
 		} catch (Exception e) {
 			if (MeBoy.debug)
@@ -862,7 +864,7 @@ public class MeBoy extends MIDlet implements CommandListener {
 		suspendName20[oldIndex.length] = name;
 		GBCanvas.writeSettings();
 	}
-	
+
 	private int findMatch(String match, String[] list, boolean fuzzy) {
 		// exact match
 		for (int i = 0; i < list.length; i++)
