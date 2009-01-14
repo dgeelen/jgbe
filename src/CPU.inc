@@ -99,10 +99,12 @@
 	#define WRITE_V WRITE_S
 #endif
 
-#define FETCH (READ_V(PC++))
-#define IMM8 (FETCH)
+#define IMM8a (imm8a)
+#define IMM8b (imm8b)
+#define IMM16 ((IMM8b << 8) + IMM8a)
+
+#define IMM8OFS (((IMM8a)^0x80)-0x80)
 // hope java evaluates left-to-right
-#define IMM16 (FETCH|(FETCH<<8))
 #define POP (READ_V(SP++)|(READ_V(SP++)<<8))
 
 #define DO_PUSH(val) { \
@@ -126,14 +128,15 @@
 
 
 #define DO_LD_RX(r, val) { r = val; }
-#define DO_JP_NN { PC = IMM16; }
-#define DO_JR_D { PC += 1+((READ_F(PC))^0x80)-0x80; }
-#define DO_CALL_NN { DO_PUSH(PC+2); DO_JP_NN; }
-#define DO_RET { PC = POP; }
+#define DO_JP_NN { setPC(IMM16); }
+#define DO_JR_D { localPC += 1+IMM8OFS; }
 
-#define SKIP_JR { --cycles; ++PC; }
-#define SKIP_JP { --cycles; PC+=2; }
-#define SKIP_CALL { cycles-=3; PC+=2; }
+#define DO_CALL_NN { localPC+=2; pushPC(); DO_JP_NN; }
+#define DO_RET { popPC(); }
+
+#define SKIP_JR { --cycles; ++localPC; }
+#define SKIP_JP { --cycles; localPC+=2; }
+#define SKIP_CALL { cycles-=3; localPC+=2; }
 #define SKIP_RET  { cycles-=3; }
 
 
@@ -267,12 +270,12 @@ F = FN \
 	case (0x40+(RNUM(r1)<<3)+(RNUM(r2))): DO_LD_RR(r1, r2); break;
 
 #define CASE_LD_RI(r) \
-	case (0x06+(RNUM(r)<<3)): DO_LD_RI(r, IMM8); break;
+	case (0x06+(RNUM(r)<<3)): ++localPC; DO_LD_RI(r, IMM8a); break;
 
-#define DO_LD_16_RI_BC { C = IMM8; B = IMM8; }
-#define DO_LD_16_RI_DE { E = IMM8; D = IMM8; }
-#define DO_LD_16_RI_HL { L = IMM8; H = IMM8; }
-#define DO_LD_16_RI_SP { SP = IMM16; }
+#define DO_LD_16_RI_BC { localPC+=2; C = IMM8a; B = IMM8b; }
+#define DO_LD_16_RI_DE { localPC+=2; E = IMM8a; D = IMM8b; }
+#define DO_LD_16_RI_HL { localPC+=2; L = IMM8a; H = IMM8b; }
+#define DO_LD_16_RI_SP { localPC+=2;  SP = IMM16; }
 
 #define CASE_LD_16_RI(r) \
 	case (0x01+(RNUM(r)<<4)): DO_LD_16_RI_ ## r ; break;
@@ -350,7 +353,7 @@ F = FN \
 #define DO_ADC_V(n) { t_vol = (n); DO_ADC_N(t_vol); }
 
 #define CASES_ALU_OP(base, imm, op) \
-	case (imm)   : DO_ ## op ## _V(FETCH); break; \
+	case (imm)   : ++localPC; DO_ ## op ## _N(IMM8a); break; \
 
 /*
 	case (base)  : DO_ ## op ## _N(B); break; \
