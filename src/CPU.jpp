@@ -1030,13 +1030,11 @@ public final class CPU {
 		}
 
 		public static void pressButton(int i) {
-			if ((GUIKeyStatus&i) != 0) return;
 			GUIKeyStatus |= i;
 		}
 
 		public static void releaseButton(int i) {
-			if ((GUIKeyStatus&i) == 0) return;
-			GUIKeyStatus&=~i;
+			GUIKeyStatus &= ~i;
 		}
 
 		public static void pressRemoteButton(int i) {
@@ -1411,14 +1409,12 @@ public final class CPU {
 #endif
 
 		public static int nextinstruction() {
-			/*
 			if (KeyStatus != GUIKeyStatus) {
 					KeyStatus = GUIKeyStatus;
-					keyHistory.add(lastKeyChange);
-					keyHistory.add(KeyStatus);
-					lastKeyChange = 0;
+					keyBounce = 1000;
+					keyBounceWaitNext = 0;
 			}
-			/*/
+			/* /
 			if (playbackHistoryIndex == -1) {
 				if (KeyStatus != GUIKeyStatus) {
 					keyBounce = 1000;
