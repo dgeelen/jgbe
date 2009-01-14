@@ -1420,7 +1420,35 @@ public final class CPU {
 			lastException = ((res!=0) ? 0 : 1);
 			last_memory_access=last_memory_access_internal;
 			elapseTime(res);
+
+			logState();
 			return res;
+		}
+
+
+		static OutputStream statelogger = null;
+
+		static int getPC() {
+			return PC;
+		}
+
+		static void logState() {
+			try {
+				if (statelogger == null) statelogger = new FileOutputStream("statelog.txt");
+				String msg = "i:" + TotalInstrCount + " c:" + TotalCycleCount + " PC:" + getPC()
+					+ " A:" + A
+					+ " F:" + F
+					+ " B:" + B
+					+ " C:" + C
+					+ " D:" + D
+					+ " E:" + E
+					+ " H:" + H
+					+ " L:" + L
+					+ " SP:" + SP
+					+ "\n";
+				statelogger.write(msg.getBytes());
+			} catch (Throwable e) {
+			}
 		}
 
 		/* Elapse time should be called whenever an event happens that consumes time.
