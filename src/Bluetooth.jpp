@@ -1,3 +1,4 @@
+#ifdef COMPILE_MEBOY
 /*
 
 MeBoy
@@ -602,3 +603,4 @@ public class Bluetooth implements DiscoveryListener, CommandListener, Runnable {
 		return true;
 	}
 }
+#endif

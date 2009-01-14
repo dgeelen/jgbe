@@ -1,3 +1,4 @@
+#ifdef COMPILE_MEBOY
 /*
 
 MeBoy
@@ -2923,3 +2924,4 @@ public class Dmgcpu implements Runnable {
 		System.gc();
 	}
 }
+#endif
