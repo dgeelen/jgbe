@@ -2483,7 +2483,7 @@ public class Dmgcpu implements Runnable {
 	/** Create a cartridge object, loading ROM and any associated battery RAM from the cartridge
 		*  filename given. */
 	private final void initCartridge() {
-		java.io.InputStream is = getClass().getResourceAsStream(cartName + '0');
+		java.io.InputStream is = MeBoyVFS.getCartFileStream(cartName, 0);
 		if (is == null) {
 			throw new RuntimeException(MeBoy.literal[49] + " (" + cartName + ")");
 		}
@@ -2515,7 +2515,7 @@ public class Dmgcpu implements Runnable {
 					if ((i & 15) == 0) {
 						// open next file
 						is.close();
-						is = getClass().getResourceAsStream(cartName + (i >> 4));
+						is = MeBoyVFS.getCartFileStream(cartName, i >> 4);
 					}
 
 					total = 0x2000;
@@ -2606,7 +2606,7 @@ public class Dmgcpu implements Runnable {
 
 				int file = bankNo >> 3;
 				int offset = (bankNo & 7) * 0x4000;
-				java.io.InputStream is = getClass().getResourceAsStream(cartName + file);
+				java.io.InputStream is = MeBoyVFS.getCartFileStream(cartName, file);
 
 				if (is == null || is.skip(offset) != offset)
 					throw new RuntimeException("Failed skipping to " + bankNo);
