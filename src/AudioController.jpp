@@ -97,7 +97,7 @@ public final class AudioController {
 	public void addIAudioListener(IAudioListener audioListener) { //FIXME: only 1 listener at a time
 		this.audioListener = audioListener;
 	}
-	
+
 	public AudioController(CPU cpu) {
 		this.cpu = cpu;
 		this.audioListener = null;
@@ -118,7 +118,7 @@ public final class AudioController {
 		RATE = (1<<21) / sampleRate;
 		setSpeed(currentEmulationSpeed);
 	}
-	
+
 	public void setSpeed(double emulationSpeed) {
 		currentEmulationSpeed = emulationSpeed;
 		CRATE = (int)((4194304.0 / (double)sampleRate)*emulationSpeed); //4194304 == (1<<22)
@@ -438,9 +438,7 @@ public final class AudioController {
 	}
 	public static boolean speedHax = false;
 
-	static long lastms = System.currentTimeMillis();
 
-	static byte bla=0;
 	public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
 		cyclesLeftToRender+=nrCycles;
 		sound_mix();
