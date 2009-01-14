@@ -846,13 +846,17 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 		boolean focus_pause = false;
 		public void focusGained(FocusEvent e) {
-			if(focus_pause) resumeEmulation(false);
+			if (!debug)
+				if(focus_pause)
+					resumeEmulation(false);
 		}
 
 		public void focusLost(FocusEvent e) {
-			focus_pause = cpuRunner.isRunning();
-			if(!cs.isVisible() && cpuRunner != null) // We like to keep the emu running when selecting colors
-				pauseEmulation(false);
+			if (!debug) {
+				focus_pause = cpuRunner.isRunning();
+				if(!cs.isVisible() && cpuRunner != null) // We like to keep the emu running when selecting colors
+					pauseEmulation(false);
+			}
 		}
 
 		boolean fulls = false;
@@ -1893,6 +1897,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			getContentPane().add(label);
 		}
 
+		boolean debug = false;
 		static Image logo = null;
 		public static void starter(swinggui gui, String[] args) {
 			Thread.setDefaultUncaughtExceptionHandler(new GlobalExceptionCatcher());
@@ -1915,6 +1920,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				if ((args[i].equals("-lastcart"))) //TODO: FIXME: Invert this (current behaviour is a work-around)
 					lastcart=true;
 			}
+
+			gui.debug = debug;
 
 			if(!lastcart) {
 				Toolkit toolkit = Toolkit.getDefaultToolkit();
