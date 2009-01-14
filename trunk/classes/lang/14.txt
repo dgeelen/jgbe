@@ -1,0 +1,72 @@
+Pokreni igru
+Učitaj igru
+Podešenja
+Izvešće (log)
+Blutut
+O programu
+Izlaz
+Odaberite igru
+Obriši
+Kopiraj
+Nazad
+Ne mogu da učitam jer igra nije instalisana
+Preskakanje frejmova
+Rotacija ekrana (x90°)
+Grafika
+Prilagodi ekranu
+Zadrži omer slike
+Napredna grafika
+Napredni modus skaliranja
+Zvuk
+Omogući zvuk
+Eksperimentalne funkcije
+Jezik
+Ostalo
+Onemogući GameBoy boje
+Pokaži "Izvešće" u meniju
+Maks.vel.učitane igre kB
+Sačuvaj
+Izvešće (log)
+Slobodna memorija
+Pauza
+Nastavi
+Sačuvaj
+Pokaži/makni fps
+Preko celog ekrana
+Podesi tipke
+Izađi iz
+Pritisnite tipku za
+desno
+levo
+gore
+dole
+A
+B
+Select
+Start
+MeBoy greška
+Pojavila se greška
+Nekompatibilna datoteka sačuvane igre.
+Ne mogu da učitam igru
+Ne mogu da obnovim spremljenu igru
+Ne mogu da učitam listu igara.
+Pošalji cart-RAM
+Cart-RAM
+Šalji spremljenu igru
+Spremljene igre
+Primi datoteku spremljene igre
+Odustani
+Blutut prenos uspešno izvršen.
+Blutut prenos nije uspeo.
+Ne mogu da pronađem Blutut uređaje.
+Slanje...
+Ne mogu da se spojim na MeBoy na uređaju.
+Datoteka spremljene igre nije primljena jer ne paše nijednoj instalisanoj igri.
+Ne mogu da sačuvam primljenu datoteku spremljene igre.
+Nijedna od instalisanih igara nema cart-RAM.
+Tražim uređaje... Provjerite da li je na uređaju na koji šaljete odabrano "Primi datoteku spremljene igre".
+Spajanje na MeBoy na odabranom uređaju...
+Slanje datoteke spremljene igre...
+Nekompatibilna verzija.
+Odaberite uređaj
+Primanje...
