@@ -992,6 +992,111 @@ public final class CPU {
 			RemoteKeyStatus &= ~i;
 		}
 
+		/** Performs a read of a register by internal register number */
+		private static final int registerRead(int regNum) {
+			switch (regNum) {
+				case 0:
+					return B;
+				case 1:
+					return C;
+				case 2:
+					return D;
+				case 3:
+					return E;
+				case 4:
+					return H;
+				case 5:
+					return L;
+				case 6:
+					return read(H<<8 | L);
+				case 7:
+					return A;
+				default:
+					return -1;
+			}
+		}
+
+		public static void executeALU(int b1) {
+			int operand = registerRead(b1 & 0x07);
+			switch ((b1 & 0x38) >> 3) {
+				case 1: // ADC A, r
+					if ((F & CF_Mask) != 0) {
+						operand++;
+					}
+					// Note!  No break!
+				case 0: // ADD A, r
+
+					if ((A & 0x0F) + (operand & 0x0F) >= 0x10) {
+						F = HC_Mask;
+					} else {
+						F = 0;
+					}
+
+					A += operand;
+
+					if (A > 0xff) {
+						F |= CF_Mask;
+						A &= 0xff;
+					}
+
+					if (A == 0) {
+						F |= ZF_Mask;
+					}
+					break;
+				case 3: // SBC A, r
+					if ((F & CF_Mask) != 0) {
+						operand++;
+					}
+					// Note! No break!
+				case 2: // SUB A, r
+
+					F = NF_Mask;
+
+					if ((A & 0x0F) < (operand & 0x0F)) {
+						F |= HC_Mask;
+					}
+
+					A -= operand;
+
+					if (A < 0) {
+						F |= CF_Mask;
+						A &= 0xff;
+					}
+					if (A == 0) {
+						F |= ZF_Mask;
+					}
+
+					break;
+				case 4: // AND A, r
+					A &= operand;
+					if (A == 0) {
+						F = HC_Mask + ZF_Mask;
+					} else {
+						F = HC_Mask;
+					}
+					break;
+				case 5: // XOR A, r
+					A ^= operand;
+					F = (A == 0) ? ZF_Mask : 0;
+					break;
+				case 6: // OR A, r
+					A |= operand;
+					F = (A == 0) ? ZF_Mask : 0;
+					break;
+				case 7: // CP A, r (compare)
+					F = NF_Mask;
+					if (A == operand) {
+						F |= ZF_Mask;
+					} else if (A < operand) {
+						F |= CF_Mask;
+					}
+					if ((A & 0x0F) < (operand & 0x0F)) {
+						F |= HC_Mask;
+					}
+					break;
+			}
+		}
+
 		public static int execute() {
 			int cycles;
 			TVARS;
@@ -1072,7 +1177,7 @@ public final class CPU {
 				--PC;
 			}
 
-#define break return cycles
+//#define break return cycles
 			switch ( op ) {
 				case 0x00: break;                                   // NOP
 				case 0xf3: IME=false; break;                        // DI
@@ -1234,17 +1339,23 @@ public final class CPU {
 						CASES_CB_SHOP(0x38, SRL)
 						CASES_CB_SWAP
 						default:
-						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x\n" , op );
+						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x (" + op + ")\n" , op );
 						PC -= 2;
 						return 0;
 					}
+					break;
 				default:
-					PRINTF( "UNKNOWN INSTRUCTION: $%02x\n" , op );
-					PC -= 1; // we failed to execute the instruction, so restore PC
-					return 0;
+					if ((op & 0xC0) == 0x80) {
+						executeALU(op);
+						return cycles;
+					} else {
+						PRINTF( "UNKNOWN INSTRUCTION: $%02x (" + op + ")\n" , op );
+						PC -= 1; // we failed to execute the instruction, so restore PC
+						return 0;
+					}
 			}
-#undef break
-//			return cycles;
+//#undef break
+			return cycles;
 		}
 
 		static long lastns = 0;
