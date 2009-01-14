@@ -7,6 +7,11 @@ import javax.microedition.midlet.*;
 import javax.microedition.lcdui.game.GameCanvas;
 import com.samsung.util.AudioClip;
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.DataInputStream;
+import javax.microedition.rms.RecordStore;
 
 public class jmgbe extends MIDlet {
 	jmgbeCanvas gCanvas;
@@ -66,6 +71,51 @@ class jmgbeCanvas extends Canvas implements Runnable, IVideoListener {
 
 	private jmgbe parent;
 	public jmgbeCanvas(jmgbe p){
+		try {
+			RecordStore rs = RecordStore.openRecordStore("jmgbe", true, RecordStore.AUTHMODE_ANY, true);
+			PRINTLN("rs size:" + rs.getSize());
+			PRINTLN("rs size:" + rs.getSizeAvailable());
+			//mstr = "rs avail:" + rs.getSizeAvailable();
+			String ri = "";
+			try {
+				ri = new String(rs.getRecord(1));
+			} catch (Throwable e) {	};
+			if (ri.length() == 0) {
+				PRINTLN("rs get:" + ri);
+				ri += ":test:";
+				//rs.setRecord(1, ri.getBytes(), 0, ri.length());
+				int rid= -1;
+				rid = rs.addRecord(ri.getBytes(), 0, ri.length());
+				PRINTLN("set:"+ rid);
+				mstr = "set:"+rid;
+			} else {
+				mstr = "get:"+ri;
+			}
+		} catch (Throwable e) {
+			PRINTLN("e:" + e.toString());
+		}
+		
+		Vector carts = new Vector();
+		try {
+			//BufferedReader br = new BufferedReader(new InputStreamReader(FHandler.getDataInputStream("/carts")));
+			DataInputStream br = FHandler.getDataInputStream("/carts");
+			while (true) {
+				String cart = "";
+				char c;
+				c = (char)br.readByte();
+				while (c != '\r' && c != '\n') {
+					cart += c;
+					c = (char)br.readByte();
+				}
+				if (cart.length() > 0) 
+					carts.addElement("/" + cart);
+			}
+		} catch (IOException e) {
+		}
+		
+		PRINTLN("carts: " + carts.size());
+		PRINTLN("cart: " + (String)carts.elementAt(0));
+		
 		//super( true );
 		parent = p;
 		setFullScreenMode(true);
@@ -75,7 +125,7 @@ class jmgbeCanvas extends Canvas implements Runnable, IVideoListener {
 		graphics.fillRect( 0, 0, getWidth(), getHeight() );
 		*/
 		PRINTFREEMEM("pre cartridge");
-		cartridge = new Cartridge("/sml1.gb");
+		cartridge = new Cartridge((String)carts.elementAt(0));
 		System.gc();
 		PRINTFREEMEM("pre CPU");
 		cpu = new CPU();
@@ -194,8 +244,8 @@ class jmgbeCanvas extends Canvas implements Runnable, IVideoListener {
 			done = false;
 			while (!done) {
 				try {
-					newVideoImage();
-					//CPU.nextinstruction();
+					//newVideoImage();
+					CPU.nextinstruction();
 				} catch (Throwable e) {
 					System.out.println(e.getMessage());
 					e.printStackTrace();
