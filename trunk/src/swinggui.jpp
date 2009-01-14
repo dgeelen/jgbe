@@ -162,7 +162,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 	public boolean hasThread(Thread t) {
 		return cpurunthread.equals(t);
 	}
-	
+
 	synchronized public void suspend() {
 		while (threadStatus != 0) {
 			threadStatus = 3;
@@ -192,13 +192,13 @@ class SimpleCPURunner implements CPURunner, Runnable {
 		while (true) {
 			// suspended
 			while (threadStatus == 0) { YIELD; };
-			
+
 			// suspend -> running
 			if (threadStatus == 1) threadStatus = 2;
-			
+
 			// running
 			while ((threadStatus == 2) && (CPU.nextinstruction()!=0)) {};
-			
+
 			if (threadStatus == 2) { // CPU returned exception
 				threadStatus = 3;
 				SwingUtilities.invokeLater( new Runnable() {
@@ -673,7 +673,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			menuitemIgnoreSTAT.addActionListener(this);
 			menuitemIgnoreSTAT.setAccelerator(KeyStroke.getKeyStroke(73,2)); // CTRL+I
 			menuOther.add(menuitemIgnoreSTAT);
-			
+
 			mainMenuBar.add( menuOther) ;
 
 			return mainMenuBar;
@@ -844,7 +844,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 		public void focusGained(FocusEvent e) {
 			if(focus_pause) resumeEmulation(false);
 		}
-		
+
 		public void focusLost(FocusEvent e) {
 			focus_pause = cpuRunner.isRunning();
 			if(!cs.isVisible() && cpuRunner != null) // We like to keep the emu running when selecting colors
@@ -1542,7 +1542,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				SAVE_VAL( menuitemMixFramesetState );
 				SAVE_VAL( fsizewidth );
 				SAVE_VAL( fsizeheight );
-				
+
 				/* SAVE PAL */
 				str = "ColorType = ";
 				for (int i = 0; i < menuitemColorSchemes.length; ++i)
@@ -1688,11 +1688,13 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			cheatcodes.useCheats(usecheats);
 			menuitemEnableCheats.setState(usecheats);
 
-			audioDriver.setMixerInfo(adName, adVendor, adDescription, adVersion);
-			audioDriver.setChannels(adChannels);
-			audioDriver.setBufferSize(adBufferSize);
-			audioDriver.setOutputInterval(adOutputInterval);
-			audioDriver.setSampleRate(adSampleRate);
+			if(audioDriver!=null) {
+				audioDriver.setMixerInfo(adName, adVendor, adDescription, adVersion);
+				audioDriver.setChannels(adChannels);
+				audioDriver.setBufferSize(adBufferSize);
+				audioDriver.setOutputInterval(adOutputInterval);
+				audioDriver.setSampleRate(adSampleRate);
+			}
 
 			interpolationRadioGroup.setSelectedIndex(interpolationRadioGroupsetSelectedIndex);
 			keepAspectRatio.setEnabled(keepAspectRatiosetEnabled);
@@ -1892,7 +1894,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			Thread.setDefaultUncaughtExceptionHandler(new GlobalExceptionCatcher());
 
 			boolean sound=true, debug=false, lastcart=false;
-			String romfile="", logfile="";
+			String romfile="", logfile="", remotedebugoffset = "";
 			for (int i = 0; i < args.length; ++i) {
 				if (args[i].charAt(0)!='-')
 					romfile = args[i];
@@ -1904,6 +1906,8 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 					sound = true;
 				if (args[i].equals("-debug"))
 					debug = true;
+				if (args[i].equals("-rdo"))
+					remotedebugoffset = args[++i];
 				if ((args[i].equals("-lastcart"))) //TODO: FIXME: Invert this (current behaviour is a work-around)
 					lastcart=true;
 			}
@@ -1926,12 +1930,16 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				romfile = (String)gui.rcFiles.get(0);
 
 			gui.cpu = new CPU();
-			gui.audioDriver = new AudioDriver(gui.cpu.AC);
-			CPU.AC.addIAudioListener(gui.audioDriver);
 
 			gui.VC = gui.cpu.VC;
 			gui.cs = new ColorSelector( gui );
 			gui.createGUI();
+
+			if(sound) {
+				gui.audioDriver = new AudioDriver(gui.cpu.AC);
+				CPU.AC.addIAudioListener(gui.audioDriver);
+				advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, gui.audioDriver, gui);
+			}
 
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
@@ -1942,10 +1950,6 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			gui.loadKeyBinds();
 
 			cheatcodes.applyCheatCodes(cart);
-
-			//Audio Properties Dialog
-			advancedAudioPropertiesDialog = new AdvancedAudioPropertiesDialog(frame, gui.audioDriver, gui);
-// 			advancedAudioPropertiesDialog.showWindow();
 
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
@@ -1963,6 +1967,11 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			//DEBUGGER
 			if (debug) {
 				Debugger dbgr = new Debugger(gui, logfile); //The GUI to which this debugger belongs
+				PRINTLN("Parsing long" + remotedebugoffset);
+				long l = Long.parseLong(remotedebugoffset);
+				PRINTLN("Setting");
+				dbgr.setRemoteDebugOffset(l);
+				PRINTLN("Running");
 				gui.cpuRunner = dbgr.runner;
 			}
 			else {

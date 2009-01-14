@@ -12,7 +12,8 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.io.*;
 
-public class Debugger implements ActionListener, ItemListener, KeyListener, MouseListener, AdjustmentListener { //GUI
+public class Debugger implements ActionListener, ItemListener, KeyListener, MouseListener, AdjustmentListener {
+	//GUI
 	public static boolean RIGHT_TO_LEFT = false;
 	private static final int aaarg=650;
 	public JTable regs1;
@@ -40,12 +41,21 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	private RDParser parser;
 	private int[] oldRegVal;
 	private Writer logwriter;
+	private long remoteDebugOffset = 0;
+
 	private int bpm=-1; //break on memory access
 	public Debugger(swinggui gui, String logfilename) {
 		this.gui=gui;
 		try {
-			if (!logfilename.equals(""))
-				logwriter = new BufferedWriter( new FileWriter(logfilename) );
+			if (!logfilename.equals("")) {
+				if(logfilename.startsWith("tcp://")) { // Remote debugging
+					Socket LogOutputSocket = new Socket(logfilename.substring(6), 2016);
+					logwriter = new BufferedWriter( new OutputStreamWriter( LogOutputSocket.getOutputStream() ) );
+				}
+				else {
+					logwriter = new BufferedWriter( new FileWriter(logfilename) );
+				}
+			}
 		}
 		catch (java.io.IOException e) {
 			PRINTLN("Error opening logfile:" + e.getMessage());
@@ -58,6 +68,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		runner = new DebugRunner(this);
 		createAndShowGUI();
 		update();
+	}
+
+	void setRemoteDebugOffset(long i) {
+		remoteDebugOffset = i;
 	}
 
 	public class DebugRunner implements Runnable, CPURunner {
@@ -166,9 +180,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						PRINTLN("+=================================================+");
 						keeprunning = false;
 					}
-					if (logwriter != null) {
-						String out = STRFORMAT("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
-//							gui.cpu.TotalInstrCount,
+					if((logwriter != null) && (gui.cpu.TotalCycleCount>=remoteDebugOffset)) {
+						PRINTLN(""+gui.cpu.TotalCycleCount);
+						String out = STRFORMAT("cycles="+gui.cpu.TotalCycleCount+" PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
 //							gui.cpu.TotalCycleCount,
 							gui.cpu.PC,
 							gui.cpu.A,
@@ -494,7 +508,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		MouseListener popupListener = new PopupListener();
 		instrs.addMouseListener(popupListener);
 	}
-	
+
 	class PopupListener extends MouseAdapter {
 		public void mousePressed(MouseEvent e) {
 			maybeShowPopup(e);
