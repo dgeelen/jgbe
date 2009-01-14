@@ -394,15 +394,16 @@ F = FN \
 
 
 #define DO_SHOP_R(op, r) { \
-	t_acc = (r) | ((F&FC)<<4); \
-	F = ShTables. op ## _flag[t_acc]; \
-	r = ShTables. op ## _val[t_acc]; \
+	t_acc = ((F&FC)>>4); \
+	F = ShTables ## op .flag[t_acc][(r)]; \
+	r = ShTables ## op .val[t_acc][(r)]; \
 }
 
 #define DO_SHOP_HL(op) { \
-	t_acc = READ_V(R16RHL) | ((F&FC)<<4); \
-	F = ShTables. op ## _flag[t_acc]; \
-	WRITE_V(R16RHL, ShTables. op ## _val[t_acc]); \
+	t_acc = ((F&FC)>>4); \
+	t_vol = READ_V(R16RHL); \
+	F = ShTables ## op .flag[t_acc][t_vol]; \
+	WRITE_V(R16RHL, ShTables ## op .val[t_acc][t_vol]); \
 }
 
 #define CASES_CB_SHOP(base, op) \

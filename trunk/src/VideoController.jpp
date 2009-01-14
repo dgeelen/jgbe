@@ -1075,7 +1075,8 @@ public final class VideoController {
 					ofsY &= 7;
 				}
 
-				if ((sprAttr&(1<<5))!=0) sprNum |= (1<<10); // horiz flip
+				bool hflip = ((sprAttr&(1<<5))!=0);
+				//if  sprNum |= (1<<10); // horiz flip
 				//if ((sprAttr&(1<<6))!=0) sprNum |= (1<<11); // vert flip
 				boolean prio = ((sprAttr&(1<<7))==0);
 
@@ -1090,6 +1091,7 @@ public final class VideoController {
 
 				for (int ofsX = 0; ofsX < 8; ++ofsX) {
 					int rx = sprX - 8 + ofsX;
+					if (hflip) rx = 7 - rx;
 					// 0 is transparent color
 					int col = PatLine[ofsX];
 					if((col != 0) && (rx >= 0) && (rx < 160)

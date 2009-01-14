@@ -16,6 +16,17 @@
 	#endif
 #endif
 
+
+#ifdef USE_JAVA_MOBILE
+	#define BTYPE byte
+	#define B2I(val) ((val)+128)
+	#define I2B(val) ((byte)((val)-128))
+#else
+	#define BTYPE int
+	#define B2I(val) (val)
+	#define I2B(val) (val)
+#endif
+
 #define DEBUG
 
 #define YIELD { \
