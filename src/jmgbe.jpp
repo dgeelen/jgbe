@@ -218,7 +218,7 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 		flushGraphics();
 		if (fctr == 250) {
 			stopms = System.currentTimeMillis();
-			done = true;
+			CPU.keeprunning = false;
 		}
 	}
 /*
@@ -260,7 +260,7 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 */
 	int getKeyMask(int code) {
 		int ret = 0;
-		if (code == 48) done = true;
+		if (code == 48) CPU.keeprunning = false;
 		int act = getGameAction(code);
 		     if (act == UP)        ret = 1<<0;
 		else if (act == DOWN)      ret = 1<<1;
@@ -304,7 +304,6 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 	}
 
 	// The game loop.
-	boolean done;
 	long startms;
 	long stopms;
 	public void run(){
@@ -323,12 +322,8 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 
 		startms = System.currentTimeMillis();
 		try {
-
-			done = false;
 				try {
-					while (!done) {
-						CPU.nextinstruction();
-					};
+					CPU.runloop();
 				} catch (Throwable e) {
 					System.out.println(e.getMessage());
 					e.printStackTrace();
