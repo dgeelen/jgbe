@@ -165,16 +165,26 @@ jarzip: $(CLASSFILES)
 $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(AJAVAFILES) $(CLASSFILES)
 	@echo "[packing] $*.jar"
 	@cp "$(shell cat $(SRCDIR)/$*.jar.info | grep "^manifest=" | sed "s:^[^=]*=::")" "$(CLASSDIR)/MANIFEST.MF.in"
-	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in $*.jar $(shell cat "$(SRCDIR)/$*.jar.info" | grep -v "^[a-z]*=") $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:')
+	@cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::" > $(CLASSDIR)/vfsjar.idx
+	cd $(CLASSDIR) && jar cmf MANIFEST.MF.in $*.jar $(shell cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::") $(shell cat "$(SRCDIR)/$*.jar.info" | grep -v "^[a-z]*=") $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:')
 
 	@echo "[obfuscating] $*.jar"
-	java -jar $(PROGUARDPATH) @proguard.conf -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
+	@java -jar $(PROGUARDPATH) @proguard.conf -printusage -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
 
 	
 	@echo "[minimizing] $*.jar"
 	@rm $(JARDIR)/$*.jar || true
-	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*.jar || true
+	#@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*-ps.jar || true
+	@mv $(CLASSDIR)/$*-obf.jar $(JARDIR)/$*-ps.jar
 	@rm -r jar/kjar_* || true
+
+	
+	#@"$(KEYTOOL)" -delete -alias signFiles -keystore jgbekeystore -keypass kpi135 -storepass ab987c > /dev/null || true
+	#@"$(KEYTOOL)" -genkey -alias signFiles -keystore jgbekeystore -keypass kpi135 -dname "cn=JGBE" -storepass ab987c
+	#@"$(JARSIGNER)" -keystore jgbekeystore -storepass ab987c -keypass kpi135 -signedjar $(JARDIR)/$*.jar $(JARDIR)/$*-ps.jar signFiles > /dev/null
+	@mv $(JARDIR)/$*-ps.jar $(JARDIR)/$*.jar
+	
+
 #	@mv $(CLASSDIR)/$*.jar $(JARDIR)/$*.jar
 
 	

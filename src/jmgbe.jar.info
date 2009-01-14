@@ -1,6 +1,6 @@
 manifest=./src/MANIFEST.MF.jmgbe.in
 jad=./src/MANIFEST.MF.jmgbe.in
 keep=jmgbe
-=carts
-=tetris.gb
-=sml1.gb
+vfsjar.idx
+=vfsjar=tetris.gb
+=vfsjar=sml1.gb
