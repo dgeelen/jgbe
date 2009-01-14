@@ -56,9 +56,25 @@ class VFSRecStoreInputStream extends InputStream {
 			throw new IOException(e.toString());
 		}
 	}
+
+	public void close() throws IOException
+	{
+		if (dis != null) {
+			dis.close();
+			dis = null;
+			recstore = null;
+		}
+	}
+
+	protected void finalize() throws Throwable
+	{
+		close();
+		//super.finalize();
+	}
 };
 
 class VFSRecStoreOutputStream extends OutputStream {
+	static final int CHUNKSIZE = 10*1024; // 10kb chunks
 	private int rid;
 	private int nextid;
 	private RecordStore recstore;
@@ -84,7 +100,7 @@ class VFSRecStoreOutputStream extends OutputStream {
 	{
 		this.recstore = recstore;
 		this.rid = rid;
-		this.buffer = new byte[10*1024];
+		this.buffer = new byte[CHUNKSIZE];
 		this.wofs = -1;
 		setNextID(-1);
 	}
@@ -116,6 +132,21 @@ class VFSRecStoreOutputStream extends OutputStream {
 		} catch (Throwable e) {
 			throw new IOException(e.toString());
 		}
+	}
+
+	public void close() throws IOException
+	{
+		if (buffer != null) {
+			flush();
+			buffer = null;
+			recstore = null;
+		}
+	}
+
+	protected void finalize() throws Throwable
+	{
+		close();
+		//super.finalize();
 	}
 };
 

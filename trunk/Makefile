@@ -185,7 +185,7 @@ jademu: $(JARDIR)/jmgbe.jad
 	@echo "[emulating] jmgbe"
 	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./jmgbe.jad -Xdomain:maximum -classpath "jmgbe.jar;$(CLASSPATH)"
 	
-$(JARDIR)/%.emu: $(JARDIR)/%.jad
+%.emu: $(JARDIR)/%.jad
 	@echo "[emulating] $*"
 	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./$*.jad -Xdomain:maximum -classpath "$*.jar;$(CLASSPATH)"
 

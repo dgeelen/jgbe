@@ -73,15 +73,18 @@ public class VFSRoot implements IVFSNode {
 
 	public void addNode(IVFSNode newnode)
 	{
-		if (newnode != null)
-			children.addElement(newnode);
+		if (newnode == null)
+			return;
+		if (newnode.isDir() && !newnode.getChildren().hasMoreElements())
+			return;
+		children.addElement(newnode);
 	}
 
 	static IVFSNode getRoot()
 	{
 		VFSRoot root = new VFSRoot("root/");
+		root.addNode(new VFSJar("jar/", "/"));
 #ifdef USE_JAVA_MOBILE
-		root.addNode(new VFSJarDir("jar/", ""));
 		if (System.getProperty("microedition.io.file.FileConnection.version") != null)
 			root.addNode(new VFS_JSR75("filesystem/", ""));
 		try {
