@@ -1,0 +1,82 @@
+#include "Global.inc"
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.Vector;
+
+public class VFSRoot implements IVFSNode {
+	public VFSRoot()
+	{
+		children = new Vector();
+	}
+
+	public boolean exists()
+	{
+		return true;
+	};
+
+	public boolean isFile()
+	{
+		return false;
+	}
+
+	public boolean isDir()
+	{
+		return true;
+	}
+
+	public String getURL()
+	{
+		return "rootvfs://";
+	}
+
+	/* for files */
+	public InputStream getInputStream()
+	{
+		return null;
+	}
+
+	public OutputStream getOutputStream()
+	{
+		return null;
+	}
+
+	private Vector children;
+
+	/* for dirs */
+	public Enumeration getChildren()
+	{
+		return children.elements();
+	}
+
+	public IVFSNode createFile(String name)
+	{
+		return null;
+	}
+
+	public IVFSNode createDir(String name)
+	{
+		return null;
+	}
+
+	public void delete(String name)
+	{
+	}
+
+	public void addNode(IVFSNode newnode)
+	{
+		children.addElement(newnode);
+	}
+
+	static IVFSNode getRoot()
+	{
+		VFSRoot root = new VFSRoot();
+#ifdef USE_JAVA_MOBILE
+		root.addNode(new VFSJarDir());
+		if (System.getProperty("microedition.io.file.FileConnection.version") != null)
+			root.addNode(new VFS_JSR75());
+#endif
+		return root;
+	}
+};

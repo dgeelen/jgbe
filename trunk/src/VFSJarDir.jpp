@@ -1,0 +1,87 @@
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.DataInputStream;
+import java.util.Enumeration;
+import java.util.Vector;
+
+public class VFSJarDir implements IVFSNode {
+	private String path;
+	VFSJarDir() {
+		path = "";
+	}
+
+	VFSJarDir(String path_)
+	{
+		path = path_;
+	}
+
+	public boolean exists()
+	{
+		return true;
+	};
+
+	public boolean isFile()
+	{
+		return false;
+	}
+
+	public boolean isDir()
+	{
+		return true;
+	}
+
+	public String getURL()
+	{
+		return "jar://" + path;
+	}
+
+	/* for files */
+	public InputStream getInputStream()
+	{
+		return null;
+	}
+
+	public OutputStream getOutputStream()
+	{
+		return null;
+	}
+
+	/* for dirs */
+	/* for dirs */
+	public Enumeration getChildren()
+	{
+		Vector children = new Vector();
+
+		try {
+			//BufferedReader br = new BufferedReader(new InputStreamReader(FHandler.getDataInputStream("/carts")));
+			DataInputStream br = new DataInputStream(this.getClass().getResourceAsStream("/carts"));
+			while (true) {
+				String cart = "";
+				char c;
+				c = (char)br.readByte();
+				while (c != '\r' && c != '\n') {
+					cart += c;
+					c = (char)br.readByte();
+				}
+				if (cart.length() > 0)
+					children.addElement(new VFSJarFile(cart));
+			}
+		} catch (Throwable e) {
+		}
+		return children.elements();
+	}
+
+	public IVFSNode createFile(String name)
+	{
+		return null;
+	}
+
+	public IVFSNode createDir(String name)
+	{
+		return null;
+	}
+
+	public void delete(String name)
+	{
+	}
+};

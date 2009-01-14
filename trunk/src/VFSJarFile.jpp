@@ -1,0 +1,70 @@
+#include "Global.inc"
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.Vector;
+
+public class VFSJarFile implements IVFSNode {
+	private String path;
+	VFSJarFile() {
+		path = "";
+	}
+
+	VFSJarFile(String path_)
+	{
+		path = path_;
+	}
+
+	public boolean exists()
+	{
+		return (path != "");
+	};
+
+	public boolean isFile()
+	{
+		return true;
+	}
+
+	public boolean isDir()
+	{
+		return false;
+	}
+
+	public String getURL()
+	{
+		return "jar://" + path;
+	}
+
+	/* for files */
+	public InputStream getInputStream()
+	{
+		PRINTLN("path:"+path);
+		return this.getClass().getResourceAsStream("/" + path);
+	}
+
+	public OutputStream getOutputStream()
+	{
+		return null;
+	}
+
+	/* for dirs */
+	public Enumeration getChildren()
+	{
+		return null;
+	}
+
+	public IVFSNode createFile(String name)
+	{
+		return null;
+	}
+
+	public IVFSNode createDir(String name)
+	{
+		return null;
+	}
+
+	public void delete(String name)
+	{
+	}
+};

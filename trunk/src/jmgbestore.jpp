@@ -1,0 +1,74 @@
+#include "Global.inc"
+#ifdef USE_JAVA_MOBILE
+
+import javax.microedition.lcdui.*;
+import javax.microedition.midlet.*;
+
+import java.io.*;
+import java.util.*;
+
+import javax.microedition.rms.RecordStore;
+import javax.microedition.rms.RecordEnumeration;
+
+public class jmgbestore extends MIDlet {
+	Form form;
+	RecordStore rs_data;
+	int data_id;
+
+	public jmgbestore() {
+	}
+
+	public void startApp() {
+		form = new Form("Hello World");
+		Display display = Display.getDisplay(this);
+		display.setCurrent(form);
+		
+		try {
+			form.append("Initializing...\n");
+			initialize();
+			form.append("Data size: " + rs_data.getSize() + "\n");
+			form.append("Data max: " + rs_data.getSizeAvailable() + "\n");
+		} catch (Throwable e) {
+			form.append("Exception: " + e.getMessage());
+		}
+	}
+	
+	public void initialize() throws Throwable
+	{
+		RecordStore rs_root = RecordStore.openRecordStore("jmgbe-store-root", true, RecordStore.AUTHMODE_ANY, true);
+		            rs_data = RecordStore.openRecordStore("jmgbe-store-data", true, RecordStore.AUTHMODE_ANY, true);
+		form.append("Recordstores opened.\n");
+
+		RecordEnumeration enum_root = rs_root.enumerateRecords( null, null, false );
+		data_id = -1;
+		try {
+		    while( enum_root.hasNextElement() ){
+			int id = enum_root.nextRecordId();
+			byte[] data = rs_root.getRecord( id );
+			DataInputStream dis = new DataInputStream(new ByteArrayInputStream( data ));
+			data_id = dis.readInt();
+			form.append("Got root data id:" + data_id + "\n");
+		    }
+		} finally {
+			enum_root.destroy(); // always clean it up!
+		}
+		
+		if (data_id == -1) {
+			byte[] newroot = new byte[0];
+			data_id = rs_data.addRecord(newroot, 0, newroot.length);
+			DirectByteArrayOutputStream bo = new DirectByteArrayOutputStream();
+			DataOutputStream dos = new DataOutputStream(bo);
+			dos.writeInt(data_id);
+			dos.flush();
+			rs_root.addRecord(bo.getByteArray(), 0, bo.size());
+			form.append("Added new root data id:" + data_id + "\n");
+		}
+	}
+
+	public void pauseApp() {
+	}
+
+	public void destroyApp(boolean unconditional) {
+	}
+}
+#endif

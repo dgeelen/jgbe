@@ -162,24 +162,32 @@ $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(AJAVAFILES) $(CLASSFILES)
 	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in $*.jar $(shell cat "$(SRCDIR)/$*.jar.info" | grep -v "^[a-z]*=") $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:')
 
 	@echo "[obfuscating] $*.jar"
-	@java -jar $(PROGUARDPATH) @proguard.conf -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar
+	java -jar $(PROGUARDPATH) @proguard.conf -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
+
 	
 	@echo "[minimizing] $*.jar"
 	@rm $(JARDIR)/$*.jar || true
 	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*.jar || true
+	@rm -r jar/kjar_* || true
 #	@mv $(CLASSDIR)/$*.jar $(JARDIR)/$*.jar
+
 	
 $(JARDIR)/%.jad: $(JARDIR)/%.jar $(SRCDIR)/%.jar.info
 	@echo [creating] $*.jad 
-	@cp "$(shell cat "$(SRCDIR)/$*.jar.info" | grep "^jad=" | sed "s:^[^=]*=::")" "$(JARDIR)/$*.jad"
+	@cp "$(shell cat "$(SRCDIR)/$*.jar.info" | grep "^manifest=" | sed "s:^[^=]*=::")" "$(JARDIR)/$*.jad"
 	@stat "$(JARDIR)/$*.jar" -c "%s" | sed "s=^=MIDlet-Jar-Size: =" >> "$(JARDIR)/$*.jad"
 
 jad: $(JARDIR)/jmgbe.jad
-	
+
+.PRECIOUS: $(JARDIR)/%.jar $(JARDIR)/%.jad
+
 jademu: $(JARDIR)/jmgbe.jad
 	@echo "[emulating] jmgbe"
 	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./jmgbe.jad -Xdomain:maximum -classpath "jmgbe.jar;$(CLASSPATH)"
 	
+$(JARDIR)/%.emu: $(JARDIR)/%.jad
+	@echo "[emulating] $*"
+	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./$*.jad -Xdomain:maximum -classpath "$*.jar;$(CLASSPATH)"
 
 
 # # # # # # # # # # #
