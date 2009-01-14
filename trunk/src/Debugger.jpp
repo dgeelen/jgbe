@@ -958,10 +958,10 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						runner.setRunFor(v);
 						runner.resume();
 					}
-					else if (l.equalsIgnoreCase("c")) {
-						if (!runner.isRunning()) {
+					else if (l.equalsIgnoreCase("ic")) {
+						//if (!runner.isRunning()) {
 							runner.setInstrStop(v);
-						}
+						//}
 					}
 					else if (l.equalsIgnoreCase("ime")) {
 						gui.cpu.IME = (v!=0);

@@ -1007,6 +1007,7 @@ public final class CPU {
 		public static void interrupt(int i) { //execute interrupt #i
 			IME = false;
 			pushPC();
+			setPC(i);
 			IOP[0x0f] &= ~i;
 		}
 
@@ -1167,6 +1168,12 @@ public final class CPU {
 				}
 			}
 
+			if (halt_fail_inc_pc) {
+				// failed to increment PC after halt
+				halt_fail_inc_pc = false;
+				--localPC;
+			}
+
 			if (false) {
 			} else {
 				int pc = localPC + globalPC;
@@ -1175,14 +1182,7 @@ public final class CPU {
 				imm8b = read(pc+1);
 				setPC(pc);
 			}
-
 			cycles = Tables.cycles[op];
-
-			if (halt_fail_inc_pc) {
-				// failed to increment PC after halt
-				halt_fail_inc_pc = false;
-				--localPC;
-			}
 
 //#define break return cycles
 			switch ( op ) {
@@ -1421,16 +1421,12 @@ public final class CPU {
 			last_memory_access=last_memory_access_internal;
 			elapseTime(res);
 
-			logState();
+			//logState();
 			return res;
 		}
 
-
+/*
 		static OutputStream statelogger = null;
-
-		static int getPC() {
-			return PC;
-		}
 
 		static void logState() {
 			try {
@@ -1450,7 +1446,7 @@ public final class CPU {
 			} catch (Throwable e) {
 			}
 		}
-
+*/
 		/* Elapse time should be called whenever an event happens that consumes time.
 		 * It will update all relevant timers. Input is the ammount of time that supposedly
 		 * has elapsed, in 'real' cpu cycles.
