@@ -1280,10 +1280,10 @@ public final class CPU {
 				case 0x39: DO_ADD_HL((SP>>8), (SP&0xff)); break;    // ADD  HL  , SP
 				case 0xe9: setPC(R16RHL); break;                      // JP   HL
 				case 0x2f: A ^= 0xff; F |= (FN|FH); break;          // CPL
-				case 0x07: DO_SHOP_R(RLC, A); F &= FC; break;       // RLA
-				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RL
-				case 0x0f: DO_SHOP_R(RRC, A); F &= FC; break;       // RRA
-				case 0x1f: DO_SHOP_R(RR, A); F &= FC; break;        // RR
+				case 0x07: DO_SHOP_R(RLC, A); F &= FC; break;       // RLCA
+				case 0x17: DO_SHOP_R(RL, A); F &= FC; break;        // RLA
+				case 0x0f: DO_SHOP_R(RRC, A); F &= FC; break;       // RRCA
+				case 0x1f: DO_SHOP_R(RR, A); F &= FC; break;        // RRA
 				case 0xc7: pushPC(); setPC(0x00); break;           // RST  &0
 				case 0xcf: pushPC(); setPC(0x08); break;           // RST  &8
 				case 0xd7: pushPC(); setPC(0x10); break;           // RST  &10
