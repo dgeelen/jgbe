@@ -908,11 +908,6 @@ public final class VideoController {
 				renderScanlineSprites();
 			}
 		}
-		else { //DEBUGGING
-			blitLine = blitImg[LY];
-			for(int x=0; x<160; ++x)
-				blitLine[x] = (int)(0xffffff*Math.random());
-		}
 	}
 
 	//private int lbgTileY = -1;
