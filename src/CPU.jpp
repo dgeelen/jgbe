@@ -41,7 +41,7 @@ public final class CPU {
 		public static int L = 7;
 
 		public static int[] IOP = new int[0x80]; //IO Ports
-		public static int[] HRAM = new int[0x7f]; //HighRAM
+		public static BTYPE[] HRAM = new BTYPE[0x7f]; //HighRAM
 		public static BTYPE[][] WRAM = new BTYPE[0x08][0x1000]; //8x4k InternalRAM
 		public static BTYPE[] FWRAM = WRAM[0]; // first WRAM bank
 		public static int CurrentWRAMBank=1;
@@ -59,29 +59,43 @@ public final class CPU {
 			return globalPC + localPC;
 		}
 
+		public static BTYPE[] decoderMemory = null;
+		public static int decoderMaxCruise = 0;
+
 		public static void setPC(int newPC) {
-			globalPC = 0;
-			localPC = newPC;
+			if (rMemMap[newPC >> 12] != null) {
+				//PRINTLN("Memmap cruise: " + newPC);
+				decoderMemory = rMemMap[newPC >> 12];
+				globalPC = newPC&0xf000;
+				localPC = newPC&0x0fff;
+				decoderMaxCruise = 0x0ffe;
+			} else if (0xFF80 <= newPC && newPC < 0xFFFE-2) {
+				//PRINTLN("HRAM cruise: " + newPC);
+				localPC = newPC - 0xFF80;
+				globalPC = newPC - localPC;
+				decoderMemory = HRAM;
+				decoderMaxCruise = 0x7e;
+			} else {
+				//PRINTLN("Failed cruise: " + newPC);
+				globalPC = 0;
+				localPC = newPC;
+				decoderMaxCruise = 0;
+			}
 		}
 
 		public static void pushPC() {
-			DO_PUSH_OLD(getPC());
-			/*
 			int pc = globalPC + localPC;
-			if (SP > 0xC001 && (SP >> 13) == 6) {
+			if (SP >= 0xC002 && SP <= 0xD000) {
 				FWRAM[--SP - 0xC000] = I2B(pc>>8);
 				FWRAM[--SP - 0xC000] = I2B(pc&0xff);
 			} else {
-				SP=(SP-1)&0xffff; write(SP, pc >> 8);
-				SP=(SP-1)&0xffff; write(SP, pc&0xff);
+				write(--SP, pc >> 8);
+				write(--SP, pc&0xff);
 			}
-			*/
 		}
 
 		public static void popPC() {
-			setPC(POP);
-			/*
-			if (SP < 0xCFFF && (SP >> 13) == 6) {
+			if (SP >= 0xC000 && SP <= 0xCFFE	) {
 				setPC(
 					   B2I(FWRAM[SP++ - 0xC000])
 					+ (B2I(FWRAM[SP++ - 0xC000])<<8)
@@ -89,7 +103,6 @@ public final class CPU {
 			} else {
 				setPC(read(SP++) + (read(SP++) << 8));
 			}
-			*/
 		}
 
 		//public static int PC=0;         ///< Program counter
@@ -185,7 +198,7 @@ public final class CPU {
 			SL_UINT8(F);
 			SL_UINT8(A);
 			SL_ARR(UINT8, IOP, 0x80);
-			SL_ARR(UINT8, HRAM, 0x7f);
+			SL_ARR(UINT8B, HRAM, 0x7f);
 			SL_IF_VERSION( 0,  0) {
 				for (int i = 0; i < 8; ++i) {
 					SL_ARR(UINT8B, WRAM[i], 0x1000);
@@ -391,6 +404,8 @@ public final class CPU {
 			rMemMap[0xE] = wMemMap[0xE] = rMemMap[0xC];
 
 			// 0xF // lots of special stuff here...
+
+			setPC(getPC());
 		}
 
 		public static int read(int index) {
@@ -591,7 +606,7 @@ public final class CPU {
 				}
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
-				b = HRAM[index-0xff80];
+				b = B2I(HRAM[index-0xff80]);
 			}
 			else if(index < 0x10000) { // Interrupt Enable Register (0xffff)
 				b=IE;
@@ -867,7 +882,7 @@ public final class CPU {
 				}
 			}
 			else if(index < 0xffff) { //High RAM (HRAM)
-				HRAM[index-0xff80] = value;
+				HRAM[index-0xff80] = I2B(value);
 			}
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
 				IE=value; // Interrupt Enable Register
@@ -1174,7 +1189,21 @@ public final class CPU {
 				--localPC;
 			}
 
-			if (false) {
+			if (localPC >= 0 && localPC < decoderMaxCruise) {
+				/*
+				PRINTLN("PC="+getPC());
+				PRINTLN("gPC="+globalPC);
+				PRINTLN("lPC="+localPC);
+				PRINTLN("dmc="+decoderMaxCruise);
+				PRINTLN("dmem="+decoderMemory);
+				PRINTLN("dm0="+decoderMemory[localPC]);
+				PRINTLN("dm1="+decoderMemory[localPC+1]);
+				PRINTLN("dm2="+decoderMemory[localPC+2]);
+				*/
+
+				op = B2I(decoderMemory[localPC++]);
+				imm8a = B2I(decoderMemory[localPC]);
+				imm8b = B2I(decoderMemory[localPC+1]);
 			} else {
 				int pc = localPC + globalPC;
 				op=read(pc++);
@@ -1412,7 +1441,7 @@ public final class CPU {
 			}
 			int res = 4*execute();
 			SP &= 0xffff;
-			if (getPC() > 0xffff || getPC() < 0) setPC(getPC()&0xffff);
+			//if (getPC() > 0xffff || getPC() < 0) setPC(getPC()&0xffff);
 			//PC &= 0xffff;
 			++TotalInstrCount;
 			lastKeyChange += res;
