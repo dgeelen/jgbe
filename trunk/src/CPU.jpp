@@ -40,7 +40,7 @@ public final class CPU {
 		public static int[] IOP = new int[0x80]; //IO Ports
 		public static BTYPE[] HRAM = new BTYPE[0x7f]; //HighRAM
 		public static BTYPE[][] WRAM = new BTYPE[0x08][0x1000]; //8x4k InternalRAM
-		public static BTYPE[] FWRAM = WRAM[0]; // first WRAM bank
+		public static BTYPE[] FWRAM = WRAM[0]; // first WRAM bank, this is the placa almost aways used for the stack
 		public static int CurrentWRAMBank=1;
 
 		public static boolean doublespeed = false;
@@ -52,15 +52,16 @@ public final class CPU {
 		public static int globalPC = 0;
 		public static int localPC = 0;
 
-		public static int getPC() {
-			return globalPC + localPC;
-		}
-
 		public static BTYPE[] smallcruise = new BTYPE[2];
 		public static BTYPE[] decoderMemory = null;
 		public static int decoderMaxCruise = 0;
 
+		public static int getPC() {
+			return globalPC + localPC;
+		}
+
 		public static void setPC(int newPC) {
+			newPC &= 0xffff;
 			if (rMemMap[newPC >> 12] != null) {
 				//PRINTLN("Memmap cruise: " + newPC);
 				decoderMemory = rMemMap[newPC >> 12];
@@ -78,7 +79,7 @@ public final class CPU {
 				globalPC = newPC;
 				localPC = 0;
 				smallcruise[0] = I2B(read(globalPC));
-				smallcruise[1] = I2B(read(globalPC+1));
+				smallcruise[1] = I2B(read((globalPC+1)&0xffff));
 				decoderMemory = smallcruise;
 				decoderMaxCruise = 0; // still set to zero, to get memory reread as late as possible
 			}
@@ -89,10 +90,14 @@ public final class CPU {
 			if (SP >= 0xC002 && SP <= 0xD000) {
 				FWRAM[--SP - 0xC000] = I2B(pc>>8);
 				FWRAM[--SP - 0xC000] = I2B(pc&0xff);
-			} else {
-				write(--SP, pc >> 8);
-				write(--SP, pc&0xff);
-			}
+			} else slowPushPC();
+		}
+
+		public static void slowPushPC() {
+			PRINTLN("SLOW PUSH: "+ SP);
+			int pc = globalPC + localPC;
+			--SP; SP &= 0xffff;write(SP, pc >> 8);
+			--SP; SP &= 0xffff; write(SP, pc&0xff);
 		}
 
 		public static void popPC() {
@@ -101,9 +106,14 @@ public final class CPU {
 					   B2I(FWRAM[SP++ - 0xC000])
 					+ (B2I(FWRAM[SP++ - 0xC000])<<8)
 				);
-			} else {
-				setPC(read(SP++) + (read(SP++) << 8));
-			}
+			} else slowPopPC();
+		}
+
+		public static void slowPopPC() {
+			PRINTLN("SLOW POP: "+ SP);
+			int pc = read(SP++);     SP &= 0xffff;
+			pc |= (read(SP++) << 8); SP &= 0xffff;
+			setPC(pc);
 		}
 
 		//public static int PC=0;         ///< Program counter
