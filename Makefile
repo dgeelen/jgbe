@@ -32,7 +32,9 @@ GB_LINK := xlink
 GB_FIX  := rgbfix
 
 -include Makefile.config
-CLASSPATH:="$(CLASSPATH):$(EXTRACLASSPATH)"
+ifneq ($(EXTRACLASSPATH),)
+	CLASSPATH:="$(CLASSPATH):$(EXTRACLASSPATH)"
+endif
 -include Makefile.inc
 
 
@@ -160,7 +162,7 @@ jarzip: $(CLASSFILES)
 	@cd $(CLASSDIR) && zip -r -9 jgbe.zip META-INF *.class icon.gif jgbe_logo.png VeraMono.ttf $(BOOTROM)
 	@mkdir -p $(JARDIR)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
-	
+
 
 $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(AJAVAFILES) $(CLASSFILES)
 	@echo "[packing] $*.jar"
@@ -171,25 +173,25 @@ $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(AJAVAFILES) $(CLASSFILES)
 	@echo "[obfuscating] $*.jar"
 	@java -jar $(PROGUARDPATH) @proguard.conf -printusage -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
 
-	
+
 	@echo "[minimizing] $*.jar"
 	@rm $(JARDIR)/$*.jar || true
 	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*-ps.jar || true
 #	@mv $(CLASSDIR)/$*-obf.jar $(JARDIR)/$*-ps.jar
 	@rm -r jar/kjar_* || true
 
-	
+
 	#@"$(KEYTOOL)" -delete -alias signFiles -keystore jgbekeystore -keypass kpi135 -storepass ab987c > /dev/null || true
 	#@"$(KEYTOOL)" -genkey -alias signFiles -keystore jgbekeystore -keypass kpi135 -dname "cn=JGBE" -storepass ab987c
 	#@"$(JARSIGNER)" -keystore jgbekeystore -storepass ab987c -keypass kpi135 -signedjar $(JARDIR)/$*.jar $(JARDIR)/$*-ps.jar signFiles > /dev/null
 	@mv $(JARDIR)/$*-ps.jar $(JARDIR)/$*.jar
-	
+
 
 #	@mv $(CLASSDIR)/$*.jar $(JARDIR)/$*.jar
 
-	
+
 $(JARDIR)/%.jad: $(JARDIR)/%.jar $(SRCDIR)/%.jar.info
-	@echo [creating] $*.jad 
+	@echo [creating] $*.jad
 	@cp "$(shell cat "$(SRCDIR)/$*.jar.info" | grep "^manifest=" | sed "s:^[^=]*=::")" "$(JARDIR)/$*.jad"
 	@stat "$(JARDIR)/$*.jar" -c "%s" | sed "s=^=MIDlet-Jar-Size: =" >> "$(JARDIR)/$*.jad"
 
@@ -200,7 +202,7 @@ jad: $(JARDIR)/jmgbe.jad
 jademu: $(JARDIR)/jmgbe.jad
 	@echo "[emulating] jmgbe"
 	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./jmgbe.jad -Xdomain:maximum -classpath "jmgbe.jar;$(CLASSPATH)"
-	
+
 %.emu: $(JARDIR)/%.jad
 	@echo "[emulating] $*"
 	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./$*.jad -Xdomain:maximum -classpath "$*.jar;$(CLASSPATH)"
