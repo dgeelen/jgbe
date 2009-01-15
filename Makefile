@@ -256,7 +256,7 @@ cleaner: clean
 	rm -f $(GJAVAFILES)
 	rm -f Makefile.inc
 
-#$(GJAVAFILES): $(MAKEFILES)
+$(GJAVAFILES): Makefile.config
 #$(CLASSFILES): $(MAKEFILES)
 #$(CLASSFILES): $(GJAVAFILES)
 

@@ -1409,12 +1409,13 @@ public final class CPU {
 #endif
 
 		public static int nextinstruction() {
+#ifdef USE_JAVA_MOBILE
 			if (KeyStatus != GUIKeyStatus) {
 					KeyStatus = GUIKeyStatus;
 					keyBounce = 1000;
 					keyBounceWaitNext = 0;
 			}
-			/* /
+#else
 			if (playbackHistoryIndex == -1) {
 				if (KeyStatus != GUIKeyStatus) {
 					keyBounce = 1000;
@@ -1443,7 +1444,7 @@ public final class CPU {
 				playbackHistoryIndex = -1;
 				keyHistoryEnabled = true;
 			}
-			//*/
+#endif
 			int res = 4*execute();
 			SP &= 0xffff;
 			//if (getPC() > 0xffff || getPC() < 0) setPC(getPC()&0xffff);
@@ -1608,10 +1609,11 @@ public final class CPU {
 		public static boolean keeprunning;
 
 		public static void runlooprun() {
+			int cycles;
 			do {
-				int i = nextinstruction();
-				if (i == 0) THROW("nextinstruction() returned 0");
-			} while (keeprunning);
+				cycles = nextinstruction();
+			} while (keeprunning && cycles > 0);
+			if (cycles == 0) THROW("nextinstruction() returned 0");
 		};
 
 		public static void runloop() {
