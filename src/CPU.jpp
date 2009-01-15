@@ -1462,11 +1462,15 @@ public final class CPU {
 				}
 
 				if (doublespeed) { // more instrs per vblank int
+#ifndef USE_JAVA_MOBILE
 					AC.render(cycles>>1); //render enough sound bytes for cycles Cycles
+#endif
 					VC.render( cycles>>1 );
 				}
 				else {
+#ifndef USE_JAVA_MOBILE
 					AC.render(cycles); //render enough sound bytes for cycles Cycles
+#endif
 					VC.render( cycles );
 				}
 			}
