@@ -222,7 +222,9 @@ public final class CPU {
 			SL_INT(CurrentWRAMBank);
 			SL_BOOL(doublespeed);
 			SL_BOOL(speedswitch);
-			SL_SKIP(INT, 1); //SL_INT(DIVcntdwn); // TODO: save divReset and load it from old games...
+			int DIVcntdwn = -1; // is used below to fix up divReset
+			SL_IF_VERSION( -1, 18) SL_INT(DIVcntdwn);
+			SL_IF_VERSION( 19, -1) SL_LONG(divReset);
 			SL_INT(TIMAcntdwn);
 			SL_IF_VERSION( -1, 14) SL_SKIP(INT, 1); //SL_INT(LCDCcntdwn);
 			int pc = getPC();
@@ -239,7 +241,7 @@ public final class CPU {
 			SL_IF_VERSION(11, -1) SL_UINT8(KeyStatus);
 			SL_IF_VERSION(12, -1) SL_INT(keyBounce);
 			SL_IF_VERSION(12, -1) SL_INT(keyBounceWaitNext);
-			SL_SKIP(INT, 1); // SL_INT(lastException);
+			SL_IF_VERSION(-1, 18) SL_SKIP(INT, 1); // SL_INT(lastException);
 			SL_BOOL(BIOS_enabled);
 
 			SL_OBJ(cartridge);
@@ -276,6 +278,13 @@ public final class CPU {
 				if (SL_LOAD) playbackHistoryIndex = -1;
 			} else
 				keyHistoryEnabled = false;
+
+			SL_IF_VERSION( -1, 18) if (SL_LOAD) {
+				// fix divReset for old savegames
+				divReset = (TotalCycleCount + CYCLES_PER_DIV - 1) - (IOP[0x04]*CYCLES_PER_DIV);
+				divReset -= CYCLES_PER_DIV;
+				divReset += DIVcntdwn;
+			}
 
 			if (SL_LOAD) {
 				refreshMemMap();
@@ -512,7 +521,7 @@ public final class CPU {
 						break;
 					case 0xff04: // DIV
 						// could be simpler, but this way is it exactly the same as it was before
-						return (int)((((TotalCycleCount+255 - divReset) / CYCLES_PER_DIV))&0xff);
+						return (int)((((TotalCycleCount + CYCLES_PER_DIV - 1 - divReset) / CYCLES_PER_DIV))&0xff);
 					case 0xff01: // SB - Serial transfer data (R/W)
 					case 0xff02: // SC - Serial Transfer Control (R/W)
 						//yes fallthrough works here
