@@ -65,13 +65,13 @@ public final class CPU {
 
 		public static void setPC(int newPC) {
 			newPC &= 0xffff;
-			if (rMemMap[newPC >> 12] != null) {
+			if (rMemMap[newPC >> 12] != null && (newPC&0x0fff)<=(0x0fff-2)) {
 				//PRINTLN("Memmap cruise: " + newPC);
 				decoderMemory = rMemMap[newPC >> 12];
 				globalPC = newPC&0xf000;
 				localPC = newPC&0x0fff;
 				decoderMaxCruise = 0x0ffe;
-			} else if (0xFF80 <= newPC && newPC < 0xFFFE-2) {
+			} else if (0xFF80 <= newPC && newPC <= 0xFFFE-2) {
 				//PRINTLN("HRAM cruise: " + newPC);
 				localPC = newPC - 0xFF80;
 				globalPC = newPC - localPC;
