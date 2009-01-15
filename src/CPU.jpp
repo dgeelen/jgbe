@@ -94,7 +94,7 @@ public final class CPU {
 		}
 
 		public static void slowPushPC() {
-			PRINTLN("SLOW PUSH: "+ SP);
+			//PRINTLN("SLOW PUSH: "+ SP);
 			int pc = globalPC + localPC;
 			--SP; SP &= 0xffff;write(SP, pc >> 8);
 			--SP; SP &= 0xffff; write(SP, pc&0xff);
@@ -110,7 +110,7 @@ public final class CPU {
 		}
 
 		public static void slowPopPC() {
-			PRINTLN("SLOW POP: "+ SP);
+			//PRINTLN("SLOW POP: "+ SP);
 			int pc = read(SP++);     SP &= 0xffff;
 			pc |= (read(SP++) << 8); SP &= 0xffff;
 			setPC(pc);
@@ -141,7 +141,6 @@ public final class CPU {
 
 		//CPU Class variables
 		public static Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
-		public static int lastException=0;
 		#ifndef USE_JAVA_MOBILE
 			public static Disassembler deasm;
 		#endif
@@ -237,7 +236,7 @@ public final class CPU {
 			SL_IF_VERSION(11, -1) SL_UINT8(KeyStatus);
 			SL_IF_VERSION(12, -1) SL_INT(keyBounce);
 			SL_IF_VERSION(12, -1) SL_INT(keyBounceWaitNext);
-			SL_INT(lastException);
+			SL_SKIP(INT, 1);
 			SL_BOOL(BIOS_enabled);
 
 			SL_OBJ(cartridge);
@@ -976,7 +975,6 @@ public final class CPU {
 			keyBounceWaitNext=0;
 			lastKeyChange = 0;
 			keyHistory.clear();
-			lastException=0;
 			hblank_dma_state = 0;
 			playbackHistoryIndex = -1;
 			keyHistoryEnabled = false;
@@ -1420,82 +1418,6 @@ public final class CPU {
 		static int[] rccnt =  new int[0x4000];
 #endif
 
-		public static int nextinstruction() {
-#ifdef USE_JAVA_MOBILE
-			if (KeyStatus != GUIKeyStatus) {
-					KeyStatus = GUIKeyStatus;
-					keyBounce = 1000;
-					keyBounceWaitNext = 0;
-			}
-#else
-			if (playbackHistoryIndex == -1) {
-				if (KeyStatus != GUIKeyStatus) {
-					keyBounce = 1000;
-					keyBounceWaitNext = 0;
-				}
-				if (KeyStatus != GUIKeyStatus || lastKeyChange > 0x3fffffff) {
-					KeyStatus = GUIKeyStatus;
-					keyHistory.add(lastKeyChange);
-					keyHistory.add(KeyStatus);
-					lastKeyChange = 0;
-				}
-			} else if (playbackHistoryIndex < keyHistory.size()) {
-				int d = keyHistory.get(playbackHistoryIndex);
-				if (d <= lastKeyChange) {
-					//PRINTLN("Playback!"+playbackHistoryIndex);
-					lastKeyChange = 0;
-					++playbackHistoryIndex;
-					d = keyHistory.get(playbackHistoryIndex++);
-					if (KeyStatus != d)  {
-						KeyStatus = d;
-						keyBounce = 1000;
-						keyBounceWaitNext = 0;
-					}
-				}
-			} else {
-				playbackHistoryIndex = -1;
-				keyHistoryEnabled = true;
-			}
-#endif
-			int res = 4*execute();
-			SP &= 0xffff;
-			//if (getPC() > 0xffff || getPC() < 0) setPC(getPC()&0xffff);
-			//PC &= 0xffff;
-			++TotalInstrCount;
-			lastKeyChange += res;
-			TotalCycleCount += res;
-			lastException = ((res!=0) ? 0 : 1);
-			#ifdef EXTRADEBUG
-				last_memory_access=last_memory_access_internal;
-			#endif
-			elapseTime(res);
-
-			//logState();
-			return res;
-		}
-
-/*
-		static OutputStream statelogger = null;
-
-		static void logState() {
-			try {
-				if (statelogger == null) statelogger = new FileOutputStream("statelog.txt");
-				String msg = "i:" + TotalInstrCount + " c:" + TotalCycleCount + " PC:" + getPC()
-					+ " A:" + A
-					+ " F:" + F
-					+ " B:" + B
-					+ " C:" + C
-					+ " D:" + D
-					+ " E:" + E
-					+ " H:" + H
-					+ " L:" + L
-					+ " SP:" + SP
-					+ "\n";
-				statelogger.write(msg.getBytes());
-			} catch (Throwable e) {
-			}
-		}
-*/
 		/* Elapse time should be called whenever an event happens that consumes time.
 		 * It will update all relevant timers. Input is the ammount of time that supposedly
 		 * has elapsed, in 'real' cpu cycles.
@@ -1611,10 +1533,6 @@ public final class CPU {
 #endif
 		}
 
-		public int exception() {
-			return lastException;
-		};
-
 #define THROW(msg) { \
 	throw new RuntimeException(); \
 } \
@@ -1625,7 +1543,52 @@ public final class CPU {
 		public static void runlooprun() {
 			int cycles;
 			do {
-				cycles = nextinstruction();
+				#ifdef USE_JAVA_MOBILE
+					if (KeyStatus != GUIKeyStatus) {
+							KeyStatus = GUIKeyStatus;
+							keyBounce = 1000;
+							keyBounceWaitNext = 0;
+					}
+				#else
+					if (playbackHistoryIndex == -1) {
+						if (KeyStatus != GUIKeyStatus) {
+							keyBounce = 1000;
+							keyBounceWaitNext = 0;
+						}
+						if (KeyStatus != GUIKeyStatus || lastKeyChange > 0x3fffffff) {
+							KeyStatus = GUIKeyStatus;
+							keyHistory.add(lastKeyChange);
+							keyHistory.add(KeyStatus);
+							lastKeyChange = 0;
+						}
+					} else if (playbackHistoryIndex < keyHistory.size()) {
+						int d = keyHistory.get(playbackHistoryIndex);
+						if (d <= lastKeyChange) {
+							//PRINTLN("Playback!"+playbackHistoryIndex);
+							lastKeyChange = 0;
+							++playbackHistoryIndex;
+							d = keyHistory.get(playbackHistoryIndex++);
+							if (KeyStatus != d)  {
+								KeyStatus = d;
+								keyBounce = 1000;
+								keyBounceWaitNext = 0;
+							}
+						}
+					} else {
+						playbackHistoryIndex = -1;
+						keyHistoryEnabled = true;
+					}
+				#endif
+				cycles = 4*execute();
+				++TotalInstrCount;
+				#ifndef USE_JAVA_MOBILE
+					lastKeyChange += cycles;
+				#endif
+				TotalCycleCount += cycles;
+				#ifdef EXTRADEBUG
+					last_memory_access=last_memory_access_internal;
+				#endif
+				elapseTime(cycles);
 			} while (keeprunning && cycles > 0);
 			if (cycles == 0) THROW("nextinstruction() returned 0");
 		};

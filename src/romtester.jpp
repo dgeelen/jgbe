@@ -66,7 +66,15 @@ public class romtester {
 					logwriter = null;
 				}
 			}
-			if ((--instrlimit==0) || cpu.nextinstruction()==0) {
+
+			boolean failed = false;
+			try {
+				CPU.runlooponce();
+			} catch (Throwable e) {
+				failed = true;
+			}
+
+			if ((--instrlimit==0) || failed) {
 				String s= STRFORMAT("%02x",cpu.read(cpu.getPC()));
 				String ss= STRFORMAT("%04x",cpu.getPC());
 				s=s.toUpperCase();

@@ -164,7 +164,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				if (threadStatus == 1) threadStatus = 2;
 
 				// running..
-				int cycling = 69905;
 				long curms = System.currentTimeMillis();
 
 				boolean keeprunning = true;
@@ -172,7 +171,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					int wval = (watchaddr>=0) ? dbg.gui.cpu.read(watchaddr) : 0;
 					int OldPC=gui.cpu.getPC();
 					try {
-						cycling -= dbg.gui.cpu.nextinstruction();
+						CPU.runlooponce();
 						decRunFor();
 					}
 					catch( Throwable t ) {
@@ -231,10 +230,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						(dbg.gui.cpu.getPC()<0) || (dbg.gui.cpu.getPC()>0xffff)
 					) {
 						keeprunning = false;
-					}
-					if (dbg.gui.cpu.exception() != 0) {
-						keeprunning = false;
-						gui.cpu.printCPUstatus();
 					}
 					if (dbg.gui.cpu.read(dbg.gui.cpu.getPC()) == breakinstr) {
 						keeprunning = false;
@@ -999,7 +994,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				s="-";
 			}
 			if(s.equalsIgnoreCase("s")) {
-				gui.cpu.nextinstruction();
+				CPU.runlooponce();
 				update();
 			}
 			if(s.equalsIgnoreCase("reset")) {
