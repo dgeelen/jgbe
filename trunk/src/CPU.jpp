@@ -420,7 +420,9 @@ public final class CPU {
 		}
 
 		public static int read(int index) {
-			last_memory_access_internal=index;
+			#ifdef EXTRADEBUG
+				last_memory_access_internal=index;
+			#endif
 			BTYPE mm[]=rMemMap[index>>12];
 			if (mm!=null)
 				return B2I(mm[index&0x0FFF]);
@@ -444,7 +446,9 @@ public final class CPU {
 			 */
 
 			int b;
-			last_memory_access_internal=index;
+			#ifdef EXTRADEBUG
+				last_memory_access_internal=index;
+			#endif
 			ASSERT(index>=0 && index <=0xffff);
 
 			if (index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
@@ -631,7 +635,10 @@ public final class CPU {
 
 		// has arguments swapped for recompiler use (stack order and stuff)
 		public static void write_fast1(int value, int index) {
-			last_memory_access_internal=index;
+
+			#ifdef EXTRADEBUG
+				last_memory_access_internal=index;
+			#endif
 			BTYPE mm[]=wMemMap[index>>12];
 			if (mm!=null) {
 				mm[index&0x0FFF] = I2B(value);
@@ -641,7 +648,9 @@ public final class CPU {
 		}
 
 		public static void write(int index, int value) {
-			last_memory_access_internal=index;
+			#ifdef EXTRADEBUG
+				last_memory_access_internal=index;
+			#endif
 			BTYPE mm[]=wMemMap[index>>12];
 			if (mm!=null) {
 				mm[index&0x0FFF] = I2B(value);
@@ -665,7 +674,9 @@ public final class CPU {
 			 * FF80-FFFE   High RAM (HRAM)
 			 * FFFF        Interrupt Enable Register
 			 */
-			last_memory_access_internal=index;
+			#ifdef EXTRADEBUG
+				last_memory_access_internal=index;
+			#endif
 			ASSERT(wMemMap[index>>12] == null); // remove when not triggered for some time...
 
 			ASSERT(index>=0 && index <=0xffff);
@@ -805,12 +816,16 @@ public final class CPU {
 					case 0xff46:{ // FF46 - DMA - DMA Transfer and Start Address (W)
 						//NOTE: CPU may only access HRAM during this DMA,
 						//      so there is no need to do special timing
-						last_memory_access=last_memory_access_internal;
+						#ifdef EXTRADEBUG
+							last_memory_access_internal=index;
+						#endif
 						//ASSERT((VC.STAT&2)==0);
 						for(int i=0; i<0xa0; ++i){
 							write(0xfe00|i, read(i+(value<<8)));
 						}
-						last_memory_access_internal=last_memory_access;
+						#ifdef EXTRADEBUG
+							last_memory_access_internal=index;
+						#endif
 						} break;
 					case 0xff47: // BGP - BG Palette Data (R/W) - Non CGB Mode Only
 					case 0xff48: // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
@@ -1450,7 +1465,9 @@ public final class CPU {
 			lastKeyChange += res;
 			TotalCycleCount += res;
 			lastException = ((res!=0) ? 0 : 1);
-			last_memory_access=last_memory_access_internal;
+			#ifdef EXTRADEBUG
+				last_memory_access=last_memory_access_internal;
+			#endif
 			elapseTime(res);
 
 			//logState();
