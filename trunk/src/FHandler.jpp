@@ -72,9 +72,9 @@ public final class FHandler {
 		String fext = fname.substring(dotPos);
 		if ( !fext.equals(".zip") ) {
 			// plain files
-			PRINTLN("NonStatic.class.getResourceAsStream("+fname+");");
-			Class clazz = Runtime.getRuntime().getClass();
-			InputStream bistream = (InputStream)clazz.getResourceAsStream(fname);
+			//PRINTLN("NonStatic.class.getDataInputStream("+fname+");");
+			//Class clazz = Runtime.getRuntime().getClass();
+			InputStream bistream =  new FileInputStream(fname);
 // 			PRINTLN("bistream="+bistream);
 			DataInputStream distream = new DataInputStream(bistream);
 // 			PRINTLN("distream="+distream);
