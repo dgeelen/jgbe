@@ -165,6 +165,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 
 	synchronized public void suspend() {
 		while (threadStatus != 0) {
+			CPU.keeprunning = false;
 			threadStatus = 3;
 			while (threadStatus == 3) { YIELD; };
 		}
@@ -197,7 +198,7 @@ class SimpleCPURunner implements CPURunner, Runnable {
 			if (threadStatus == 1) threadStatus = 2;
 
 			// running
-			while ((threadStatus == 2) && (CPU.nextinstruction()!=0)) {};
+			CPU.runloop();
 
 			if (threadStatus == 2) { // CPU returned exception
 				threadStatus = 3;
