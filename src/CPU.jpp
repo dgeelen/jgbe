@@ -46,7 +46,10 @@ public final class CPU {
 		public static boolean doublespeed = false;
 		public static boolean speedswitch = false;
 
-		public static int DIVcntdwn = 0;
+		// same in single and double speed:
+		public static final int CYCLES_PER_DIV = 256;
+		public static long divReset = 0;
+
 		public static int TIMAcntdwn = 0;
 
 		public static int globalPC = 0;
@@ -219,7 +222,7 @@ public final class CPU {
 			SL_INT(CurrentWRAMBank);
 			SL_BOOL(doublespeed);
 			SL_BOOL(speedswitch);
-			SL_INT(DIVcntdwn);
+			SL_SKIP(INT, 1); //SL_INT(DIVcntdwn); // TODO: save divReset and load it from old games...
 			SL_INT(TIMAcntdwn);
 			SL_IF_VERSION( -1, 14) SL_SKIP(INT, 1); //SL_INT(LCDCcntdwn);
 			int pc = getPC();
@@ -236,7 +239,7 @@ public final class CPU {
 			SL_IF_VERSION(11, -1) SL_UINT8(KeyStatus);
 			SL_IF_VERSION(12, -1) SL_INT(keyBounce);
 			SL_IF_VERSION(12, -1) SL_INT(keyBounceWaitNext);
-			SL_SKIP(INT, 1);
+			SL_SKIP(INT, 1); // SL_INT(lastException);
 			SL_BOOL(BIOS_enabled);
 
 			SL_OBJ(cartridge);
@@ -507,11 +510,13 @@ public final class CPU {
 						}
 						b^=0x0f;
 						break;
+					case 0xff04: // DIV
+						// could be simpler, but this way is it exactly the same as it was before
+						return (int)((((TotalCycleCount+255 - divReset) / CYCLES_PER_DIV))&0xff);
 					case 0xff01: // SB - Serial transfer data (R/W)
 					case 0xff02: // SC - Serial Transfer Control (R/W)
 						//yes fallthrough works here
 					//case 0xff03 ! dont break above ports
-					case 0xff04: // DIV
 					case 0xff05: // TIMA
 					case 0xff06: // TMA
 					case 0xff07: // TAC
@@ -734,7 +739,12 @@ public final class CPU {
 						}
 						break;
 					case 0xff04: // DIV
-						IOP[0x04] = 0;
+						// could be simpler, but this way is it exactly the same as it was before
+						int tcycle = (int)(TotalCycleCount&0xff);
+						if (tcycle == 0)
+							divReset = TotalCycleCount;
+						else
+							divReset = TotalCycleCount-tcycle+256;
 						break;
 					case 0xff05: // TIMA
 					case 0xff06: // TMA
@@ -964,7 +974,7 @@ public final class CPU {
 			CurrentWRAMBank=1;
 			doublespeed = false;
 			speedswitch = false;
-			DIVcntdwn = 0; //FIXME: Possibly set to initial value
+			divReset = 0;
 			TIMAcntdwn = 0;//This should get set with the proper value as soon as TIMA is activated
 
 			IE=0;         ///< Interrupt Enable (allowed interrupts)
@@ -1423,14 +1433,9 @@ public final class CPU {
 		 * has elapsed, in 'real' cpu cycles.
 		 */
 		public static void elapseTime(int cycles) {
+			TotalCycleCount += cycles;
 			if (cycles > 0) {
 				//clockfreq = 4194304hz
-				DIVcntdwn -= cycles;
-				if (DIVcntdwn < 0) {
-					DIVcntdwn += 256; // == 4194304/16384
-					++IOP[0x04];
-					IOP[0x04] &= 0xff;
-				}
 				int tac = IOP[0x07];
 				if ((tac&4)!=0) {
 					TIMAcntdwn -= cycles;
@@ -1584,7 +1589,6 @@ public final class CPU {
 				#ifndef USE_JAVA_MOBILE
 					lastKeyChange += cycles;
 				#endif
-				TotalCycleCount += cycles;
 				#ifdef EXTRADEBUG
 					last_memory_access=last_memory_access_internal;
 				#endif
