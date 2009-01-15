@@ -99,11 +99,15 @@
 	#define WRITE_V WRITE_S
 #endif
 
-#define IMM8a (imm8a)
-#define IMM8b (imm8b)
-#define IMM16 ((IMM8b << 8) + IMM8a)
+#define IMM8a (B2I(decoderMemory[localPC++]))
+#define IMM8b (IMM8a)
+#define IMM16 (B2I(decoderMemory[localPC++])|(B2I(decoderMemory[localPC++])<<8))
 
-#define IMM8OFS (((IMM8a)^0x80)-0x80)
+#define IMM8aNI (B2I(decoderMemory[localPC]))
+#define IMM16NI (B2I(decoderMemory[localPC])|(B2I(decoderMemory[localPC+1])<<8))
+
+#define I2OFS(x) (((x)^0x80)-0x80)
+#define IMM8OFS I2OFS(IMM8a)
 // hope java evaluates left-to-right
 #define POP (READ_V(SP++)|(READ_V(SP++)<<8))
 
@@ -128,10 +132,10 @@
 
 
 #define DO_LD_RX(r, val) { r = val; }
-#define DO_JP_NN { setPC(IMM16); }
-#define DO_JR_D { localPC += 1+IMM8OFS; }
+#define DO_JP_NN { setPC(IMM16NI); }
+#define DO_JR_D { localPC += 1+I2OFS(IMM8aNI); }
 
-#define DO_CALL_NN { localPC+=2; pushPC(); DO_JP_NN; }
+#define DO_CALL_NN { t_acc = IMM16; pushPC(); setPC(t_acc); }
 #define DO_RET { popPC(); }
 
 #define SKIP_JR { --cycles; ++localPC; }
@@ -270,12 +274,12 @@ F = FN \
 	case (0x40+(RNUM(r1)<<3)+(RNUM(r2))): DO_LD_RR(r1, r2); break;
 
 #define CASE_LD_RI(r) \
-	case (0x06+(RNUM(r)<<3)): ++localPC; DO_LD_RI(r, IMM8a); break;
+	case (0x06+(RNUM(r)<<3)): DO_LD_RI(r, IMM8a); break;
 
-#define DO_LD_16_RI_BC { localPC+=2; C = IMM8a; B = IMM8b; }
-#define DO_LD_16_RI_DE { localPC+=2; E = IMM8a; D = IMM8b; }
-#define DO_LD_16_RI_HL { localPC+=2; L = IMM8a; H = IMM8b; }
-#define DO_LD_16_RI_SP { localPC+=2; SP = IMM16; }
+#define DO_LD_16_RI_BC { C = IMM8a; B = IMM8b; }
+#define DO_LD_16_RI_DE { E = IMM8a; D = IMM8b; }
+#define DO_LD_16_RI_HL { L = IMM8a; H = IMM8b; }
+#define DO_LD_16_RI_SP { SP = IMM16; }
 
 #define CASE_LD_16_RI(r) \
 	case (0x01+(RNUM(r)<<4)): DO_LD_16_RI_ ## r ; break;
@@ -353,7 +357,7 @@ F = FN \
 #define DO_ADC_V(n) { t_vol = (n); DO_ADC_N(t_vol); }
 
 #define CASES_ALU_OP(base, imm, op) \
-	case (imm)   : ++localPC; DO_ ## op ## _N(IMM8a); break; \
+	case (imm)   : DO_ ## op ## _V(IMM8a); break; \
 	case (base)  : DO_ ## op ## _N(B); break; \
 	case (base)+1: DO_ ## op ## _N(C); break; \
 	case (base)+2: DO_ ## op ## _N(D); break; \

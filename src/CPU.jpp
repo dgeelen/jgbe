@@ -56,6 +56,7 @@ public final class CPU {
 			return globalPC + localPC;
 		}
 
+		public static BTYPE[] smallcruise = new BTYPE[2];
 		public static BTYPE[] decoderMemory = null;
 		public static int decoderMaxCruise = 0;
 
@@ -74,9 +75,12 @@ public final class CPU {
 				decoderMaxCruise = 0x7e;
 			} else {
 				//PRINTLN("Failed cruise: " + newPC);
-				globalPC = 0;
-				localPC = newPC;
-				decoderMaxCruise = 0;
+				globalPC = newPC;
+				localPC = 0;
+				smallcruise[0] = I2B(read(globalPC));
+				smallcruise[1] = I2B(read(globalPC+1));
+				decoderMemory = smallcruise;
+				decoderMaxCruise = 0; // still set to zero, to get memory reread as late as possible
 			}
 		}
 
@@ -1185,27 +1189,13 @@ public final class CPU {
 			}
 
 			if (localPC >= 0 && localPC < decoderMaxCruise) {
-				/*
-				PRINTLN("PC="+getPC());
-				PRINTLN("gPC="+globalPC);
-				PRINTLN("lPC="+localPC);
-				PRINTLN("dmc="+decoderMaxCruise);
-				PRINTLN("dmem="+decoderMemory);
-				PRINTLN("dm0="+decoderMemory[localPC]);
-				PRINTLN("dm1="+decoderMemory[localPC+1]);
-				PRINTLN("dm2="+decoderMemory[localPC+2]);
-				*/
-
-				op = B2I(decoderMemory[localPC++]);
-				imm8a = B2I(decoderMemory[localPC]);
-				imm8b = B2I(decoderMemory[localPC+1]);
+				op=B2I(decoderMemory[localPC++]);
 			} else {
-				int pc = localPC + globalPC;
+				int pc = getPC();
 				op=read(pc++);
-				imm8a = read(pc);
-				imm8b = read(pc+1);
 				setPC(pc);
 			}
+
 			cycles = Tables.cycles[op];
 
 //#define break return cycles
@@ -1213,10 +1203,10 @@ public final class CPU {
 				case 0x00: break;                                   // NOP
 				case 0xf3: IME=false; break;                        // DI
 				case 0xfb: IME=true; break;                         // IE
-				case 0xea: localPC+=2; WRITE_V(IMM16, A); break;                // LD   (nn), A
-				case 0xfa: localPC+=2; A = READ_V(IMM16); break;                // LD   A   , (nn)
-				case 0xe0: ++localPC; WRITE_S(IMM8a | 0xff00, A); break;        // LDH  (n) , A
-				case 0xf0: ++localPC; A = READ_S(IMM8a | 0xff00); break;        // LDH  A   , (n)
+				case 0xea: WRITE_V(IMM16, A); break;                // LD   (nn), A
+				case 0xfa: A = READ_V(IMM16); break;                // LD   A   , (nn)
+				case 0xe0: WRITE_S(IMM8a | 0xff00, A); break;        // LDH  (n) , A
+				case 0xf0: A = READ_S(IMM8a | 0xff00); break;        // LDH  A   , (n)
 				case 0xe2: WRITE_S(C | 0xff00, A); break;           // LDH  (C) , A
 				case 0xf2: A = READ_S(C | 0xff00); break;           // LDH  A   , (C)
 				case 0xf9: SP = R16RHL; break;                      // LD   SP  , HL
@@ -1255,7 +1245,7 @@ public final class CPU {
 				case 0x74: WRITE_V(R16RHL, H); break;               // LD   (HL), H
 				case 0x75: WRITE_V(R16RHL, L); break;               // LD   (HL), L
 				case 0x77: WRITE_V(R16RHL, A); break;               // LD   (HL), A
-				case 0x36: ++localPC; WRITE_V(R16RHL, IMM8a); break;            // LD   (HL), n
+				case 0x36: WRITE_V(R16RHL, IMM8a); break;            // LD   (HL), n
 				case 0x76: {                                        // HALT
 					if (IME) {
 						halted = true;
@@ -1295,13 +1285,11 @@ public final class CPU {
 				case 0x37: F &= FZ; F |= FC; break;                 // SCF
 				case 0x3f: F &= (FZ|FC); F ^= FC; break;            // CCF
 				case 0x08: {                                        // LD   (nn), SP
-					localPC+=2;
 					t_acc = IMM16;
 					WRITE_V(t_acc, SP&0xff);
 					WRITE_F((t_acc+1)&0xffff , SP>>8);
 				}; break;
 				case 0xf8:{                                         // LD  HL, SP+dd
-					++localPC;
 					R16WHL(SP);
 					L += IMM8OFS;
 					F = 0;
@@ -1331,7 +1319,6 @@ public final class CPU {
 					A &= 0xff;
 				};break;
 				case 0xe8:{
-					++localPC;
 					t_acc = SP;
 					SP += IMM8OFS;
 					F = ((SP >> 8) != (t_acc >> 8)) ? FH : 0;
@@ -1358,9 +1345,9 @@ public final class CPU {
 				CASES_INCDEC16
 				CASES_LD_XX
 				case 0xcb: // prefix instruction
-					++localPC;
-					cycles = Tables.cb_cycles[IMM8a];
-					switch ( IMM8a ) {
+					op = IMM8a;
+					cycles = Tables.cb_cycles[op];
+					switch ( op ) {
 						CASES_CB_BITNUM(0x40, BIT)
 						CASES_CB_BITNUM(0x80, RES)
 						CASES_CB_BITNUM(0xc0, SET)
@@ -1373,7 +1360,7 @@ public final class CPU {
 						CASES_CB_SHOP(0x38, SRL)
 						CASES_CB_SWAP
 						default:
-						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x (" + IMM8a + ")\n" , IMM8a );
+						PRINTF( "UNKNOWN PREFIX INSTRUCTION: $%02x (" + op + ")\n" , op );
 						localPC -= 2;
 						return 0;
 					}
