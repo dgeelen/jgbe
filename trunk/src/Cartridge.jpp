@@ -37,19 +37,24 @@ public final class Cartridge {
 	private int     CurrentRTCRegister=0;
 	DataInputStream distream;
 
+	private void handleIOException(IOException e) {
+		PRINTLN("error loading cartridge from file!: " + e.toString());
+		status = STATUS_FATAL_ERROR;
+		err_msg = e.getMessage();
+		if(e instanceof EOFException) {
+			err_msg = "This ROM image should have " + (rom_mm_size>>2) + " banks of data,\nbut not all banks appear to be present in the ROM image.\nJGBE will try to emulate the ROM regardless, but beware\nthat this may cause the ROM to lockup or crash.";
+			status = STATUS_NONFATAL_ERROR;
+		}
+		if(err_msg == null) err_msg = "Java Error messages are useless! (UNKNOWN_ERROR)";
+	}
+
 	public Cartridge(InputStream is) {
 		try {
 			file_name = "";
 			distream = new DataInputStream(is);
-
 			loadFromStream();
 		}
-		catch (java.io.IOException e) {
-			PRINTLN("error loading cartridge from file!: " + e.toString());
-			err_msg = e.getMessage();
-			if(err_msg == null) err_msg = "Java Error messages are useless! (UNKNOWN_ERROR)";
-		}
-
+		catch (java.io.IOException e) { handleIOException(e); }
 	}
 
 	public Cartridge(String file_name) {
@@ -62,16 +67,13 @@ public final class Cartridge {
 		 *         the cartridge is loaded into memory
 		 */
 		this.file_name = file_name;
+		distream = null;
 		try {
 			distream = FHandler.getDataInputStream(file_name);
-
 			loadFromStream();
 		}
-		catch (java.io.IOException e) {
-			PRINTLN("error loading cartridge from file!: " + e.getMessage());
-			err_msg = e.getMessage();
-			if(err_msg == null) err_msg = "Java Error messages are useless! (UNKNOWN_ERROR)";
-		}
+		catch (java.io.IOException e) { handleIOException(e); }
+
 /*#ifdef USE_JAVA_MOBILE
 		loadBios("/boot.rom");
 #else
@@ -103,13 +105,20 @@ public final class Cartridge {
 		SL_INT(CurrentRTCRegister);
 	}
 
-	public String getError() {
+	public static final int STATUS_OK             =                         0;
+	public static final int STATUS_NONFATAL_ERROR = STATUS_OK             + 1;
+	public static final int STATUS_FATAL_ERROR    = STATUS_NONFATAL_ERROR + 1;
+	private int status = STATUS_OK;
+	public int getStatus(String[] s) {
 		/**
 		 * getError returns the error message if an error has occured
-		 * pre: loadFromFile == true
+		 * pre: -
 		 * ret: Exception.getMessage()
 		 */
-		return err_msg;
+		if(s.length > 0) {
+			s[0] = err_msg;
+		}
+		return status;
 	}
 
 	private void loadFromStream() throws java.io.IOException {
@@ -117,7 +126,7 @@ public final class Cartridge {
 		 * loadFromFile loads a cartidge from a file
 		 * pre:  true
 		 * post: if an error occurred
-		 *         getError() contains the gives the message of the error
+		 *         getError() contains a message describing the error
 		 *       else
 		 *         the cartidge is loaded into ROM/RAM
 		 */
@@ -219,15 +228,18 @@ public final class Cartridge {
 		PRINTLN("ROM Name appears to be `"+title+"'");
 
 		// load entire ROM into memory
-		PRINTF("Trying to load "+(rom_mm_size>>2)+" banks of ROM");
-// 		PRINTF("loading");
+		PRINTF("Trying to load "+(rom_mm_size>>2)+" banks of ROM ");
+		// First allocate memory, then fill it with data from distream.
+		// This way we always have the appropriate number of banks available.
 		for (int i = 1; i < rom_mm_size; ++i) {
 			PRINTFREEMEM("cartidge");
 			MM_ROM[i] = new BTYPE[MEMMAP_SIZE];
+		}
+		for (int i = 1; i < rom_mm_size; ++i) {
+			PRINTF(".");
 			for(int j = 0; j < MEMMAP_SIZE; ++j) {
 				MM_ROM[i][j] = I2B(distream.readUnsignedByte());
 			}
-			PRINTF(".");
 		}
 		PRINTF("\n");
 

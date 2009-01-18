@@ -1754,19 +1754,25 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				tcart.loadBios(biosfilename);
 			else
 				tcart.loadBios("");
-			if(tcart.getError() == null) {
-				cart = tcart;
-				CPU.loadCartridge(cart);
-				updateCartName(filename);
-				boolean b = (cheatcodes==null) ? false : cheatcodes.UseCheats;
-				cheatcodes = new CheatCodeEditor(frame, curcartname);
-				cheatcodes.useCheats(b);
-				cheatcodes.applyCheatCodes(cart);
-				updateSaveStateOrder();
-				addOSDLine("loaded Rom: " + curcartname);
-			}
-			else { //error loading file as ROM
-				JOptionPane.showMessageDialog(frame, "There was an error loading this ROM!\n("+tcart.getError()+")" , "Error!", JOptionPane.ERROR_MESSAGE);
+			String[] messages = { "[Missing an error message here]" };
+			switch(tcart.getStatus(messages)) {
+				case Cartridge.STATUS_NONFATAL_ERROR: {
+					JOptionPane.showMessageDialog(frame, "WARNING:\n"+messages[0], "Warning!", JOptionPane.WARNING_MESSAGE);
+				} /* Fallthrough intentional */
+				case Cartridge.STATUS_OK: {
+					cart = tcart;
+					CPU.loadCartridge(cart);
+					updateCartName(filename);
+					boolean b = (cheatcodes==null) ? false : cheatcodes.UseCheats;
+					cheatcodes = new CheatCodeEditor(frame, curcartname);
+					cheatcodes.useCheats(b);
+					cheatcodes.applyCheatCodes(cart);
+					updateSaveStateOrder();
+					addOSDLine("loaded Rom: " + curcartname);
+				} break;
+				default: { //error loading file as ROM
+				JOptionPane.showMessageDialog(frame, "There was an error loading this ROM!\n("+messages[0]+")" , "Error!", JOptionPane.ERROR_MESSAGE);
+				} break;
 			}
 			resumeEmulation(false);
 		}
