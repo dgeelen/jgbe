@@ -26,6 +26,7 @@ public final class Cartridge {
 
 	private String  file_name;
 	private String  err_msg;            // message in case of an error
+	private String  title;              // Internal name of the ROM
 
 	protected int MBC;                    // The MBC used in the cartridge
 
@@ -119,6 +120,10 @@ public final class Cartridge {
 			s[0] = err_msg;
 		}
 		return status;
+	}
+
+	public String getTitle() {
+		return title;
 	}
 
 	private void loadFromStream() throws java.io.IOException {
@@ -220,7 +225,7 @@ public final class Cartridge {
 
 		if((MBC==2)&&(ram_mm_size==0)) ram_mm_size=1; // MBC2 has 512x4bits RAM builtin
 
-		String title="";
+		title="";
 		for(int i=0; i<16; ++i) {
 			if(B2I(MM_ROM[0][0x0134+i])==0) break;
 			title+=(char)B2I(MM_ROM[0][0x0134+i]);
