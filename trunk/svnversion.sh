@@ -2,21 +2,21 @@
 SVNVER=`svnversion 2> /dev/null`
 
 if [ "${SVNVER}" = "exported" ]; then
-	GITHEAD=`git-rev-parse HEAD 2> /dev/null`
+	GITHEAD=`git rev-parse HEAD 2> /dev/null`
 	GITHEAD_ORIG="${GITHEAD}"
 	SVNVER=
 fi
 
 if [ "${GITHEAD}" != "" ]; then
-	GITSVN=`git-rev-parse git-svn 2> /dev/null`
+	GITSVN=`git rev-parse git-svn 2> /dev/null`
 	
 	if [ "${GITSVN}" != "" ]; then
-		SVNVER=`git-svn find-rev ${GITSVN}`
+		SVNVER=`git svn find-rev ${GITSVN}`
 
 		if [ "${GITHEAD}" != "${GITSVN}" ]; then
 			SVNVER=${SVNVER}G
 		fi
-		GITDIFF=`git-diff HEAD | cat`
+		GITDIFF=`git diff HEAD | cat`
 
 		if [ "${GITDIFF}" != "" ]; then
 			SVNVER=${SVNVER}M
