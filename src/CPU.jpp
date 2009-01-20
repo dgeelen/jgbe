@@ -79,12 +79,12 @@ public final class CPU {
 				decoderMaxCruise = 0x7e;
 			} else {
 				//PRINTLN("Failed cruise: " + newPC);
-				globalPC = newPC;
-				localPC = 0;
-				smallcruise[0] = I2B(read(globalPC));
-				smallcruise[1] = I2B(read((globalPC+1)&0xffff));
+				smallcruise[0] = I2B(read(newPC));
+				smallcruise[1] = I2B(read((newPC+1)&0xffff));
 				decoderMemory = smallcruise;
 				decoderMaxCruise = 0; // still set to zero, to get memory reread as late as possible
+				globalPC = newPC;
+				localPC = 0;
 			}
 		}
 
@@ -464,7 +464,7 @@ public final class CPU {
 
 			if (index < 0x4000) { //16KB ROM Bank 00     (in cartridge, fixed at bank 00)
 				if (index < 0x100) {
-			PRINTLN("read_slow:"+index);
+			//PRINTLN("read_slow:"+index);
 					b = cartridge.BIOS_ROM[index];
 				    //PRINTLN("reading from BIOS rom");
 				}
