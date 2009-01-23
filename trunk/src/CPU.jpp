@@ -38,6 +38,9 @@ public final class CPU {
 		public static int cyclesPerTIMA = 0; //number of cycles per TIMA increase, or 0 when TIMA is disabled
 		public static int keyBounce = 0;
 
+		public static boolean KeyBounceEventPending = false;
+		public static boolean TIMAEventPending = false;
+
 		public static int A = 0;
 		public static int B = 1;
 		public static int C = 2;
@@ -213,8 +216,10 @@ public final class CPU {
 			if ((IOP[0x07]&4) != 0) { // TIMA enabled
 				TIMAEventCycleCount = TotalCycleCount + cyclesPerTIMA * (0x100 - IOP[0x05]);
 				addEventCycleCount(TIMAEventCycleCount);
+				TIMAEventPending = true;
 			} else {
 				TIMAEventCycleCount = MAX_CYCLE_COUNT;
+				TIMAEventPending = false;
 			}
 		}
 
@@ -335,6 +340,8 @@ public final class CPU {
 					lastVCRenderCycleCount = TotalCycleCount;
 				SL_IF_VERSION( -1, 21) // a bit fuzyy, see comments in handleKeyBounceEvent
 					KeyBounceEventCycleCount = (keyBounce > 0) ? TotalCycleCount + keyBounceWaitNextFix * ((doublespeed)?10:20) : MAX_CYCLE_COUNT;
+				TIMAEventPending = (TIMAEventCycleCount == MAX_CYCLE_COUNT);
+				KeyBounceEventPending = (KeyBounceEventCycleCount == MAX_CYCLE_COUNT);
 			}
 		}
 
@@ -1061,6 +1068,8 @@ public final class CPU {
 			VCRenderEventCycleCount = 0;
 			lastVCRenderCycleCount = 0;
 			KeyBounceEventCycleCount = MAX_CYCLE_COUNT;
+			KeyBounceEventPending = false;
+			// TIMA Event variables are set by the writes to 0xff05-0xff07 above
 
 			for (int i = 0; i < 0x80; ++i) IOP[i] = 0;
 			for (int i = 0; i < 0x7f; ++i) HRAM[i] = 0;
@@ -1274,8 +1283,11 @@ public final class CPU {
 				triggerInterrupt(4);
 				--keyBounce;
 				KeyBounceEventCycleCount = TotalCycleCount + (doublespeed ? 20000 : 10000); // gives more or less similar results as before
-			} else
+				KeyBounceEventPending = true;
+			} else {
 				KeyBounceEventCycleCount = MAX_CYCLE_COUNT;
+				KeyBounceEventPending = false;
+			}
 		};
 
 		public static void handleVCRenderEvent()
@@ -1300,17 +1312,21 @@ public final class CPU {
 		public static void handleEvents() {
 			NextEventCycleCount = MAX_CYCLE_COUNT;
 
-			if (TotalCycleCount >= TIMAEventCycleCount)
-				handleTIMAEvent();
-			addEventCycleCount(TIMAEventCycleCount);
-
 			if (TotalCycleCount >= VCRenderEventCycleCount);
 				handleVCRenderEvent();
 			addEventCycleCount(VCRenderEventCycleCount);
 
-			if (TotalCycleCount >= KeyBounceEventCycleCount)
-				handleKeyBounceEvent();
-			addEventCycleCount(KeyBounceEventCycleCount);
+			if (TIMAEventPending) {
+				if (TotalCycleCount >= TIMAEventCycleCount)
+					handleTIMAEvent();
+				addEventCycleCount(TIMAEventCycleCount);
+			}
+
+			if (KeyBounceEventPending) {
+				if (TotalCycleCount >= KeyBounceEventCycleCount)
+					handleKeyBounceEvent();
+				addEventCycleCount(KeyBounceEventCycleCount);
+			}
 		};
 
 		public static int execute() {
