@@ -385,8 +385,8 @@ public final class MobileVideoController {
 	 ****/
 	static int STAT_statemachine_state = 0;
 	static int mode3duration = 0;
-	public static void render(int cycles) { // Renders in real clock cycles
-		ASSERT(cycles <= 6*4); // Longest instruction lasts 24 cycles, so we should get called at least that often
+	public static int render(int cycles) { // Renders in real clock cycles
+		//PRINTLN("VC.render called   LCDCcntdwn="+LCDCcntdwn+"   cycles="+cycles);
 		LCDCcntdwn -= cycles;
 		while (LCDCcntdwn <= 0) {
 			switch (STAT_statemachine_state) {
@@ -471,6 +471,7 @@ public final class MobileVideoController {
 			}
 		}
 		ASSERT(LCDCcntdwn > 0);
+		return LCDCcntdwn;
 	}
 
 	public int read(int index) {
