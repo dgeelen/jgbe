@@ -4,5 +4,5 @@ keep=MeBoy
 =TETRIS0
 lang
 vfsjar.idx
-#vfsjar=tetris.gb
-#vfsjar=sml1.gb
+=vfsjar=tetris.gb
+=vfsjar=sml1.gb
