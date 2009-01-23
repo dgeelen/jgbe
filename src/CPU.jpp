@@ -1310,11 +1310,9 @@ public final class CPU {
 		};
 
 		public static void handleEvents() {
-			NextEventCycleCount = MAX_CYCLE_COUNT;
-
 			if (TotalCycleCount >= VCRenderEventCycleCount);
 				handleVCRenderEvent();
-			addEventCycleCount(VCRenderEventCycleCount);
+			NextEventCycleCount = VCRenderEventCycleCount;
 
 			if (TIMAEventPending) {
 				if (TotalCycleCount >= TIMAEventCycleCount)
