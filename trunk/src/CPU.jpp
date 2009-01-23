@@ -25,8 +25,14 @@ public final class CPU {
 		public static final int HC_Mask  = 1 << HC_Shift;
 		public static final int CF_Mask  = 1 << CF_Shift;
 
+		public static final long MAX_CYCLE_COUNT = 1 << 60;
+
 		public static long TotalInstrCount = 0;
 		public static long TotalCycleCount = 0;
+
+		public static long NextEventCycleCount = 0; // cyclecount when next event should happen (next time TIMA would overflow)
+		public static long TIMAEventCycleCount = 0; // cyclecount when next TIMA event should happen
+		public static int cyclesPerTIMA = 0; //number of cycles per TIMA increase, or 0 when TIMA is disabled
 
 		public static int A = 0;
 		public static int B = 1;
@@ -49,8 +55,6 @@ public final class CPU {
 		// same in single and double speed:
 		public static final int CYCLES_PER_DIV = 256;
 		public static long divReset = 0;
-
-		public static int TIMAcntdwn = 0;
 
 		public static int globalPC = 0;
 		public static int localPC = 0;
@@ -193,6 +197,25 @@ public final class CPU {
 		public static String first_save_string = new String();
 		public static String last_save_string = new String();
 
+		public static void calcCyclesPerTIMA() {
+			// 0-3 -> {1024, 16, 64, 256}
+			// 0-3 -> 4*{256, 4, 16, 64}
+			if ((IOP[0x07]&4) != 0) { // TIMA enabled
+				cyclesPerTIMA = 4*(4 << (2 * ((IOP[0x07]-1)&3)));
+			} else {
+				cyclesPerTIMA = 0;
+			}
+		}
+
+		public static void calcTIMAEventCycleCount() {
+			if ((IOP[0x07]&4) != 0) { // TIMA enabled
+				TIMAEventCycleCount = TotalCycleCount + cyclesPerTIMA * (0x100 - IOP[0x05]);
+				addEventCycleCount(TIMAEventCycleCount);
+			} else {
+				TIMAEventCycleCount = MAX_CYCLE_COUNT;
+			}
+		}
+
 		static SAVELOAD_FUNCTION {
 			SL_IF_VERSION( 0,  9) first_save_string = "unknown";
 			SL_IF_VERSION( 0,  9) last_save_string = "unknown";
@@ -222,14 +245,20 @@ public final class CPU {
 			SL_INT(CurrentWRAMBank);
 			SL_BOOL(doublespeed);
 			SL_BOOL(speedswitch);
-			int DIVcntdwn = -1; // is used below to fix up divReset
-			SL_IF_VERSION( -1, 18) SL_INT(DIVcntdwn);
+
+			int DIVcntdwnFix = -1; // is used below to fix up divReset
+			SL_IF_VERSION( -1, 18) SL_INT(DIVcntdwnFix);
 			SL_IF_VERSION( 19, -1) SL_LONG(divReset);
-			SL_INT(TIMAcntdwn);
+			int TIMAcntdwnFix = -1; // is used below to fix up TIMAResetCycleCount
+			SL_IF_VERSION( -1, 19) SL_INT(TIMAcntdwnFix);
+			SL_IF_VERSION( 20, -1) SL_LONG(TIMAEventCycleCount);
+
 			SL_IF_VERSION( -1, 14) SL_SKIP(INT, 1); //SL_INT(LCDCcntdwn);
+
 			int pc = getPC();
 			SL_UINT16(pc);
 			setPC(pc);
+
 			SL_UINT16(SP);
 			SL_UINT8(IE);
 			SL_BOOL(IME);
@@ -279,15 +308,23 @@ public final class CPU {
 			} else
 				keyHistoryEnabled = false;
 
-			SL_IF_VERSION( -1, 18) if (SL_LOAD) {
-				// fix divReset for old savegames
-				divReset = (TotalCycleCount + CYCLES_PER_DIV - 1) - (IOP[0x04]*CYCLES_PER_DIV);
-				divReset -= CYCLES_PER_DIV;
-				divReset += DIVcntdwn;
-			}
-
 			if (SL_LOAD) {
 				refreshMemMap();
+				calcCyclesPerTIMA();
+				NextEventCycleCount = 0;
+				SL_IF_VERSION( -1, 18) if (SL_LOAD) {
+					// fix divReset for old savegames
+					divReset = (TotalCycleCount + CYCLES_PER_DIV - 1) - (IOP[0x04]*CYCLES_PER_DIV);
+					divReset -= CYCLES_PER_DIV;
+					divReset += DIVcntdwnFix;
+				}
+				SL_IF_VERSION( -1, 19) {
+					// fix TIMAEventCycleCount for old savegames
+					calcTIMAEventCycleCount();
+					TIMAEventCycleCount -= cyclesPerTIMA;
+					TIMAEventCycleCount += TIMAcntdwnFix;
+					addEventCycleCount(TIMAEventCycleCount);
+				}
 			}
 		}
 
@@ -524,9 +561,15 @@ public final class CPU {
 						return (int)((((TotalCycleCount + CYCLES_PER_DIV - 1 - divReset) / CYCLES_PER_DIV))&0xff);
 					case 0xff01: // SB - Serial transfer data (R/W)
 					case 0xff02: // SC - Serial Transfer Control (R/W)
-						//yes fallthrough works here
-					//case 0xff03 ! dont break above ports
+						b = IOP[index-0xff00];
+						break;
 					case 0xff05: // TIMA
+						if (cyclesPerTIMA != 0) {
+							b =  (int)(((TotalCycleCount - TIMAEventCycleCount + (cyclesPerTIMA * 0x100)) / cyclesPerTIMA)&0xff);
+						} else {
+							b = IOP[0x05];
+						}
+						break;
 					case 0xff06: // TMA
 					case 0xff07: // TAC
 						b = IOP[index-0xff00];
@@ -753,26 +796,31 @@ public final class CPU {
 						if (tcycle == 0)
 							divReset = TotalCycleCount;
 						else
-							divReset = TotalCycleCount-tcycle+256;
+							divReset = TotalCycleCount-tcycle+CYCLES_PER_DIV;
 						break;
 					case 0xff05: // TIMA
+						if (cyclesPerTIMA == 0) {
+							IOP[0x05] = value; // is this correct? we did this previously too, but meboy only does when TIMA is active
+						} else {
+							// we don't reset the countdown here like meboy, but preserve the subtime position thin
+							int prevval = read(0xff05);
+							int prevcount = 0x100 - prevval;
+							int newcount = 0x100 - value;
+							TIMAEventCycleCount += cyclesPerTIMA * (newcount - prevcount);
+							addEventCycleCount(TIMAEventCycleCount);
+						}
+						break;
 					case 0xff06: // TMA
+						IOP[0x06] = value;
+						break;
 					case 0xff07: // TAC
-						IOP[index-0xff00] = value;
-						switch(value&3) {
-							case 0:
-								TIMAcntdwn = 1024; // == 4194304/4096
-								break;
-							case 1:
-								TIMAcntdwn = 16; // == 4194304/262144
-								break;
-							case 2:
-								TIMAcntdwn = 64; // == 4194304/65536
-								break;
-							case 3:
-								TIMAcntdwn = 256; // == 4194304/16384
-								break;
-							}
+						if ((value&4) == 0 && cyclesPerTIMA != 0) {
+							// disabling previously active TIMA, put correct value in register
+							IOP[0x05] = read(0xff05); // would be slightly faster to inline the formula here...
+						}
+						IOP[0x07] = value;
+						calcCyclesPerTIMA();
+						calcTIMAEventCycleCount();
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
 						IOP[0x0f] = value;
@@ -984,7 +1032,6 @@ public final class CPU {
 			doublespeed = false;
 			speedswitch = false;
 			divReset = 0;
-			TIMAcntdwn = 0;//This should get set with the proper value as soon as TIMA is activated
 
 			IE=0;         ///< Interrupt Enable (allowed interrupts)
 			IME=true; ///< Interrupt Master Enable
@@ -1000,6 +1047,8 @@ public final class CPU {
 			first_save_string = Version.str;
 			delayed_halt = false;
 			halt_fail_inc_pc = false;
+
+			NextEventCycleCount = 0;
 
 			for (int i = 0; i < 0x80; ++i) IOP[i] = 0;
 			for (int i = 0; i < 0x7f; ++i) HRAM[i] = 0;
@@ -1195,6 +1244,27 @@ public final class CPU {
 					break;
 			}
 		}
+
+		public static void handleTIMAEvent()
+		{
+			IOP[0x05] = IOP[0x06];
+			triggerInterrupt(2);
+			TIMAEventCycleCount += cyclesPerTIMA * (0x100 - IOP[0x05]);
+		};
+
+		public static void addEventCycleCount(long count)
+		{
+			if (count < NextEventCycleCount)
+				NextEventCycleCount = count;
+		};
+
+		public static void handleEvents() {
+			NextEventCycleCount = MAX_CYCLE_COUNT;
+
+			if (TotalCycleCount >= TIMAEventCycleCount)
+				handleTIMAEvent();
+			addEventCycleCount(TIMAEventCycleCount);
+		};
 
 		public static int execute() {
 			int op, imm8a, imm8b;
@@ -1444,23 +1514,6 @@ public final class CPU {
 		public static void elapseTime(int cycles) {
 			TotalCycleCount += cycles;
 			if (cycles > 0) {
-				//clockfreq = 4194304hz
-				int tac = IOP[0x07];
-				if ((tac&4)!=0) {
-					TIMAcntdwn -= cycles;
-					while (TIMAcntdwn <= 0) {
-						if ((tac&3)==0) TIMAcntdwn += 1024; // == 4194304/4096
-						if ((tac&3)==1) TIMAcntdwn +=   16; // == 4194304/262144
-						if ((tac&3)==2) TIMAcntdwn +=   64; // == 4194304/65536
-						if ((tac&3)==3) TIMAcntdwn +=  256; // == 4194304/16384
-						++IOP[0x05];
-						if (IOP[0x05] > 0xff) {
-							IOP[0x05] = IOP[0x06];
-							triggerInterrupt(2);
-						}
-					}
-				}
-
 				if (doublespeed) { // more instrs per vblank int
 #ifndef USE_JAVA_MOBILE
 					AC.render(cycles>>1); //render enough sound bytes for cycles Cycles
@@ -1551,9 +1604,11 @@ public final class CPU {
 #endif
 		}
 
-#define THROW(msg) { \
-	throw new RuntimeException(); \
-} \
+#ifdef EXTRADEBUG
+	#define THROW(msg) { throw new RuntimeException(msg); }
+#else
+	#define THROW(msg) { throw new RuntimeException(); }
+#endif
 
 		// runloop aborts when this is set to false
 		public static boolean keeprunning;
@@ -1561,6 +1616,9 @@ public final class CPU {
 		public static void runlooprun() {
 			int cycles;
 			do {
+				if (TotalCycleCount >= NextEventCycleCount)
+					handleEvents();
+
 				#ifdef USE_JAVA_MOBILE
 					if (KeyStatus != GUIKeyStatus) {
 							KeyStatus = GUIKeyStatus;
@@ -1598,11 +1656,11 @@ public final class CPU {
 					}
 				#endif
 				cycles = 4*execute();
-				++TotalInstrCount;
 				#ifndef USE_JAVA_MOBILE
 					lastKeyChange += cycles;
 				#endif
 				#ifdef EXTRADEBUG
+					++TotalInstrCount;
 					last_memory_access=last_memory_access_internal;
 				#endif
 				elapseTime(cycles);
