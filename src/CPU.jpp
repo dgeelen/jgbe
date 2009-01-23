@@ -33,8 +33,10 @@ public final class CPU {
 		public static long NextEventCycleCount = 0; // cyclecount when next event should happen (next time TIMA would overflow)
 		public static long VCRenderEventCycleCount = 0; // cyclecount when VC needs to render something again
 		public static long lastVCRenderCycleCount = 0; // cyclecount when VC last rendered something
+		public static long KeyBounceEventCycleCount = 0; // cyclecount when next keybounce event should happen
 		public static long TIMAEventCycleCount = 0; // cyclecount when next TIMA event should happen
 		public static int cyclesPerTIMA = 0; //number of cycles per TIMA increase, or 0 when TIMA is disabled
+		public static int keyBounce = 0;
 
 		public static int A = 0;
 		public static int B = 1;
@@ -138,8 +140,6 @@ public final class CPU {
 		public static int GUIKeyStatus=0;
 		public static int RemoteKeyStatus=0;
 		public static boolean useRemoteKeys = false;
-		public static int keyBounce = 0;
-		public static int keyBounceWaitNext;
 
 		public static boolean keyHistoryEnabled;
 		public static IntVector keyHistory;
@@ -272,7 +272,9 @@ public final class CPU {
 			SL_IF_VERSION( 0,  2) SL_SKIP(UINT8, 1); //SL_UINT8(ButtonKeyStatus);
 			SL_IF_VERSION(11, -1) SL_UINT8(KeyStatus);
 			SL_IF_VERSION(12, -1) SL_INT(keyBounce);
-			SL_IF_VERSION(12, -1) SL_INT(keyBounceWaitNext);
+			SL_IF_VERSION(22, -1) SL_LONG(KeyBounceEventCycleCount);
+			int keyBounceWaitNextFix = 0;
+			SL_IF_VERSION(12, 21) SL_INT(keyBounceWaitNextFix);
 			SL_IF_VERSION(-1, 18) SL_SKIP(INT, 1); // SL_INT(lastException);
 			SL_BOOL(BIOS_enabled);
 
@@ -331,6 +333,8 @@ public final class CPU {
 				}
 				SL_IF_VERSION( -1, 20)
 					lastVCRenderCycleCount = TotalCycleCount;
+				SL_IF_VERSION( -1, 21) // a bit fuzyy, see comments in handleKeyBounceEvent
+					KeyBounceEventCycleCount = (keyBounce > 0) ? TotalCycleCount + keyBounceWaitNextFix * ((doublespeed)?10:20) : MAX_CYCLE_COUNT;
 			}
 		}
 
@@ -1044,7 +1048,6 @@ public final class CPU {
 			halted=false;
 			KeyStatus=0; //bitmask
 			keyBounce=0;
-			keyBounceWaitNext=0;
 			lastKeyChange = 0;
 			keyHistory.clear();
 			hblank_dma_state = 0;
@@ -1057,6 +1060,7 @@ public final class CPU {
 			NextEventCycleCount = 0;
 			VCRenderEventCycleCount = 0;
 			lastVCRenderCycleCount = 0;
+			KeyBounceEventCycleCount = MAX_CYCLE_COUNT;
 
 			for (int i = 0; i < 0x80; ++i) IOP[i] = 0;
 			for (int i = 0; i < 0x7f; ++i) HRAM[i] = 0;
@@ -1260,6 +1264,20 @@ public final class CPU {
 			TIMAEventCycleCount += cyclesPerTIMA * (0x100 - IOP[0x05]);
 		};
 
+		public static void handleKeyBounceEvent()
+		{
+			// Keybounce can't be implemented exactly cycle-perfect the same as previously
+			// mostly because previously it was somewhat stupid:
+			// -when cpu was halted, keybounce was delayed (so a keybounce interrupt could never resume the CPU from halted state)
+			// -it was counted in instructions, to the actual cyclecount varied and is not predictable
+			if (keyBounce > 0) {
+				triggerInterrupt(4);
+				--keyBounce;
+				KeyBounceEventCycleCount = TotalCycleCount + (doublespeed ? 20000 : 10000); // gives more or less similar results as before
+			} else
+				KeyBounceEventCycleCount = MAX_CYCLE_COUNT;
+		};
+
 		public static void handleVCRenderEvent()
 		{
 			int cycles = (int)(TotalCycleCount - lastVCRenderCycleCount);
@@ -1270,6 +1288,7 @@ public final class CPU {
 			if (doublespeed) cntdown *= 2;
 
 			VCRenderEventCycleCount = TotalCycleCount + cntdown;
+			//VCRenderEventCycleCount = TotalCycleCount + 1;
 		};
 
 		public static void addEventCycleCount(long count)
@@ -1288,6 +1307,10 @@ public final class CPU {
 			if (TotalCycleCount >= VCRenderEventCycleCount);
 				handleVCRenderEvent();
 			addEventCycleCount(VCRenderEventCycleCount);
+
+			if (TotalCycleCount >= KeyBounceEventCycleCount)
+				handleKeyBounceEvent();
+			addEventCycleCount(KeyBounceEventCycleCount);
 		};
 
 		public static int execute() {
@@ -1308,15 +1331,6 @@ public final class CPU {
 			}
 
 			if (halted) return 1; //Halt duration is a multiple of 4 cycles, so return 1 here
-
-			if (keyBounce > 0) {
-				--keyBounceWaitNext;
-				if(keyBounceWaitNext < 0) {//wait some instructions
-					keyBounceWaitNext=1000;
-					triggerInterrupt(4);
-					--keyBounce;
-				}
-			}
 
 			if (halt_fail_inc_pc) {
 				// failed to increment PC after halt
@@ -1643,13 +1657,13 @@ public final class CPU {
 					if (KeyStatus != GUIKeyStatus) {
 							KeyStatus = GUIKeyStatus;
 							keyBounce = 1000;
-							keyBounceWaitNext = 0;
+							handleKeyBounceEvent();
 					}
 				#else
 					if (playbackHistoryIndex == -1) {
 						if (KeyStatus != GUIKeyStatus) {
 							keyBounce = 1000;
-							keyBounceWaitNext = 0;
+							handleKeyBounceEvent();
 						}
 						if (KeyStatus != GUIKeyStatus || lastKeyChange > 0x3fffffff) {
 							KeyStatus = GUIKeyStatus;
@@ -1667,7 +1681,7 @@ public final class CPU {
 							if (KeyStatus != d)  {
 								KeyStatus = d;
 								keyBounce = 1000;
-								keyBounceWaitNext = 0;
+								handleKeyBounceEvent();
 							}
 						}
 					} else {
