@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 import java.lang.Integer;
 
@@ -229,6 +230,32 @@ public class VFSRecStore implements IVFSNode {
 		this.rid = data_id;
 	}
 
+	private void deleteRecord(int delrid, String name)
+	{
+		if (name.endsWith("/"))
+			deleteFileRecord(delrid);
+		else
+			deleteDirRecord(delrid);
+	}
+
+	private void deleteFileRecord(int delrid)
+	{
+		try {
+			DataInputStream dis = new DataInputStream(new ByteArrayInputStream(recstore.getRecord(delrid)));
+			int nextid = dis.readInt();
+			recstore.deleteRecord(delrid);
+			if (nextid != -1)
+				deleteFileRecord(nextid);
+		} catch (Throwable e) {
+			PRINTLN("Failed to unlink: " + delrid + " - " + e.toString());
+		}
+	}
+
+	private void deleteDirRecord(int delrid)
+	{
+		PRINTLN("TODO: delete dir id="+delrid);
+	}
+
 	/* initialises from the recordstores identified by rsname/pubname/appname */
 	public VFSRecStore(String name, String rsname, String pubname, String appname) throws Throwable
 	{
@@ -357,6 +384,23 @@ public class VFSRecStore implements IVFSNode {
 
 	public void delete(String name)
 	{
+		PRINTLN("Deleting: " + name);
+		try {
+			Vector oldlist = getDirList();
+			Vector newlist = new Vector();
+			for (int i = 0; i+1 < oldlist.size(); i += 2) {
+				String nname = (String)oldlist.elementAt(i+1);
+				if (nname.equals(name) || nname.equals(name+"/") || name.equals(nname+"/")) {
+					int id = ((Integer)oldlist.elementAt(i)).intValue();
+					deleteRecord(id, nname);
+				} else {
+					newlist.addElement(oldlist.elementAt(i));
+					newlist.addElement(oldlist.elementAt(i+1));
+				}
+			}
+			setDirList(newlist);
+		} catch (Throwable ex) {
+		}
 	}
 };
 #endif
