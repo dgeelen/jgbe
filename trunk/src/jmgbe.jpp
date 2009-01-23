@@ -23,6 +23,10 @@ public class jmgbe extends MIDlet implements CommandListener {
 	jmgbeCanvas gCanvas;
 
 	static final Command backCommand = new Command("Back", Command.BACK, 0);
+	static final Command copyCommand1 = new Command("Copy To: Record-JMGBE", Command.SCREEN, 0);
+	static final Command copyCommand2 = new Command("Copy To: Record-JMGBE-Local", Command.SCREEN, 0);
+	static final Command copyCommand3 = new Command("Copy To: Record-JMGBE-Store", Command.SCREEN, 0);
+	static final Command deleteCommand = new Command("Delete", Command.SCREEN, 0);
 	static final Command exitCommand = new Command("Exit", Command.STOP, 2);
 	Vector filemenu;
 	Vector curitems;
@@ -42,6 +46,14 @@ public class jmgbe extends MIDlet implements CommandListener {
 		}
 		if (filemenu.size() > 1)
 			menulist.addCommand(backCommand);
+		//if (MeBoyVFS.getNodeFromPath("/Record-JMGBE") != null)
+			menulist.addCommand(copyCommand1);
+		//if (MeBoyVFS.getNodeFromPath("/Record-JMGBE-Local") != null)
+			menulist.addCommand(copyCommand2);
+		//if (MeBoyVFS.getNodeFromPath("/Record-JMGBE-Store") != null)
+			menulist.addCommand(copyCommand3);
+		if (vn.getClass().getName().equals(new VFSRecStore("",null,-1).getClass().getName())) // FIX?: Add canDelete() to interface?
+			menulist.addCommand(deleteCommand);
 		menulist.setCommandListener(this);
 		display.setCurrent(menulist);
 	}
@@ -58,11 +70,19 @@ public class jmgbe extends MIDlet implements CommandListener {
 			List down = (List)display.getCurrent();
 			IVFSNode cn = (IVFSNode)curitems.elementAt(down.getSelectedIndex());
 			PRINTLN("Chosen: " + cn.getName());
-			if (cn.isDir()) {
-				filemenu.addElement(cn);
+			if (label.startsWith("Copy To: ")) {
+				if (cn.isFile()) CopyFile(label.substring(9), cn);
+			} else if (label.equals("Delete")) {
+				IVFSNode pn = (IVFSNode)filemenu.lastElement();
+				pn.delete(cn.getName());
 				displayFileMenu();
-			} else if (cn.isFile()) {
-				loadCartridge(cn);
+			} else {
+				if (cn.isDir()) {
+					filemenu.addElement(cn);
+					displayFileMenu();
+				} else if (cn.isFile()) {
+					loadCartridge(cn);
+				}
 			}
 		}
 	}
@@ -78,34 +98,34 @@ public class jmgbe extends MIDlet implements CommandListener {
 		display.setCurrent(gCanvas);
 	}
 
+	public void CopyFile(String targetroot, IVFSNode srcFile) {
+		PRINTLN("Copying " + srcFile.getName() + " to " + targetroot);
+		try {
+			IVFSNode rsnode = MeBoyVFS.getNodeFromPath("/" + targetroot);
+			PRINTLN("got " + rsnode + " = " + rsnode.getName());
+			IVFSNode outnode = rsnode.createDir("roms").createFile(srcFile.getName());
+
+			InputStream is = srcFile.getInputStream();
+			OutputStream os = outnode.getOutputStream();
+			byte[] buffer = new byte[1024];
+			int read = is.read(buffer);
+			while (read > 0) {
+				os.write(buffer, 0, read);
+				read = is.read(buffer);
+			}
+			os.flush();
+		} catch (Throwable e) { PRINTLN(e.toString()); }
+	}
+
 	public void startApp() {
 		display = Display.getDisplay(this);
-/*
-		try {
-			IVFSNode rsnode = new VFSRecStore("Record-JMGBE-Store", "jmgbe-store", "Da Fox && HackyKid && Satan", "JMGBE-Store");
-			//IVFSNode rsnode = new VFSRecStore("Record-JMGBE-Local", "jmgbe-store");
-			if (true || !rsnode.getChildren().hasMoreElements()) {
-				IVFSNode jarnode = new VFSJarFile("tetris.gb" , "tetris.gb");
-				IVFSNode newnode = rsnode.createDir("roms").createFile("tetris.gb");
-
-				InputStream is = jarnode.getInputStream();
-				OutputStream os = newnode.getOutputStream();
-				byte[] buffer = new byte[1024];
-				int read = is.read(buffer);
-				while (read > 0) {
-					os.write(buffer, 0, read);
-					read = is.read(buffer);
-				}
-				os.flush();
-			}
-		} catch (Throwable e) { PRINTLN(e.toString()); }
-*/
 
 		IVFSNode cartnode = null;
 		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/jar/sml1.gb");
-		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb");
 		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE/roms/sml1.gb");
+		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Local/roms/sml1.gb");
 		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Store/roms/sml1.gb");
+		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb");
 
 		if (cartnode == null) {
 			IVFSNode root = VFSRoot.getRoot();
