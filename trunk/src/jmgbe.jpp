@@ -5,7 +5,6 @@
 import javax.microedition.lcdui.*;
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.game.GameCanvas;
-import com.samsung.util.AudioClip;
 import java.util.Vector;
 import java.util.Enumeration;
 import java.util.Random;
