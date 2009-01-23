@@ -100,19 +100,20 @@ public class jmgbe extends MIDlet implements CommandListener {
 			}
 		} catch (Throwable e) { PRINTLN(e.toString()); }
 */
-/*
-		IVFSNode root = VFSRoot.getRoot();
-		filemenu = new Vector();
-		filemenu.addElement(root);
-		displayFileMenu();
-/*/
+
 		IVFSNode cartnode = null;
+		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/jar/sml1.gb");
 		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb");
+		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE/roms/sml1.gb");
 		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Store/roms/sml1.gb");
-		loadCartridge(cartnode);
-//*/
-		//display.setCurrent(gCanvas);
-		//gCanvas.run();
+
+		if (cartnode == null) {
+			IVFSNode root = VFSRoot.getRoot();
+			filemenu = new Vector();
+			filemenu.addElement(root);
+			displayFileMenu();
+		} else
+			loadCartridge(cartnode);
 	}
 
 	public void notifyTestRun(long startms, long stopms) {
