@@ -1346,7 +1346,10 @@ public final class CPU {
 				halted = true;
 			}
 
-			if (halted) return 1; //Halt duration is a multiple of 4 cycles, so return 1 here
+			if (halted) {
+				// skip to next event
+				return (int)((NextEventCycleCount - TotalCycleCount + 3)>>2);
+			}
 
 			if (halt_fail_inc_pc) {
 				// failed to increment PC after halt
