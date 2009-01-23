@@ -348,23 +348,30 @@ public final class CPU {
 		public static void saveState(DataOutputStream dostream)
 		throws IOException
 		{
-#ifndef USE_JAVA_MOBILE
 			int saveversion = SL_SAVE_VERSION; //change when changing savestate format
 			dostream.writeInt(SL_MAGIX);
 			dostream.writeInt(saveversion);
+#ifndef USE_JAVA_MOBILE
 			int compressionmethod = 1; // GZIP compression
-			dostream.writeInt(compressionmethod);
 			DeflaterOutputStream zostream = null;
+#else
+			int	compressionmethod = 0; // no compression
+#endif
+			dostream.writeInt(compressionmethod);
 			switch (compressionmethod) {
 				// no compression
 				case 0: break;
+#ifndef USE_JAVA_MOBILE
 				// GZIP compression
 				case 1: {
 					zostream = new GZIPOutputStream(dostream);
 					dostream = new DataOutputStream(zostream);
 				}; break;
+#endif
+				default: ASSERT(false);
 			}
 			stateSaveLoad(true, saveversion, dostream, null);
+#ifndef USE_JAVA_MOBILE
 			if (zostream != null) {
 				dostream.flush();
 				zostream.finish();
@@ -375,7 +382,6 @@ public final class CPU {
 		public static void loadState(DataInputStream distream)
 		throws IOException
 		{
-#ifndef USE_JAVA_MOBILE
 			int loadversion;
 			int magix = distream.readInt();
 			if (magix != SL_MAGIX) {
@@ -402,11 +408,13 @@ public final class CPU {
 			switch (compressionmethod) {
 				// no compression
 				case 0: break;
+#ifndef USE_JAVA_MOBILE
 				// GZIP compression
 				case 1: distream = new DataInputStream(new GZIPInputStream(distream)); break;
+#endif
+				default: throw new IOException("unknown compression method:"+compressionmethod);
 			}
 			stateSaveLoad(false, loadversion, null, distream);
-#endif
 		}
 
 		public static BTYPE[][] rMemMap = new BTYPE[0x10][];
