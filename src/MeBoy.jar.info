@@ -1,0 +1,8 @@
+manifest=./src/MeBoy.MANIFEST.MF
+keep=MeBoy
+=carts
+=TETRIS0
+lang
+vfsjar.idx
+vfsjar=tetris.gb
+vfsjar=sml1.gb
