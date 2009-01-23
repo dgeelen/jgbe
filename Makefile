@@ -7,15 +7,21 @@ ROMSRCDIR:=$(SRCDIR)/test-rom
 
 JPPFILES     :=$(shell ls $(SRCDIR)/*.jpp)
 GJAVAFILES   :=$(JPPFILES:.jpp=.java)
-AJAVAFILES   :=$(shell ls $(SRCDIR)/*.java) $(GJAVAFILES)
-AJAVAFILES   :=$(shell echo $(AJAVAFILES) | sort | uniq)
-CLASSFILES   :=$(AJAVAFILES:$(SRCDIR)/%.java=$(CLASSDIR)/%.class)
+CLASSFILES   :=$(GJAVAFILES:$(SRCDIR)/%.java=$(CLASSDIR)/%.class)
 ROM_ASMFILES :=$(shell ls $(ROMSRCDIR)/*.asm)
 ROM_FILES    :=$(ROM_ASMFILES:$(ROMSRCDIR)/%.asm=$(BUILDDIR)/%.gb)
 MAKEFILES :=Makefile Makefile.inc Makefile.config $(shell cat Makefile.inc 2> /dev/null | sed "s:-include ::")
 BOOTROM   :=$(shell find -iname boot.rom | head -1)
 
 VERSION  := $(shell sh generate-svnrev.sh "$(SRCDIR)")
+
+NATIVEPATHSEPARATOR:=:
+CYGPATH:=echo
+PROGUARD:=$(shell which proguard)
+ifeq ($(shell uname -o),Cygwin)
+	NATIVEPATHSEPARATOR:=;
+	CYGPATH:=cygpath -pws
+endif
 
 ifeq ($(CLASSPATH),)
 	CLASSPATH:=.
@@ -142,7 +148,7 @@ $(SRCDIR)/%.java: $(SRCDIR)/%.jpp
 jarrun: $(JARDIR)/jgbe.jar
 	cd $(JARDIR) && $(JAVA_BIN) -jar jgbe.jar -lastcart
 
-$(JARDIR)/jgbe.jar: $(AJAVAFILES) $(CLASSFILES)
+$(JARDIR)/jgbe.jar: $(GJAVAFILES) $(CLASSFILES)
 	@echo "[packing] jgbe.jar"
 	@echo "Manifest-Version: 1.2" > $(CLASSDIR)/MANIFEST.MF.in
 	@echo "Main-Class: swinggui" >> $(CLASSDIR)/MANIFEST.MF.in
@@ -164,21 +170,21 @@ jarzip: $(CLASSFILES)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
 
 
-$(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(AJAVAFILES) $(CLASSFILES)
+$(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(GJAVAFILES) $(CLASSFILES)
 	@echo "[packing] $*.jar"
 	@cp "$(shell cat $(SRCDIR)/$*.jar.info | grep "^manifest=" | sed "s:^[^=]*=::")" "$(CLASSDIR)/MANIFEST.MF.in"
 	@cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::" > $(CLASSDIR)/vfsjar.idx
 	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in $*.jar $(shell cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::") $(shell cat "$(SRCDIR)/$*.jar.info" | grep -v "^[a-z]*=") $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:')
 
 	@echo "[obfuscating] $*.jar"
-	@java -jar $(PROGUARDPATH) @proguard.conf -printusage -libraryjars '$(shell cygpath -pws "$(CLASSPATH)" | sed "s:\.;::")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
+	@$(PROGUARD) @proguard.conf -printusage -libraryjars '$(shell $(CYGPATH) "$(CLASSPATH)" | sed "s=\.[;:]==")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
 
 
-	@echo "[minimizing] $*.jar"
-	@rm $(JARDIR)/$*.jar || true
-	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*-ps.jar || true
-#	@mv $(CLASSDIR)/$*-obf.jar $(JARDIR)/$*-ps.jar
-	@rm -r jar/kjar_* || true
+# 	@echo "[minimizing] $*.jar"
+# 	@rm $(JARDIR)/$*.jar || true
+# 	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*-ps.jar || true
+	@mv $(CLASSDIR)/$*-obf.jar $(JARDIR)/$*-ps.jar
+# 	@rm -r jar/kjar_* || true
 
 
 	#@"$(KEYTOOL)" -delete -alias signFiles -keystore jgbekeystore -keypass kpi135 -storepass ab987c > /dev/null || true
@@ -199,13 +205,11 @@ jad: $(JARDIR)/jmgbe.jad
 
 .PRECIOUS: $(JARDIR)/%.jar $(JARDIR)/%.jad
 
-jademu: $(JARDIR)/jmgbe.jad
-	@echo "[emulating] jmgbe"
-	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./jmgbe.jad -Xdomain:maximum -classpath "jmgbe.jar;$(CLASSPATH)"
+jademu: jmgbe.emu
 
 %.emu: $(JARDIR)/%.jad
 	@echo "[emulating] $*"
-	@cd $(JARDIR) && time /cygdrive/c/Progra~1/Java/WTK25/bin/emulator.exe -Xheapsize:512K -Xdescriptor:./$*.jad -Xdomain:maximum -classpath "$*.jar;$(CLASSPATH)"
+	@cd $(JARDIR) && time $(J2MEEMULATOR) -Xheapsize:512K -Xdescriptor:./$*.jad -Xdomain:maximum -classpath "$*.jar$(NATIVEPATHSEPARATOR)$(CLASSPATH)"
 
 
 # # # # # # # # # # #
