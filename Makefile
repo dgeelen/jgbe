@@ -11,7 +11,7 @@ AJAVAFILES   :=$(shell ls $(SRCDIR)/*.java) $(GJAVAFILES)
 AJAVAFILES   :=$(shell echo $(AJAVAFILES) | sort | uniq)
 CLASSFILES   :=$(AJAVAFILES:$(SRCDIR)/%.java=$(CLASSDIR)/%.class)
 ROM_ASMFILES :=$(shell ls $(ROMSRCDIR)/*.asm)
-ROM_OBJFILES :=$(ROM_ASMFILES:$(ROMSRCDIR)/%.asm=$(BUILDDIR)/%.o)
+ROM_FILES    :=$(ROM_ASMFILES:$(ROMSRCDIR)/%.asm=$(BUILDDIR)/%.gb)
 MAKEFILES :=Makefile Makefile.inc Makefile.config $(shell cat Makefile.inc 2> /dev/null | sed "s:-include ::")
 BOOTROM   :=$(shell find -iname boot.rom | head -1)
 
@@ -213,32 +213,31 @@ jademu: $(JARDIR)/jmgbe.jad
 # # # # # # # # # # #
 
 $(BUILDDIR)/%.o: $(ROMSRCDIR)/%.asm
-	@echo "[asm -> o  ] $* $< $@ "
+	@echo "[assembling] $*"
 	@mkdir -p $(BUILDDIR)
-	@$(GB_ASM) -i$(ROMSRCDIR)/ -o$@ $<
-	@rm -f $(BUILDDIR)/linkfile
+	@$(GB_ASM) -i$(ROMSRCDIR)/ -o$@ $< > $(BUILDDIR)/%.o.out && rm $(BUILDDIR)/%.o.out || cat $(BUILDDIR)/%.o.out
+	@rm -f $(BUILDDIR)/$*.link
 
-$(BUILDDIR)/linkfile: # TODO: Better automatic generation
-	@echo "# Linkfile for testrom.gb" > $@
+$(BUILDDIR)/%.link:
+	@echo "# Linkfile for $*.gb" > $@
 	@echo "[Objects]" >> $@
-# 	@echo $(ROM_OBJFILES) | sed 's: :\n:g' | tac >> $@
-# 	@echo -ne "./build/test.o\n./build/memory.o\n" >> $@
-	@echo -ne "./build/test.o\n" >> $@
+	@echo -ne "./build/$*.o\n" >> $@
 	@echo "[Libraries]" >> $@
 	@echo "[Output]" >> $@
-	@echo "$(BUILDDIR)/testrom.gb.in" >> $@
+	@echo "$(BUILDDIR)/$*.gb.in" >> $@
 
-$(BUILDDIR)/testrom.gb.in: $(ROM_OBJFILES) $(BUILDDIR)/linkfile
-	@echo "[linking   ]"
-	@$(GB_LINK) -m$(BUILDDIR)/testrom.map -tg $(BUILDDIR)/linkfile
+$(BUILDDIR)/%.gb.in: $(BUILDDIR)/%.o $(BUILDDIR)/%.link
+	@echo "[linking   ] $*"
+	@$(GB_LINK) -m$(BUILDDIR)/$*.map -tg $(BUILDDIR)/$*.link
 
-$(BUILDDIR)/testrom.gb: $(BUILDDIR)/testrom.gb.in
-	@echo "[validating]"
-	@rm -f $(BUILDDIR)/testrom.gb
-	@cp $(BUILDDIR)/testrom.gb.in $(BUILDDIR)/testrom.gb
-	@$(GB_FIX) -p -tTESTROM -v $(BUILDDIR)/testrom.gb
 
-testrom: $(BUILDDIR)/testrom.gb
+$(BUILDDIR)/%.gb: $(BUILDDIR)/%.gb.in
+	@echo "[validating] $*"
+	@rm -f $(BUILDDIR)/$*.gb
+	@cp $(BUILDDIR)/$*.gb.in $(BUILDDIR)/$*.gb
+	@$(GB_FIX) -p -t`echo '$*' | tr '[:lower:]' '[:upper:]'` -v $(BUILDDIR)/$*.gb > /dev/null
+
+roms: $(ROM_FILES)
 	@echo "[done      ]"
 
 # # # # # # # # # # #
