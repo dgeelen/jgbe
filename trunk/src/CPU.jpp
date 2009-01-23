@@ -87,7 +87,7 @@ public final class CPU {
 				localPC = newPC - 0xFF80;
 				globalPC = newPC - localPC;
 				decoderMemory = HRAM;
-				decoderMaxCruise = 0x7e;
+				decoderMaxCruise = 0x7d;
 			} else {
 				//PRINTLN("Failed cruise: " + newPC);
 				smallcruise[0] = I2B(read(newPC));
