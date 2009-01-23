@@ -1581,91 +1581,6 @@ public final class CPU {
 		 */
 		public static void elapseTime(int cycles) {
 			TotalCycleCount += cycles;
-#ifndef USE_JAVA_MOBILE
-			if (cycles > 0) {
-				if (doublespeed) { // more instrs per vblank int
-					AC.render(cycles>>1); //render enough sound bytes for cycles Cycles
-				}
-				else {
-					AC.render(cycles); //render enough sound bytes for cycles Cycles
-				}
-			}
-#endif
-
-#ifndef USE_JAVA_MOBILE
-			if (LinkCableStatus != 0) {
-				LINKcntdwn -= cycles;
-				if (LINKcntdwn < 0) {
-					LINKcntdwn += (4096 / LINKmulti);
-					// == 4194304/(1024*LINKmulti) (normal speed 8k bits/sec is 1k bytes/sec)
-					//LINKcntdwn += 4096*9; // * 10 tetris hax to get more 'reasonable' speeds...
-					try {
-						int lstatus = IOP[0x02] | (IOP[0x01] << 8);
-						int rstatus = -1;
-
-						LINKbuf[LINKind++] = lstatus;
-
-						lstatus |= RemoteKeyStatus << 16;
-
-						LinkCableOut.writeInt(lstatus);
-						LinkCableOut.flush();
-						rstatus = LinkCableIn.readInt();
-
-						if (useRemoteKeys) {
-							int rkeys = (rstatus >> 16) & 0xff;
-							if (GUIKeyStatus != rkeys) {
-								GUIKeyStatus = rkeys;
-							}
-						}
-
-						if (LINKind > LINKdelay) LINKind = 0;
-						lstatus = LINKbuf[LINKind];
-
-						int bstatus = (rstatus & 0xff) | ((lstatus & 0xff) << 8);
-						bstatus &= 0x8181; // mask out ext/int clk and start transfer bits
-															// dont yet care about clockspeed...,
-						switch (bstatus) {
-							case 0x8080: case 0x8001: case 0x8000: {
-								// waiting for external clock that isnt there...
-								// PRINTLN("waiting for external clock that isnt there...");
-							}; break;
-							case 0x8101: case 0x8100: {
-								// internal clock timeout
-								// PRINTLN("internal clock timeout");
-								if (++LINKtimeout > LINKdelay) {
-									LINKtimeout = 0;
-									IOP[0x01] = 0xff;
-									IOP[0x02] &= ~0x80;
-									triggerInterrupt(3);
-								}
-							}; break;
-							case 0x8181: {
-								// 2 internal clocks! conflict! panic! aargh!
-								PRINTLN("Link: clock conflict");
-							}; break;
-							case 0x8180:   // local clock, swap bytes
-							case 0x8081: { // remote clock, swap bytes
-								//PRINTF("Link: swapping $%04x: $%02x <-> $%02x\n",bstatus,IOP[0x01] , rstatus >> 8);
-								IOP[0x01] = (rstatus >> 8) & 0xff;
-								IOP[0x02] &= ~0x80;
-								triggerInterrupt(3);
-								LINKtimeout = 0;
-							}; break;
-							default: {
-								// no (local) transfer requested
-								//PRINTF("Link: no swapping $%04x\n",bstatus);
-							}
-						}
-
-					}
-					catch (IOException e) {
-						PRINTLN("Link exception");
-						severLink();
-					}
-
-				}
-			}
-#endif
 		}
 
 #ifdef EXTRADEBUG
@@ -1727,7 +1642,95 @@ public final class CPU {
 					++TotalInstrCount;
 					last_memory_access=last_memory_access_internal;
 				#endif
-				elapseTime(cycles);
+
+				/*** Elapse Time ***/
+				TotalCycleCount += cycles;
+				#ifndef USE_JAVA_MOBILE
+					if (cycles > 0) {
+						if (doublespeed) { // more instrs per vblank int
+							AC.render(cycles>>1); //render enough sound bytes for cycles Cycles
+						}
+						else {
+							AC.render(cycles); //render enough sound bytes for cycles Cycles
+						}
+					}
+				#endif
+
+				#ifndef USE_JAVA_MOBILE
+					if (LinkCableStatus != 0) {
+						LINKcntdwn -= cycles;
+						if (LINKcntdwn < 0) {
+							LINKcntdwn += (4096 / LINKmulti);
+							// == 4194304/(1024*LINKmulti) (normal speed 8k bits/sec is 1k bytes/sec)
+							//LINKcntdwn += 4096*9; // * 10 tetris hax to get more 'reasonable' speeds...
+							try {
+								int lstatus = IOP[0x02] | (IOP[0x01] << 8);
+								int rstatus = -1;
+
+								LINKbuf[LINKind++] = lstatus;
+
+								lstatus |= RemoteKeyStatus << 16;
+
+								LinkCableOut.writeInt(lstatus);
+								LinkCableOut.flush();
+								rstatus = LinkCableIn.readInt();
+
+								if (useRemoteKeys) {
+									int rkeys = (rstatus >> 16) & 0xff;
+									if (GUIKeyStatus != rkeys) {
+										GUIKeyStatus = rkeys;
+									}
+								}
+
+								if (LINKind > LINKdelay) LINKind = 0;
+								lstatus = LINKbuf[LINKind];
+
+								int bstatus = (rstatus & 0xff) | ((lstatus & 0xff) << 8);
+								bstatus &= 0x8181; // mask out ext/int clk and start transfer bits
+																	// dont yet care about clockspeed...,
+								switch (bstatus) {
+									case 0x8080: case 0x8001: case 0x8000: {
+										// waiting for external clock that isnt there...
+										// PRINTLN("waiting for external clock that isnt there...");
+									}; break;
+									case 0x8101: case 0x8100: {
+										// internal clock timeout
+										// PRINTLN("internal clock timeout");
+										if (++LINKtimeout > LINKdelay) {
+											LINKtimeout = 0;
+											IOP[0x01] = 0xff;
+											IOP[0x02] &= ~0x80;
+											triggerInterrupt(3);
+										}
+									}; break;
+									case 0x8181: {
+										// 2 internal clocks! conflict! panic! aargh!
+										PRINTLN("Link: clock conflict");
+									}; break;
+									case 0x8180:   // local clock, swap bytes
+									case 0x8081: { // remote clock, swap bytes
+										//PRINTF("Link: swapping $%04x: $%02x <-> $%02x\n",bstatus,IOP[0x01] , rstatus >> 8);
+										IOP[0x01] = (rstatus >> 8) & 0xff;
+										IOP[0x02] &= ~0x80;
+										triggerInterrupt(3);
+										LINKtimeout = 0;
+									}; break;
+									default: {
+										// no (local) transfer requested
+										//PRINTF("Link: no swapping $%04x\n",bstatus);
+									}
+								}
+
+							}
+							catch (IOException e) {
+								PRINTLN("Link exception");
+								severLink();
+							}
+
+						}
+					}
+				#endif
+
 			} while (keeprunning && cycles > 0);
 			if (cycles == 0) THROW("nextinstruction() returned 0");
 		};
