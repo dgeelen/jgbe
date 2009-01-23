@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.DataInputStream;
 import javax.microedition.rms.RecordStore;
 
+#define BENCH_FRAMES (500)
 public class jmgbe extends MIDlet implements CommandListener {
 	Display display;
 	jmgbeCanvas gCanvas;
@@ -118,12 +119,12 @@ public class jmgbe extends MIDlet implements CommandListener {
 		long durms = stopms-startms;
 		Form form = new Form("Test run");
 		display.setCurrent(form);
-		int frames = 250*CPU.VC.fskip;
-		form.append("250 * " + CPU.VC.fskip + " frames = " + frames + "\n");
+		int frames = BENCH_FRAMES*CPU.VC.fskip;
+		form.append("" + BENCH_FRAMES + " * " + CPU.VC.fskip + " frames = " + frames + "\n");
 		form.append("start: " + stopms + "\n");
 		form.append("stop : " + startms + "\n");
 		form.append("dur  : " + durms + "\n");
-		form.append("Drawn fps % = " + 250*100*1000 / durms + "\n");
+		form.append("Drawn fps % = " + BENCH_FRAMES*100*1000 / durms + "\n");
 		form.append("Real  fps % = " + frames*100*1000 / durms + "\n");
 	}
 
@@ -219,7 +220,7 @@ class jmgbeCanvas extends GameCanvas implements Runnable, IVideoListener {
 		}
 		*/
 		flushGraphics();
-		if (fctr == 250) {
+		if (fctr == BENCH_FRAMES) {
 			stopms = System.currentTimeMillis();
 			CPU.keeprunning = false;
 		}
