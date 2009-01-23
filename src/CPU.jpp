@@ -841,6 +841,7 @@ public final class CPU {
 						break;
 					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
 						IOP[0x0f] = value;
+						preCheckInts();
 						break;
 					/* AUDIO IO PORTS */
 					case 0xff10: case 0xff11: case 0xff12: case 0xff13: case 0xff14: case 0xff15: case 0xff16: case 0xff17:
@@ -995,6 +996,7 @@ public final class CPU {
 			}
 			else if(index < 0x10000) { // FFFF - IE - Interrupt Enable (R/W)
 				IE=value; // Interrupt Enable Register
+				preCheckInts();
 			}
 			else {
 				PRINTLN("ERROR: CPU.write(): Out of range memory access: $"+index);
@@ -1064,6 +1066,8 @@ public final class CPU {
 			delayed_halt = false;
 			halt_fail_inc_pc = false;
 
+			preCheckInts();
+
 			NextEventCycleCount = 0;
 			VCRenderEventCycleCount = 0;
 			lastVCRenderCycleCount = 0;
@@ -1128,6 +1132,7 @@ public final class CPU {
 					interrupt(0x60);
 					return 1;
 				}
+				preCheckInts();
 			}
 			return 0; // No interrupts to service
 		}
@@ -1137,12 +1142,14 @@ public final class CPU {
 			pushPC();
 			setPC(i);
 			IOP[0x0f] &= ~i;
+			preCheckInts();
 		}
 
 		public static void triggerInterrupt(int i) { // request interrupt with bit nr #i
 			IOP[0x0f] |= (1<<i);
 
 			if (halted && IME && ((1<<i) & IE) != 0) halted = false;
+			preCheckInts();
 		}
 
 		public static void pressButton(int i) {
@@ -1327,15 +1334,21 @@ public final class CPU {
 			}
 		};
 
+
+		public static boolean fastCheckInts;
+		public static void preCheckInts() {
+			fastCheckInts = CHECK_INTS;
+		}
+
 		public static int execute() {
 			int op, imm8a, imm8b;
 			int cycles;
 			TVARS;
 
-			if (CHECK_INTS) {
+			if (fastCheckInts) {
 				checkInterrupts();
 				halted = false;
-				//return 4;/* FIXME(?) For break on interrupt *//* note: 4 should be allright. RST takes 16 cycles */
+				//return 4;// FIXME(?) For break on interrupt - note: 4 should be allright. RST takes 16 cycles
 				return 5; //According to MESS "Taking an interrupt seems to take around 20 clock cycles."
 			}
 
@@ -1368,8 +1381,8 @@ public final class CPU {
 //#define break return cycles
 			switch ( op ) {
 				case 0x00: break;                                   // NOP
-				case 0xf3: IME=false; break;                        // DI
-				case 0xfb: IME=true; break;                         // IE
+				case 0xf3: IME=false; preCheckInts(); break;                        // DI
+				case 0xfb: IME=true; preCheckInts(); break;                         // IE
 				case 0xea: WRITE_V(IMM16, A); break;                // LD   (nn), A
 				case 0xfa: A = READ_V(IMM16); break;                // LD   A   , (nn)
 				case 0xe0: WRITE_S(IMM8a | 0xff00, A); break;        // LDH  (n) , A
@@ -1422,7 +1435,7 @@ public final class CPU {
 							halt_fail_inc_pc = true;
 					}
 				}; break;
-				case 0xd9: IME = true; DO_RET; break;               // RETI
+				case 0xd9: IME = true; preCheckInts(); DO_RET; break;               // RETI
 				case 0xc1: R16WBC_V(POP); break;                    // POP  BC
 				case 0xd1: R16WDE_V(POP); break;                    // POP  DE
 				case 0xe1: R16WHL_V(POP); break;                    // POP  HL
