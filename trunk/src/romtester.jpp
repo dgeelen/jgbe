@@ -31,8 +31,9 @@ public class romtester {
 		}
 
 		cartridge = new Cartridge(romfile);
-		if(cartridge.getError()!=null) {
-			PRINTLN("ERROR: "+cartridge.getError());
+		String[] messages = { "[empty]" };
+		if(cartridge.getStatus(messages)==Cartridge.STATUS_FATAL_ERROR) {
+			PRINTLN("ERROR: "+messages[0]);
 			return;
 		}
 
