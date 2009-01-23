@@ -25,7 +25,7 @@ public final class CPU {
 		public static final int HC_Mask  = 1 << HC_Shift;
 		public static final int CF_Mask  = 1 << CF_Shift;
 
-		public static final long MAX_CYCLE_COUNT = 1 << 60;
+		public static final long MAX_CYCLE_COUNT = 0x7FFFFFFFFFFFFFFFL; // 2^63 - 1
 
 		public static long TotalInstrCount = 0;
 		public static long TotalCycleCount = 0;
