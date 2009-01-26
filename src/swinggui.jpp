@@ -1118,8 +1118,7 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			else if(e.getSource().equals( menuitemSaveOldestState )) {
 				if (!CPU.canRun()) return;
 				pauseEmulation(false);
-				selectedState = saveStateOrder.get(0);
-				saveStateOrder.remove(0);
+				selectedState = saveStateOrder.remove(0);
 				saveStateOrder.add(selectedState);
 				addOSDLine("Saving To Oldest State " + selectedState);
 				try {

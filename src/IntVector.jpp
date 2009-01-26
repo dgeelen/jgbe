@@ -71,6 +71,7 @@ public class IntVector {
 		int res = data[index];
 		for (int i = index+1; i < length; ++i)
 			data[i-1] = data[i];
+		--length;
 		return res;
 	}
 
