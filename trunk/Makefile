@@ -188,7 +188,7 @@ $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(GJAVAFILES) $(CLASSFILES)
 	@cd $(CLASSDIR) && jar cmf MANIFEST.MF.in $*.jar $(shell cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::") $(shell cat "$(SRCDIR)/$*.jar.info" | grep -v "^[a-z]*=") $(shell cd $(CLASSDIR) && ls *.class -s | grep -v "^ *0 " | sed "s: *[0-9]* ::" | sed 's:\$$:\\\$$:')
 
 	@echo "[obfuscating] $*.jar"
-	@$(PROGUARD) @proguard.conf -printusage -libraryjars '$(shell $(CYGPATH) "$(CLASSPATH)" | sed "s=\.[;:]==")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
+	@$(PROGUARD) @proguard.conf $(EXTRAPROGUARDOPTIONS) -printusage -libraryjars '$(shell $(CYGPATH) "$(CLASSPATH)" | sed "s=\.[;:]==")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
 
 	@echo "[minimizing] $*.jar"
 	@cd $(CLASSDIR) && $(JARSIZEOPTIMIZER) $*-obf.jar $*-ps.jar
