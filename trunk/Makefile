@@ -17,7 +17,7 @@ VERSION  := $(shell sh generate-svnrev.sh "$(SRCDIR)")
 
 NATIVEPATHSEPARATOR:=:
 CYGPATH:=echo
-PROGUARD:=$(shell which proguard)
+PROGUARD:=$(shell which proguard 2> /dev/null)
 ifeq ($(shell uname -o),Cygwin)
 	NATIVEPATHSEPARATOR:=;
 	CYGPATH:=cygpath -pws
@@ -43,6 +43,17 @@ ifneq ($(EXTRACLASSPATH),)
 endif
 -include Makefile.inc
 
+ifeq ($(P7Z),)
+	P7Z:=$(shell which 7z 2> /dev/null || which 7za 2> /dev/null)
+endif
+ifeq ($(JARSIZEOPTIMIZER),)
+	ifeq ($(P7Z),)
+		JARSIZEOPTIMIZER:=cp
+	endif
+	ifneq ($(P7Z),)
+		JARSIZEOPTIMIZER:="$(shell which ./zipopt.bash 2> /dev/null)" --7zip "$(P7Z)"
+	endif
+endif
 
 # compiler choose targets
 help:
@@ -179,21 +190,14 @@ $(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(GJAVAFILES) $(CLASSFILES)
 	@echo "[obfuscating] $*.jar"
 	@$(PROGUARD) @proguard.conf -printusage -libraryjars '$(shell $(CYGPATH) "$(CLASSPATH)" | sed "s=\.[;:]==")' -injars $(CLASSDIR)/$*.jar -outjar $(CLASSDIR)/$*-obf.jar -keep public class "$(shell cat $(SRCDIR)/$*.jar.info | grep "^keep=" | sed "s:^[^=]*=::")"
 
+	@echo "[minimizing] $*.jar"
+	@cd $(CLASSDIR) && $(JARSIZEOPTIMIZER) $*-obf.jar $*-ps.jar
 
-# 	@echo "[minimizing] $*.jar"
-# 	@rm $(JARDIR)/$*.jar || true
-# 	@cd $(JARDIR) && ./kjar ../$(CLASSDIR)/$*-obf.jar $*-ps.jar || true
-	@mv $(CLASSDIR)/$*-obf.jar $(JARDIR)/$*-ps.jar
-# 	@rm -r jar/kjar_* || true
-
-
-	#@"$(KEYTOOL)" -delete -alias signFiles -keystore jgbekeystore -keypass kpi135 -storepass ab987c > /dev/null || true
-	#@"$(KEYTOOL)" -genkey -alias signFiles -keystore jgbekeystore -keypass kpi135 -dname "cn=JGBE" -storepass ab987c
-	#@"$(JARSIGNER)" -keystore jgbekeystore -storepass ab987c -keypass kpi135 -signedjar $(JARDIR)/$*.jar $(JARDIR)/$*-ps.jar signFiles > /dev/null
-	@mv $(JARDIR)/$*-ps.jar $(JARDIR)/$*.jar
-
-
-#	@mv $(CLASSDIR)/$*.jar $(JARDIR)/$*.jar
+#	@echo "[signing] $*.jar"
+#	@"$(KEYTOOL)" -delete -alias signFiles -keystore jgbekeystore -keypass kpi135 -storepass ab987c > /dev/null || true
+#	@"$(KEYTOOL)" -genkey -alias signFiles -keystore jgbekeystore -keypass kpi135 -dname "cn=JGBE" -storepass ab987c
+#	@"$(JARSIGNER)" -keystore jgbekeystore -storepass ab987c -keypass kpi135 -signedjar $(JARDIR)/$*.jar $(JARDIR)/$*-ps.jar signFiles > /dev/null
+	@mv $(CLASSDIR)/$*-ps.jar $(JARDIR)/$*.jar
 
 
 $(JARDIR)/%.jad: $(JARDIR)/%.jar $(SRCDIR)/%.jar.info
@@ -207,7 +211,7 @@ jad: $(JARDIR)/jmgbe.jad
 
 jademu: jmgbe.emu
 
-%.emu: $(JARDIR)/%.jad
+%.emu: $(JARDIR)/%.jad $(JARDIR)/%.jar
 	@echo "[emulating] $*"
 	@cd $(JARDIR) && time $(J2MEEMULATOR) -Xheapsize:512K -Xdescriptor:./$*.jad -Xdomain:maximum -classpath "$*.jar$(NATIVEPATHSEPARATOR)$(CLASSPATH)"
 
