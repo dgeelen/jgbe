@@ -683,15 +683,16 @@ public final class VideoController {
 	 ****/
 	static int STAT_statemachine_state = 0;
 	static int mode3duration = 0;
+	static int scanlinepos = 0;
 	public static int render(int cycles) { // Renders in real clock cycles
 		//PRINTLN("VC.render called   LCDCcntdwn="+LCDCcntdwn+"   cycles="+cycles);
+// 		renderScanLinePart();
 		LCDCcntdwn -= cycles;
 		while (LCDCcntdwn <= 0) {
 			switch (STAT_statemachine_state) {
 				case 0: // currently in mode 2, switch to mode 3
 						//Note: check if this can change before mode 3 (I think not -> Video memory should be locked)
 						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
-
 						LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
 						STAT = (STAT & 0xFC) | 3;
 						++STAT_statemachine_state;
@@ -767,9 +768,64 @@ public final class VideoController {
 					ASSERT(false); //We should never get here!
 					break;
 			}
+// 			renderScanLinePart();
 		}
 		ASSERT(LCDCcntdwn > 0);
 		return LCDCcntdwn;
+	}
+
+	// Render enough pixels for the ammount of time that has passed (from LCDCcntdwn to LCDCcntdwn + cycles).
+	static int pixpos = 0;
+	private static void renderScanLinePart(int cycles) {
+		scanlinepos += cycles<<1;
+		//First figure out what we are going to render
+		switch(STAT_statemachine_state) {
+				case 0: // currently in mode 2, switch to mode 3
+					blitLine = blitImg[LY];
+					int begin = pixpos;
+// 					int count = Math.max(cycles<<1, 0);
+// 					renderBGPart();
+					break;
+				case 1: // currently in mode 3, switch to mode 0
+// 					renderSpritePart();
+					break;
+// 				case 2: // currently in mode 0, nearing the end, time to increase LY
+// 					/* DO NOTHING */
+// 					break;
+// 				case 3: // currently in mode 0, switch to mode [2 or 1]
+// 					/* DO NOTHING (will be handled by case 0)*/
+// 					break;
+// 				case 4: // currently in mode 1(VBlank), beginning of the scanline
+// 					/* DO NOTHING */
+// 					break;
+// 				case 5: // currently in mode 1(VBlank), nearing 'scanline' end
+// 					/* DO NOTHING */
+// 					break;
+// 				case 6: // Time to go to back to mode 2
+// 					/* DO NOTHING (will be handled by case 0)*/
+// 					break;
+		}
+	}
+/*
+
+
+				case 0: {	// mode 2, Background, 160 pixels/scanline, 80 cycles for mode 2 -> 2 pixels/cycle
+					blitLine = blitImg[LY];
+					int begin = 160 - (LCDCcntdwn<<1);
+					int end   = Math.min(160 - ((LCDCcntdwn-cycles)<<1), 160);
+					renderBGPart(begin, end); // Renders N pixels
+				}
+				case
+				case 1: { // Sprites
+				}
+		}
+	}*/
+
+	private static void renderBGPart(int begin, int end) {
+// 		PRINTLN("Drawing "+begin+"-"+end);
+		for(int i = begin; i<end; ++i) {
+			DRAWPIX(i, 0, 0);
+		}
 	}
 
 	public int read(int index) {
