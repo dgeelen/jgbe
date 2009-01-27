@@ -692,15 +692,19 @@ public final class VideoController {
 			switch (STAT_statemachine_state) {
 				case 0: // currently in mode 2, switch to mode 3
 						//Note: check if this can change before mode 3 (I think not -> Video memory should be locked)
-						mode3duration = 172 + 10*getSpriteCountOnScanline(LY);
+						mode3duration = 172 + 10*setSpritesOnScanline();//getSpriteCountOnScanline(LY);
 						LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
 						STAT = (STAT & 0xFC) | 3;
 						++STAT_statemachine_state;
- 						renderScanLine(); //Test: What if the VC renders the BG internally in mode 2?
+//  						renderScanLine(); //Test: What if the VC renders the BG internally in mode 2?
+						updatepatpix();
+					// Reset scanline rendering state, everything is rendered in mode 3
+					pixpos = -(SCX&7); // First tile may be drawn partly off screen
+					cyclepos = 0;
+					curSprite = 0;
 					break;
 				case 1: // currently in mode 3, switch to mode 0
-					renderScanLinePart(); // Render background and sprites (Which have not moved since mode 2 because of OAM/VRAM lock)
-					pixpos=0; // Reset scanline rendering position
+					renderScanLinePart(); // Render (remainder of) background and sprites
 					LCDCcntdwn += (isCGB ? 376 : 372) - mode3duration; //mode 0 duration - mode 3 duration - hblank_dma
 					STAT &= 0xFC; //switch to mode 0: STAT = (STAT & 0x7C) | 0;
 					if ((STAT&(1<<3))!=0) CPU.triggerInterrupt(1);
@@ -778,68 +782,166 @@ public final class VideoController {
 
 	// Render enough pixels for the ammount of time that has passed (from LCDCcntdwn to LCDCcntdwn + cycles).
 	static int pixpos = 0;
+	static int cyclepos = 0;
+	static int[] zbuffer = new int[160];
+	static int curSprite = 0;
+	static int bgmapptr = 0;
 	private static void renderScanLinePart() {
-		//First figure out what we are going to render
-		switch(STAT_statemachine_state) {
-				case 0: // currently in mode 2, switch to mode 3
-					blitLine = blitImg[LY];
-// 					int count = Math.max(Math.min((80-LCDCcntdwn)<<1, 160)-pixpos,0); // (how far along the scanline we are minus how far we've rendered)
-					renderBGPart(pixpos, Math.min((80-LCDCcntdwn)<<1, 160));
-					pixpos=Math.min((80-LCDCcntdwn)<<1, 160);
-					break;
-				case 1: // currently in mode 3, switch to mode 0
-// 					renderSpritePart();
-					break;
-// 				case 2: // currently in mode 0, nearing the end, time to increase LY
-// 					/* DO NOTHING */
-// 					break;
-// 				case 3: // currently in mode 0, switch to mode [2 or 1]
-// 					/* DO NOTHING (will be handled by case 0)*/
-// 					break;
-// 				case 4: // currently in mode 1(VBlank), beginning of the scanline
-// 					/* DO NOTHING */
-// 					break;
-// 				case 5: // currently in mode 1(VBlank), nearing 'scanline' end
-// 					/* DO NOTHING */
-// 					break;
-// 				case 6: // Time to go to back to mode 2
-// 					/* DO NOTHING (will be handled by case 0)*/
-// 					break;
+		if(STAT_statemachine_state != 1) return;
+		blitLine = blitImg[LY];
+		/* rendering takes between 172 and 272 cycles, depending on #sprites.
+		 * Looking at the source for VBA-M (the goggles, they do nothing!), sprites are rendered
+		 * 'inplace', while rendering the background. Thus in their emu changes in SCX,SCY and
+		 * pallettes are not reflected until a sprite finishes rendering.
+		 * Or rather: 8 pixels (they render 8 pixels at a time)
+		 *
+		 * Priorities are as follows:
+		 *
+		 */
+
+		// Render one bg tile = 8px = 8 cycles -> leaves 4 cycles slack?
+		// (172-21*8)=4, because we need to render 21 tiles
+		int cyclesToRender = (mode3duration - LCDCcntdwn - cyclepos - 8); //NOTE: Should be 4, might improve when sprites take time
+		cyclepos += cyclesToRender;
+		while(cyclesToRender>0) { // we render 8px at a time
+			int sprXPos = OAM[spritesOnScanline[curSprite]|1]-8-pixpos;
+			if((sprXPos>=0) && (sprXPos<8) && (curSprite<spriteCountOnScanline)) { // Sprite starts within next 8 px
+				cyclesToRender-=2; // rendering a sprite takes 10 cycles (2+8), no bg tile is rendered
+				++curSprite; // Select next sprite
+			} else
+			if((!isCGB) && ((LCDC&(1<<0))==0)) { // Bit 0 - BG Display (gbmono mode) (0=Off, 1=On)
+				for(int i=0; i<8; ++i) {
+					int x = pixpos+i;
+					if((x>=0)&&(x<160))
+						DRAWPIX(x, 0, 0);
+				}
+			}
+			else {
+				// Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+				int WindowTileMap = ((LCDC&(1<<6))==0) ? 0x1800 : 0x1c00;
+				// Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)
+				int TileData = ((LCDC&(1<<4))==0) ? 0x0800 : 0x0000;
+				// Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)
+				int BGTileMap  = ((LCDC&(1<<3))==0) ? 0x1800 : 0x1c00;
+
+				int bgline = SCY + LY;
+				int bgtilemapindex = (((SCX+pixpos)&0xff)>>3)+(((bgline&0xff)>>3)<<5);//((bgline&0xf8)<<2); // Index into BG tilemap
+				int bgtile = VRAM[ BGTileMap + bgtilemapindex ];
+				if(((LCDC&(1<<4))==0)) {  // Tiles in 8000-8FFF are numbered -128 to 127
+					// Some magix to convert -128..127 to 0..255 and fix the index into patpix... somehow
+					// FIXME: Explain this
+					bgtile ^= 0x80;
+					bgtile += 0x80;
+				}
+				int[] patLine = patpix[bgtile][bgline&7];
+				for(int i=0; i<8; ++i) {
+					int x = pixpos+i;
+					if((x>=0)&&(x<160)) {
+						DRAWPIX(x, 32, patLine[i]);
+						zbuffer[x] = patLine[i];
+					}
+				}
+				pixpos+=8;
+			}
+			cyclesToRender-=8;
+		}
+		cyclepos -= cyclesToRender;
+
+		if(pixpos>=159) { // We're done with the background, now render the sprites on top
+			boolean spr8x16 = ((LCDC&(1<<2))!=0);
+			for(int curSprite = spriteCountOnScanline-1; curSprite>=0; --curSprite) { // Renders backwards for priorities in gb mono mode
+				if(!isCGB) {
+					// In GB-mono mode sprites are ordered according to X coordinate
+					// EG left-most on top of everything to it's right.
+					int line = spritesLineOnScanline[curSprite];
+					int xpos = OAM[spritesOnScanline[curSprite]|1]-8;
+					int tile = OAM[spritesOnScanline[curSprite]|2];
+					int attr = OAM[spritesOnScanline[curSprite]|3];
+					if (spr8x16) {
+						// Select the correct tile depending on whether we need to render the upper or lower part of the sprite
+						tile &= ~1;
+						tile |= (line >= 8) ? 1 : 0;
+						line &= 7;
+					}
+					boolean priority = ((attr&(1<<7))==0); // True if sprite is above BG and window
+					if((attr&(1<<6))!=0) line = 7 - line;  // Sprite is flipped vertically
+					if((attr&(1<<5))!=0) tile |= (1<<10);  // Sprite is flipped horizontally
+					int pallette = (attr>>4)&1;            // Selects between OBP0 or OBP1
+					int[] patLine = patpix[tile][line]; // Fetch a line from the tile buffer
+		// 					PRINTLN(priority);
+					for(int i=0; i<8;++i) {             // And copy it to the screen.
+// 						int xpos = pixpos+i;
+						int color = patLine[i];        // Color 0 is always transparent
+	// 					if(xpos<160)PRINTLN("xpos="+xpos+" color="+color+" zbuffer="+zbuffer[xpos]+" priority="+priority);
+						if((xpos>=0) && (xpos<160) && (color!=0) && ((zbuffer[xpos]==0) || priority)) {
+// 							PRINTLN("SAD");
+							DRAWPIX(xpos, pallette, color);
+						}
+						++xpos;
+					}
+// 					++curSprite;
+				}
+				else {
+					// In GB-color mode sprites are ordered according to their position
+					// in the OAM, eg sprites with lower numbers on top of sprites with higher numbers
+					PRINTLN("Sprite!");
+				}
+			}
 		}
 	}
-/*
 
-
-				case 0: {	// mode 2, Background, 160 pixels/scanline, 80 cycles for mode 2 -> 2 pixels/cycle
-					blitLine = blitImg[LY];
-					int begin = 160 - (LCDCcntdwn<<1);
-					int end   = Math.min(160 - ((LCDCcntdwn-cycles)<<1), 160);
-					renderBGPart(begin, end); // Renders N pixels
-				}
-				case
-				case 1: { // Sprites
-				}
+	static int spriteCountOnScanline; // How many sprites there are on this scanline
+	static int[] spritesOnScanline = new int[10]; // Index into OAM
+	static int[] spritesLineOnScanline = new int[10]; // Which line of the sprite we're going to render
+	                                                  // (I'm caching this here to access patpix in render)
+	private static int setSpritesOnScanline() {
+		int sprYSize = ((LCDC&(1<<2))!=0)?16:8;
+		int count = 0;
+		for (int spr = 0; (spr < 40*4) && (count<10); spr+=4) { //NOTE: max sprites/scanline == 10
+			int sprPos = LY - (OAM[spr] - 16); // Relative position of sprite top to current scanline
+			//check if sprite is visible on this scanline (X position does not matter)
+			if((sprPos >= 0) && (sprPos < sprYSize )) {
+// 			PRINTLN(sprPos);
+				spritesOnScanline[count] = spr;
+				spritesLineOnScanline[count] = sprPos;
+				++count;
+			}
 		}
-	}*/
 
-	private static void renderBGPart(int begin, int end) {
-		PRINTLN("Drawing "+begin+"->"+end+" ("+(end-begin)+"px)");
-		for(int i = begin; i<end; ++i) {
-			DRAWPIX(i, 0, 0);
+		// Next we sort the selected sprites on X position to make rendering easier (Bubblesort ftw)
+		for(int i=count-1; i>=0; --i) {
+			for(int j=i; j>=0; --j) {
+				int k = spritesOnScanline[i];
+				int l = spritesLineOnScanline[i];
+				if(OAM[spritesOnScanline[j]|1]>OAM[k]) {
+					spritesOnScanline[i]=spritesOnScanline[j];
+					spritesLineOnScanline[i]=spritesLineOnScanline[j];
+					spritesOnScanline[j]=k;
+					spritesLineOnScanline[j]=l;
+				}
+			}
 		}
+/*		for(int i=0 ; i < count ; ++i) {
+			PRINTF("%d, ",spritesOnScanline[i]);
+		}
+		if(count>0) PRINTLN("");
+*/
+		spriteCountOnScanline=count;
+		return count;
 	}
+
 
 	public int read(int index) {
 		if(index < 0xa000) {
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3))
 				return VRAM[index-0x8000+CurrentVRAMBank];
-			PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
+// 			PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
 			return 0xff;
 		}
 		if((index>0xfdff) && (index<0xfea0)) {
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0))
 				return OAM[index-0xfe00];
-			PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
+// 			PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
 			return 0xff;
 		}
 		int b = 0xff;
@@ -856,7 +958,7 @@ public final class VideoController {
 			case 0x02: // 0xff42 - SCY
 				b = SCY;
 				break;
-			case 0x03: // SCX// 0xff43 - 			PRINTLN("ERROR: not using memmap "+ index);
+			case 0x03: // 0xff43 - SCX
 				b = SCX;
 				break;
 			case 0x04: // 0xff44 - LY
@@ -923,14 +1025,14 @@ public final class VideoController {
 				patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
 				anydirty = true;
 			}
-			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
+// 			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
 			return;
 		}
 		if((index > 0xfdff) && (index<0xfea0)) { // OAM: 0xfe00 - 0xfe9f
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0)) {
 				OAM[index-0xfe00]=value;
 			}
-			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
+// 			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
 			return;
 		}
 		switch(index&0x3f) { // VC: 0xff40 - 0xff6f
@@ -955,9 +1057,11 @@ public final class VideoController {
 					}
 				break;
 			case 0x02: // 0xff42 - SCY
+				renderScanLinePart();
 				SCY = value;
 				break;
 			case 0x03: // 0xff43 - SCX
+				renderScanLinePart();
 				SCX = value;
 				break;
 			case 0x04: // 0xff44 - LY
@@ -993,7 +1097,7 @@ public final class VideoController {
 			case 0x08: // 0xff48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
 			case 0x09: // 0xff49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
 				renderScanLinePart();
-				PRINTLN("PAL "+LY+" "+STAT_statemachine_state);
+				PRINTLN("Palette");
 				CPU.IOP[index-0xff00] = value;
 				updateMonoColData(index-0xff47);
 				break;
