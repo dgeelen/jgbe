@@ -340,8 +340,12 @@ public final class CPU {
 					lastVCRenderCycleCount = TotalCycleCount;
 				SL_IF_VERSION( -1, 21) // a bit fuzyy, see comments in handleKeyBounceEvent
 					KeyBounceEventCycleCount = (keyBounce > 0) ? TotalCycleCount + keyBounceWaitNextFix * ((doublespeed)?10:20) : MAX_CYCLE_COUNT;
-				TIMAEventPending = (TIMAEventCycleCount == MAX_CYCLE_COUNT);
-				KeyBounceEventPending = (KeyBounceEventCycleCount == MAX_CYCLE_COUNT);
+				SL_IF_VERSION( 22, 22) { // fix some crashes..
+					TIMAEventCycleCount = TotalCycleCount;
+					KeyBounceEventCycleCount = TotalCycleCount;
+				}
+				TIMAEventPending = (TIMAEventCycleCount != MAX_CYCLE_COUNT);
+				KeyBounceEventPending = (KeyBounceEventCycleCount != MAX_CYCLE_COUNT);
 			}
 		}
 
