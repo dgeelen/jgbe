@@ -186,4 +186,3 @@ class keyConfigDialog implements ComponentListener, ActionListener, KeyListener 
 	public void actionPerformed( ActionEvent e ) {}
 }
 #endif
-
