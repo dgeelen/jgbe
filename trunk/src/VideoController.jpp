@@ -543,14 +543,22 @@ public final class VideoController {
 		// index = 1 -> FF48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
 		// index = 2 -> FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
 
+
 		if (isCGB) return;
 
 		int [][] curColors = GrayColors[index];
 
 		int value = CPU.IOP[index+0x47];//FIXME:do not use, this is called from constructor! CPU.read(index + 0xff47); // could fix this to hold those values ourselves..
 
+		/* here we juggle the pallete numbers a bit
+		 * background palletes have bit 4 (0x08) set
+		 */
 		if (index==0) index= (0x20>>2);
 		else --index;
+
+		/* Here we set the colors in this pallete to the correct rgb values
+		 * Color indexes consist of 2 color bits and 4 pallete bits (ppppcc)
+		 */
 		int temp[] = null;
 		temp = curColors[(value>>0)&3]; palChange((index<<2) | 0, temp[0], temp[1], temp[2]);
 		temp = curColors[(value>>2)&3]; palChange((index<<2) | 1, temp[0], temp[1], temp[2]);
@@ -1261,7 +1269,7 @@ public final class VideoController {
 			tilebufBG[bufMap++] = tile |
 			 ((attr & 0x08) << 6) |              // bank select
 			 ((attr & 0x60) << 5);               // horiz/vert flip
-			tilebufBG[bufMap++] = ((attr&7) | 0x08) << 2; // pal select
+			tilebufBG[bufMap++] = ((attr&7) | 0x08) << 2; // pal select                   xpppcc
 			if ((tileMap&31)==0) { //if ((attrMap&31)==0)
 				tileMap -= 32;
 				attrMap -= 32;
