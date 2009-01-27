@@ -503,9 +503,7 @@ public final class MobileVideoController {
 			}
 // 			return OAM[index-0xfe00];                                                               // Debug version
 		}
-		else {
-			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
-		}
+
 		int b = 0xff;
 		switch(index&0x3f) {
 			case 0x00: // 0xff40 - LCDC register
@@ -605,9 +603,7 @@ public final class MobileVideoController {
  				PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
  			}
 		}
-		else {
-			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
-		}
+
 		switch(index&0x3f) { // VC: 0xff40 - 0xff6f
 			case 0x00: // 0xff40 - LCDC register
 				if( ((value&0x80)!=0) && ((LCDC&0x80)==0) ) restart();
