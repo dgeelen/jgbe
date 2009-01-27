@@ -181,7 +181,7 @@ jarzip: $(CLASSFILES)
 	@mv $(CLASSDIR)/jgbe.zip $(JARDIR)/jgbe.jar
 
 
-$(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(GJAVAFILES) $(CLASSFILES)
+$(JARDIR)/%.jar: $(SRCDIR)/%.jar.info $(GJAVAFILES) $(CLASSFILES) proguard.conf
 	@echo "[packing] $*.jar"
 	@cp "$(shell cat $(SRCDIR)/$*.jar.info | grep "^manifest=" | sed "s:^[^=]*=::")" "$(CLASSDIR)/MANIFEST.MF.in"
 	@cat "$(SRCDIR)/$*.jar.info" | grep  "^vfsjar=" | sed "s:^[^=]*=::" > $(CLASSDIR)/vfsjar.idx
