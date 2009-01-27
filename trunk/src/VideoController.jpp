@@ -985,13 +985,13 @@ public final class VideoController {
 		if(index < 0xa000) {
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3))
 				return VRAM[index-0x8000+CurrentVRAMBank];
-// 			PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
 			return 0xff;
 		}
 		if((index>0xfdff) && (index<0xfea0)) {
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0))
 				return OAM[index-0xfe00];
-// 			PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
 			return 0xff;
 		}
 		int b = 0xff;
@@ -1075,14 +1075,14 @@ public final class VideoController {
 				patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
 				anydirty = true;
 			}
-// 			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
 			return;
 		}
 		if((index > 0xfdff) && (index<0xfea0)) { // OAM: 0xfe00 - 0xfe9f
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0)) {
 				OAM[index-0xfe00]=value;
 			}
-// 			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
 			return;
 		}
 		switch(index&0x3f) { // VC: 0xff40 - 0xff6f
@@ -1177,7 +1177,7 @@ public final class VideoController {
 					int src = ((CPU.IOP[0x51]<<8)|CPU.IOP[0x52]) & 0xfff0;
 					int dst = (((CPU.IOP[0x53]<<8)|CPU.IOP[0x54]) & 0x1ff0) | 0x8000;
 					int len = ((value & 0x7f)+1)<<4;
-//					PRINTLN("WARNING: CPU.write(): TODO: Untimed H-DMA Transfer");
+					PRINTLN("WARNING: CPU.write(): TODO: Untimed H-DMA Transfer");
 					// TODO: this should take more than 4-12 cycles :O
 					//PRINTF("DONE: General HDMA transfer src=$%04x dst=$%04x len=$%04x\n", src, dst, len);
 					for (int i = 0; i < len; ++i)
