@@ -831,16 +831,16 @@ public final class VideoController {
 
 	public int read(int index) {
 		if(index < 0xa000) {
-			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3)) {                           // Debug version
+			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3))
 				return VRAM[index-0x8000+CurrentVRAMBank];
-			}
-			else PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
+			return 0xff;
 		}
 		if((index>0xfdff) && (index<0xfea0)) {
-			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0)) {                                           // Allow all version
+			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0))
 				return OAM[index-0xfe00];
-			}
-			else PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
+			return 0xff;
 		}
 		int b = 0xff;
 		switch(index&0x3f) {
@@ -923,14 +923,14 @@ public final class VideoController {
 				patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
 				anydirty = true;
 			}
-			else PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
 			return;
 		}
 		if((index > 0xfdff) && (index<0xfea0)) { // OAM: 0xfe00 - 0xfe9f
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0)) {
 				OAM[index-0xfe00]=value;
 			}
-			else PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
 			return;
 		}
 		switch(index&0x3f) { // VC: 0xff40 - 0xff6f
