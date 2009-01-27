@@ -51,7 +51,7 @@ ifeq ($(JARSIZEOPTIMIZER),)
 		JARSIZEOPTIMIZER:=cp
 	endif
 	ifneq ($(P7Z),)
-		JARSIZEOPTIMIZER:="$(shell which ./zipopt.bash 2> /dev/null)" --7zip "$(P7Z)"
+		JARSIZEOPTIMIZER:=bash "$(shell pwd)/zipopt.bash" --7zip "$(P7Z)"
 	endif
 endif
 
