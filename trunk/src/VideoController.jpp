@@ -112,11 +112,18 @@ public final class VideoController {
 				y[abc][bca]=x[abc][bca]; \
 	}
 
+	public void setGrayShades(int[][][] g) {
+		for(int i = 0; i < 3) {
+			unshallowCloneInto(g[i], GrayColors[i]);
+					updateMonoColData(i);
+		}
+	}
+
 	public void setGrayShades(int[][] g) {
 		unshallowCloneInto(g, GrayColors[0]);
 		unshallowCloneInto(g, GrayColors[1]);
 		unshallowCloneInto(g, GrayColors[2]);
-		updateMonoColData(0); //???
+		updateMonoColData(0); //??? <-- What do these question marks here?
 		updateMonoColData(1);
 		updateMonoColData(2);
 	}
@@ -125,7 +132,7 @@ public final class VideoController {
 		unshallowCloneInto(g1, GrayColors[0]);
 		unshallowCloneInto(g2, GrayColors[1]);
 		unshallowCloneInto(g3, GrayColors[2]);
-		updateMonoColData(0); //???
+		updateMonoColData(0); //??? <-- And here?
 		updateMonoColData(1);
 		updateMonoColData(2);
 	}
@@ -133,6 +140,11 @@ public final class VideoController {
 	public int[][] getGrayShade(int i) {
 		return GrayColors[i];
 	}
+
+	public int[][][] getGrayShades() {
+		return GrayColors;
+	}
+
 
 	public void restart() { // LCD off -> on
 		LY=0;

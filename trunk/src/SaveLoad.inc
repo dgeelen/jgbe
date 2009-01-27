@@ -79,6 +79,13 @@ import java.io.*;
 			SL_ ## type (var[sl_i][sl_j]); \
 }
 
+#define SL_ARR_3D(type, var, len1, len2, len3) {\
+	for (int sl_i = 0; sl_i < (len1); ++sl_i) \
+		for (int sl_j = 0; sl_j < (len2); ++sl_j) \
+			for (int sl_k = 0; sl_k < (len3); ++sl_k) \
+				SL_ ## type (var[sl_i][sl_j][sl_k]); \
+}
+
 #define SL_IF_VERSION(min, max) \
 	if ( ((min == -1) || (min <= version)) && ((max == -1) || (version <= max)) )
 
@@ -90,5 +97,19 @@ import java.io.*;
 
 #define SL_OBJ(obj) \
 	(obj).stateSaveLoad(save, version, dostream, distream);
+
+#define SL_TYPE_BOOL boolean
+#define SL_TYPE_INT  int
+
+#define SL_GETSET(type, var, getter, setter) {\
+	if (SL_SAVE) { \
+	  SL_TYPE_ ## type sl_v = var.getter(); \
+	  SL_ ## type (sl_v); \
+	} else { \
+		SL_TYPE_ ## type sl_v; \
+	  SL_ ## type (sl_v); \
+		var.setter(sl_v); \
+	} \
+}
 
 #endif//SAVELOAD_INC

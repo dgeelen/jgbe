@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
+#include "SaveLoad.inc"
 #include "keyConfigDialog.inc"
 
 class GlobalExceptionCatcher implements Thread.UncaughtExceptionHandler {
@@ -1571,6 +1572,94 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			}
 		}
 
+		SAVELOAD_FUNCTION {
+			SL_BOOL  (cpu.AC.isMuted);
+			SL_STRING(biosfilename);
+			SL_GETSET(BOOL, menuitemUseBIOS, getState, setState);
+			SL_INT   (VC.nscale);
+			SL_INT   (VC.fskip);
+
+			SL_GETSET(INT, interpolationRadioGroup, getSelectedIndex, setSelectedIndex);
+			SL_GETSET(BOOL, keepAspectRatio, isEnabled, setEnabled);
+			SL_GETSET(BOOL, keepAspectRatio, getState, setState);
+			SL_GETSET(BOOL, enableFullScreen, isEnabled, setEnabled);
+			SL_GETSET(BOOL, enableFullScreen, getState, setState);
+			SL_GETSET(BOOL, menuitemMixFrame, getState, setState);
+
+			{
+				int[][][] gs = VC.getGrayShades();
+				SL_ARR_3D(INT, gs, 3, 3, 4);
+				VC.setGrayShades(gs);
+			}
+
+			{
+				SL_BOOL(cheatcodes.UseCheats);
+				menuitemEnableCheats.setState(cheatcodes.UseCheats);
+			}
+
+			{
+				boolean[] soundchannelactive = new boolean[4];
+				if (SL_LOAD)
+					for (int i = 0; i < 4; ++i)
+						soundchannelactive[i] = cpu.AC.channelActive(i);
+				SL_ARR   (BOOL,soundchannelactive,4)
+				menuitemEnableSound.setState(!cpu.AC.isMuted);
+				if (SL_SAVE)
+					for (int i = 0; i < 4; ++i) {
+						cpu.AC.setChannelActive(i+1, soundchannelactive[i]);
+						((JCheckBoxMenuItem)soundChannelGroup.get(i)).setState(soundchannelactive[i]);
+					}
+			}
+
+			{
+				String adName = "None", adVendor = "None", adDescription = "None", adVersion = "None";
+				int    adChannels = 2, adSampleRate = 44100, adOutputInterval = 735, adBufferSize = 2048;
+				if(SL_SAVE && audioDriver!=null) {
+					adName           = audioDriver.getMixerInfo().getName();
+					adVendor         = audioDriver.getMixerInfo().getVendor();
+					adDescription    = audioDriver.getMixerInfo().getDescription();
+					adVersion        = audioDriver.getMixerInfo().getVersion();
+					adChannels       = audioDriver.getChannels();
+					adBufferSize     = audioDriver.getBufferSize();
+					adOutputInterval = audioDriver.getOutputInterval();
+					adSampleRate     = audioDriver.getSampleRate();
+				}
+				SL_STRING(adName);
+				SL_STRING(adVendor);
+				SL_STRING(adDescription);
+				SL_STRING(adVersion);
+				SL_INT(adChannels);
+				SL_INT(adBufferSize);
+				SL_INT(adOutputInterval);
+				SL_INT(adSampleRate);
+				if(SL_LOAD && audioDriver!=null) {
+					audioDriver.setMixerInfo(adName, adVendor, adDescription, adVersion);
+					audioDriver.setChannels(adChannels);
+					audioDriver.setBufferSize(adBufferSize);
+					audioDriver.setOutputInterval(adOutputInterval);
+					audioDriver.setSampleRate(adSampleRate);
+				}
+			}
+
+			{
+				int fsizewidth;
+				int fsizeheight;
+				if(SL_SAVE) {
+					Dimension fsize  = frame.getSize();
+					fsizewidth       = fsize.width;
+					fsizeheight      = fsize.height;
+				}
+				SL_INT(fsizewidth);
+				SL_INT(fsizeheight);
+				if(SL_LOAD) {
+					Dimension fsize = new Dimension(fsizewidth, fsizeheight);
+					frame.setPreferredSize(fsize);
+					frame.pack();
+					frame.setPreferredSize(new Dimension(0,0));
+				}
+			}
+		}
+
 		private boolean loading = false;
 		public void loadConfig() {
 			loading = true;
@@ -1590,131 +1679,31 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 			int adOutputInterval = 735; // 44100/60, once per frame
 			int adBufferSize = 2048;    // no need to buffer big enough to avoid underruns
 			int interpolationRadioGroupsetSelectedIndex=0;
-			boolean keepAspectRatiosetEnabled=false;
-			boolean keepAspectRatiosetState=true;
+
 			boolean enableFullScreensetEnabled=true;
 			boolean enableFullScreensetState=false;
 			boolean menuitemMixFramesetState=false;
 			Dimension fsize = frame.getSize();
 			int fsizewidth = fsize.width;
 			int fsizeheight = fsize.height;
-			try {
-				String filename = FHandler.JGBEDir("") + "jgbe.conf";
-				BufferedReader in = new BufferedReader(new FileReader(filename));
-				String str;
-				while ((str = in.readLine()) != null) {
-// 					PRINTF("loadConfig(): `"+str+"' --> ");
-					int index = str.indexOf("#");	if(index>=0) str = str.substring(0, index).trim();
-					index=str.indexOf("=");
-					String property, value;
-					if(index>=0) {
-						property = str.substring(0, index).trim();
-						value = str.substring( index+1, str.length()).trim();
-					}
-					else {
-						property="";
-						value="";
-					}
-// 					PRINTLN(property+"("+value+")");
-					#define LOAD_INT_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
-					                        	try { \
-					                        		(x) = Integer.parseInt(value); \
-					                        	} catch( Exception e) { } \
-					                         }
-					#define LOAD_BOOL_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
-					                         	x = value.equalsIgnoreCase("True"); \
-					                         }
-					#define LOAD_STRING_VAL(x) if( property.equalsIgnoreCase( #x ) ) { \
-					                             	x = value; \
-					                             }
 
-					LOAD_BOOL_VAL( cpu.AC.isMuted );
-					LOAD_STRING_VAL( biosfilename );
-					LOAD_BOOL_VAL( runbiosonreset );
-					LOAD_INT_VAL( VC.nscale );
-					LOAD_INT_VAL( VC.fskip );
-					for (int i = 0; i < 4; ++i)
-						if (property.equalsIgnoreCase("soundchannel"+(i+1)+"active"))
-							soundchannelactive[i] = value.equalsIgnoreCase("True");
 
-					LOAD_INT_VAL(adChannels);
-					LOAD_STRING_VAL(adName);
-					LOAD_STRING_VAL(adVendor);
-					LOAD_STRING_VAL(adDescription);
-					LOAD_STRING_VAL(adVersion);
-					LOAD_INT_VAL(adBufferSize);
-					LOAD_INT_VAL(adOutputInterval);
-					LOAD_INT_VAL(adSampleRate);
-					LOAD_BOOL_VAL(usecheats);
-
-					LOAD_INT_VAL(interpolationRadioGroupsetSelectedIndex);
-					LOAD_BOOL_VAL(keepAspectRatiosetEnabled);
-					LOAD_BOOL_VAL(keepAspectRatiosetState);
-					LOAD_BOOL_VAL(enableFullScreensetEnabled);
-					LOAD_BOOL_VAL(enableFullScreensetState);
-					LOAD_BOOL_VAL(menuitemMixFramesetState);
-
-					LOAD_INT_VAL( fsizewidth );
-					LOAD_INT_VAL( fsizeheight );
-
-					/* LOAD PAL */
-					if (property.equalsIgnoreCase("ColorType")) {
-						try {
-							colorType = Integer.parseInt(value);
-						} catch( Exception e) { };
-					}
-					if(property.equalsIgnoreCase("CustomColors")) {
-						String[] strs = value.split(" ");
-
-						int[][][] ints = new int[3][4][3];
-						for (int k = 0; k < 3; ++k) {
-							for (int i = 0; i < 12; ++i) {
-								try {
-									ints[k][i / 3][i % 3] = Integer.parseInt(strs[k*12+i]);
-								} catch( Exception e) { };
-							}
-						}
-						cpu.VC.setGrayShades(ints[0],ints[1],ints[2]);
-					}
-				}
-				in.close();
-			} catch (IOException e) {
-				PRINTLN("error reading jgbe.conf");
-			}
 			grfx.setPreferredSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 			grfx.setSize( new Dimension( 160*cpu.VC.nscale, 144*cpu.VC.nscale ) ); //quadruple each pixel
 			frame.pack();
-			menuitemUseBIOS.setState(runbiosonreset);
-			menuitemEnableSound.setState(!cpu.AC.isMuted);
-			for (int i = 0; i < 4; ++i) {
-				cpu.AC.setChannelActive(i+1, soundchannelactive[i]);
-				((JCheckBoxMenuItem)soundChannelGroup.get(i)).setState(soundchannelactive[i]);
-			}
+
 			actionPerformed(new ActionEvent(menuitemColorSchemes[colorType], 0, ""));
 			scaleRadioGroup.setSelectedIndex(VC.nscale-1);
-			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
-			cheatcodes.useCheats(usecheats);
-			menuitemEnableCheats.setState(usecheats);
 
-			if(audioDriver!=null) {
-				audioDriver.setMixerInfo(adName, adVendor, adDescription, adVersion);
-				audioDriver.setChannels(adChannels);
-				audioDriver.setBufferSize(adBufferSize);
-				audioDriver.setOutputInterval(adOutputInterval);
-				audioDriver.setSampleRate(adSampleRate);
-			}
+
 
 			interpolationRadioGroup.setSelectedIndex(interpolationRadioGroupsetSelectedIndex);
-			keepAspectRatio.setEnabled(keepAspectRatiosetEnabled);
-			keepAspectRatio.setState(keepAspectRatiosetState);
-			enableFullScreen.setEnabled(enableFullScreensetEnabled);
-			enableFullScreen.setState(enableFullScreensetState);
+
+
 			menuitemMixFrame.setState(menuitemMixFramesetState);
 			CPU.VC.MixFrames=menuitemMixFramesetState;
-			fsize = new Dimension(fsizewidth, fsizeheight);
-			frame.setPreferredSize(fsize);
-			frame.pack();
-			frame.setPreferredSize(new Dimension(0,0));
+
+
 			actionPerformed(new ActionEvent(interpolationRadioGroup.get(interpolationRadioGroupsetSelectedIndex), 0, ""));
 			loading = false;
 		}
@@ -1960,13 +1949,15 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 
 			if (!romfile.equals(""))
 				gui.tryToLoadROM(romfile);
-			gui.loadConfig();
 
-			if(cheatcodes==null) cheatcodes = new CheatCodeEditor(frame, curcartname);
-			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
-			gui.loadKeyBinds();
+			cheatcodes = new CheatCodeEditor(frame, curcartname);
 
 			cheatcodes.applyCheatCodes(cart);
+
+			gui.loadConfig();
+
+			if (gui.menuitemUseBIOS.getState() && cart != null) cart.loadBios(biosfilename);
+			gui.loadKeyBinds();
 
 			gui.cpu.VC.addListener(gui.grfx);
 			if (!sound)
