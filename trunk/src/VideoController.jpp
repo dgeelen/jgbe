@@ -1086,6 +1086,7 @@ public final class VideoController {
 				VRAM[index-0x8000+CurrentVRAMBank]=value;
 				patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
 				anydirty = true;
+				return;
 			}
 			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
 			return;
@@ -1093,6 +1094,7 @@ public final class VideoController {
 		if((index > 0xfdff) && (index<0xfea0)) { // OAM: 0xfe00 - 0xfe9f
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0)) {
 				OAM[index-0xfe00]=value;
+				return;
 			}
 			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
 			return;
