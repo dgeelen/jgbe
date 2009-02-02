@@ -64,7 +64,7 @@ public final class MobileVideoController {
 	private static int cfskip = 0;
 	public static int fskip = 4; // 1 is off
 	public static boolean MixFrames; // Mix together last N frames
-	public boolean allow_writes_in_mode_2_3=false;
+	public boolean allow_writes_in_mode_2_3=true;
 
 /*
 	public void setGrayShade(int i, int j, Color c) {
