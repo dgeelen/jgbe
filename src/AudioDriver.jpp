@@ -24,7 +24,7 @@ public class AudioDriver implements IAudioListener {
 	public AudioDriver() {
 		ASSERT(false); //DO NOT USE THIS CONSTRUCTOR!
 	}
-	
+
 	public AudioDriver(AudioController ac) {
 		this.ac = ac;
 		audioBufferIndex = 0;
@@ -37,6 +37,8 @@ public class AudioDriver implements IAudioListener {
 		signedSound = true;
 		bigEndianSound = true;
 		outputInterval=1<<6;
+		Mixer.Info[] mi = AudioSystem.getMixerInfo();
+		mixerinfo=mi[0]; // FIXME: Will fail when no mixers are present
 	}
 
 	public void stop() {
@@ -45,7 +47,7 @@ public class AudioDriver implements IAudioListener {
 			audioSource.close();
 		}
 	}
-	
+
 	public void start() {
 		try {
 			if(audioSource != null) {
@@ -57,7 +59,7 @@ public class AudioDriver implements IAudioListener {
 				PRINTLN("Note: Sound will be unavailable");
 			}
 	}
-	
+
 	public boolean update() {
 // 		PRINTLN("sampleRate="+sampleRate+" sampleSize="+sampleSize+" channels="+channels+" signedSound="+signedSound+" bigEndianSound="+bigEndianSound+" audioBufferSize="+audioBufferSize+" mixer="+mixerinfo);
 		frameSize = (sampleSize+7)/8*channels;
@@ -86,7 +88,7 @@ public class AudioDriver implements IAudioListener {
 	public int getFrameSize() {
 		return frameSize;
 	}
-	
+
 	public int getChannels() {
 		return channels;
 	}
@@ -96,7 +98,7 @@ public class AudioDriver implements IAudioListener {
 		audioBufferIndex = (frameSize)*(audioBufferIndex/(frameSize));;
 		update();
 	}
-	
+
 	public Mixer.Info getMixerInfo() {
 		return mixerinfo;
 	}
@@ -113,7 +115,7 @@ public class AudioDriver implements IAudioListener {
 		}
 		return false;
 	}
-	
+
 	public boolean setMixerInfo(Mixer.Info minfo) {
 		Mixer.Info tmp = mixerinfo;
 		mixerinfo = minfo;
@@ -130,7 +132,7 @@ public class AudioDriver implements IAudioListener {
 	public int getOutputInterval() {
 		return outputInterval;
 	}
-	
+
 	public boolean setOutputInterval(int n) {
 		outputInterval = (frameSize)*(n/(frameSize));
 		if(outputInterval >= audioBufferSize -1 - (frameSize))
@@ -138,7 +140,7 @@ public class AudioDriver implements IAudioListener {
 		outputInterval = Math.max((frameSize), outputInterval);
 		return true;
 	}
-	
+
 	public boolean setBufferSize(int n) {
 		audioBufferSize = (frameSize)*(n/(frameSize));;
 		setOutputInterval(Math.min(audioBufferSize, outputInterval));
@@ -150,7 +152,7 @@ public class AudioDriver implements IAudioListener {
 	public int getSampleRate() {
 		return sampleRate;
 	}
-	
+
 	public boolean setSampleRate(int sr) {
 		sampleRate = sr;
 		return update();
