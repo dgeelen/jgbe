@@ -124,19 +124,7 @@ class LZOutputStream extends OutputStream {
 		}
 	};
 
-	/*
-	 * ostream     the stream to write the compressed data to
-	 * windowbits  affects memory usage for compressor and decompressor.
-	 *             higher values yield better compression ratio.
-	 *             valid values: 0 < windowbits < 16
-	 *             decompressor needs 2^windowbits bytes of memory
-	 *             compressor needs 6 * 2^windowbits bytes of memory
-	 * numhashbits affects speed and memory usage for compressor.
-	 *             higher values yield faster compression.
-	 *             valid values: 4 <= numhashbits <= 30
-	 *             compressor needs 4 * 2^numhashbits bytes of memory
-	 */
-	public LZOutputStream(OutputStream ostream, int windowbits, int numhashbits) throws IOException
+	private void initialize(OutputStream ostream, int windowbits, int numhashbits) throws IOException
 	{
 		if (windowbits  <= 0) throw new IOException("Invalid number of window bits");
 		if (windowbits  > 15) throw new IOException("Invalid number of window bits");
@@ -173,6 +161,28 @@ class LZOutputStream extends OutputStream {
 
 		outstr.write(FILE_MAGIX_UNKNOWN);
 		outstr.write(wind_bits);
+	}
+
+	/*
+	 * ostream     the stream to write the compressed data to
+	 * windowbits  affects memory usage for compressor and decompressor.
+	 *             higher values yield better compression ratio.
+	 *             valid values: 0 < windowbits < 16
+	 *             decompressor needs 2^windowbits bytes of memory
+	 *             compressor needs 6 * 2^windowbits bytes of memory
+	 * numhashbits affects speed and memory usage for compressor.
+	 *             higher values yield faster compression.
+	 *             valid values: 4 <= numhashbits <= 30
+	 *             compressor needs 4 * 2^numhashbits bytes of memory
+	 */
+	public LZOutputStream(OutputStream ostream, int windowbits, int numhashbits) throws IOException
+	{
+		initialize(ostream, windowbits, numhashbits);
+	}
+
+	public LZOutputStream(OutputStream ostream) throws IOException
+	{
+		initialize(ostream, 15, 16);
 	}
 
 	public void write(int b) throws IOException
