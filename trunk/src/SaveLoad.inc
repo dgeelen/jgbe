@@ -3,10 +3,15 @@
 
 import java.io.*;
 
-#define SL_MAGIX (0x4a374a53)                // JGBS = <J>ava <G>ame<B>oy <S>tate in ascii hex
-#define SL_SAVE_VERSION     23               // version we save, change when changing savestate format
-#define SL_LOAD_MIN_VERSION  0               // oldest version we can handle
-#define SL_LOAD_MAX_VERSION SL_SAVE_VERSION  // newest version we can handle, normally the same as what we save
+#define SL_MAGIX            (0x4a374a53)      // Incorrect spelling of 'JGBS', spells 'J7JS'
+#define SL_SAVE_VERSION     (23)              // version we save, change when changing savestate format
+#define SL_LOAD_MIN_VERSION (0)               // oldest version we can handle
+#define SL_LOAD_MAX_VERSION (SL_SAVE_VERSION) // newest version we can handle, normally the same as what we save
+
+#define SL_GUI_SWING_MAGIX (0x53475549)                            // JGBS = <S>wing <G><U><I> in ascii hex
+#define SL_GUI_SWING_SAVE_VERSION (0)                              // version we save, change when changing savestate format
+#define SL_GUI_SWING_LOAD_MIN_VERSION (0)                          // oldest version we can handle
+#define SL_GUI_SWING_LOAD_MAX_VERSION (SL_SAVE_VERSION_GUI_SWING)  // newest version we can handle, normally the same as what we save
 
 #define SL_LOAD_COMPRESS_VERSION 5 // first version to use compression
 
@@ -99,14 +104,16 @@ import java.io.*;
 	(obj).stateSaveLoad(save, version, dostream, distream);
 
 #define SL_TYPE_BOOL boolean
+#define SL_TYPE_INIT_BOOL false
 #define SL_TYPE_INT  int
+#define SL_TYPE_INIT_INT 0
 
 #define SL_GETSET(type, var, getter, setter) {\
 	if (SL_SAVE) { \
 	  SL_TYPE_ ## type sl_v = var.getter(); \
 	  SL_ ## type (sl_v); \
 	} else { \
-		SL_TYPE_ ## type sl_v; \
+		SL_TYPE_ ## type sl_v = SL_TYPE_INIT_ ## type; \
 	  SL_ ## type (sl_v); \
 		var.setter(sl_v); \
 	} \
