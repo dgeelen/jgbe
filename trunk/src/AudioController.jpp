@@ -81,10 +81,12 @@ public final class AudioController {
 	protected CPU cpu;
 
 	public boolean channelActive(int i) {
+		ASSERT(i>=1); ASSERT(i<=4); // Valid channels are 1 <= i <= 4")
 		return channelactive[i];
 	}
 
 	public void setChannelActive(int i, boolean b){
+		ASSERT(i>=1); ASSERT(i<=4); // Valid channels are 1 <= i <= 4")
 		channelactive[i] = b;
 	}
 
