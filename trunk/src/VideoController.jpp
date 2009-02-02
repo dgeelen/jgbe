@@ -113,10 +113,8 @@ public final class VideoController {
 	}
 
 	public void setGrayShades(int[][][] g) {
-		for(int i = 0; i < 3) {
-			unshallowCloneInto(g[i], GrayColors[i]);
-					updateMonoColData(i);
-		}
+		//NOTE: Somehow this function can not use unshallowCloneInto and updateMonoColData
+		setGrayShades(g[0], g[1], g[2]);
 	}
 
 	public void setGrayShades(int[][] g) {
