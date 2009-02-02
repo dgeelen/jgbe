@@ -475,35 +475,18 @@ public final class MobileVideoController {
 	}
 
 	public int read(int index) {
-		if(index<0x8000) {
-			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
-		}
-		else if(index < 0xa000) {
-// 			return ((((STAT&3)!=3)||((LCDC&0x80)==0)) ? VRAM[index-0x8000+CurrentVRAMBank] : 0xff); // Optimized version
-			if(((STAT&3)!=3)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {                                                     // Debug version
+		if(index < 0xa000) {
+			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3))
 				return VRAM[index-0x8000+CurrentVRAMBank];
-			}
-			else {
-				PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
-				return 0xff;
-			}
-// 			return VRAM[index-0x8000+CurrentVRAMBank];                                              // Allow all version
+			PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
+			return 0xff;
 		}
-		else if(index<0xfe00) {
-			PRINTLN("Error: VideoController.read(): Reading from non VideoController-Address "+index);
-		}
-		else if(index<0xfea0) {
-// 			return ((((STAT&2)==0)||((LCDC&0x80)==0)) ? OAM[index-0xfe00] : 0xff);                  // Optimized version
-			if(((STAT&2)==0)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {                                                     // Allow all version
+		if((index>0xfdff) && (index<0xfea0)) {
+			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0))
 				return OAM[index-0xfe00];
-			}
-			else {
-				PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
-				return 0xff;
-			}
-// 			return OAM[index-0xfe00];                                                               // Debug version
+			PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
+			return 0xff;
 		}
-
 		int b = 0xff;
 		switch(index&0x3f) {
 			case 0x00: // 0xff40 - LCDC register
@@ -579,31 +562,22 @@ public final class MobileVideoController {
 	}
 
 	public void write(int index, int value) {
-		if(index<0x8000) {
-			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
-		}
-		else if(index < 0xa000) {
-			if(((STAT&3)!=3)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {
+		if(index < 0xa000) { // VRAM: 0x8000 - 0x9fff, lowest writeable address in VC (checked in CPU.write)
+			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3)) {
 				VRAM[index-0x8000+CurrentVRAMBank]=value;
-				//patdirty[(CurrentVRAMBank>>4)+((index-0x8000)>>4)] = true; // nicked from gnuboy...
-				//anydirty = true;
+				return;
 			}
-			else {
-				PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
-			}
+			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
+			return;
 		}
-		else if(index<0xfe00) {
-			PRINTLN("Error: VideoController.write(): Writing to non VideoController-Address "+index+" value="+value);
-		}
-		else if(index<0xfea0) {
-			if(((STAT&2)==0)||((LCDC&0x80)==0)||allow_writes_in_mode_2_3) {
+		if((index > 0xfdff) && (index<0xfea0)) { // OAM: 0xfe00 - 0xfe9f
+			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0)) {
 				OAM[index-0xfe00]=value;
- 			}
- 			else {
- 				PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
- 			}
+				return;
+			}
+			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
+			return;
 		}
-
 		switch(index&0x3f) { // VC: 0xff40 - 0xff6f
 			case 0x00: // 0xff40 - LCDC register
 				if( ((value&0x80)!=0) && ((LCDC&0x80)==0) ) restart();
