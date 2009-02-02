@@ -1,24 +1,40 @@
 
 class Format142 {
 	public static final String strformat(String s, int[] iarr) {
+#ifndef USE_JAVA_MOBILE
 		Object oarr[] = new Object[iarr.length];
 		for (int i = 0; i < iarr.length; ++i)
 			oarr[i] = new Integer(iarr[i]);
-#ifndef USE_JAVA_MOBILE
 		return String.format(s, oarr);
 #else
-		return s;
+		String result = s;
+		if (iarr.length > 0) {
+			String add = "%("+iarr[0];
+			for (int i = 1; i < iarr.length; ++i)
+				add = add + ", " + iarr[i];
+			add = add + ")";
+			result = add + " " + result;
+		}
+		return result;
 #endif
 	}
 
 	public static final String strformat(String s, double[] iarr) {
+#ifndef USE_JAVA_MOBILE
 		Object oarr[] = new Object[iarr.length];
 		for (int i = 0; i < iarr.length; ++i)
 			oarr[i] = new Double(iarr[i]);
-#ifndef USE_JAVA_MOBILE
 		return String.format(s, oarr);
 #else
-		return s;
+		String result = s;
+		if (iarr.length > 0) {
+			String add = "%("+iarr[0];
+			for (int i = 1; i < iarr.length; ++i)
+				add = add + ", " + iarr[i];
+			add = add + ")";
+			result = add + " " + result;
+		}
+		return result;
 #endif
 	}
 
