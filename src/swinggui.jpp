@@ -23,7 +23,7 @@ class GlobalExceptionCatcher implements Thread.UncaughtExceptionHandler {
 	GlobalExceptionCatcher() {}
 	public void uncaughtException(Thread t, Throwable ee) { //Note: still dies on OutOfMemory error :-(
 		final Throwable e=ee;
-		if(swinggui.cpuRunner.hasThread(t)) {
+		if((swinggui.cpuRunner != null) && swinggui.cpuRunner.hasThread(t)) {
 			/* The exception occured in the runner thread, but this is
 			 * a required thread (because it is used by grfx.focusGained/focusLost)
 			 * Any exception occuring in the Debugger is handled in the debugger,
