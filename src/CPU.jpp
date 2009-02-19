@@ -1130,12 +1130,15 @@ public final class CPU {
 		public static void handleVCRenderEvent()
 		{
 			int cycles = (int)(TotalCycleCount - lastVCRenderCycleCount);
-			lastVCRenderCycleCount = TotalCycleCount;
 
 			if (doublespeed) cycles /= 2; // cycle counts are always even, so no need to account for rounding
 			int cntdown = VC.render(cycles);
 			if (doublespeed) cntdown *= 2;
 
+			// NOTE: lastVCRenderCycleCount is used in VC.renderScanlinePart to determine how many pixels to render
+			//       since the last render part. At the end of MODE3 this is called one last time so don't update
+			//       lastVCRenderCycleCount until after the call to VC.render().
+			lastVCRenderCycleCount = TotalCycleCount;
 			VCRenderEventCycleCount = TotalCycleCount + cntdown;
 			//VCRenderEventCycleCount = TotalCycleCount + 1;
 		};
