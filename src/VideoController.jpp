@@ -715,14 +715,15 @@ public final class VideoController {
 		while (LCDCcntdwn <= 0) {
 			switch (STAT_statemachine_state) {
 				case 0: // currently in mode 2, switch to mode 3
-						//Note: check if this can change before mode 3 (I think not -> Video memory should be locked)
-						mode3duration = 172 + 10*setSpritesOnScanline();//getSpriteCountOnScanline(LY);
-						LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
-						STAT = (STAT & 0xFC) | 3;
-						++STAT_statemachine_state;
-// 						if(!useSubscanlineRendering) renderScanLine(); //Test: What if the VC renders the BG internally in mode 2?
-						updatepatpix();
+					//Note: check if this can change before mode 3 (I think not -> Video memory should be locked)
+					mode3duration = 172 + 10*setSpritesOnScanline();//getSpriteCountOnScanline(LY);
+					LCDCcntdwn += mode3duration; // Mode 3 lasts longer depending on the nr of sprites on the scanline
+					STAT = (STAT & 0xFC) | 3;
+					++STAT_statemachine_state;
+// 					if(!useSubscanlineRendering) renderScanLine(); //Test: What if the VC renders the BG internally in mode 2?
+					updatepatpix();
 					// Reset scanline rendering state, everything is rendered in mode 3
+					// FIXME/NOTE: The beginning of the scanline might already have to have been drawn here, since LCDCcntdwn<=0
 					pixpos = -(SCX&7); // First tile may be drawn partly off screen
 					cyclepos = 0;
 					curSprite = 0;
