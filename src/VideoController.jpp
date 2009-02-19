@@ -42,7 +42,7 @@ public final class VideoController {
 	protected static int STAT=0;
 	private static int LCDCcntdwn=0;
 
-	public static boolean useSubscanlineRendering = true;
+	public static boolean useSubscanlineRendering = false;
 
 	protected static int curBGY;
 	protected static int curWNDY;
