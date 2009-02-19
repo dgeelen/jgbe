@@ -997,13 +997,13 @@ public final class VideoController {
 		if(index < 0xa000) {
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3))
 				return VRAM[index-0x8000+CurrentVRAMBank];
-			PRINTLN("WARNING: Illegal read from VRAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Read from VRAM["+STRFORMAT("0x%04x",index)+"] denied during mode "+(STAT&3)+", PC="+STRFORMAT("0x%04x",(CPU.getPC())));
 			return 0xff;
 		}
 		if((index>0xfdff) && (index<0xfea0)) {
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&2)==0))
 				return OAM[index-0xfe00];
-			PRINTLN("WARNING: Illegal read from OAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Read from OAM["+STRFORMAT("0x%04x",index)+"] denied during mode "+(STAT&3)+", PC="+STRFORMAT("0x%04x",(CPU.getPC())));
 			return 0xff;
 		}
 		int b = 0xff;
@@ -1088,7 +1088,7 @@ public final class VideoController {
 				anydirty = true;
 				return;
 			}
-			PRINTLN("WARNING: Ignoring writes to VRAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Write to VRAM["+STRFORMAT("0x%04x",index)+"] denied during mode "+(STAT&3)+", PC="+STRFORMAT("0x%04x",(CPU.getPC())));
 			return;
 		}
 		if((index > 0xfdff) && (index<0xfea0)) { // OAM: 0xfe00 - 0xfe9f
@@ -1096,7 +1096,7 @@ public final class VideoController {
 				OAM[index-0xfe00]=value;
 				return;
 			}
-			PRINTLN("WARNING: Ignoring writes to OAM while in mode "+(STAT&3));
+			PRINTLN("WARNING: Write to OAM["+STRFORMAT("0x%04x",index)+"] denied during mode "+(STAT&3)+", PC="+STRFORMAT("0x%04x",(CPU.getPC())));
 			return;
 		}
 		switch(index&0x3f) { // VC: 0xff40 - 0xff6f
