@@ -838,9 +838,9 @@ public final class VideoController {
 		// Render one bg tile = 8px = 8 cycles -> leaves 4 cycles slack?
 		// (172-21*8)=4, because we need to render 21 tiles
 
-		int cyclesPassedInCPU = (int)(CPU.TotalCycleCount - CPU.lastVCRenderCycleCount); // NR of cycles since start of MODE3
-		int cyclesToRender    = cyclesPassedInCPU - cyclepos; // NR of cycles elapsed since last call to renderScanLinePart
-		cyclepos = cyclesPassedInCPU;
+		int newLCDCcntdwn = (int)(LCDCcntdwn - (int)(CPU.TotalCycleCount - CPU.lastVCRenderCycleCount)); // NR of cycles left till end of scanline
+		int cyclesToRender = (mode3duration - newLCDCcntdwn - cyclepos - 4);
+		cyclepos += cyclesToRender;
 
 		while(cyclesToRender>0) { // we render 8px at a time
 			int sprXPos = OAM[spritesOnScanline[curSprite]|1]-8-pixpos;
@@ -894,6 +894,7 @@ public final class VideoController {
 			cyclesToRender-=8;
 			pixpos+=8;
 		}
+		cyclepos -= cyclesToRender;
 
 		if(pixpos>=159) { // We're done with the background, now render the sprites on top
 			int pricol = 0xff0000;
