@@ -120,11 +120,11 @@ public class jmgbe extends MIDlet implements CommandListener {
 		display = Display.getDisplay(this);
 
 		IVFSNode cartnode = null;
-		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/jar/sml1.gb");
-		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE/roms/sml1.gb");
-		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Local/roms/sml1.gb");
-		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Store/roms/sml1.gb");
-		if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb");
+		//if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/jar/sml1.gb");
+		//if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE/roms/sml1.gb");
+		//if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Local/roms/sml1.gb");
+		//if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/Record-JMGBE-Store/roms/sml1.gb");
+		//if (cartnode == null) cartnode = MeBoyVFS.getNodeFromPath("/filesystem/roms/sml1.gb");
 
 		if (cartnode == null) {
 			IVFSNode root = VFSRoot.getRoot();
