@@ -87,6 +87,7 @@ class LZInputStream extends InputStream {
 		close();
 	}
 
+#ifndef USE_JAVA_MOBILE
 	/* for testing and usage example */
 	public static void main(String[] args) {
 		try {
@@ -117,4 +118,5 @@ class LZInputStream extends InputStream {
 			e.printStackTrace();
 		}
 	}
+#endif
 };
