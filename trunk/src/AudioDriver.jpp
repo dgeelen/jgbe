@@ -10,6 +10,7 @@ public class AudioDriver implements IAudioListener {
 	SourceDataLine audioSource;
 	Mixer.Info mixerinfo;
 	AudioController ac;
+	OutputStream dumpStream;
 	byte[] audioBuffer;
 	int audioBufferIndex;
 	int sampleRate;
@@ -170,12 +171,32 @@ public class AudioDriver implements IAudioListener {
 			if(audioSource!=null) {
 					audioSource.write(audioBuffer, 0, audioBufferIndex);
 			}
+			if(dumpStream!=null) {
+				// convert from s8 to u8 for mplayer
+				for (int i = 0; i < audioBufferIndex; ++i)
+					audioBuffer[i] = (byte)(audioBuffer[i] + 128);
+					//audioBuffer[i] = (byte)(2*(audioBuffer[i]) + 128); //hax double power
+
+				try {
+					dumpStream.write(audioBuffer, 0, audioBufferIndex);
+				} catch (IOException e) {
+				}
+			}
 			audioBufferIndex = 0;
 		}
 	}
 
 	public void writeAudioSample(byte[] b) {
 		ASSERT(false); //Currently broken
+	}
+
+	public void reset() {
+		audioBufferIndex = 0;
+	}
+
+	public void setDumpStream(java.io.DataOutputStream dos)
+	{
+		dumpStream = dos;
 	}
 }
 #else

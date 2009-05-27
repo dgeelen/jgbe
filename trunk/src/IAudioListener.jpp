@@ -2,4 +2,7 @@ public interface IAudioListener {
 // 	public void updateAudioBuffer(byte[] b, int off, int len);
 	public void writeAudioSample(byte[] s);
 	public void writeAudioSample(byte l, byte r);
+
+	public void reset();
+	public void setDumpStream(java.io.DataOutputStream dos);
 }
