@@ -1177,13 +1177,54 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 				cpu.keyHistoryEnabled = false;
 				if(e.getSource().equals( menuitemSpeedRunPlayWithOutput )) {
 					if(menuitemSpeedRunPlayWithOutput.getState()) {
-						JFileChooser fc = new JFileChooser(".");
-						File selFile;
-						fc.showOpenDialog(frame);
-						selFile = fc.getSelectedFile();
-						if(selFile != null) {
+						JFileChooser fcv = new JFileChooser(".");
+						fcv.setDialogTitle("Save video dump");
+						File vidFile;
+						fcv.showSaveDialog(frame);
+						vidFile = fcv.getSelectedFile();
+
+						JFileChooser fca = new JFileChooser(".");
+						fca.setDialogTitle("Save audio dump");
+						File audFile;
+						fca.showSaveDialog(frame);
+						audFile = fca.getSelectedFile();
+
+						if(vidFile != null && audFile != null) {
 							try {
-								speedRunPlayWithOutputVideoStream = FHandler.getDataOutputStream(selFile.getAbsolutePath());
+								speedRunPlayWithOutputVideoStream = FHandler.getDataOutputStream(vidFile.getAbsolutePath());
+								DataOutputStream audstr = FHandler.getDataOutputStream(audFile.getAbsolutePath());
+
+								int SampleRate = 44100;
+								int Channels = 2;
+								int BitsPerSample = 8;
+								int ByteRate = SampleRate * Channels * BitsPerSample / 8;
+								int BlockAlign = Channels * BitsPerSample / 8;
+								int hdr[] = {
+									'R', 'I', 'F', 'F',
+									0,   0,   0,   0,
+									'W', 'A', 'V', 'E',
+									'f', 'm', 't', ' ',
+									16,   0,   0,   0,
+									1,   0,
+									(Channels&0xff),   ((Channels>>8)&0xff),
+									(SampleRate&0xff), ((SampleRate>>8)&0xff), ((SampleRate>>16)&0xff), ((SampleRate>>24)&0xff),
+									(ByteRate&0xff), ((ByteRate>>8)&0xff), ((ByteRate>>16)&0xff), ((ByteRate>>24)&0xff),
+									(BlockAlign&0xff),   ((BlockAlign>>8)&0xff),
+									(BitsPerSample&0xff),   ((BitsPerSample>>8)&0xff),
+									'd', 'a', 't', 'a',
+									0,   0,   0,   0,
+									0,   0,   0,   0,
+								};
+
+								PRINTLN(hdr.length);
+								for (int i = 0; i < hdr.length; ++i)
+									audstr.writeByte(hdr[i]);
+
+								//fwrite(hdr, 1, 48, f);
+
+								audioDriver.reset();
+								audioDriver.setDumpStream(audstr);
+
 							}
 							catch (IOException ee) {
 								speedRunPlayWithOutputVideoStream = null;
@@ -1193,14 +1234,10 @@ public final class swinggui extends JApplet implements ActionListener, ItemListe
 								                              JOptionPane.ERROR_MESSAGE);
 							}
 						}
-						// TODO: audio stream/file
-						/*fc.showOpenDialog(frame);*/selFile = null;
-						selFile = fc.getSelectedFile();
-						if(selFile != null) {
-						}
 					}
 					else {
 						speedRunPlayWithOutputVideoStream = null;
+						audioDriver.setDumpStream(null);
 					}
 				}
 				resumeEmulation(false);
