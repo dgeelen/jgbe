@@ -15,7 +15,7 @@ todo.link.to.latest.source.release
 
 = .jpp Files, wtf do i do with those? =
 
-We didnt like java, and at one point we decided to use the C preprocessor to get macro-powers.
+We decided to use the C preprocessor to enhance java and get macro-powers.
 
 To generate the .java files from the .jpp files, you need gcc. 
 
