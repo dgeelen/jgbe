@@ -840,7 +840,7 @@ public final class CPU {
 						calcCyclesPerTIMA();
 						calcTIMAEventCycleCount();
 						break;
-					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queed)
+					case 0xff0f: // FF0F - IF - Interrupt Flag (R/W) (*Request* interrupts, and *shows* interrupts being queued)
 						IOP[0x0f] = value;
 						preCheckInts();
 						break;
