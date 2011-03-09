@@ -983,44 +983,38 @@ public final class CPU {
 		}
 
 		public static int checkInterrupts() { //handle interrupt priorities
+			int ret = 0;
 			if(IME) { // If interrupts enabled
-				int ir = IOP[0x0f]&IE; //First Requested interrupts
-				if((ir&(1<<0))!=0) { //VBlANK
+				int ir = 0x1f&IOP[0x0f]&IE; //First Requested interrupts
+				if((ir&(1<<0))!=0) {       //VBlANK
 					IOP[0x0f] &= ~(1<<0);
-					interrupt(0x40);
-					return 1;
+					ir = 0x40;
 				}
 				else if ((ir&(1<<1))!=0) { //LCD STAT
 					IOP[0x0f] &= ~(1<<1);
-					interrupt(0x48);
-					return 1;
+					ir = 0x48;
 				}
 				else if ((ir&(1<<2))!=0) { //Timer
 					IOP[0x0f] &= ~(1<<2);
-					interrupt(0x50);
-					return 1;
+					ir = 0x50;
 				}
 				else if ((ir&(1<<3))!=0) { //Serial
 					IOP[0x0f] &= ~(1<<3);
-					interrupt(0x58);
-					return 1;
+					ir = 0x58;
 				}
 				else if ((ir&(1<<4))!=0) { //Joypad
 					IOP[0x0f] &= ~(1<<4);
-					interrupt(0x60);
-					return 1;
+					ir = 0x60;
+				}
+				if(ir > 0x1f) {
+					IME = false;
+					pushPC();
+					setPC(ir);
+					ret = 1;
 				}
 				preCheckInts();
 			}
-			return 0; // No interrupts to service
-		}
-
-		public static void interrupt(int i) { //execute interrupt #i
-			IME = false;
-			pushPC();
-			setPC(i);
-			IOP[0x0f] &= ~i;
-			preCheckInts();
+			return ret; // No interrupts to service
 		}
 
 		public static void triggerInterrupt(int i) { // request interrupt with bit nr #i
