@@ -34,7 +34,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 	private Disassembler deasm;
 	private int memaddr=0;
+	private Color PCColor     = new Color(222,222,255);
 	private Color UpdateColor = new Color(255,200,200);
+	private Color WarnColor   = new Color(255,246,200);
 	public DebugRunner runner;
 	swinggui gui;
 	private Font MonoFont= FHandler.getVeraMonoFont();
@@ -258,6 +260,14 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			Colors=c;
 		}
 
+		public Color[] getColors() {
+			return Colors;
+		}
+
+		public void setColors(Color[] c) {
+			Colors = c;
+		}
+
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			setText(String.valueOf(value));
 // 			PRINTLN("row "+row+"="+this.Colors[row]);
@@ -467,8 +477,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		TableColumnModel m = instrs.getColumnModel();
 		TableColumn c = m.getColumn(0);
 		Color[] ccc=new Color[16];
-		for(int i=0; i<16; ++i) ccc[i]=new Color(255,255,255);
-		ccc[7]=new Color(222,222,255);
+		for(int i=0; i<16; ++i) ccc[i]=Color.WHITE;
+		ccc[7]=PCColor;
 		MyCellRenderer r = new MyCellRenderer(ccc);
 		r.setFont(MonoFont);
 		c.setCellRenderer(r);
@@ -667,17 +677,53 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		return j;
 	}
 
+	private boolean updateInstructionsStepping   = false; // Used to detect if we are single-stepping or not
+	private int     updateInstructionsSteppingPC = -1;    // (Previous) PC while singlestepping.
 	private void updateInstructions() {
-		int pc=gui.cpu.getPC();
-		for(int i=0; i<7; ++i) {
-			pc = seekBackOneInstruction(pc);
-			instrs.setValueAt(instrs.getValueAt(i+1,0), i,0);
+		if(updateInstructionsStepping && (updateInstructionsSteppingPC + deasm.instructionLength(updateInstructionsSteppingPC) == gui.cpu.getPC())) {
+			Color[] c = ((MyCellRenderer)instrs.getCellRenderer(0, 0)).getColors();
+			for(int i=0; i<7; ++i) {
+				instrs.setValueAt(instrs.getValueAt(i+1,0), i,0);
+				c[i] = c[i+1];
+			}
+			c[6] = Color.WHITE;
+			int pc    = gui.cpu.getPC();
+			for(int i=7; i<16; ++i) {
+				instrs.setValueAt(deasm.disassemble(pc), i,0);
+				pc += Math.max(deasm.instructionLength(pc), 1);
+			}
 		}
-		for(int i=0; i<16; ++i) {
-			if (i==7) pc=gui.cpu.getPC();
-			instrs.setValueAt(deasm.disassemble(pc), i,0);
-			pc+=deasm.instructionLength(pc);
+		else {
+			/**
+			 * We find the longest set of instructions which lead to PC.
+			 * We could also search for the shortest set, but this leads to the
+			 * first instruction being mis-interpreted more often.
+			 */
+			int tgt    = gui.cpu.getPC();
+			int start  = Math.max(tgt - 3*7, 0); // longest instruction is 3 bytes, we want 7 instructions
+			int pc     = start;
+			while(pc != tgt) {
+				pc = start;
+				for(int i=0; i<7; ++i) {
+					pc += deasm.instructionLength(pc);
+				}
+				if(pc>tgt) // can happen if we couldn't start far enough back (beginning of memoryspace)
+					pc = start;
+				++start;
+			}
+			pc = Math.min(start - 1, gui.cpu.getPC() - 7);
+			for(int i=0; i<16; ++i) {
+				if(i<7) {
+					/* Turn the 'new' instructions yellow to indicate that they are 'uncertain' */
+					Color[] c = ((MyCellRenderer)instrs.getCellRenderer(i, 0)).getColors();
+					c[i] = WarnColor;
+				}
+				instrs.setValueAt(deasm.disassemble(pc), i,0);
+				pc += Math.max(deasm.instructionLength(pc), 1);
+			}
 		}
+		updateInstructionsStepping = false;
+		updateInstructionsSteppingPC = gui.cpu.getPC();
 	}
 
 	private void updateRegisters() { //TODO: Dit moet makkelijker kunnen ...
@@ -842,6 +888,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		}
 		JComboBox f = ( JComboBox )( e.getSource() );
 		if(f==cmds && e.getActionCommand().equals("comboBoxEdited") ) {
+			updateInstructionsStepping = false;
 			int i=0;
 			String s=cmds.getSelectedItem().toString();
 			cmds.insertItemAt(makeObj(s), 0);
@@ -993,17 +1040,19 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				}
 				s="-";
 			}
-			if(s.equalsIgnoreCase("s")) {
-				CPU.runlooponce();
-				update();
-			}
 			if(s.equalsIgnoreCase("reset")) {
 				gui.cpu.reset(false);
+				update();
+			}
+			if(s.equalsIgnoreCase("s")) {
+				CPU.runlooponce();
+				updateInstructionsStepping = true;
 				update();
 			}
 			if(s.equalsIgnoreCase("so")) {
 				if (!runner.isRunning()) {
 					runner.setBreakPoint(gui.cpu.getPC() + deasm.instructionLength(gui.cpu.getPC()));
+					updateInstructionsStepping = true;
 					runner.resume();
 				}
 			}
