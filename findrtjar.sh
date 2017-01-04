@@ -33,4 +33,7 @@ TD=`find /cygdrive/c/Program\ Files/Java/ -name rt.jar 2> /dev/null | sort | tai
 
 testdir "$TD"
 
+TD="$(dirname "$(locate -iebr '^rt\.jar$' | head -1)")"
+testdir "$TD"
+
 echo ErrorRtJarNotFound
