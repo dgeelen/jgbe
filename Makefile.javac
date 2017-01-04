@@ -11,3 +11,4 @@ all: preprocess $(CLASSFILES)
 $(CLASSDIR)/%.class: $(SRCDIR)/%.java
 	@echo "[java -> class] $*"
 	@javac $(JAVAC_OPTS) $<
+	@touch $(CLASSDIR)/$*.class
