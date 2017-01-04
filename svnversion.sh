@@ -2,7 +2,7 @@
 cd "$1"
 SVNVER=`svnversion 2> /dev/null`
 
-if [ "${SVNVER}" = "exported" ]; then
+if [ "${SVNVER}" = "Unversioned directory" ]; then
 	GITHEAD=`git rev-parse HEAD 2> /dev/null`
 	GITHEAD_ORIG="${GITHEAD}"
 	SVNVER=
