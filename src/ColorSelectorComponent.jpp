@@ -15,22 +15,6 @@ import java.util.*;
 
 public class ColorSelectorComponent extends AbstractColorChooserPanel
 {
-  // rgb colors
-  public static final int MIN_RED = 0;
-  public static final int MAX_RED = 255;
-  public static final int MIN_GREEN = 0;
-  public static final int MAX_GREEN = 255;
-  public static final int MIN_BLUE = 0;
-  public static final int MAX_BLUE = 255;
-
-  // hsv colors
-  public static final int MIN_HUE = 0;
-  public static final int MAX_HUE = 360;
-  public static final int MIN_SATURATION = 0;
-  public static final int MAX_SATURATION = 100;
-  public static final int MIN_VALUE = 0;
-  public static final int MAX_VALUE = 100;
-
   // color wheel
   public static final float WHEEL_WIDTH = 0.2f;
 
@@ -45,6 +29,8 @@ public class ColorSelectorComponent extends AbstractColorChooserPanel
 	private ExtendedHSVColorSelectorComponent EHSVSC = new ExtendedHSVColorSelectorComponent(this);
 
 	private boolean updating = false;
+
+	private static final long serialVersionUID = 1L; // prevent warning
 
 	public ColorSelectorComponent()
 	{
@@ -133,27 +119,27 @@ public class ColorSelectorComponent extends AbstractColorChooserPanel
 
 class RGBColorSelectorComponent extends JPanel implements ChangeListener
 {
-	private JColoredSlider[] rgbSliders = {new JColoredSlider(ColorSelectorComponent.MIN_RED,
-                                                            ColorSelectorComponent.MAX_RED,
-                                                            ColorSelectorComponent.MIN_RED),  // r
-	                                       new JColoredSlider(ColorSelectorComponent.MIN_GREEN,
-                                                            ColorSelectorComponent.MAX_GREEN,
-                                                            ColorSelectorComponent.MIN_GREEN),  // g
-	                                       new JColoredSlider(ColorSelectorComponent.MIN_BLUE,
-                                                            ColorSelectorComponent.MAX_BLUE,
-                                                            ColorSelectorComponent.MIN_BLUE)}; // b
+	private JColoredSlider[] rgbSliders = {new JColoredSlider(ColorConverter.MIN_RED,
+                                                            ColorConverter.MAX_RED,
+                                                            ColorConverter.MIN_RED),  // r
+	                                       new JColoredSlider(ColorConverter.MIN_GREEN,
+                                                            ColorConverter.MAX_GREEN,
+                                                            ColorConverter.MIN_GREEN),  // g
+	                                       new JColoredSlider(ColorConverter.MIN_BLUE,
+                                                            ColorConverter.MAX_BLUE,
+                                                            ColorConverter.MIN_BLUE)}; // b
 
-  private SpinnerNumberModel[] snms = { new SpinnerNumberModel(ColorSelectorComponent.MIN_RED,
-                                                               ColorSelectorComponent.MIN_RED,
-                                                               ColorSelectorComponent.MAX_RED,
+  private SpinnerNumberModel[] snms = { new SpinnerNumberModel(ColorConverter.MIN_RED,
+                                                               ColorConverter.MIN_RED,
+                                                               ColorConverter.MAX_RED,
                                                                1),
-                                        new SpinnerNumberModel(ColorSelectorComponent.MIN_RED,
-                                                               ColorSelectorComponent.MIN_RED,
-                                                               ColorSelectorComponent.MAX_RED,
+                                        new SpinnerNumberModel(ColorConverter.MIN_RED,
+                                                               ColorConverter.MIN_RED,
+                                                               ColorConverter.MAX_RED,
                                                                1),
-                                        new SpinnerNumberModel(ColorSelectorComponent.MIN_RED,
-                                                               ColorSelectorComponent.MIN_RED,
-                                                               ColorSelectorComponent.MAX_RED,
+                                        new SpinnerNumberModel(ColorConverter.MIN_RED,
+                                                               ColorConverter.MIN_RED,
+                                                               ColorConverter.MAX_RED,
                                                                1) };
 
   private JSpinner[] rgbSpinners = {new JSpinner(snms[0]),
@@ -161,6 +147,8 @@ class RGBColorSelectorComponent extends JPanel implements ChangeListener
                                     new JSpinner(snms[2])};
 	ColorSelectorComponent creator;
 	boolean changing = false;
+
+	private static final long serialVersionUID = 1L; // prevent warning
 
 	public RGBColorSelectorComponent(ColorSelectorComponent creator)
 	{
@@ -280,29 +268,29 @@ class RGBColorSelectorComponent extends JPanel implements ChangeListener
 class HSVColorSelectorComponent extends JPanel implements ChangeListener
 {
 	private JColoredSlider[] hsvSliders = {new JHueSlider(JSlider.HORIZONTAL,
-                                                        ColorSelectorComponent.MIN_HUE,
-                                                        ColorSelectorComponent.MAX_HUE,
-                                                        ColorSelectorComponent.MIN_HUE),  // h
+                                                        ColorConverter.MIN_HUE,
+                                                        ColorConverter.MAX_HUE,
+                                                        ColorConverter.MIN_HUE),  // h
 	                                       new JColoredSlider(JSlider.HORIZONTAL,
-                                                            ColorSelectorComponent.MIN_SATURATION,
-                                                            ColorSelectorComponent.MAX_SATURATION,
-                                                            ColorSelectorComponent.MIN_SATURATION),  // s
+                                                            ColorConverter.MIN_SATURATION,
+                                                            ColorConverter.MAX_SATURATION,
+                                                            ColorConverter.MIN_SATURATION),  // s
 	                                       new JColoredSlider(JSlider.HORIZONTAL,
-                                                            ColorSelectorComponent.MIN_VALUE,
-                                                            ColorSelectorComponent.MAX_VALUE,
-                                                            ColorSelectorComponent.MIN_VALUE)}; // v
+                                                            ColorConverter.MIN_VALUE,
+                                                            ColorConverter.MAX_VALUE,
+                                                            ColorConverter.MIN_VALUE)}; // v
 
-  private SpinnerNumberModel[] hsvms = { new SpinnerNumberModel(ColorSelectorComponent.MIN_HUE,
-                                                                ColorSelectorComponent.MIN_HUE,
-                                                                ColorSelectorComponent.MAX_HUE,
+  private SpinnerNumberModel[] hsvms = { new SpinnerNumberModel(ColorConverter.MIN_HUE,
+                                                                ColorConverter.MIN_HUE,
+                                                                ColorConverter.MAX_HUE,
                                                                 1),
-                                         new SpinnerNumberModel(ColorSelectorComponent.MIN_SATURATION,
-                                                                ColorSelectorComponent.MIN_SATURATION,
-                                                                ColorSelectorComponent.MAX_SATURATION,
+                                         new SpinnerNumberModel(ColorConverter.MIN_SATURATION,
+                                                                ColorConverter.MIN_SATURATION,
+                                                                ColorConverter.MAX_SATURATION,
                                                                 1),
-                                         new SpinnerNumberModel(ColorSelectorComponent.MAX_VALUE,
-                                                                ColorSelectorComponent.MIN_VALUE,
-                                                                ColorSelectorComponent.MAX_VALUE,
+                                         new SpinnerNumberModel(ColorConverter.MAX_VALUE,
+                                                                ColorConverter.MIN_VALUE,
+                                                                ColorConverter.MAX_VALUE,
                                                                 1) };
 
   private JSpinner[] hsvSpinners = {new JSpinner(hsvms[0]),
@@ -310,6 +298,8 @@ class HSVColorSelectorComponent extends JPanel implements ChangeListener
                                     new JSpinner(hsvms[2])};
 	ColorSelectorComponent creator;
 	boolean changing = false;
+
+	private static final long serialVersionUID = 1L; // prevent warning
 
 	public HSVColorSelectorComponent(ColorSelectorComponent creator)
 	{
@@ -433,6 +423,8 @@ class HexRGBColorSelectorComponent extends JPanel implements ActionListener
 	private MaskFormatter formatter;
 	private JFormattedTextField rgbHex;
 
+	private static final long serialVersionUID = 1L; // prevent warning
+
 	public HexRGBColorSelectorComponent(ColorSelectorComponent creator)
 	{
 		try
@@ -502,6 +494,8 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 	private boolean circleDragging = false;
 	private boolean triangleDragging = false;
 	ColorSelectorComponent creator;
+
+	private static final long serialVersionUID = 1L; // prevent warning
 
 	public ExtendedHSVColorSelectorComponent(ColorSelectorComponent creator)
 	{
@@ -617,8 +611,8 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 			//tr_s = 1 - tr_s;
 			//PRINTLN("v = " + tr_v);
 			//PRINTLN("s = " + tr_s);
-			cSat = tr_s * ColorSelectorComponent.MAX_SATURATION;
-			cValue = tr_v * ColorSelectorComponent.MAX_VALUE;
+			cSat = tr_s * ColorConverter.MAX_SATURATION;
+			cValue = tr_v * ColorConverter.MAX_VALUE;
 
 			if (0 != (haxx & 1)) cValue = 100;
 			if (0 != (haxx & 2)) cSat = 0;
@@ -734,9 +728,9 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 
 		for (int i = 0; i < precision; ++i)
 		{
-			g.setColor(ColorConverter.hsvToColor(i*(float)ColorSelectorComponent.MAX_HUE/((float)precision),
-                                           (float)ColorSelectorComponent.MAX_SATURATION,
-                                           (float)ColorSelectorComponent.MAX_VALUE));
+			g.setColor(ColorConverter.hsvToColor(i*(float)ColorConverter.MAX_HUE/((float)precision),
+                                           (float)ColorConverter.MAX_SATURATION,
+                                           (float)ColorConverter.MAX_VALUE));
 
 			int[] xs = new int[4];
 			int[] ys = new int[4];
@@ -855,74 +849,4 @@ class ExtendedHSVColorSelectorComponent extends JPanel implements MouseListener,
 	public void mouseMoved(MouseEvent e) {}
 }
 
-class ColorConverter
-{
-	/*
-	 * 0 <= h <= 360
-	 * 0 <= s <= 100
-	 * 0 <= v <= 100
-	 */
-	public static Color hsvToColor(float h, float s, float v)
-	{
-		return Color.getHSBColor(h / ColorSelectorComponent.MAX_HUE,
-                             s / ColorSelectorComponent.MAX_SATURATION,
-                             v / ColorSelectorComponent.MAX_VALUE);
-	}
-
-	public static Color hsvToColor(double h, double s, double v)
-	{
-		return Color.getHSBColor((float)(h / ColorSelectorComponent.MAX_HUE),
-                             (float)(s / ColorSelectorComponent.MAX_SATURATION),
-                             (float)(v / ColorSelectorComponent.MAX_VALUE));
-	}
-
-	/**
-	 * 0 <= r, g, b < 256
-	 * return [h, s, v]
-	 * 0 <= h <= 360
-	 * 0 <= s, v <= 100
-	 */
-	public static double[] rgbToHsv(int r, int g, int b)
-	{
-		double[] result = new double[3]; // [h,s,v]
-		float[] temp = new float[3];
-    Color.RGBtoHSB(r, g, b, temp);
-    result[0] = temp[0] * ColorSelectorComponent.MAX_HUE;
-    result[1] = temp[1] * ColorSelectorComponent.MAX_SATURATION;
-    result[2] = temp[2] * ColorSelectorComponent.MAX_VALUE;
-		return result;
-	}
-
-	/*
-	 * 0 <= h <= 360
-	 * 0 <= s <= 100
-	 * 0 <= v <= 100
-	 * return [r,g,b]
-	 */
-	public static int[] hsvToRgb(float h, float s, float v)
-	{
-		int[] result = new int[3];
-		int color = Color.HSBtoRGB(h / ColorSelectorComponent.MAX_HUE,
-                               s / ColorSelectorComponent.MAX_SATURATION,
-                               v / ColorSelectorComponent.MAX_VALUE);
-
-    result[2] = color & 0xff;
-    result[1] = (color >> 8) & 0xff;
-    result[0] = (color >> 16) & 0xff;
-    return result;
-	}
-
-	public static int[] hsvToRgb(double h, double s, double v)
-	{
-		int[] result = new int[3];
-		int color = Color.HSBtoRGB((float)(h / ColorSelectorComponent.MAX_HUE),
-                               (float)(s / ColorSelectorComponent.MAX_SATURATION),
-                               (float)(v / ColorSelectorComponent.MAX_VALUE));
-
-    result[2] = color & 0xff;
-    result[1] = (color >> 8) & 0xff;
-    result[0] = (color >> 16) & 0xff;
-    return result;
-	}
-}
 #endif

@@ -35,78 +35,78 @@
 // FF2E - ???
 // FF2F - ???
 // FF30-FF3F - Wave Pattern RAM
+
+final class SoundRegister {
+	int on;
+	int pos; // TODO: unsigned?
+	int cnt, encnt, swcnt;
+	int len, enlen, swlen;
+	int swfreq;
+	int freq;
+	int envol, endir;
+	SAVELOAD_FUNCTION {
+		SL_INT(on);
+		SL_INT(pos);
+		SL_INT(cnt);
+		SL_INT(encnt);
+		SL_INT(swcnt);
+		SL_INT(len);
+		SL_INT(enlen);
+		SL_INT(swlen);
+		SL_INT(swfreq);
+		SL_INT(freq);
+		SL_INT(envol);
+		SL_INT(endir);
+	}
+}
+
 public final class AudioController {
-	protected boolean isMuted=false;
-	private boolean isEnabled=true;
-	private int IO[];
-	private int WAVE[] = new int[16];
-	private int sampleRate=44100;//22050;//44100;//22050;
-	public int cyclesLeftToRender;
-	private int TimerCountDown;     // 256hz
-	private boolean SweepTimerTick; // 128hz
-	private int RATE;
-	public int CRATE;
-	protected double currentEmulationSpeed=1.0;
+	protected static boolean isMuted=false;
+	private static boolean isEnabled=true;
+	private static int IO[];
+	private static int WAVE[] = new int[16];
+	private static int sampleRate=44100;//22050;//44100;//22050;
+	public static int cyclesLeftToRender;
+	private static int TimerCountDown;     // 256hz
+	private static boolean SweepTimerTick; // 128hz
+	private static int RATE;
+	public static int CRATE;
+	protected static double currentEmulationSpeed=1.0;
 
-	boolean[] channelactive = new boolean[5]; // entry [0] not used...
+	static boolean[] channelactive = new boolean[5]; // entry [0] not used...
 
-	public void setDumpStream(DataOutputStream dos) {
+	public static void setDumpStream(DataOutputStream dos) {
 		audioListener.setDumpStream(dos);
 	}
 
-	public final class SoundRegister {
-		int on;
-		int pos; // TODO: unsigned?
-		int cnt, encnt, swcnt;
-		int len, enlen, swlen;
-		int swfreq;
-		int freq;
-		int envol, endir;
-		SAVELOAD_FUNCTION {
-			SL_INT(on);
-			SL_INT(pos);
-			SL_INT(cnt);
-			SL_INT(encnt);
-			SL_INT(swcnt);
-			SL_INT(len);
-			SL_INT(enlen);
-			SL_INT(swlen);
-			SL_INT(swfreq);
-			SL_INT(freq);
-			SL_INT(envol);
-			SL_INT(endir);
-		}
-	}
-	protected SoundRegister S1;
-	protected SoundRegister S2;
-	protected SoundRegister S3;
-	protected SoundRegister S4;
-	//private SoundRegister SR5; //On cartridge, not used atm
-	protected CPU cpu;
+	protected static SoundRegister S1;
+	protected static SoundRegister S2;
+	protected static SoundRegister S3;
+	protected static SoundRegister S4;
+	//private static SoundRegister SR5; //On cartridge, not used atm
 
-	public boolean channelActive(int i) {
+	public static boolean channelActive(int i) {
 		ASSERT(i>=1); ASSERT(i<=4); // Valid channels are 1 <= i <= 4")
 		return channelactive[i];
 	}
 
-	public void setChannelActive(int i, boolean b){
+	public static void setChannelActive(int i, boolean b){
 		ASSERT(i>=1); ASSERT(i<=4); // Valid channels are 1 <= i <= 4")
 		channelactive[i] = b;
 	}
 
-	public boolean toggleChannelOnOff(int i){
+	public static boolean toggleChannelOnOff(int i){
 		channelactive[i] ^= true;
 		return channelactive[i];
 	}
 
-	IAudioListener audioListener = null;
-	public void addIAudioListener(IAudioListener audioListener) { //FIXME: only 1 listener at a time
-		this.audioListener = audioListener;
+	static IAudioListener audioListener = null;
+	public static void addIAudioListener(IAudioListener audioListener) { //FIXME: only 1 listener at a time
+		AudioController.audioListener = audioListener;
 	}
 
-	public AudioController(CPU cpu) {
-		this.cpu = cpu;
-		this.audioListener = null;
+	public static void initialise() {
+		audioListener = null;
 		IO = new int[0x30];
 		cyclesLeftToRender=0;
 		S1=new SoundRegister();
@@ -119,18 +119,18 @@ public final class AudioController {
 		setSpeed(1.0);
 	}
 
-	public void setSampleRate(int r) {
+	public static void setSampleRate(int r) {
 		sampleRate = r;
 		RATE = (1<<21) / sampleRate;
 		setSpeed(currentEmulationSpeed);
 	}
 
-	public void setSpeed(double emulationSpeed) {
+	public static void setSpeed(double emulationSpeed) {
 		currentEmulationSpeed = emulationSpeed;
 		CRATE = (int)((4194304.0 / (double)sampleRate)*emulationSpeed); //4194304 == (1<<22)
 	}
 
-	SAVELOAD_FUNCTION	{
+	static SAVELOAD_FUNCTION	{
 		SL_IF_VERSION(-1,  5) SL_ARR(UINT8, IO, 0x20);
 		SL_IF_VERSION( 6, -1) SL_ARR(UINT8, IO, 0x30);
 		SL_ARR(UINT8, WAVE, 0x10);
@@ -147,7 +147,7 @@ public final class AudioController {
 // 			audioBufferIndex=0;
 	}
 
-	void s1_init() {
+	static void s1_init() {
 		S1.swcnt = 0;
 		S1.swfreq = ((IO[0x04]&7)<<8) + IO[0x03];
 		S1.envol = IO[0x02] >> 4;
@@ -160,7 +160,7 @@ public final class AudioController {
 		S1.encnt = 0;
 	}
 
-	void s2_init() {
+	static void s2_init() {
 		S2.envol = IO[0x07] >> 4;
 		S2.endir = (IO[0x07]>>3) & 1;
 		S2.endir |= S2.endir - 1;
@@ -171,17 +171,17 @@ public final class AudioController {
 		S2.encnt = 0;
 	}
 
-	void s3_init() {
+	static void s3_init() {
 		int i;
 		if (S3.on==0) S3.pos = 0;
 		S3.cnt = 0;
 		S3.on = IO[0x0a] >> 7;
 		if (S3.on!=0) for (i = 0; i < 0xf; i++)
 			IO[i+0x20] = 0x13 ^ IO[i+0x21];
-		IO[0x2f] = 0x13 ^ cpu.VC.LCDC; //0xff40
+		IO[0x2f] = 0x13 ^ VideoController.LCDC; //0xff40
 	}
 
-	void s4_init() {
+	static void s4_init() {
 		S4.envol = IO[0x11] >> 4;
 		S4.endir = (IO[0x11]>>3) & 1;
 		S4.endir |= S4.endir - 1;
@@ -192,33 +192,33 @@ public final class AudioController {
 		S4.encnt = 0;
 	}
 
-	private void s1_freq_d(int d) {
+	private static void s1_freq_d(int d) {
 		if (RATE > (d<<4)) S1.freq = 0;
 		else S1.freq = (RATE << 17)/d;
 	}
 
-	private void s1_freq() {
+	private static void s1_freq() {
 		s1_freq_d(2048 - (((IO[0x04]&7)<<8) + IO[0x03]));
 	}
 
-	private void s2_freq() {
+	private static void s2_freq() {
 		int d = 2048 - (((IO[0x09]&7)<<8) + IO[0x08]);
 		if (RATE > (d<<4)) S2.freq = 0;
 		else S2.freq = (RATE << 17)/d;
 	}
 
-	private void s3_freq() {
+	private static void s3_freq() {
 		int d = 2048 - (((IO[0x0e]&7)<<8) + IO[0x0d]);
 		if (RATE > (d<<3)) S3.freq = 0;
 		else S3.freq = (RATE << 21)/d;
 	}
 
-	private void s4_freq() {
+	private static void s4_freq() {
 		S4.freq = (freqtab[IO[0x12]&7] >> (IO[0x12] >> 4)) * RATE;
 		if ((S4.freq >> 18)!=0) S4.freq = 1<<18;
 	}
 
-	private void sound_dirty() {
+	private static void sound_dirty() {
 		S1.swlen = ((IO[0x00]>>4) & 7) << 14;
 		S1.len = (64-(IO[0x01]&63)) << 13;
 		S1.envol = IO[0x02] >> 4;
@@ -242,7 +242,7 @@ public final class AudioController {
 		s4_freq();
 	}
 
-	protected void sound_off() {
+	protected static void sound_off() {
 		IO[0x00] = 0x80;
 		IO[0x01] = 0xBF;
 		IO[0x02] = 0xF3;
@@ -268,7 +268,7 @@ public final class AudioController {
 		sound_dirty();
 	}
 
-	public void reset() {
+	public static void reset() {
 		cyclesLeftToRender=0;
 		S1=new SoundRegister();
 		S2=new SoundRegister();
@@ -278,7 +278,7 @@ public final class AudioController {
 		SweepTimerTick=false;
 // 		audioBufferIndex=0;
 
-		int[] w=cpu.isCGB()?cgbwave:dmgwave;
+		int[] w=CPU.isCGB()?cgbwave:dmgwave;
 		for (int i = 0; i < 0x10; ++i)
 			WAVE[i]=w[i];
 		for (int i = 0; i < 0x10; ++i)
@@ -290,7 +290,7 @@ public final class AudioController {
 		if (audioListener != null) audioListener.reset();
 	}
 
-	void sound_mix() {
+	static void sound_mix() {
 		int s, l, r, f, n;
 		if (RATE==0) return;
 
@@ -447,12 +447,12 @@ public final class AudioController {
 	public static boolean speedHax = false;
 
 
-	public void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
+	public static void render(int nrCycles) { //Gameboy runs at 4194304hz, so we render sampleRate/4194304mhz bytes every cycle
 		cyclesLeftToRender+=nrCycles;
 		sound_mix();
 	}
 
-	public int read(int index) {
+	public static int read(int index) {
 		int i=(index&0xff)-0x10;
 		if((i<0)||(i>0x3f)) {
 			PRINTLN("AudioController: Error: reading from non sound-address:"+index);
@@ -469,7 +469,7 @@ public final class AudioController {
 		return IO[i];
 	}
 
-	public void write(int index, int value) {
+	public static void write(int index, int value) {
 		int i=(index&0xff)-0x10;
 		if((i<0)||(i>0x2f)) {
 			PRINTLN("AudioController: Error: writing to non sound-address:"+index);

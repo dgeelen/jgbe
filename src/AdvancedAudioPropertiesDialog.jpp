@@ -25,7 +25,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 // 	int[] samplingRates = {4000, 8000, 11025, 22050, 44100};
 	VECTOR(Integer) samplingRates = new VECTOR(Integer)();
 	VECTOR(Mixer.Info) mixers = new VECTOR(Mixer.Info)();
-	private JComboBox outputDevices;
+	private JComboBox<String> outputDevices;
 	private JCheckBox useStereo;
 	private JSlider samplingRateSlider;
 	private JSpinner samplingRateSpinner;
@@ -34,7 +34,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 	private JSlider outputIntervalSlider;
 	private JSpinner outputIntervalSpinner;
 	swinggui gui;
-	
+
 	public AdvancedAudioPropertiesDialog(JFrame o, AudioDriver ad, swinggui gui) {
 		owner = o;
 		this.ad = ad;
@@ -45,7 +45,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		dialog.setResizable(false);
 		/* Setting Components */
 		if(ad != null) {
-			outputDevices = new JComboBox();
+			outputDevices = new JComboBox<String>();
 			Mixer.Info FixUp = ad.getMixerInfo();
 			ad.stop();
 			Mixer.Info[] mixers = AudioSystem.getMixerInfo();
@@ -65,7 +65,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 /* This attempts to query available sampling rates from the system,
  * but it doesn't seem to work as intended, and always returns -1 (AudioSystem.NOT_SPECIFIED).
  * I think this means we can just guess-o-matic a set of sampling rates?
- * 
+ *
  *				Line.Info[] infos = AudioSystem.getMixer(mixers[i]).getSourceLineInfo();
  *				PRINTLN(infos);
  *				for (int l = 0; l < infos.length; ++l) {
@@ -88,7 +88,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 			}
 			ad.start();
 			for(int i=0; i<outputDevices.getItemCount(); ++i) {
-				if(((Mixer.Info)(this.mixers.get(i))).equals(ad.getMixerInfo())) outputDevices.setSelectedIndex(i);
+				if(((this.mixers.get(i))).equals(ad.getMixerInfo())) outputDevices.setSelectedIndex(i);
 			}
 			/* Set a set of predetermined samplingRates (which may or may not be supported by any line),
 			 * instead of asking the current mixer which samplingRates it supports
@@ -181,23 +181,23 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 		dialog.setLocation(p);
 	}
 
-	
+
 
 	public void showWindow() {
 			dialog.setVisible( true );
 	}
-	
+
 	public void actionPerformed( ActionEvent e ) {
 		if(e.getSource().equals( outputDevices )) {
-			ad.setMixerInfo((Mixer.Info)mixers.get(outputDevices.getSelectedIndex()));
+			ad.setMixerInfo(mixers.get(outputDevices.getSelectedIndex()));
 			gui.saveConfig();
 		}
 	}
-	
+
 	public void stateChanged( ChangeEvent e) {
 		if(e.getSource().equals( samplingRateSlider )) {
-			samplingRateSpinner.setValue((Integer)samplingRates.get(samplingRateSlider.getValue()));
-			ad.setSampleRate(((Integer)samplingRates.get(samplingRateSlider.getValue())).intValue());
+			samplingRateSpinner.setValue(samplingRates.get(samplingRateSlider.getValue()));
+			ad.setSampleRate((samplingRates.get(samplingRateSlider.getValue())).intValue());
 			gui.saveConfig();
 		}
 		else if(e.getSource().equals( samplingRateSpinner )) {
@@ -205,7 +205,7 @@ public class AdvancedAudioPropertiesDialog implements ComponentListener, ChangeL
 				if(samplingRateSpinner.getValue() == samplingRates.get(i))
 					samplingRateSlider.setValue(i);
 			}
-			ad.setSampleRate(((Integer)samplingRates.get(samplingRateSlider.getValue())).intValue());
+			ad.setSampleRate((samplingRates.get(samplingRateSlider.getValue())).intValue());
 			gui.saveConfig();
 		}
 		else if(e.getSource().equals( bufferSizeSlider )) {

@@ -66,7 +66,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 				if (evt.getType() == TableModelEvent.UPDATE) {
 					int column = evt.getColumn();
 					int row = evt.getFirstRow();
-					CheatCode c = (CheatCode)codes.get(row);
+					CheatCode c = codes.get(row);
 					c.enabled = ((Boolean)tableCodes.getValueAt(row, 0)).booleanValue();
 					c.setCode((String)tableCodes.getValueAt(row, 1));
 					c.Description=(String)tableCodes.getValueAt(row, 2);
@@ -80,7 +80,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		}
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			setText(String.valueOf(value));
-			CheatCode c=(CheatCode)codes.get(row);
+			CheatCode c=codes.get(row);
 			if(c.address<0) setBackground(new Color(255,220,220));
 			else setBackground(Color.WHITE);
 			setFont(MonoFont);
@@ -202,7 +202,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		tablemodelcodes.addTableModelListener(new CheatCodeEditorTableModelListener());
 		tableCodes = new DbTable(tablemodelcodes) {
 			private static final long serialVersionUID = 1L; // prevent warning
-			public Class getColumnClass(int column) { //enable JTable to use different renderers, eg Checkbox for Boolean
+			public Class<?> getColumnClass(int column) { //enable JTable to use different renderers, eg Checkbox for Boolean
 				return getValueAt(0, column).getClass();
 			}
 		};
@@ -392,7 +392,7 @@ public class CheatCodeEditor implements ComponentListener, ActionListener { ///i
 		}
 		else if (e.getSource().equals( menuitemToggleActive )) {
 			int row = tableCodes.getSelectedRow();
-			CheatCode c=(CheatCode)codes.get(row);
+			CheatCode c=codes.get(row);
 			c.enabled=!c.enabled;
 			codes.set(row, c);
 			tablemodelcodes.removeRow(row);

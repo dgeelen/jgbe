@@ -46,7 +46,7 @@ import java.io.*;
 #define SL_INT SL_INT32
 #define SL_INT32(var) {\
 	if (SL_SAVE) \
-		dostream.writeInt((int)var); \
+		dostream.writeInt(var); \
 	else \
 		var = distream.readInt(); \
 }
@@ -101,7 +101,7 @@ import java.io.*;
 }
 
 #define SL_OBJ(obj) \
-	(obj).stateSaveLoad(save, version, dostream, distream);
+	obj.stateSaveLoad(save, version, dostream, distream);
 
 #define SL_TYPE_BOOL boolean
 #define SL_TYPE_INIT_BOOL false

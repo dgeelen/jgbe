@@ -52,10 +52,10 @@ public class VFSJar implements IVFSNode {
 	}
 
 	/* for dirs */
-	public Enumeration getChildren()
+	public Enumeration<IVFSNode> getChildren()
 	{
 		if (!isDir()) return null;
-		Vector children = new Vector();
+		Vector<IVFSNode> children = new Vector<IVFSNode>();
 
 		try {
 			DataInputStream br = new DataInputStream(this.getClass().getResourceAsStream(path + "vfsjar.idx"));

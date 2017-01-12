@@ -17,7 +17,7 @@ public final class VideoController {
 	private static final int MIN_HEIGHT = 144;
 
 #ifdef USE_JAVA_MOBILE
-	private Graphics listener = null;
+	private static Graphics listener = null;
 #else
 	private static IVideoListener listener = null;
 	private static Image drawImg[] = new Image[2];
@@ -25,7 +25,7 @@ public final class VideoController {
 #endif
 	private static int curDrawImg = 0;
 
-	private int CurrentVRAMBank=0;
+	private static int CurrentVRAMBank=0;
 	protected static int VRAM[]=new int[0x4000]; //8k per bank, 2 banks, flattened;
 	protected static int OAM[] =new int[0xa0];   //Sprite Attribute Table;
 
@@ -44,12 +44,12 @@ public final class VideoController {
 	protected static int ISTAT_mask; // Used to mask out certain bits of ISTAT upon interrupt execution
 	private static int LCDCcntdwn=0;
 
-	public static boolean useSubscanlineRendering = false;
+	public static boolean useSubscanlineRendering = true;
 
 	protected static int curBGY;
 	protected static int curWNDY;
 
-	protected int[][][] Scalerx4 = new int[0x100][4][4];
+	protected static int[][][] Scalerx4 = new int[0x100][4][4];
 
 	// Looks a lot like Origional Gameboy
 	private static final int GRAYSHADES[][] = { {0xa0, 0xe0, 0x20},   // WHITE
@@ -57,13 +57,13 @@ public final class VideoController {
 	                                            {0x40, 0x70, 0x32},   // DARKGRAY
 	                                            {0x10, 0x50, 0x26} }; // BLACK
 
-	private int GrayColors[][][] = { GRAYSHADES, GRAYSHADES, GRAYSHADES };
+	private static int GrayColors[][][] = { GRAYSHADES, GRAYSHADES, GRAYSHADES };
 
-	protected int BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
-	private int BGPD[]=new int[8*4*2]; //BCPD/BGPD - CGB Mode Only - Background Palette Data
+	protected static int BGPI=0;              //BCPS/BGPI - CGB Mode Only - Background Palette Index
+	private static int BGPD[]=new int[8*4*2]; //BCPD/BGPD - CGB Mode Only - Background Palette Data
 
-	protected int OBPI=0;              //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
-	private int OBPD[]=new int[8*4*2]; //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
+	protected static int OBPI=0;              //OCPS/OBPI - CGB Mode Only - Sprite Palette Index
+	private static int OBPD[]=new int[8*4*2]; //OCPD/OBPD - CGB Mode Only - Sprite Palette Data
 
 	/* caching vars */
 #ifdef USE_JAVA_MOBILE
@@ -81,18 +81,18 @@ public final class VideoController {
 	private static boolean anydirty = true;                // see updatepatpix()
 // 	private boolean alldirty = true;                // see updatepatpix()
 
-	private long pfreq;
-	private long ptick;
-	private long ftick;
+	private static long pfreq;
+	private static long ptick;
+	private static long ftick;
 
 	private static int scale = 3;
 	public static int nscale = 3;
 	private static int cfskip = 0;
 	public static int fskip = 1; // 1 is off
 	public static boolean MixFrames; // Mix together last N frames
-	public boolean allow_writes_in_mode_2_3=true;
+	public static boolean allow_writes_in_mode_2_3=true;
 
-	public void setGrayShade(int i, int j, Color c) {
+	public static void setGrayShade(int i, int j, Color c) {
 		GrayColors[i][j][0] = c.getRed();
 		GrayColors[i][j][1] = c.getGreen();
 		GrayColors[i][j][2] = c.getBlue();
@@ -112,12 +112,12 @@ public final class VideoController {
 				y[abc][bca]=x[abc][bca]; \
 	}
 
-	public void setGrayShades(int[][][] g) {
+	public static void setGrayShades(int[][][] g) {
 		//NOTE: Somehow this function can not use unshallowCloneInto and updateMonoColData
 		setGrayShades(g[0], g[1], g[2]);
 	}
 
-	public void setGrayShades(int[][] g) {
+	public static void setGrayShades(int[][] g) {
 		unshallowCloneInto(g, GrayColors[0]);
 		unshallowCloneInto(g, GrayColors[1]);
 		unshallowCloneInto(g, GrayColors[2]);
@@ -126,7 +126,7 @@ public final class VideoController {
 		updateMonoColData(2);
 	}
 
-	public void setGrayShades(int[][] g1, int[][] g2, int[][] g3) {
+	public static void setGrayShades(int[][] g1, int[][] g2, int[][] g3) {
 		unshallowCloneInto(g1, GrayColors[0]);
 		unshallowCloneInto(g2, GrayColors[1]);
 		unshallowCloneInto(g3, GrayColors[2]);
@@ -135,16 +135,16 @@ public final class VideoController {
 		updateMonoColData(2);
 	}
 
-	public int[][] getGrayShade(int i) {
+	public static int[][] getGrayShade(int i) {
 		return GrayColors[i];
 	}
 
-	public int[][][] getGrayShades() {
+	public static int[][][] getGrayShades() {
 		return GrayColors;
 	}
 
 
-	public void restart() { // LCD off -> on
+	public static void restart() { // LCD off -> on
 		LY=0;
 		STAT=STAT&0xFC;//*KIGB=0x85(?)*/0x85 /*used to be: 0x04*/; // FF41 - STAT - LCDC Status (R/W) // LY==LYC bit set
 		ISTAT=STAT;
@@ -153,7 +153,7 @@ public final class VideoController {
 		LCDCcntdwn=80;
 	}
 
-	public void reset() {
+	public static void reset() {
 		CurrentVRAMBank=0;
 		LY=0;
 		LYC=0;
@@ -192,7 +192,7 @@ public final class VideoController {
 			VRAM[i] = 0;
 	}
 
-	public VideoController(CPU cpu, int image_width, int image_height) {
+	public static void initialise() {
 #ifndef USE_JAVA_MOBILE
 		drawImg=new Image[2];
 #endif
@@ -201,7 +201,7 @@ public final class VideoController {
 	}
 
 
-	SAVELOAD_FUNCTION {
+	static SAVELOAD_FUNCTION {
 		SL_INT(CurrentVRAMBank);
 		SL_ARR(UINT8, VRAM, 0x4000);
 		SL_ARR(UINT8, OAM, 0xa0);
@@ -276,15 +276,15 @@ public final class VideoController {
 	}
 
 #ifndef USE_JAVA_MOBILE
-	public void addListener(IVideoListener vl) {
+	public static void addListener(IVideoListener vl) {
 
 		listener = vl; // only 1 listener at a time currently :-p
-		this.scale();
+		scale();
 	}
 #else
-	public void addListener(Graphics grfx) {
+	public static void addListener(Graphics grfx) {
 		listener = grfx;
-		//this.scale(drawImg[0].getWidth(null), drawImg[0].getHeight(null));
+		//scale(drawImg[0].getWidth(null), drawImg[0].getHeight(null));
 	}
 #endif
 
@@ -304,7 +304,7 @@ public final class VideoController {
 	}
 #endif
 
-	private void palChange(int palcol, int r, int g, int b) {
+	private static void palChange(int palcol, int r, int g, int b) {
 #ifdef USE_JAVA_MOBILE
 		palColors[palcol][0] = r;
 		palColors[palcol][1] = g;
@@ -559,7 +559,7 @@ public final class VideoController {
 #undef I
 	}
 
-	public void updateMonoColData(int index) {
+	public static void updateMonoColData(int index) {
 		// index = 0 -> FF47 - BGP - BG Palette Data (R/W) - Non CGB Mode Only
 		// index = 1 -> FF48 - OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
 		// index = 2 -> FF49 - OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
@@ -587,7 +587,7 @@ public final class VideoController {
 		temp = curColors[(value>>6)&3]; palChange((index<<2) | 3, temp[0], temp[1], temp[2]);
 	}
 
-	public void setBGColData(int value) {
+	public static void setBGColData(int value) {
 		BGPD[BGPI&0x3f] = value;
 		int bnum = (BGPI & 0x3e) >> 1;
 		updateBGColData(bnum);
@@ -595,7 +595,7 @@ public final class VideoController {
 			++BGPI;
 	}
 
-	public void updateBGColData(int bnum) {
+	public static void updateBGColData(int bnum) {
 		int base = bnum << 1;
 
 		// calculate color now
@@ -617,11 +617,11 @@ public final class VideoController {
 		palChange((palnum << 2) | colnum | 0x20, r, g, b);
 	}
 
-	public int getBGColData() {
+	public static int getBGColData() {
 		return BGPD[BGPI&0x3f];
 	}
 
-	public void setOBColData(int value) {
+	public static void setOBColData(int value) {
 		OBPD[OBPI&0x3f] = value;
 		int bnum = (OBPI & 0x3e) >> 1;
 		updateOBColData(bnum);
@@ -629,7 +629,7 @@ public final class VideoController {
 			++OBPI;
 	}
 
-	public void updateOBColData(int bnum) {
+	public static void updateOBColData(int bnum) {
 		int base = bnum << 1;
 
 		// calculate color now
@@ -647,7 +647,7 @@ public final class VideoController {
 		palChange((palnum << 2) | colnum, r, g, b);
 	}
 
-	public int getOBColData() {
+	public static int getOBColData() {
 		return OBPD[OBPI&0x3f];
 	}
 
@@ -838,10 +838,10 @@ public final class VideoController {
 	}
 
 	// Render enough pixels for the ammount of time that has passed (from LCDCcntdwn to LCDCcntdwn + cycles).
-	static int pixpos = 0;
-	static int cyclepos = 0;
-	static int[] zbuffer = new int[160]; // see renderScanlineSprites
-	static int curSprite = 0;
+	static int   pixpos     = 0;
+	static int   cyclepos   = 0;
+	static int[] zbuffer    = new int[160]; // see renderScanlineSprites
+	static int   curSprite  = 0;
 	private static void renderScanlinePart() {
 		if((STAT_statemachine_state != 1)) return;
 		blitLine = blitImg[LY];
@@ -868,7 +868,7 @@ public final class VideoController {
 		// Render one bg tile = 8px = 8 cycles -> leaves 4 cycles slack?
 		// (172-21*8)=4, because we need to render 21 tiles
 
-		int newLCDCcntdwn = (int)(LCDCcntdwn - (int)(CPU.TotalCycleCount - CPU.lastVCRenderCycleCount)); // NR of cycles left till end of scanline
+		int newLCDCcntdwn = LCDCcntdwn - (int)(CPU.TotalCycleCount - CPU.lastVCRenderCycleCount); // NR of cycles left till end of scanline
 		int cyclesToRender = (mode3duration - newLCDCcntdwn - cyclepos - 4);
 		cyclepos += cyclesToRender;
 
@@ -1039,7 +1039,7 @@ public final class VideoController {
 	}
 
 
-	public int read(int index) {
+	public static int read(int index) {
 		if(index < 0xa000) {
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3))
 				return VRAM[index-0x8000+CurrentVRAMBank];
@@ -1126,7 +1126,7 @@ public final class VideoController {
 		return b;
 	}
 
-	public void write(int index, int value) {
+	public static void write(int index, int value) {
 		if(index < 0xa000) { // VRAM: 0x8000 - 0x9fff, lowest writeable address in VC (checked in CPU.write)
 			if(allow_writes_in_mode_2_3 || ((LCDC&0x80)==0) || ((STAT&3)!=3)) {
 				VRAM[index-0x8000+CurrentVRAMBank]=value;
@@ -1281,13 +1281,13 @@ public final class VideoController {
 		}
 	}
 
-	public void selectVRAMBank(int i) {
+	public static void selectVRAMBank(int i) {
 		CurrentVRAMBank=i*0x2000;
 		if ((i <0) || (i > 1))
 			PRINTF("current offset=%x\n",CurrentVRAMBank);
 	}
 
-	public int getcurVRAMBank() {
+	public static int getcurVRAMBank() {
 		return CurrentVRAMBank/0x2000;
 	}
 
@@ -1542,7 +1542,7 @@ public final class VideoController {
 			int from  = xpos < 0 ? 0 : xpos;
 			int pixel = from - xpos;
 			int until = xpos > 160-8 ? 160 : xpos+8;
-			
+
 			if (from >= until)
 				continue;
 
@@ -1562,13 +1562,13 @@ public final class VideoController {
 			int pallette;
 			if (isCGB) {
 				if ((attr&(1<<3))!=0) // bank select
-					tile |= (1<<9);               
+					tile |= (1<<9);
 				pallette = (attr & 7) << 2 ;
 			} else
 				pallette = ((attr>>4)&1) << 2; // Selects between OBP0 or OBP1
 
 			int[] patLine = patpix[tile][line]; // Fetch a line from the tile buffer
-			
+
 			while (from < until) {
 				int color = patLine[pixel];
 				if (color != 0) {

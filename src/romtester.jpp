@@ -3,7 +3,6 @@
 import java.io.*;
 public class romtester {
 	public static void main( String[] args ) {
-		CPU cpu;
 		Cartridge cartridge;
 		String romfile="", logfile="";
 		for (int i = 0; i < args.length; ++i) {
@@ -38,27 +37,26 @@ public class romtester {
 		}
 
 		PRINTLN("Succesfully loaded ROM :)");
-		cpu = new CPU();
-		cpu.loadCartridge(cartridge);
+		CPU.loadCartridge(cartridge);
 
-		cpu.reset();
-		cpu.AC.isMuted = true;
+		CPU.reset();
+		AudioController.isMuted = true;
 
 		int instrlimit=100;
 
 		while (true) {
 			if (logwriter != null) {
 				String out = STRFORMAT("PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
-					cpu.getPC(),
-					cpu.A,
-					cpu.F,
-					cpu.B,
-					cpu.C,
-					cpu.D,
-					cpu.E,
-					cpu.H,
-					cpu.L,
-					cpu.SP);
+					CPU.getPC(),
+					CPU.A,
+					CPU.F,
+					CPU.B,
+					CPU.C,
+					CPU.D,
+					CPU.E,
+					CPU.H,
+					CPU.L,
+					CPU.SP);
 				try {
 					logwriter.write(out);
 				}
@@ -76,8 +74,8 @@ public class romtester {
 			}
 
 			if ((--instrlimit==0) || failed) {
-				String s= STRFORMAT("%02x",cpu.read(cpu.getPC()));
-				String ss= STRFORMAT("%04x",cpu.getPC());
+				String s= STRFORMAT("%02x",CPU.read(CPU.getPC()));
+				String ss= STRFORMAT("%04x",CPU.getPC());
 				s=s.toUpperCase();
 				ss=ss.toUpperCase();
 				if (logwriter != null) {

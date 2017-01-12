@@ -2,14 +2,12 @@
 #include "Global.inc"
 
 import java.awt.event.*;
-import java.util.TreeSet;
 import javax.swing.Timer;
 
 public class TimedKeyListener implements KeyListener, ActionListener {
 	private final KeyListener kl;
 	private final Timer timer;
-	private final TreeSet set = new TreeSet();
-	
+
 	private KeyEvent releaseEvent;
 
 	public TimedKeyListener(KeyListener akl) {

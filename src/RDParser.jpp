@@ -158,7 +158,7 @@ public class RDParser {
 					++i;
 				}
 		for(int k=0; k<vars.size(); ++k) {
-			flup ff=(flup)vars.get(k);
+			flup ff=vars.get(k);
 			if(ff.s.equals(s)) f=ff;
 		}
 		return f;

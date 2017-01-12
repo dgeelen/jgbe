@@ -37,7 +37,7 @@ public class jmgbe extends MIDlet implements CommandListener {
 		if (!vn.isDir()) return;
 
 		curitems = new Vector();
-		Enumeration e = vn.getChildren();
+		Enumeration<IVFSNode> e = vn.getChildren();
 		while (e.hasMoreElements()) {
 			IVFSNode cn = (IVFSNode)e.nextElement();
 			menulist.append(cn.getName(), null);

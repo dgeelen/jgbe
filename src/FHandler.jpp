@@ -62,7 +62,7 @@ public final class FHandler {
 #endif
 		return path;
 	}
-	
+
 #ifndef USE_JAVA_MOBILE
 	public static InputStream getInputStream(String fname) throws IOException {
 		String error = "";
@@ -150,7 +150,7 @@ public final class FHandler {
 	 */
 
 	public static final BufferedInputStream getResourceStream(String filename) throws IOException {
-		Class clazz = fhinstance.getClass(); // workaround...
+		Class<?> clazz = fhinstance.getClass(); // workaround...
 		InputStream fistream = clazz.getResourceAsStream(filename);
 		BufferedInputStream bistream = new BufferedInputStream(fistream);
 		return bistream;

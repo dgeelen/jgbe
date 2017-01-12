@@ -22,7 +22,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	public JTable mem;
 	public boolean memiseditable=true;
 	public JTable instrs;
-	public JComboBox cmds;
+	public JComboBox<String> cmds;
 
 	//Options
 	public MenuItemArrayGroup disassemblerRadioGroup;
@@ -32,7 +32,6 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 	private JScrollBar memScroller;
 
-	private Disassembler deasm;
 	private int memaddr=0;
 	private Color PCColor     = new Color(222,222,255);
 	private Color UpdateColor = new Color(255,200,200);
@@ -63,7 +62,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			PRINTLN("Error opening logfile:" + e.getMessage());
 			logwriter = null;
 		}
-		deasm= new Disassembler(gui.cpu, Disassembler.SIMPLE_DISASSEMBLY);
+		Disassembler.setMode(Disassembler.SIMPLE_DISASSEMBLY);
 		oldRegVal=new int[11];
 		parser=new RDParser();
 
@@ -170,8 +169,8 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 				boolean keeprunning = true;
 				while ((threadStatus == 2) && keeprunning) {
-					int wval = (watchaddr>=0) ? dbg.gui.cpu.read(watchaddr) : 0;
-					int OldPC=gui.cpu.getPC();
+					int wval = (watchaddr>=0) ? CPU.read(watchaddr) : 0;
+					int OldPC=CPU.getPC();
 					try {
 						CPU.runlooponce();
 						decRunFor();
@@ -181,25 +180,25 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						PRINTLN("UNHANDLED ERROR:");
 						t.printStackTrace();
 						PRINTLN("+-------------------------------------------------+");
-						gui.cpu.setPC(OldPC);
-						gui.cpu.printCPUstatus();
+						CPU.setPC(OldPC);
+						CPU.printCPUstatus();
 						PRINTLN("+=================================================+");
 						keeprunning = false;
 					}
-					if((logwriter != null) && (gui.cpu.TotalCycleCount>=remoteDebugOffset)) {
-						PRINTLN(""+gui.cpu.TotalCycleCount);
-						String out = STRFORMAT("cycles="+gui.cpu.TotalCycleCount+" PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
-//							gui.cpu.TotalCycleCount,
-							gui.cpu.getPC(),
-							gui.cpu.A,
-							gui.cpu.F,
-							gui.cpu.B,
-							gui.cpu.C,
-							gui.cpu.D,
-							gui.cpu.E,
-							gui.cpu.H,
-							gui.cpu.L,
-							gui.cpu.SP);
+					if((logwriter != null) && (CPU.TotalCycleCount>=remoteDebugOffset)) {
+						PRINTLN(""+CPU.TotalCycleCount);
+						String out = STRFORMAT("cycles="+CPU.TotalCycleCount+" PC=$%04x AF=$%02x%02x BC=$%02x%02x DE=$%02x%02x HL=$%02x%02x SP=$%04x\n",
+//							CPU.TotalCycleCount,
+							CPU.getPC(),
+							CPU.A,
+							CPU.F,
+							CPU.B,
+							CPU.C,
+							CPU.D,
+							CPU.E,
+							CPU.H,
+							CPU.L,
+							CPU.SP);
 						try {
 							logwriter.write(out);
 						}
@@ -208,37 +207,37 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 							logwriter = null;
 						}
 					}
-					if (dbg.gui.cpu.TotalInstrCount == instrstop) {
+					if (CPU.TotalInstrCount == instrstop) {
 						keeprunning = false;
 					}
-					if (dbg.gui.cpu.getPC() == stopaddr) {
+					if (CPU.getPC() == stopaddr) {
 						keeprunning = false;
 					}
-					if (cyclestop != -1 && cyclestop <= dbg.gui.cpu.TotalCycleCount) {
+					if (cyclestop != -1 && cyclestop <= CPU.TotalCycleCount) {
 						keeprunning = false;
 					}
-					if ((watchaddr>=0) && (wval != dbg.gui.cpu.read(watchaddr))) {
+					if ((watchaddr>=0) && (wval != CPU.read(watchaddr))) {
 						keeprunning = false;
 					}
 					if (
-						(dbg.gui.cpu.B<0) || (dbg.gui.cpu.B>0xff) ||
-						(dbg.gui.cpu.C<0) || (dbg.gui.cpu.C>0xff) ||
-						(dbg.gui.cpu.D<0) || (dbg.gui.cpu.D>0xff) ||
-						(dbg.gui.cpu.E<0) || (dbg.gui.cpu.E>0xff) ||
-						(dbg.gui.cpu.F<0) || (dbg.gui.cpu.F>0xff) ||
-						(dbg.gui.cpu.H<0) || (dbg.gui.cpu.H>0xff) ||
-						(dbg.gui.cpu.L<0) || (dbg.gui.cpu.L>0xff) ||
-						(dbg.gui.cpu.SP<0) || (dbg.gui.cpu.SP>0xffff) ||
-						(dbg.gui.cpu.getPC()<0) || (dbg.gui.cpu.getPC()>0xffff)
+						(CPU.B<0) || (CPU.B>0xff) ||
+						(CPU.C<0) || (CPU.C>0xff) ||
+						(CPU.D<0) || (CPU.D>0xff) ||
+						(CPU.E<0) || (CPU.E>0xff) ||
+						(CPU.F<0) || (CPU.F>0xff) ||
+						(CPU.H<0) || (CPU.H>0xff) ||
+						(CPU.L<0) || (CPU.L>0xff) ||
+						(CPU.SP<0) || (CPU.SP>0xffff) ||
+						(CPU.getPC()<0) || (CPU.getPC()>0xffff)
 					) {
 						keeprunning = false;
 					}
-					if (dbg.gui.cpu.read(dbg.gui.cpu.getPC()) == breakinstr) {
+					if (CPU.read(CPU.getPC()) == breakinstr) {
 						keeprunning = false;
 					}
-					if((bpm>=0)&&(bpm==dbg.gui.cpu.last_memory_access)) {
+					if((bpm>=0)&&(bpm==CPU.last_memory_access)) {
 						keeprunning = false;
-						PRINTF("Break due to memory access of $%04x\n", dbg.gui.cpu.last_memory_access);
+						PRINTF("Break due to memory access of $%04x\n", CPU.last_memory_access);
 					}
 					if (getRunFor()==0)
 						keeprunning = false;
@@ -287,29 +286,29 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					s=STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i);
 				}
 				if( table == regs2 && column == 2) {
-					int intstat=(gui.cpu.IOP[0x0f]&0x1f)|((gui.cpu.IE&0x1f)<<5)|(gui.cpu.IME?1<<10:0);
+					int intstat=(CPU.IOP[0x0f]&0x1f)|((CPU.IE&0x1f)<<5)|(CPU.IME?1<<10:0);
 					s = "<HTML><PRE>";
 					s+=" IME     : " + ((intstat           & (1<<10)) !=0 ? "Enabled" : "Disabled");
 					s+=" <BR>";
-					s+=" Joypad  : " + ((gui.cpu.IE        & (1<< 4)) !=0 ? "Enabled" : "Disabled" );
-					s+=                ((gui.cpu.IOP[0x0f] & (1<< 4)) !=0 ? ", pending":"");
+					s+=" Joypad  : " + ((CPU.IE        & (1<< 4)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((CPU.IOP[0x0f] & (1<< 4)) !=0 ? ", pending":"");
 					s+=" <BR>";
-					s+=" Serial  : " + ((gui.cpu.IE        & (1<< 3)) !=0 ? "Enabled" : "Disabled" );
-					s+=                ((gui.cpu.IOP[0x0f] & (1<< 3)) !=0 ? ", pending":"");
+					s+=" Serial  : " + ((CPU.IE        & (1<< 3)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((CPU.IOP[0x0f] & (1<< 3)) !=0 ? ", pending":"");
 					s+=" <BR>";
-					s+=" Timer   : " + ((gui.cpu.IE        & (1<< 2)) !=0 ? "Enabled" : "Disabled" );
-					s+=                ((gui.cpu.IOP[0x0f] & (1<< 2)) !=0 ? ", pending":"");
+					s+=" Timer   : " + ((CPU.IE        & (1<< 2)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((CPU.IOP[0x0f] & (1<< 2)) !=0 ? ", pending":"");
 					s+=" <BR>";
-					s+=" LCD/STAT: " + ((gui.cpu.IE        & (1<< 1)) !=0 ? "Enabled" : "Disabled" );
-					s+=                ((gui.cpu.IOP[0x0f] & (1<< 1)) !=0 ? ", pending":"");
+					s+=" LCD/STAT: " + ((CPU.IE        & (1<< 1)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((CPU.IOP[0x0f] & (1<< 1)) !=0 ? ", pending":"");
 					s+=" <BR>";
-					s+=" V-Blank : " + ((gui.cpu.IE        & (1<< 0)) !=0 ? "Enabled" : "Disabled" );
-					s+=                ((gui.cpu.IOP[0x0f] & (1<< 0)) !=0 ? ", pending":"");
+					s+=" V-Blank : " + ((CPU.IE        & (1<< 0)) !=0 ? "Enabled" : "Disabled" );
+					s+=                ((CPU.IOP[0x0f] & (1<< 0)) !=0 ? ", pending":"");
 					s+=" <BR>";
 					s+="</PRE></HTML>";
 				} else
 				if( table == hwregs && row == 0 && column == 0) { // LCDC
-					int j=gui.cpu.VC.LCDC;
+					int j=VideoController.LCDC;
 					s = "<HTML><PRE>";
 					s+=" "+STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i)+"<BR>";
 					s+=" ----------------------------------------- <BR>";
@@ -324,7 +323,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					s+="</PRE></HTML>";
 				} else
 				if( table == hwregs && row == 0 && column == 1) { // STAT
-					int j=gui.cpu.VC.STAT;
+					int j=VideoController.STAT;
 					s = "<HTML><PRE>";
 					s+= " "+STRFORMAT(((regs2 == table) ? "%dd  %04xh " : "%dd  %02xh " )+brep+"b",i,i)+"<BR>";
 					s+= " ----------------------------------------------------------------- <BR>";
@@ -357,7 +356,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					int i=memaddr; memaddr=index; prepareParser(); memaddr=i; //HAXHAXHAXHAXHAXHAX
 					int value = parser.Evaluate(((String)mem.getValueAt(row, column)).trim());
 // 					PRINTF("index=$%04x, value=$%02x\n", index , value);
-					gui.cpu.write(index, value);
+					CPU.write(index, value);
 					update(); //PRINTLN("update EditMemTableModelListener");
 	/*				mem.setColumnSelectionInterval(column + 1, column + 1);
 					mem.setRowSelectionInterval(row, row);*/
@@ -492,7 +491,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		scroll.setPreferredSize(new Dimension(aaarg, 19));
 		contentPane.add( scroll, BorderLayout.LINE_END );
 // 		cmds = new JTextField();
-		cmds = new JComboBox();
+		cmds = new JComboBox<String>();
 		cmds.setEditable(true);
 		cmds.addActionListener(this);
 		cmds.setFont(MonoFont);
@@ -569,60 +568,60 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	colors[3]=Color.BLUE;
 	int i=0, j=0, k=0;
 
-	i=gui.cpu.read(0xFF40);
+	i=CPU.read(0xFF40);
 	hwregs.setValueAt(STRFORMAT("ff40: LCDC=$%02x",i), k,0);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF48);
+	i=CPU.read(0xFF48);
 	hwregs.setValueAt(STRFORMAT("ff48: OBP0=$%02x",i), k,0);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF07);
+	i=CPU.read(0xFF07);
 	hwregs.setValueAt(STRFORMAT("ff07:  TAC=$%02x",i), k,0);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFFFF);
+	i=CPU.read(0xFFFF);
 	hwregs.setValueAt(STRFORMAT("ffff:   IE=$%02x",i), k,0);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF43);
+	i=CPU.read(0xFF43);
 	hwregs.setValueAt(STRFORMAT("ff43:  SCX=$%02x",i), k,0);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
 	c = m.getColumn(0);
 	c.setCellRenderer( new MyCellRenderer(colors) );
 
 	colors=new Color[5]; k=0;
-	i=gui.cpu.read(0xFF41);
+	i=CPU.read(0xFF41);
 	hwregs.setValueAt(STRFORMAT("ff41: STAT=$%02x",i), k,01);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF49);
+	i=CPU.read(0xFF49);
 	hwregs.setValueAt(STRFORMAT("ff49: OBP1=$%02x",i), k,1);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF04);
+	i=CPU.read(0xFF04);
 	hwregs.setValueAt(STRFORMAT("ff04:  DIV=$%02x",i), k,1);
 // 	PRINTLN("DIV: i="+i+" old="+oldHWRegs[j]);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF0f);
+	i=CPU.read(0xFF0f);
 	hwregs.setValueAt(STRFORMAT("ff0f:   IF=$%02x",i), k,1);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF42);
+	i=CPU.read(0xFF42);
 	hwregs.setValueAt(STRFORMAT("ff42:  SCY=$%02x",i), k,1);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
 	c = m.getColumn(1);
 	c.setCellRenderer( new MyCellRenderer(colors) );
 
 	colors=new Color[5];k=0;
-	i=gui.cpu.read(0xFF44);
+	i=CPU.read(0xFF44);
 	hwregs.setValueAt(STRFORMAT("ff44:   LY=$%02x",i), k,2);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF05);
+	i=CPU.read(0xFF05);
 	hwregs.setValueAt(STRFORMAT("ff05: TIMA=$%02x",i), k,2);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF02);
+	i=CPU.read(0xFF02);
 	hwregs.setValueAt(STRFORMAT("ff02:   SC=$%02x",i), k,2);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF4b);
+	i=CPU.read(0xFF4b);
 	hwregs.setValueAt(STRFORMAT("ff4b:   WX=$%02x",i), k,2);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
 	i=0x100;
 	if(watches[0]>=0) {
-		i=gui.cpu.read(watches[0]);
+		i=CPU.read(watches[0]);
 		hwregs.setValueAt(STRFORMAT("%04x:   w0=$%02x",watches[0],i), k,2);
 	} else hwregs.setValueAt("w0 unset", k,2);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
@@ -630,21 +629,21 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	c.setCellRenderer( new MyCellRenderer(colors) );
 
 	colors=new Color[5];k=0;
-	i=gui.cpu.read(0xFF45);
+	i=CPU.read(0xFF45);
 	hwregs.setValueAt(STRFORMAT("ff45:  LYC=$%02x",i), k,3);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF06);
+	i=CPU.read(0xFF06);
 	hwregs.setValueAt(STRFORMAT("ff06:  TMA=$%02x",i), k,3);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF01);
+	i=CPU.read(0xFF01);
 	hwregs.setValueAt(STRFORMAT("ff01:   SB=$%02x",i), k,3);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
-	i=gui.cpu.read(0xFF4a);
+	i=CPU.read(0xFF4a);
 	hwregs.setValueAt(STRFORMAT("ff4a:   WY=$%02x",i), k,3);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
 	i=0x100;
 	if(watches[1]>=0) {
-		i=gui.cpu.read(watches[1]);
+		i=CPU.read(watches[1]);
 		hwregs.setValueAt(STRFORMAT("%04x:   w1=$%02x",watches[1],i), k,3);
 	} else hwregs.setValueAt("w1 unset", k,3);
 	colors[k++]=( oldHWRegs[j]==i ? Color.WHITE : UpdateColor ); oldHWRegs[j++]=i;
@@ -658,7 +657,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		for(int i=0; i<8; ++i) {
 			mem.setValueAt(STRFORMAT("$%04x",m), i,0);
 			for(int j=2; j<10; ++j) {
-				mem.setValueAt(STRFORMAT("$%02x",(m<=0xffff)?gui.cpu.read(m++):0x1000), i,j);
+				mem.setValueAt(STRFORMAT("$%02x",(m<=0xffff)?CPU.read(m++):0x1000), i,j);
 			}
 		}
 		memiseditable=true;
@@ -666,13 +665,13 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 	private int seekBackOneInstruction(int pc) {
 		int j = pc-3;
-		int i=deasm.instructionLength(j);
+		int i=Disassembler.instructionLength(j);
 		if(i==3) return j;
 		++j;
-		i=deasm.instructionLength(j);
+		i=Disassembler.instructionLength(j);
 		if(i==2) return j;
 		++j;
-		i=deasm.instructionLength(j);
+		i=Disassembler.instructionLength(j);
 		if(i==1) return j;
 		return j;
 	}
@@ -680,17 +679,17 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 	private boolean updateInstructionsStepping   = false; // Used to detect if we are single-stepping or not
 	private int     updateInstructionsSteppingPC = -1;    // (Previous) PC while singlestepping.
 	private void updateInstructions() {
-		if(updateInstructionsStepping && (updateInstructionsSteppingPC + deasm.instructionLength(updateInstructionsSteppingPC) == gui.cpu.getPC())) {
+		if(updateInstructionsStepping && (updateInstructionsSteppingPC + Disassembler.instructionLength(updateInstructionsSteppingPC) == CPU.getPC())) {
 			Color[] c = ((MyCellRenderer)instrs.getCellRenderer(0, 0)).getColors();
 			for(int i=0; i<7; ++i) {
 				instrs.setValueAt(instrs.getValueAt(i+1,0), i,0);
 				c[i] = c[i+1];
 			}
 			c[6] = Color.WHITE;
-			int pc    = gui.cpu.getPC();
+			int pc    = CPU.getPC();
 			for(int i=7; i<16; ++i) {
-				instrs.setValueAt(deasm.disassemble(pc), i,0);
-				pc += Math.max(deasm.instructionLength(pc), 1);
+				instrs.setValueAt(Disassembler.disassemble(pc), i,0);
+				pc += Math.max(Disassembler.instructionLength(pc), 1);
 			}
 		}
 		else {
@@ -699,31 +698,31 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			 * We could also search for the shortest set, but this leads to the
 			 * first instruction being mis-interpreted more often.
 			 */
-			int tgt    = gui.cpu.getPC();
+			int tgt    = CPU.getPC();
 			int start  = Math.max(tgt - 3*7, 0); // longest instruction is 3 bytes, we want 7 instructions
 			int pc     = start;
 			while(pc != tgt) {
 				pc = start;
 				for(int i=0; i<7; ++i) {
-					pc += deasm.instructionLength(pc);
+					pc += Disassembler.instructionLength(pc);
 				}
 				if(pc>tgt) // can happen if we couldn't start far enough back (beginning of memoryspace)
 					pc = start;
 				++start;
 			}
-			pc = Math.min(start - 1, gui.cpu.getPC() - 7);
+			pc = Math.min(start - 1, CPU.getPC() - 7);
 			for(int i=0; i<16; ++i) {
 				if(i<7) {
 					/* Turn the 'new' instructions yellow to indicate that they are 'uncertain' */
 					Color[] c = ((MyCellRenderer)instrs.getCellRenderer(i, 0)).getColors();
 					c[i] = WarnColor;
 				}
-				instrs.setValueAt(deasm.disassemble(pc), i,0);
-				pc += Math.max(deasm.instructionLength(pc), 1);
+				instrs.setValueAt(Disassembler.disassemble(pc), i,0);
+				pc += Math.max(Disassembler.instructionLength(pc), 1);
 			}
 		}
 		updateInstructionsStepping = false;
-		updateInstructionsSteppingPC = gui.cpu.getPC();
+		updateInstructionsSteppingPC = CPU.getPC();
 	}
 
 	private void updateRegisters() { //TODO: Dit moet makkelijker kunnen ...
@@ -737,66 +736,66 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		MyCellRenderer colored = new MyCellRenderer(colorsa);
 		MyCellRenderer normal = new MyCellRenderer(colorsb);
 
-		regs1.setValueAt(STRFORMAT("A=$%02x",gui.cpu.A), 0,0);
+		regs1.setValueAt(STRFORMAT("A=$%02x",CPU.A), 0,0);
 		c = m.getColumn(0);
-		c.setCellRenderer( oldRegVal[0]==gui.cpu.A ? normal : colored );
-		oldRegVal[0]=gui.cpu.A;
+		c.setCellRenderer( oldRegVal[0]==CPU.A ? normal : colored );
+		oldRegVal[0]=CPU.A;
 
-		regs1.setValueAt(STRFORMAT("B=$%02x",gui.cpu.B), 0,1);
+		regs1.setValueAt(STRFORMAT("B=$%02x",CPU.B), 0,1);
 		c = m.getColumn(1);
-		c.setCellRenderer( oldRegVal[1]==gui.cpu.B ? normal : colored );
-		oldRegVal[1]=gui.cpu.B;
+		c.setCellRenderer( oldRegVal[1]==CPU.B ? normal : colored );
+		oldRegVal[1]=CPU.B;
 
-		regs1.setValueAt(STRFORMAT("C=$%02x",gui.cpu.C), 0,2);
+		regs1.setValueAt(STRFORMAT("C=$%02x",CPU.C), 0,2);
 		c = m.getColumn(2);
-		c.setCellRenderer( oldRegVal[2]==gui.cpu.C ? normal : colored );
-		oldRegVal[2]=gui.cpu.C;
+		c.setCellRenderer( oldRegVal[2]==CPU.C ? normal : colored );
+		oldRegVal[2]=CPU.C;
 
-		regs1.setValueAt(STRFORMAT("D=$%02x",gui.cpu.D), 0,3);
+		regs1.setValueAt(STRFORMAT("D=$%02x",CPU.D), 0,3);
 		c = m.getColumn(3);
-		c.setCellRenderer( oldRegVal[3]==gui.cpu.D ? normal : colored );
-		oldRegVal[3]=gui.cpu.D;
+		c.setCellRenderer( oldRegVal[3]==CPU.D ? normal : colored );
+		oldRegVal[3]=CPU.D;
 
-		regs1.setValueAt(STRFORMAT("E=$%02x",gui.cpu.E), 0,4);
+		regs1.setValueAt(STRFORMAT("E=$%02x",CPU.E), 0,4);
 		c = m.getColumn(4);
-		c.setCellRenderer( oldRegVal[4]==gui.cpu.E ? normal : colored );
-		oldRegVal[4]=gui.cpu.E;
+		c.setCellRenderer( oldRegVal[4]==CPU.E ? normal : colored );
+		oldRegVal[4]=CPU.E;
 
-		regs1.setValueAt(STRFORMAT("F=$%02x",gui.cpu.F), 0,5);
+		regs1.setValueAt(STRFORMAT("F=$%02x",CPU.F), 0,5);
 		c = m.getColumn(5);
-		c.setCellRenderer( oldRegVal[5]==gui.cpu.F ? normal : colored );
-// 		oldRegVal[5]=gui.cpu.F;
+		c.setCellRenderer( oldRegVal[5]==CPU.F ? normal : colored );
+// 		oldRegVal[5]=CPU.F;
 
-		regs1.setValueAt(STRFORMAT("H=$%02x",gui.cpu.H), 0,6);
+		regs1.setValueAt(STRFORMAT("H=$%02x",CPU.H), 0,6);
 		c = m.getColumn(6);
-		c.setCellRenderer( oldRegVal[6]==gui.cpu.H ? normal : colored );
-		oldRegVal[6]=gui.cpu.H;
+		c.setCellRenderer( oldRegVal[6]==CPU.H ? normal : colored );
+		oldRegVal[6]=CPU.H;
 
-		regs1.setValueAt(STRFORMAT("L=$%02x",gui.cpu.L), 0,7);
+		regs1.setValueAt(STRFORMAT("L=$%02x",CPU.L), 0,7);
 		c = m.getColumn(7);
-		c.setCellRenderer( oldRegVal[7]==gui.cpu.L ? normal : colored );
-		oldRegVal[7]=gui.cpu.L;
+		c.setCellRenderer( oldRegVal[7]==CPU.L ? normal : colored );
+		oldRegVal[7]=CPU.L;
 
 		m = regs2.getColumnModel();
-		regs2.setValueAt(STRFORMAT("PC=$%04x",gui.cpu.getPC()), 0,0);
+		regs2.setValueAt(STRFORMAT("PC=$%04x",CPU.getPC()), 0,0);
 		c = m.getColumn(0);
 		c.setCellRenderer( normal );
-		oldRegVal[8]=gui.cpu.getPC();
+		oldRegVal[8]=CPU.getPC();
 
-		regs2.setValueAt(STRFORMAT("SP=$%04x",gui.cpu.SP), 0,1);
+		regs2.setValueAt(STRFORMAT("SP=$%04x",CPU.SP), 0,1);
 		c = m.getColumn(1);
-		c.setCellRenderer( oldRegVal[9]==gui.cpu.SP ? normal : colored);
-		oldRegVal[9]=gui.cpu.SP;
+		c.setCellRenderer( oldRegVal[9]==CPU.SP ? normal : colored);
+		oldRegVal[9]=CPU.SP;
 
 		String flags = "F=";
-		flags += (( gui.cpu.F & gui.cpu.ZF_Mask ) == gui.cpu.ZF_Mask )?"Z ":"z ";
-		flags += (( gui.cpu.F & gui.cpu.NF_Mask ) == gui.cpu.NF_Mask )?"N ":"n ";
-		flags += (( gui.cpu.F & gui.cpu.HC_Mask ) == gui.cpu.HC_Mask )?"H ":"h ";
-		flags += (( gui.cpu.F & gui.cpu.CF_Mask ) == gui.cpu.CF_Mask )?"C ":"c ";
+		flags += (( CPU.F & CPU.ZF_Mask ) == CPU.ZF_Mask )?"Z ":"z ";
+		flags += (( CPU.F & CPU.NF_Mask ) == CPU.NF_Mask )?"N ":"n ";
+		flags += (( CPU.F & CPU.HC_Mask ) == CPU.HC_Mask )?"H ":"h ";
+		flags += (( CPU.F & CPU.CF_Mask ) == CPU.CF_Mask )?"C ":"c ";
 		regs2.setValueAt(flags, 0,3);
 		c = m.getColumn(3);
-		c.setCellRenderer( oldRegVal[5]==gui.cpu.F ? normal : colored);
-		oldRegVal[5]=gui.cpu.F;
+		c.setCellRenderer( oldRegVal[5]==CPU.F ? normal : colored);
+		oldRegVal[5]=CPU.F;
 
 		/*0=VBlANK
 			1=LCD STAT
@@ -806,22 +805,22 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 
 		//0 98765 43210
 		//        4
-		int intstat=(gui.cpu.IOP[0x0f]&0x1f)|((gui.cpu.IE&0x1f)<<5)|(gui.cpu.IME?1<<10:0);
+		int intstat=(CPU.IOP[0x0f]&0x1f)|((CPU.IE&0x1f)<<5)|(CPU.IME?1<<10:0);
 		String ime=((intstat&(1<<10))!=0?"I ":"i ");
-		ime+=(gui.cpu.IE       &(1<<4))!=0?"J":"j";
-		ime+=(gui.cpu.IOP[0x0f]&(1<<4))!=0?"+":"-";
+		ime+=(CPU.IE       &(1<<4))!=0?"J":"j";
+		ime+=(CPU.IOP[0x0f]&(1<<4))!=0?"+":"-";
 		ime+=" ";
-		ime+=(gui.cpu.IE       &(1<<3))!=0?"S":"s";
-		ime+=(gui.cpu.IOP[0x0f]&(1<<3))!=0?"+":"-";
+		ime+=(CPU.IE       &(1<<3))!=0?"S":"s";
+		ime+=(CPU.IOP[0x0f]&(1<<3))!=0?"+":"-";
 		ime+=" ";
-		ime+=(gui.cpu.IE       &(1<<2))!=0?"T":"t";
-		ime+=(gui.cpu.IOP[0x0f]&(1<<2))!=0?"+":"-";
+		ime+=(CPU.IE       &(1<<2))!=0?"T":"t";
+		ime+=(CPU.IOP[0x0f]&(1<<2))!=0?"+":"-";
 		ime+=" ";
-		ime+=(gui.cpu.IE       &(1<<1))!=0?"L":"l";
-		ime+=(gui.cpu.IOP[0x0f]&(1<<1))!=0?"+":"-";
+		ime+=(CPU.IE       &(1<<1))!=0?"L":"l";
+		ime+=(CPU.IOP[0x0f]&(1<<1))!=0?"+":"-";
 		ime+=" ";
-		ime+=(gui.cpu.IE       &(1<<0))!=0?"V":"v";
-		ime+=(gui.cpu.IOP[0x0f]&(1<<0))!=0?"+":"-";
+		ime+=(CPU.IE       &(1<<0))!=0?"V":"v";
+		ime+=(CPU.IOP[0x0f]&(1<<0))!=0?"+":"-";
  		regs2.setValueAt(ime, 0,2);
  		c = m.getColumn(2);
 		c.setCellRenderer( oldRegVal[10]==intstat ? normal : colored);
@@ -842,7 +841,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		parser.addVariable("SP", oldRegVal[9]);
 		parser.addVariable("HL", oldRegVal[7]|(oldRegVal[6]<<8));
 		parser.addVariable("M", memaddr);
-		parser.addVariable("Q", gui.cpu.read(memaddr));
+		parser.addVariable("Q", CPU.read(memaddr));
 		parser.addVariable("a", oldRegVal[0]);
 		parser.addVariable("b", oldRegVal[1]);
 		parser.addVariable("c", oldRegVal[2]);
@@ -855,7 +854,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		parser.addVariable("sp", oldRegVal[9]);
 		parser.addVariable("hl", oldRegVal[7]|(oldRegVal[6]<<8));
 		parser.addVariable("m", memaddr);
-		parser.addVariable("q", gui.cpu.read(memaddr));
+		parser.addVariable("q", CPU.read(memaddr));
 	}
 
 	private void createAndShowGUI() {
@@ -872,26 +871,20 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 		//frame.addKeyListener(this); TODO: Shortcut keys
 	}
 
-	// see http://java.sun.com/j2se/1.4.2/docs/api/javax/swing/JComboBox.html#addItem(java.lang.Object)
-	private Object makeObj(final String item)  {
-		return new Object() { public String toString() { return item; } };
-	}
-
 	public void actionPerformed( ActionEvent e ) {
 		if( e.getSource() instanceof JRadioButtonMenuItem ) {
 			if( e.getSource().equals( radioButtonSimpleDisasm ))
-				deasm = new Disassembler(gui.cpu, Disassembler.SIMPLE_DISASSEMBLY);
+				Disassembler.setMode(Disassembler.SIMPLE_DISASSEMBLY);
 			else
-				deasm = new Disassembler(gui.cpu, Disassembler.EXTENDED_DISASSEMBLY);
+				Disassembler.setMode(Disassembler.EXTENDED_DISASSEMBLY);
 			update();
 			return;
 		}
-		JComboBox f = ( JComboBox )( e.getSource() );
-		if(f==cmds && e.getActionCommand().equals("comboBoxEdited") ) {
+		if(e.getSource()==cmds && e.getActionCommand().equals("comboBoxEdited") ) {
 			updateInstructionsStepping = false;
 			int i=0;
 			String s=cmds.getSelectedItem().toString();
-			cmds.insertItemAt(makeObj(s), 0);
+			cmds.insertItemAt(s, 0);
 			cmds.setSelectedIndex(0);
 			cmds.getEditor().selectAll();
 // 			if(f.getItemCount()==2) {
@@ -909,48 +902,48 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				int v = parser.Evaluate(s.substring(i+1).trim());
 				if(!parser.parseError) {
 					if(l.equalsIgnoreCase("a")){
-						gui.cpu.A=v&0xFF;
+						CPU.A=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("b")){
-						gui.cpu.B=v&0xFF;
+						CPU.B=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("c")){
-						gui.cpu.C=v&0xFF;
+						CPU.C=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("d")){
-						gui.cpu.D=v&0xFF;
+						CPU.D=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("e")){
-						gui.cpu.E=v&0xFF;
+						CPU.E=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("f")){
-						gui.cpu.F=v&0xFF;
+						CPU.F=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("h")){
-						gui.cpu.H=v&0xFF;
+						CPU.H=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("l")){
-						gui.cpu.L=v&0xFF;
+						CPU.L=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("hl")){
-						gui.cpu.H=(v>>8)&0xFF;
-						gui.cpu.L=v&0xFF;
+						CPU.H=(v>>8)&0xFF;
+						CPU.L=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("pc")){
-						gui.cpu.setPC(v&0xFFFF);
+						CPU.setPC(v&0xFFFF);
 						update();
 					}
 					else if(l.equalsIgnoreCase("sp")){
-						gui.cpu.SP=v&0xFFFF;
+						CPU.SP=v&0xFFFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("m")){
@@ -958,18 +951,18 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						update();
 					}
 					else if(l.equalsIgnoreCase("af")){
-						gui.cpu.A=(v>>8)&0xFF;
-						gui.cpu.F=v&0xFF;
+						CPU.A=(v>>8)&0xFF;
+						CPU.F=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("bc")){
-						gui.cpu.B=(v>>8)&0xFF;
-						gui.cpu.C=v&0xFF;
+						CPU.B=(v>>8)&0xFF;
+						CPU.C=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("de")){
-						gui.cpu.D=(v>>8)&0xFF;
-						gui.cpu.E=v&0xFF;
+						CPU.D=(v>>8)&0xFF;
+						CPU.E=v&0xFF;
 						update();
 					}
 					else if(l.equalsIgnoreCase("bpi")){ //break on interrupt i
@@ -1019,19 +1012,19 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 						//}
 					}
 					else if (l.equalsIgnoreCase("ime")) {
-						gui.cpu.IME = (v!=0);
+						CPU.IME = (v!=0);
 						update();
 					}
 					else if (l.equalsIgnoreCase("halted")) {
-						gui.cpu.halted = (v!=0);
+						CPU.halted = (v!=0);
 						update();
 					}
 					else if (l.equalsIgnoreCase("disasm")) {
-						int pc = gui.cpu.getPC();
+						int pc = CPU.getPC();
 						while( v > pc ) {
-// 							PRINTF(deasm.simple_disasm(pc) + "  |  ");
-							PRINTLN(deasm.disassemble(pc));
-							pc+=deasm.instructionLength(pc);
+// 							PRINTF(Disassembler.simple_disasm(pc) + "  |  ");
+							PRINTLN(Disassembler.disassemble(pc));
+							pc+=Disassembler.instructionLength(pc);
 						}
 					}
 					else {
@@ -1041,7 +1034,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 				s="-";
 			}
 			if(s.equalsIgnoreCase("reset")) {
-				gui.cpu.reset(false);
+				CPU.reset(false);
 				update();
 			}
 			if(s.equalsIgnoreCase("s")) {
@@ -1051,7 +1044,7 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 			}
 			if(s.equalsIgnoreCase("so")) {
 				if (!runner.isRunning()) {
-					runner.setBreakPoint(gui.cpu.getPC() + deasm.instructionLength(gui.cpu.getPC()));
+					runner.setBreakPoint(CPU.getPC() + Disassembler.instructionLength(CPU.getPC()));
 					updateInstructionsStepping = true;
 					runner.resume();
 				}

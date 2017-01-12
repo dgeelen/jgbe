@@ -7,11 +7,11 @@ import java.util.Vector;
 
 public class VFSRoot implements IVFSNode {
 	private String name;
-	private Vector children;
+	private Vector<IVFSNode> children;
 
 	public VFSRoot(String name)
 	{
-		this.children = new Vector();
+		this.children = new Vector<IVFSNode>();
 		this.name = name;
 	}
 
@@ -52,7 +52,7 @@ public class VFSRoot implements IVFSNode {
 	}
 
 	/* for dirs */
-	public Enumeration getChildren()
+	public Enumeration<IVFSNode> getChildren()
 	{
 		return children.elements();
 	}

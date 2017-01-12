@@ -1,0 +1,96 @@
+#ifndef USE_JAVA_MOBILE
+
+#include "Global.inc"
+
+import java.util.*;
+import java.awt.Color;
+
+public class ColorConverter
+{
+  private static final long serialVersionUID = 1L; // prevent warning
+
+  // rgb colors
+  public static final int MIN_RED = 0;
+  public static final int MAX_RED = 255;
+  public static final int MIN_GREEN = 0;
+  public static final int MAX_GREEN = 255;
+  public static final int MIN_BLUE = 0;
+  public static final int MAX_BLUE = 255;
+
+  // hsv colors
+  public static final int MIN_HUE = 0;
+  public static final int MAX_HUE = 360;
+  public static final int MIN_SATURATION = 0;
+  public static final int MAX_SATURATION = 100;
+  public static final int MIN_VALUE = 0;
+  public static final int MAX_VALUE = 100;
+
+	/*
+	 * 0 <= h <= 360
+	 * 0 <= s <= 100
+	 * 0 <= v <= 100
+	 */
+	public static Color hsvToColor(float h, float s, float v)
+	{
+		return Color.getHSBColor(h / MAX_HUE,
+                             s / MAX_SATURATION,
+                             v / MAX_VALUE);
+	}
+
+	public static Color hsvToColor(double h, double s, double v)
+	{
+		return Color.getHSBColor((float)(h / MAX_HUE),
+                             (float)(s / MAX_SATURATION),
+                             (float)(v / MAX_VALUE));
+	}
+
+	/**
+	 * 0 <= r, g, b < 256
+	 * return [h, s, v]
+	 * 0 <= h <= 360
+	 * 0 <= s, v <= 100
+	 */
+	public static double[] rgbToHsv(int r, int g, int b)
+	{
+		double[] result = new double[3]; // [h,s,v]
+		float[] temp = new float[3];
+    Color.RGBtoHSB(r, g, b, temp);
+    result[0] = temp[0] * MAX_HUE;
+    result[1] = temp[1] * MAX_SATURATION;
+    result[2] = temp[2] * MAX_VALUE;
+		return result;
+	}
+
+	/*
+	 * 0 <= h <= 360
+	 * 0 <= s <= 100
+	 * 0 <= v <= 100
+	 * return [r,g,b]
+	 */
+	public static int[] hsvToRgb(float h, float s, float v)
+	{
+		int[] result = new int[3];
+		int color = Color.HSBtoRGB(h / MAX_HUE,
+                               s / MAX_SATURATION,
+                               v / MAX_VALUE);
+
+    result[2] = color & 0xff;
+    result[1] = (color >> 8) & 0xff;
+    result[0] = (color >> 16) & 0xff;
+    return result;
+	}
+
+	public static int[] hsvToRgb(double h, double s, double v)
+	{
+		int[] result = new int[3];
+		int color = Color.HSBtoRGB((float)(h / MAX_HUE),
+                               (float)(s / MAX_SATURATION),
+                               (float)(v / MAX_VALUE));
+
+    result[2] = color & 0xff;
+    result[1] = (color >> 8) & 0xff;
+    result[0] = (color >> 16) & 0xff;
+    return result;
+	}
+}
+#endif

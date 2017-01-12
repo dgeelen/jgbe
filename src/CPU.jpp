@@ -12,9 +12,8 @@ import java.util.zip.*;
 import java.util.ArrayList;
 #endif
 
-public final class CPU {
-		public static CPU singleton = null;
 
+public final class CPU {
 		//FLAGS
 		public static final int ZF_Shift = 7;
 		public static final int NF_Shift = ZF_Shift - 1;
@@ -167,31 +166,20 @@ public final class CPU {
 
 		//CPU Class variables
 		public static Cartridge cartridge;// = new Cartridge("Pokemon Blue.gb");
-		#ifndef USE_JAVA_MOBILE
-			public static Disassembler deasm;
-		#endif
-		public static VideoController VC;
-		public static AudioController AC;
 		static int hblank_dma_state;
 		//Debug helpers
 		public static int last_memory_access=-1;
 		public static int last_memory_access_internal=-1;
 
-		public CPU() {
+		public static void initialise() {
 			PRINTFREEMEM("CPU() - 1");
-			if (singleton != null) {
-				PRINTLN("WARNING: trying to instantiate second instance of CPU singleton class");
-				//int x[]=null;
-				//x[0] = 0;
-			}
-			singleton = this;
 			#ifndef USE_JAVA_MOBILE
-				deasm = new Disassembler(this, Disassembler.SIMPLE_DISASSEMBLY);
+				Disassembler.setMode(Disassembler.SIMPLE_DISASSEMBLY);
 			#endif
 			PRINTFREEMEM("CPU() - 2");
-			VC = new VideoController(this, 160, 144);
+			VideoController.initialise();
 			PRINTFREEMEM("CPU() - 3");
-			AC = new AudioController(this);
+			AudioController.initialise();
 			PRINTFREEMEM("CPU() - 4");
 			keyHistory = new IntVector();
 			PRINTFREEMEM("CPU() - 5");
@@ -259,7 +247,7 @@ public final class CPU {
 			SL_IF_VERSION( 0,  0) {
 				boolean doskip = false;
 				int skipsize = 0x10000 - 0x1000;
-				
+
 				SL_ARR(UINT8B, WRAM[0], 0x1000);
 				if (SL_LOAD) {
 					// some version 0 savegames have too much WRAM data, and some don't
@@ -321,15 +309,23 @@ public final class CPU {
 			SL_BOOL(BIOS_enabled);
 
 			SL_OBJ(cartridge);
-			SL_OBJ(VC);
-			SL_IF_VERSION( 2, -1) SL_OBJ(AC);
+			SL_OBJ(VideoController);
+			SL_IF_VERSION( 2, -1) SL_OBJ(AudioController);
 
 			SL_IF_VERSION( 3, 13) SL_SKIP(UINT8, 1); // vcmode
 
-			SL_IF_VERSION( 3,  8) SL_INT(TotalInstrCount);
-			SL_IF_VERSION( 3,  8) SL_INT(TotalCycleCount);
-			SL_IF_VERSION( 9, -1) SL_LONG(TotalInstrCount);
-			SL_IF_VERSION( 9, -1) SL_LONG(TotalCycleCount);
+			SL_IF_VERSION( 3,  8) {
+				int IntTotalInstrCount = (int)TotalInstrCount;
+				int IntTotalCycleCount = (int)TotalCycleCount;
+				SL_INT(IntTotalInstrCount);
+				SL_INT(IntTotalCycleCount);
+				TotalInstrCount = IntTotalInstrCount;
+				TotalCycleCount = IntTotalCycleCount;
+			}
+			SL_IF_VERSION( 9, -1) {
+				SL_LONG(TotalInstrCount);
+				SL_LONG(TotalCycleCount);
+			}
 
 			SL_IF_VERSION( 4, 16) SL_SKIP(UINT8, 1); //SL_UINT8(hw_ilines);
 
@@ -397,7 +393,7 @@ public final class CPU {
 			dostream.writeInt(SL_MAGIX);
 			dostream.writeInt(saveversion);
 
-			OutputStream compress = null; 
+			OutputStream compress = null;
 			int compressionmethod = 0; // no compression
 #ifndef USE_JAVA_MOBILE
 			compressionmethod = 1; // GZIP compression
@@ -423,7 +419,7 @@ public final class CPU {
 			}
 			stateSaveLoad(true, saveversion, dostream, null);
 
-			dostream.flush();			
+			dostream.flush();
 			// if there was a compressor, close it so it finishes its output
 			if (compress != null) compress.close();
 		}
@@ -477,7 +473,7 @@ public final class CPU {
 		}
 
 		public static int hblank_dma() {
-			ASSERT((VC.STAT&2)==0);
+			ASSERT((VideoController.STAT&2)==0);
 			if (hblank_dma_state < (1<<7)) return 0;
 
 			int src = ((IOP[0x51]<<8)|IOP[0x52]) & 0xfff0;
@@ -485,7 +481,7 @@ public final class CPU {
 			int len = 16;
 
 			for (int i = 0; i < len; ++i)
-				VC.write(dst++, read(src++));
+				VideoController.write(dst++, read(src++));
 
 			IOP[0x51] = src >> 8;
 			IOP[0x52] = src & 0xF0;
@@ -585,8 +581,8 @@ public final class CPU {
 					BIOS_enabled = false;
 					//reset(false); // reset without forcing mono mode
 					refreshMemMap();
-					VC.isCGB = isCGB();
-					A = VC.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
+					VideoController.isCGB = isCGB();
+					A = VideoController.isCGB?0x11:0x01; // CGB sets this to 0x11 instead of 0x01 for GB
 					b = read(index);
 				}
 				else {
@@ -598,7 +594,7 @@ public final class CPU {
 				b=cartridge.read(index);
 			}
 			else if(index < 0xa000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
-				b=VC.read(index);
+				b=VideoController.read(index);
 			}
 			else if(index < 0xc000) { //8KB External RAM     (in cartridge, switchable bank, if any)
 				b=cartridge.read(index);
@@ -613,17 +609,17 @@ public final class CPU {
 				b=read(index-0x2000);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
-				b=VC.read(index);
+				b=VideoController.read(index);
 			}
 			else if(index < 0xff00) { //Not Usable
 				PRINTLN("WARNING: CPU.read(): Read from unusable memory (0xfea0-0xfeff)");
 				b=0;
 			}
 			else if((index>0xff0f) && (index<0xff40)) { /* AUDIO IO PORTS: 0xff10 - 0xff3f */
-				b = AC.read(index);
+				b = AudioController.read(index);
 			}
 			else if((index>0xff3f) && (index<0xff70)) { /* VIDEO IO PORTS: 0xff40 - 0xff6f */
-				b = VC.read(index);
+				b = VideoController.read(index);
 			}
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
@@ -755,7 +751,7 @@ public final class CPU {
 				refreshMemMap();
 			}
 			else if(index < 0xa000) { //8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
-				VC.write(index, value);
+				VideoController.write(index, value);
 			}
 			else if(index < 0xc000) { //8KB External RAM     (in cartridge, switchable bank, if any)
 				cartridge.write(index, value);
@@ -770,7 +766,7 @@ public final class CPU {
 				write(index-0x2000, value);
 			}
 			else if(index < 0xfea0) { //Sprite Attribute Table (OAM)
-				VC.write(index, value);
+				VideoController.write(index, value);
 			}
 			else if(index < 0xff00) { //Not Usable
 				/* Silenced since a lot of games seem to write to here anyway
@@ -778,10 +774,10 @@ public final class CPU {
 				 */
 			}
 			else if((index>0xff0f) && (index<0xff40)) { /* AUDIO IO PORTS: 0xff10 - 0xff3f */
-				AC.write(index, value);
+				AudioController.write(index, value);
 			}
 			else if((index>0xff3f) && (index<0xff70)) { /* VIDEO IO PORTS: 0xff40 - 0xff6f */
-				VC.write(index, value);
+				VideoController.write(index, value);
 			}
 			else if(index < 0xff80) { //I/O Ports
 				switch(index) {
@@ -888,17 +884,17 @@ public final class CPU {
 			if(cartridge == null) return; //Do nothing if no cartridge is inserted
 			BIOS_enabled = bios;
 
-			VC.reset();
+			VideoController.reset();
 			cartridge.CurrentRAMBank=0;
 			cartridge.CurrentROMBank=1;
 
 			setPC(BIOS_enabled?0x00:0x100); // This should be set before refreshing the memmap, or risk setting BIOS_enabled to false
 			refreshMemMap();
 
-			VC.isCGB = BIOS_enabled?false:isCGB();
+			VideoController.isCGB = BIOS_enabled?false:isCGB();
 
 			//AF=$01B0
-			A=BIOS_enabled ? 0x00 : (VC.isCGB?0x11:0x01); // CGB sets this to 0x11 instead of 0x01 for GB
+			A=BIOS_enabled ? 0x00 : (VideoController.isCGB?0x11:0x01); // CGB sets this to 0x11 instead of 0x01 for GB
 			F=BIOS_enabled ? 0x00 : 0xb0;
 			//BC=$0013
 			B=0x00;
@@ -923,7 +919,7 @@ public final class CPU {
 			write(0xff47, 0xfc); // [$FF47] = $FC   ; BGP
 			write(0xff48, 0xff); // [$FF48] = $FF   ; OBP0
 			write(0xff49, 0xff); // [$FF49] = $FF   ; OBP1
-			AC.reset(); // Sets FF11-FF25
+			AudioController.reset(); // Sets FF11-FF25
 
 			CurrentWRAMBank=1;
 			doublespeed = false;
@@ -978,7 +974,7 @@ public final class CPU {
 			PRINTF( "   A=$%02x    B=$%02x    C=$%02x    D=$%02x   E=$%02x   F=$%02x   H=$%02x   L=$%02x\n", A, B, C, D, E, F, H,L );
 			PRINTF( "  PC=$%04x SP=$%04x                           flags="+flags+"\n",getPC(),SP );
 			#ifndef USE_JAVA_MOBILE
-				PRINTLN( "  "+deasm.disassemble( getPC() ) );
+				PRINTLN( "  "+Disassembler.disassemble( getPC() ) );
 			#endif
 		}
 
@@ -1022,6 +1018,7 @@ public final class CPU {
 			}
 		}
 
+		@SuppressWarnings("fallthrough")
 		public static void executeALU(int b1) {
 			int operand = registerRead(b1 & 0x07);
 			switch ((b1 & 0x38) >> 3) {
@@ -1132,12 +1129,12 @@ public final class CPU {
 			int cycles = (int)(TotalCycleCount - lastVCRenderCycleCount);
 
 			if (doublespeed) cycles /= 2; // cycle counts are always even, so no need to account for rounding
-			int cntdown = VC.render(cycles);
+			int cntdown = VideoController.render(cycles);
 			if (doublespeed) cntdown *= 2;
 
-			// NOTE: lastVCRenderCycleCount is used in VC.renderScanlinePart to determine how many pixels to render
+			// NOTE: lastVCRenderCycleCount is used in VideoController.renderScanlinePart to determine how many pixels to render
 			//       since the last render part. At the end of MODE3 this is called one last time so don't update
-			//       lastVCRenderCycleCount until after the call to VC.render().
+			//       lastVCRenderCycleCount until after the call to VideoController.render().
 			lastVCRenderCycleCount = TotalCycleCount;
 			VCRenderEventCycleCount = TotalCycleCount + cntdown;
 			//VCRenderEventCycleCount = TotalCycleCount + 1;
@@ -1150,7 +1147,7 @@ public final class CPU {
 		};
 
 		public static void handleEvents() {
-			if (TotalCycleCount >= VCRenderEventCycleCount);
+			if (TotalCycleCount >= VCRenderEventCycleCount)
 				handleVCRenderEvent();
 			NextEventCycleCount = VCRenderEventCycleCount;
 
@@ -1190,12 +1187,12 @@ public final class CPU {
 				else if ((ir&(1<<1))!=0) { // LCD STAT
 					IOP[0x0f] &= ~(1<<1);
 					ir = 0x48;
-					//VC.ISTAT &= VC.ISTAT_mask;
-					if((VC.ISTAT&0x78) != (VC.STAT&0x78))
-					PRINTF("STAT: $%02x, ISTAT: $%02x, mask: $%02x\n", VC.STAT&0x78, VC.ISTAT&0x78, VC.ISTAT_mask&0x78);
-					if((VC.ISTAT) != (VC.STAT))
-					PRINTF("STAT: $%02x, ISTAT: $%02x, mask: $%02x\n", VC.STAT, VC.ISTAT, VC.ISTAT_mask);
-					VC.ISTAT_mask = 0xff;
+					VideoController.ISTAT &= VideoController.ISTAT_mask;
+					//if((VideoController.ISTAT&0x78) != (VideoController.STAT&0x78))
+					//PRINTF("STAT: $%02x, ISTAT: $%02x, mask: $%02x\n", VideoController.STAT&0x78, VideoController.ISTAT&0x78, VideoController.ISTAT_mask&0x78);
+					//if((VideoController.ISTAT) != (VideoController.STAT))
+					//PRINTF("STAT: $%02x, ISTAT: $%02x, mask: $%02x\n", VideoController.STAT, VideoController.ISTAT, VideoController.ISTAT_mask);
+					VideoController.ISTAT_mask = 0xff;
 				}
 				else if ((ir&(1<<2))!=0) { // Timer
 					IOP[0x0f] &= ~(1<<2);
@@ -1528,10 +1525,10 @@ public final class CPU {
 				#ifndef USE_JAVA_MOBILE
 					if (cycles > 0) {
 						if (doublespeed) { // more instrs per vblank int
-							AC.render(cycles>>1); //render enough sound bytes for cycles Cycles
+							AudioController.render(cycles>>1); //render enough sound bytes for cycles Cycles
 						}
 						else {
-							AC.render(cycles); //render enough sound bytes for cycles Cycles
+							AudioController.render(cycles); //render enough sound bytes for cycles Cycles
 						}
 					}
 				#endif

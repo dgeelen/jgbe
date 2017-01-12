@@ -1,0 +1,36 @@
+#include "Global.inc"
+import javax.swing.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+
+public class MenuItemArray extends VECTOR(JMenuItem) {
+	private static final long serialVersionUID = 1L; // prevent warning
+	public boolean add(JMenuItem b) {
+		return super.add(b);
+	}
+	public void add(JMenuItem b, int mnemonic) {
+		super.add(b);
+		b.setMnemonic(mnemonic);
+	}
+	public void remove(JMenuItem b) {
+		super.remove(b);
+	}
+	public void addActionListener(ActionListener l) {
+		FOREACH(JMenuItem, ab, this)
+			ab.addActionListener(l);
+	}
+	public void addToMenu(JMenu m) {
+		FOREACH(JMenuItem, ab, this)
+			m.add(ab);
+	}
+	public void addToMenu(JPopupMenu m) {
+		FOREACH(JMenuItem, ab, this)
+			m.add(ab);
+	}
+	public boolean contains(Object b) {
+		return (b instanceof JMenuItem) && super.contains(b);
+	}
+	public JMenuItem getItem(int index) {
+		return super.get(index);
+	}
+}

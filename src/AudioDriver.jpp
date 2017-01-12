@@ -9,7 +9,6 @@ import java.util.regex.Matcher;
 public class AudioDriver implements IAudioListener {
 	SourceDataLine audioSource;
 	Mixer.Info mixerinfo;
-	AudioController ac;
 	OutputStream dumpStream;
 	byte[] audioBuffer;
 	int audioBufferIndex;
@@ -23,11 +22,6 @@ public class AudioDriver implements IAudioListener {
 	boolean bigEndianSound;
 
 	public AudioDriver() {
-		ASSERT(false); //DO NOT USE THIS CONSTRUCTOR!
-	}
-
-	public AudioDriver(AudioController ac) {
-		this.ac = ac;
 		audioBufferIndex = 0;
 		audioBufferSize = 4096;
 		audioBuffer = new byte[audioBufferSize];
@@ -76,7 +70,7 @@ public class AudioDriver implements IAudioListener {
 				audioBuffer = new byte[audioBufferSize];
 				audioBufferIndex = audioBufferSize - (channels * sampleSize);
 				start();
-				ac.setSampleRate(sampleRate);
+				AudioController.setSampleRate(sampleRate);
 				return true;
 			}
 			catch(LineUnavailableException e) {

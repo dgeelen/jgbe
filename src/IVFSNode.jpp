@@ -16,7 +16,7 @@ public interface IVFSNode {
 	public OutputStream getOutputStream();
 
 	/* for dirs */
-	public Enumeration getChildren();
+	public Enumeration<IVFSNode> getChildren();
 	public IVFSNode createFile(String name);
 	public IVFSNode createDir(String name);
 	public void delete(String name);

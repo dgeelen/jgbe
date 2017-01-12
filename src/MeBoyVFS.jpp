@@ -15,11 +15,11 @@ class MeBoyVFS {
 #ifndef LEGACY_MEBOY_CARTS
 	static protected IVFSNode vfsroot = VFSRoot.getRoot();
 
-	static protected void getFlattenedList(Vector ret, IVFSNode node, String path) {
+	static protected void getFlattenedList(Vector<String> ret, IVFSNode node, String path) {
 		if (node.isDir()) {
-			Enumeration e = node.getChildren();
+			Enumeration<IVFSNode> e = node.getChildren();
 			while (e.hasMoreElements()) {
-				IVFSNode cn = (IVFSNode)e.nextElement();
+				IVFSNode cn = e.nextElement();
 				getFlattenedList(ret, cn, path+cn.getName());
 			}
 		} else if (node.isFile()) {
@@ -39,9 +39,9 @@ class MeBoyVFS {
 			return null;
 
 		String pelem = pathelems[pathofs];
-		Enumeration e = node.getChildren();
+		Enumeration<IVFSNode> e = node.getChildren();
 		while (e.hasMoreElements()) {
-			IVFSNode cn = (IVFSNode)e.nextElement();
+			IVFSNode cn = e.nextElement();
 			//PRINTLN("kid:"+cn.getName());
 			if (cn.getName().equals(pelem) || cn.getName().equals(pelem+"/"))
 				return getNodeFromPath(pathelems, pathofs+1, cn);
@@ -51,7 +51,7 @@ class MeBoyVFS {
 
 
 private static String[] splitPath(String original) {
-Vector nodes = new Vector();
+Vector<String> nodes = new Vector<String>();
 String separator = "/";
 //System.out.println("split start...................");
 // Parse nodes into vector
@@ -69,7 +69,7 @@ String[] result = new String[ nodes.size() ];
 if( nodes.size()>0 ) {
 for(int loop=0; loop<nodes.size(); loop++)
 {
-result[loop] = (String)nodes.elementAt(loop);
+result[loop] = nodes.elementAt(loop);
 //System.out.println(result[loop]);
 }
 
@@ -107,13 +107,13 @@ return result;
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				DataOutputStream dos = new DataOutputStream(bos);
 
-				Vector cl = new Vector();
+				Vector<String> cl = new Vector<String>();
 				getFlattenedList(cl, vfsroot, "/");
 				PRINTLN(cl.size());
 				dos.writeInt(cl.size()/3);
-				Enumeration e = cl.elements();
+				Enumeration<String> e = cl.elements();
 				while (e.hasMoreElements()) {
-					String str = (String)e.nextElement();
+					String str = e.nextElement();
 					PRINTLN(str);
 					dos.writeUTF(str);
 				}
