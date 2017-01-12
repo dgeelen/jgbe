@@ -1021,9 +1021,19 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					}
 					else if (l.equalsIgnoreCase("disasm")) {
 						int pc = CPU.getPC();
+						char[] whitespace = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};//FIXME: this is crappy
 						while( v > pc ) {
-// 							PRINTF(Disassembler.simple_disasm(pc) + "  |  ");
-							PRINTLN(Disassembler.disassemble(pc));
+							int cycles = CPU.read(pc);
+							if(cycles == 0xcb) { // prefix instruction
+								cycles = CPU.read(pc+1);
+								cycles = Tables.cb_cycles[cycles];
+							}
+							else {
+								cycles = Tables.cycles[cycles];
+							}
+							String op = Disassembler.disassemble(pc) + cycles;
+							String ws = (new String(whitespace, 0, 49 - op.length()));
+							PRINTLN(op + ws + "|   " + cycles + " cycles");
 							pc+=Disassembler.instructionLength(pc);
 						}
 					}
@@ -1032,6 +1042,9 @@ public class Debugger implements ActionListener, ItemListener, KeyListener, Mous
 					}
 				}
 				s="-";
+			}
+			if(s.equalsIgnoreCase("cycles")) {
+				PRINTLN("Executed " + CPU.TotalInstrCount + " instructions, " + CPU.TotalCycleCount + " cycles");
 			}
 			if(s.equalsIgnoreCase("reset")) {
 				CPU.reset(false);
