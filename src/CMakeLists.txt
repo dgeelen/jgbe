@@ -133,13 +133,13 @@ ADD_JAVA_JAR(MeBoy
 add_custom_target(JGBE-Version ALL
 	VERBATIM
 	DEPENDS "${PROJECT_SOURCE_DIR}/svnversion.sh"
-	COMMAND "${PROJECT_SOURCE_DIR}/svnversion.sh" "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/svnrev.tmp"
-	COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/svnrev.tmp" "${CMAKE_CURRENT_BINARY_DIR}/svnrev.inc"
+	COMMAND "${PROJECT_SOURCE_DIR}/svnversion.sh" "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/revision_number.tmp"
+	COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/revision_number.tmp" "${CMAKE_CURRENT_BINARY_DIR}/revision_number.inc"
 )
-add_custom_target(JGBE-Version-Update ALL DEPENDS svnrev.mark)
-add_custom_command(OUTPUT svnrev.mark
+add_custom_target(JGBE-Version-Update ALL DEPENDS revision_number.mark)
+add_custom_command(OUTPUT revision_number.mark
 	VERBATIM
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/svnrev.inc"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/revision_number.inc"
 	COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_SOURCE_DIR}/Version.jpp"
-	COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/svnrev.mark"
+	COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/revision_number.mark"
 )

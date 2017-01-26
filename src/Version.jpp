@@ -1,5 +1,5 @@
 #include "Global.inc"
-#include "svnrev.inc"
+#include "revision_number.inc"
 
 public class Version {
 	// note: do not make this final, because then it will be inlined and

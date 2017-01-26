@@ -13,7 +13,7 @@ ROM_FILES    :=$(ROM_ASMFILES:$(ROMSRCDIR)/%.asm=$(BUILDDIR)/%.gb)
 MAKEFILES :=Makefile Makefile.inc Makefile.config $(shell cat Makefile.inc 2> /dev/null | sed "s:-include ::")
 BOOTROM   :=$(shell find -iname boot.rom | head -1)
 
-VERSION  := $(shell sh generate-svnrev.sh "$(SRCDIR)")
+VERSION  := $(shell sh generate-revision-number.sh "$(SRCDIR)")
 
 NATIVEPATHSEPARATOR:=:
 CYGPATH:=echo
@@ -255,7 +255,7 @@ clean:
 	rm -f $(DEPSDIR)/*.d
 	rm -f $(JARDIR)/jgbe.jar
 	rm -f $(CLASSDIR)/jgbe.zip
-	rm -f $(SRCDIR)/svnrev.inc
+	rm -f $(SRCDIR)/revision_number.inc
 	rm -f $(GJAVAFILES)
 	touch $(JPPFILES)
 
